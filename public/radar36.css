@@ -1,0 +1,9 @@
+/* Radar 3.6 — readable compact live journey card, while preserving 3.5.1 tiles. */
+#radar36Card {margin-top:10px;padding:10px 12px;background:rgba(55,113,186,.12);border:1px solid var(--edge);border-radius:12px;line-height:1.4;}
+#radar36Card strong {display:block;font-size:12px;color:var(--text);overflow-wrap:anywhere;}
+#radar36Card span {display:block;font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5;}
+/* Past stops stay available for manual scrolling, but are visually quieter. */
+#stops .stop-past {opacity:.64;}
+#stops .stop-current {background:linear-gradient(90deg,rgba(255,86,92,.09),transparent 75%);border-radius:5px;}
+/* Render route under markers; keep full map interaction. */
+#map .leaflet-overlay-pane {pointer-events:none;}
