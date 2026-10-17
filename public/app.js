@@ -105,17 +105,30 @@ async function loadDetails(source){
     .finally(()=>delete state.detailPending[source]);
   return state.detailPending[source];
 }
-function colorTileUrl(theme){return theme==='dark'?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'}
+// OSM Standard tile service: no CARTO API key. Dark mode is a CSS treatment of tiles only.
+// Usage policy: https://operations.osmfoundation.org/policies/tiles/
+const OSM_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 function changeTheme(theme){
   document.documentElement.setAttribute('data-theme',theme);
   $('themeToggle').textContent=theme==='dark'?'☀':'☾';
   try{localStorage.setItem('sr-theme',theme)}catch(e){}
-  if(state.tiles)state.tiles.setUrl(colorTileUrl(theme));
+  // No URL change/re-download required when switching modes.
 }
 function initMap(){
   if(!window.L){setNotice('<strong>Kartenbibliothek nicht erreichbar.</strong> Prüfe die Internetverbindung oder den Leaflet-CDN.');return false;}
   const map=L.map('map',{zoomControl:false,attributionControl:true,preferCanvas:true}).setView([46.64,11.35],9);
-  state.map=map; state.tiles=L.tileLayer(colorTileUrl(document.documentElement.getAttribute('data-theme')),{maxZoom:19,maxNativeZoom:19,subdomains:'abcd',attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>'}).addTo(map);
+  state.map=map;
+  state.tiles=L.tileLayer(OSM_TILES,{
+    minZoom:3,maxZoom:19,maxNativeZoom:19,
+    attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a>'
+  }).addTo(map);
+  let tileFailures=0;
+  state.tiles.on('tileload',()=>{tileFailures=0});
+  state.tiles.on('tileerror',()=>{
+    if(++tileFailures===7){
+      setNotice('<strong>Karte vorübergehend nicht erreichbar.</strong> Die OpenStreetMap-Kacheln konnten nicht geladen werden. Prüfe deine Internetverbindung und aktualisiere die Seite.');
+    }
+  });
   state.layer=L.layerGroup().addTo(map);
   L.control.zoom({position:'bottomleft'}).addTo(map);
   map.on('zoomend',()=>$('map').classList.toggle('map-zoomed-out',map.getZoom()<11));
@@ -259,7 +272,17 @@ async function refreshFeeds(){
   }finally{state.busy=false;}
 }
 function setFilter(which){state.filter=which;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter===which));refreshMarkers();refreshScheduleMatches();}
-function openSheet(which){closeSheets(false);state.activeSheet=which;const id=which==='station'?'stationSheet':'sheet';$(id).classList.add('open');$(id).setAttribute('aria-hidden','false');$('scrim').classList.add('show');}
+function openSheet(which){
+  closeSheets(false);
+  state.activeSheet=which;
+  const id=which==='station'?'stationSheet':'sheet';
+  const sheet=$(id);
+  const scroller=sheet.querySelector('.sheet-scroll');
+  if(scroller)scroller.scrollTop=0;
+  sheet.classList.add('open');
+  sheet.setAttribute('aria-hidden','false');
+  $('scrim').classList.add('show');
+}
 function closeSheets(resetSelection=true){
   for(const id of ['sheet','stationSheet']){$(id).classList.remove('open');$(id).setAttribute('aria-hidden','true');}
   $('scrim').classList.remove('show');state.activeSheet=null;
@@ -363,7 +386,7 @@ async function showStations(){
     all.push({source:s,stopId,name:record[0],lat,lon});
   }}
   state.stationList=all;renderStationResults();
-  $('stationSearch').focus();
+  // No forced iOS keyboard on opening: avoids shrinking the viewport unexpectedly.
 }
 function renderStationResults(){
   const q=$('stationSearch').value.toLocaleLowerCase('de').trim(),list=$('stationResults');list.replaceChildren();
@@ -383,6 +406,7 @@ function italySeconds(){
 }
 function showStationBoard(st){
   state.stationChoice=st;$('stationResults').hidden=true;$('stationBoard').hidden=false;
+  const scroller=$('stationSheet').querySelector('.sheet-scroll');if(scroller)scroller.scrollTop=0;
   $('stationName').textContent='Abfahrten · '+st.name;
   const list=$('stationDepartures');list.replaceChildren();
   const details=state.details[st.source],db=state.indexes[st.source];
@@ -447,7 +471,31 @@ async function selectScheduledTrain(tripId){
     else $('emptySchedule').textContent='Keine Fahrplandetails verfügbar.';
   }
 }
+// Safari: keep swipes inside the detail panel, without blocking real scrolling.
+function setupSheetTouchGuards(){
+  for(const sheet of document.querySelectorAll('.sheet')){
+    const scroller=sheet.querySelector('.sheet-scroll');
+    if(!scroller)continue;
+    let touchY=null;
+    scroller.addEventListener('touchstart',event=>{
+      if(event.touches.length===1)touchY=event.touches[0].clientY;
+      else touchY=null;
+    },{passive:true});
+    scroller.addEventListener('touchmove',event=>{
+      if(touchY===null || event.touches.length!==1 || !event.cancelable)return;
+      const y=event.touches[0].clientY;
+      const delta=y-touchY;
+      const atTop=scroller.scrollTop<=0;
+      const atBottom=scroller.scrollTop+scroller.clientHeight>=scroller.scrollHeight-1;
+      if((atTop&&delta>0)||(atBottom&&delta<0))event.preventDefault();
+      touchY=y;
+    },{passive:false});
+    scroller.addEventListener('touchend',()=>{touchY=null},{passive:true});
+    scroller.addEventListener('touchcancel',()=>{touchY=null},{passive:true});
+  }
+}
 function setupControls(){
+  setupSheetTouchGuards();
   for(const b of document.querySelectorAll('[data-filter]'))b.addEventListener('click',()=>setFilter(b.dataset.filter));
   let debounce=0;$('search').oninput=e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.query=e.target.value.toLocaleLowerCase('de').trim();refreshMarkers();refreshScheduleMatches()},130)};
   $('statusBtn').onclick=showSourceStatus;
