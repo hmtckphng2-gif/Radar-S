@@ -1,0 +1,55 @@
+/* Südtirol Radar 3.7 — additive UI, tuned for iPhone Safari. */
+.radar37-card {
+  display:block; margin:4px 0 13px; padding:13px 14px;
+  background:var(--panel2); border:1px solid var(--edge);
+  border-radius:15px; line-height:1.45;
+}
+.radar37-card[hidden] {display:none!important;}
+.radar37-card-head {display:block;font-size:13px;color:var(--text);overflow-wrap:anywhere;}
+.radar37-card-sub {font-size:11px;color:var(--muted);margin-top:6px;line-height:1.55;}
+.radar37-card-foot {font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5;}
+.radar37-actions {display:flex;flex-wrap:wrap;gap:8px;margin-top:11px;}
+.radar37-smallbtn {
+  display:inline-block; flex:1 1 auto; color:var(--text);
+  border:1px solid var(--edge);border-radius:10px;background:var(--panel);
+  font-size:11px;font-weight:700;min-height:37px;padding:9px 10px;
+}
+.radar37-smallbtn:active {background:var(--blue);color:#fff;}
+/* Keep the progress inside the scrollable body. No floating card over the red dot. */
+#stops .stop-current {background:linear-gradient(90deg,rgba(248,78,91,.10),transparent 90%);border-radius:6px;opacity:1;}
+#stops .stop-past {opacity:.70;}
+#stops .stop-position-note {color:#ff6e7c;font-size:10px;font-weight:800;}
+.radar37-follow {
+  position:fixed;z-index:930;left:12px;bottom:calc(147px + env(safe-area-inset-bottom));
+  background:#183451;color:#fff;max-width:min(275px,calc(100vw - 100px));
+  padding:10px 13px;border:1px solid #66b4ff;border-radius:12px;
+  font-size:11px;font-weight:800;box-shadow:var(--shadow);
+}
+.radar37-follow[hidden] {display:none;}
+.radar37-favorites {
+  position:fixed;z-index:1003;right:12px;bottom:calc(360px + env(safe-area-inset-bottom));
+  width:min(345px,calc(100vw - 25px));max-height:46dvh;overflow-y:auto;
+  background:var(--panel);box-shadow:var(--shadow);
+  border:1px solid var(--edge);border-radius:15px;padding:13px;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+}
+.radar37-favorites[hidden]{display:none!important;}
+.radar37-favtop {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px;}
+.radar37-favtop strong {font-size:14px;}
+.radar37-favclose {border:0;background:none;color:var(--text);font-size:16px;padding:4px 7px;}
+.radar37-favrow {display:flex;gap:6px;margin:7px 0;}
+.radar37-favuse {flex:1;min-width:0;text-align:left;border:1px solid var(--edge);border-radius:10px;
+  padding:11px;background:var(--panel2);font-size:12px;font-weight:700;}
+.radar37-favdelete {border:1px solid var(--edge);background:var(--panel2);border-radius:10px;padding:0 12px;color:var(--muted);}
+.radar37-muted {color:var(--muted);font-size:11px;line-height:1.5;}
+.radar37-stationhead {display:flex;flex-direction:column;align-items:flex-start;gap:7px;margin:7px 0 10px;}
+.radar37-stationhead .radar37-smallbtn {flex:0 0 auto;}
+.radar37-departure {display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border:1px solid var(--edge);border-radius:12px;padding:11px;background:var(--panel2);min-height:60px;}
+.radar37-departure-info {min-width:0;flex:1;}
+.radar37-departure-info strong {display:block;font-size:12px;overflow-wrap:anywhere;}
+.radar37-departure-info small {display:block;margin-top:4px;font-size:10px;line-height:1.5;}
+.radar37-departure-clock {font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;}
+.radar37-real {color:var(--good);}
+.radar37-cancelled {color:var(--bad);font-weight:800;}
+@media(min-width:750px){.radar37-favorites{bottom:305px;right:90px;width:360px;}.radar37-follow{bottom:130px;left:16px;}}
