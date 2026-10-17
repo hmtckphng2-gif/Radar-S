@@ -82,7 +82,7 @@ function statusLabel() {
 function showSourceStatus(){
   const lines=ENDPOINTS.map(ep=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0"><b>'+escapeHtml(ep)+'</b><span>'+ (state.statuses[ep]==='ok'?'✓ Antwort':'↻ '+(state.statuses[ep]==='old'?'veraltet':'Fehler'))+'</span></div>').join('');
   const g=SOURCES.filter(indexReady).length;
-  setNotice('<strong>Datenquellen · Südtirol Radar 3.3</strong><div style="margin:7px 0">'+lines+'</div><div>GTFS-Fahrplandaten: <b>'+g+'/3</b> Regionen geladen.</div><div style="margin-top:5px">'+mapMetrics().inside+' Fahrzeuge hier, '+state.markers.size+' Marker geladen, '+state.vehicles.size+' Positionen im Feed. Kartenanbieter: '+escapeHtml(TILE_PROVIDERS[tileProviderIndex].name)+' ('+tileLoadedCount+' Kacheln geladen, '+tileErrorCount+' Fehler).</div><div style="margin-top:5px">Trenitalia/Trentino: geschätzte Fahrzeugpositionen. RFI ist nicht angeschlossen. Feed-Erreichbarkeit bedeutet nicht echtes GPS.</div>');
+  setNotice('<strong>Datenquellen · Südtirol Radar 3.4</strong><div style="margin:7px 0">'+lines+'</div><div>GTFS-Fahrplandaten: <b>'+g+'/3</b> Regionen geladen.</div><div style="margin-top:5px">'+mapMetrics().inside+' Fahrzeuge hier, '+state.markers.size+' Marker geladen, '+state.vehicles.size+' Positionen im Feed. Kartenanbieter: '+escapeHtml(TILE_PROVIDERS[tileProviderIndex].name)+' ('+tileLoadedCount+' Kacheln geladen, '+tileErrorCount+' Fehler).</div><div style="margin-top:5px">Kartenebenen: <b>'+escapeHtml(leafletLayoutHealth())+'</b>.</div><div style="margin-top:5px">Trenitalia/Trentino: geschätzte Fahrzeugpositionen. RFI ist nicht angeschlossen. Feed-Erreichbarkeit bedeutet nicht echtes GPS.</div>');
 }
 async function loadIndexes(){
   await Promise.all(SOURCES.map(async source => {
@@ -132,31 +132,36 @@ function createTileLayer(which=0){
 function switchTileProvider(which,reason='manuell'){
   if(!state.map||which===tileProviderIndex||which<0||which>=TILE_PROVIDERS.length)return;
   const previous=state.tiles;
+  // Critical: NEVER overlay two partly loaded basemap layers. Their independent
+  // tile containers can create black checkerboard gaps in mobile Safari.
+  if(previous&&state.map.hasLayer(previous))state.map.removeLayer(previous);
   tileProviderIndex=which;fallbackTilesUsed=true;
   tileLoadedCount=0;tileErrorCount=0;
   const next=createTileLayer(which);
-  // Add first; remove old tiles only after at least one tile is ready, avoiding a blank frame.
-  const removePrevious=()=>{if(previous&&state.map.hasLayer(previous))state.map.removeLayer(previous)};
-  next.once('load',()=>{if(tileLoadedCount>1 && tileErrorCount<tileLoadedCount)removePrevious()});
   next.on('tileload',()=>{tileLoadedCount++;tileLastHealthyAt=Date.now()});
-  next.on('tileerror',()=>{
-    tileErrorCount++;
-    if(tileErrorCount===4)setNotice('<strong>Karte lädt nicht vollständig.</strong> Der alternative Kartenserver antwortet teilweise nicht. Die Fahrzeugpunkte können dennoch geladen sein. Nutze ↻ oder probiere später erneut.');
-  });
-  state.tiles=next;next.addTo(state.map);
-  // If the fallback also fails, keep the previous layer for already cached tiles.
-  setTimeout(()=>{if(tileLoadedCount>0)removePrevious();else if(previous&&state.map&&!state.map.hasLayer(previous))previous.addTo(state.map)},9500);
-  console.info('Radar basemap:',TILE_PROVIDERS[which].name,reason);
+  next.on('tileerror',onTileError);
+  state.tiles=next;
+  next.addTo(state.map);
+  if(state.map.getPane('markerPane'))state.map.getPane('markerPane').style.zIndex='650';
+  state.map.invalidateSize({pan:false});
+  console.info('Radar Kartenquelle:',TILE_PROVIDERS[which].name,reason);
+  setNotice('<strong>Kartenanbieter gewechselt:</strong> '+escapeHtml(TILE_PROVIDERS[which].name)+'. Wenn Kacheln fehlen, tippe auf ↻ oder wechsle mit 🗺 zurück.');
 }
 function onTileError(){
   tileErrorCount++;
-  // A failure streak with hardly any loaded tiles indicates a broken tile provider.
-  // Try a different provider once, not an endless loop of tile requests.
-  if(tileProviderIndex===0 && tileErrorCount>=6 && (tileLoadedCount<=2 || tileErrorCount>=tileLoadedCount*1.5)) {
-    switchTileProvider(1,'Fehler beim Laden von Kartenbildern');
-  } else if(tileProviderIndex===1 && tileErrorCount===4){
-    setNotice('<strong>Kartenserver nicht vollständig erreichbar.</strong> Manche Kartenbilder fehlen. Die Fahrzeugdaten werden unabhängig davon geladen.');
+  // Provider changes are only made by the user. Automatic failover previously
+  // mixed tiles from separate layers before either provider had fully loaded.
+  if(tileErrorCount===5){
+    setNotice('<strong>Kartenbilder fehlen.</strong> Der Kartenserver liefert einzelne Kacheln nicht. Tippe auf 🗺, um zum anderen Kartenanbieter zu wechseln. Zug- und Busdaten bleiben unabhängig erreichbar.');
   }
+}
+function leafletLayoutHealth(){
+  if(!state.map)return 'unbekannt';
+  const tiles=state.map.getPane('tilePane'),pins=state.map.getPane('markerPane');
+  if(!tiles||!pins)return 'fehlende Leaflet-Ebenen';
+  const a=getComputedStyle(tiles),b=getComputedStyle(pins);
+  return a.position==='absolute'&&b.position==='absolute'&&Number.parseInt(b.zIndex,10)>Number.parseInt(a.zIndex,10)
+    ?'OK':'CSS-Positionierung fehlerhaft ('+a.position+'/'+b.position+')';
 }
 function mapMetrics(){
   if(!state.map)return {inside:0,shown:0,total:state.vehicles.size};
@@ -195,12 +200,6 @@ function initMap(){
   state.tiles=createTileLayer().addTo(map);
   state.tiles.on('tileload',()=>{tileLoadedCount++;tileLastHealthyAt=Date.now()});
   state.tiles.on('tileerror',onTileError);
-  // If Safari is stuck waiting for broken tiles, offer one alternative after a delay.
-  setTimeout(()=>{
-    // A mobile viewport normally needs many tiles. Three or fewer after 10 seconds
-    // can leave large black gaps even without an explicit tileerror event.
-    if(tileProviderIndex===0 && tileLoadedCount<=3) switchTileProvider(1,'Karte unvollständig nach 10 Sekunden');
-  },10000);
   // Recalculate Leaflet's viewport when Safari's dynamic toolbar or orientation
   // changes the available height. Do not continuously redraw tiles.
   function resizeMap(){ if(state.map && typeof state.map.invalidateSize==='function')state.map.invalidateSize({pan:false,debounceMoveend:true}); }
@@ -210,6 +209,8 @@ function initMap(){
   window.addEventListener('pageshow',()=>setTimeout(resizeMap,180),{passive:true});
   setTimeout(resizeMap,450);
   setTimeout(resizeMap,1700);
+  // Explicit marker z-index survives broken/blocked external Leaflet CSS.
+  const markerPane=map.getPane('markerPane');if(markerPane)markerPane.style.zIndex='650';
   state.layer=L.layerGroup().addTo(map);
   L.control.zoom({position:'bottomleft'}).addTo(map);
   map.on('moveend',updateViewportBadge);
@@ -594,6 +595,7 @@ function setupControls(){
   for(const b of document.querySelectorAll('[data-filter]'))b.addEventListener('click',()=>setFilter(b.dataset.filter));
   let debounce=0;$('search').oninput=e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.query=e.target.value.toLocaleLowerCase('de').trim();refreshMarkers();refreshScheduleMatches();updateViewportBadge()},130)};
   $('statusBtn').onclick=showSourceStatus;
+  $('tileBtn').onclick=()=>switchTileProvider(1-tileProviderIndex,'Benutzerwahl');
   $('refreshBtn').onclick=()=>{
     if(Date.now()-state.fetchedAt>=manualRefreshDelayMs)refreshFeeds();
     // Recheck the viewport; only switch tile providers on user action or failures.
