@@ -3,6 +3,8 @@ const FEEDS={
   trentino:'https://proxy.busone.app/trentino/gtfs-rt/vehicle-positions.json',
   sta_updates:'https://proxy.busone.app/sta/gtfs-rt/trip-updates.json',
   trentino_updates:'https://proxy.busone.app/trentino/gtfs-rt/trip-updates.json',
+  trains:'https://proxy.busone.app/trenitalia/gtfs-rt/vehicle-positions.json',
+  trains_status:'https://proxy.busone.app/trenitalia/status',
   sta_status:'https://proxy.busone.app/sta/status',
   trentino_status:'https://proxy.busone.app/trentino/status'
 };
