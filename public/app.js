@@ -21,6 +21,20 @@ const AVERAGE_POLL_MS = 20000;
 const MAX_INTERPOLATION_METERS = 3000;
 const snapMaxMeters = 350;
 const manualRefreshDelayMs=3000;
+let tileErrorCount=0;
+let tileLoadedCount=0;
+let fallbackTilesUsed=false;
+let tileLastHealthyAt=0;
+let initiallyLocated=false;
+const MAP_PLACES={
+  sterzing:[46.895,11.433,12], bozen:[46.498,11.354,12], brixen:[46.717,11.485,12],
+  meran:[46.670,11.160,12], bruneck:[46.797,11.940,12], trento:[46.068,11.122,12]
+};
+const TILE_PROVIDERS=[
+  {name:'OpenStreetMap',url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',options:{attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a>'}},
+  {name:'OSM HOT',url:'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',options:{subdomains:'abc',attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a> · Tiles © Humanitarian OpenStreetMap Team'}}
+];
+let tileProviderIndex=0;
 const RT_MAX_AGE_SEC=15*60;
 
 function safeText(value) { return txt(value); }
@@ -68,7 +82,7 @@ function statusLabel() {
 function showSourceStatus(){
   const lines=ENDPOINTS.map(ep=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0"><b>'+escapeHtml(ep)+'</b><span>'+ (state.statuses[ep]==='ok'?'✓ Antwort':'↻ '+(state.statuses[ep]==='old'?'veraltet':'Fehler'))+'</span></div>').join('');
   const g=SOURCES.filter(indexReady).length;
-  setNotice('<strong>Datenquellen · Südtirol Radar 3.0</strong><div style="margin:7px 0">'+lines+'</div><div>GTFS-Fahrplandaten: <b>'+g+'/3</b> Regionen geladen.</div><div style="margin-top:5px">Trenitalia/Trentino: geschätzte Fahrzeugpositionen. RFI ist nicht angeschlossen. Feed-Erreichbarkeit bedeutet nicht echtes GPS.</div>');
+  setNotice('<strong>Datenquellen · Südtirol Radar 3.3</strong><div style="margin:7px 0">'+lines+'</div><div>GTFS-Fahrplandaten: <b>'+g+'/3</b> Regionen geladen.</div><div style="margin-top:5px">'+mapMetrics().inside+' Fahrzeuge hier, '+state.markers.size+' Marker geladen, '+state.vehicles.size+' Positionen im Feed. Kartenanbieter: '+escapeHtml(TILE_PROVIDERS[tileProviderIndex].name)+' ('+tileLoadedCount+' Kacheln geladen, '+tileErrorCount+' Fehler).</div><div style="margin-top:5px">Trenitalia/Trentino: geschätzte Fahrzeugpositionen. RFI ist nicht angeschlossen. Feed-Erreichbarkeit bedeutet nicht echtes GPS.</div>');
 }
 async function loadIndexes(){
   await Promise.all(SOURCES.map(async source => {
@@ -105,9 +119,69 @@ async function loadDetails(source){
     .finally(()=>delete state.detailPending[source]);
   return state.detailPending[source];
 }
-// OSM Standard tile service: no CARTO API key. Dark mode is a CSS treatment of tiles only.
-// Usage policy: https://operations.osmfoundation.org/policies/tiles/
-const OSM_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+// Key-free raster sources. Respect cache headers and provider usage terms.
+// Tiles load only for the user's current viewport (no bulk prefetch).
+function createTileLayer(which=0){
+  const provider=TILE_PROVIDERS[which];
+  return L.tileLayer(provider.url,{
+    minZoom:3,maxZoom:19,maxNativeZoom:19,
+    keepBuffer:2,updateWhenIdle:true,updateWhenZooming:false,
+    ...provider.options
+  });
+}
+function switchTileProvider(which,reason='manuell'){
+  if(!state.map||which===tileProviderIndex||which<0||which>=TILE_PROVIDERS.length)return;
+  const previous=state.tiles;
+  tileProviderIndex=which;fallbackTilesUsed=true;
+  tileLoadedCount=0;tileErrorCount=0;
+  const next=createTileLayer(which);
+  // Add first; remove old tiles only after at least one tile is ready, avoiding a blank frame.
+  const removePrevious=()=>{if(previous&&state.map.hasLayer(previous))state.map.removeLayer(previous)};
+  next.once('load',()=>{if(tileLoadedCount>1 && tileErrorCount<tileLoadedCount)removePrevious()});
+  next.on('tileload',()=>{tileLoadedCount++;tileLastHealthyAt=Date.now()});
+  next.on('tileerror',()=>{
+    tileErrorCount++;
+    if(tileErrorCount===4)setNotice('<strong>Karte lädt nicht vollständig.</strong> Der alternative Kartenserver antwortet teilweise nicht. Die Fahrzeugpunkte können dennoch geladen sein. Nutze ↻ oder probiere später erneut.');
+  });
+  state.tiles=next;next.addTo(state.map);
+  // If the fallback also fails, keep the previous layer for already cached tiles.
+  setTimeout(()=>{if(tileLoadedCount>0)removePrevious();else if(previous&&state.map&&!state.map.hasLayer(previous))previous.addTo(state.map)},9500);
+  console.info('Radar basemap:',TILE_PROVIDERS[which].name,reason);
+}
+function onTileError(){
+  tileErrorCount++;
+  // A failure streak with hardly any loaded tiles indicates a broken tile provider.
+  // Try a different provider once, not an endless loop of tile requests.
+  if(tileProviderIndex===0 && tileErrorCount>=6 && (tileLoadedCount<=2 || tileErrorCount>=tileLoadedCount*1.5)) {
+    switchTileProvider(1,'Fehler beim Laden von Kartenbildern');
+  } else if(tileProviderIndex===1 && tileErrorCount===4){
+    setNotice('<strong>Kartenserver nicht vollständig erreichbar.</strong> Manche Kartenbilder fehlen. Die Fahrzeugdaten werden unabhängig davon geladen.');
+  }
+}
+function mapMetrics(){
+  if(!state.map)return {inside:0,shown:0,total:state.vehicles.size};
+  let inside=0;
+  const bounds=state.map.getBounds();
+  for(const [,v] of state.vehicles){
+    if(visible(v) && bounds.contains([v.lat,v.lon]))inside++;
+  }
+  return {inside,shown:state.markers.size,total:state.vehicles.size};
+}
+function updateViewportBadge(){
+  const el=$('viewportBadge');if(!el)return;
+  const {inside,shown,total}=mapMetrics();
+  el.textContent=total?(inside?'📍 '+inside+' hier · '+shown+' angezeigt':'📍 0 hier · '+shown+' anderswo'):'📍 Keine Positionen';
+  el.classList.toggle('empty',inside===0 && total>0);
+  el.title='Tippen, um alle sichtbaren Fahrzeugpositionen zu finden';
+}
+function moveToPlace(place){
+  if(!state.map)return;
+  $('areaPicker').hidden=true;
+  if(place==='all'){fitMap();return;}
+  const target=MAP_PLACES[place];if(!target)return;
+  state.map.setView([target[0],target[1]],target[2],{animate:true});
+  updateViewportBadge();
+}
 function changeTheme(theme){
   document.documentElement.setAttribute('data-theme',theme);
   $('themeToggle').textContent=theme==='dark'?'☀':'☾';
@@ -118,20 +192,28 @@ function initMap(){
   if(!window.L){setNotice('<strong>Kartenbibliothek nicht erreichbar.</strong> Prüfe die Internetverbindung oder den Leaflet-CDN.');return false;}
   const map=L.map('map',{zoomControl:false,attributionControl:true,preferCanvas:true}).setView([46.64,11.35],9);
   state.map=map;
-  state.tiles=L.tileLayer(OSM_TILES,{
-    minZoom:3,maxZoom:19,maxNativeZoom:19,
-    attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a>'
-  }).addTo(map);
-  let tileFailures=0;
-  state.tiles.on('tileload',()=>{tileFailures=0});
-  state.tiles.on('tileerror',()=>{
-    if(++tileFailures===7){
-      setNotice('<strong>Karte vorübergehend nicht erreichbar.</strong> Die OpenStreetMap-Kacheln konnten nicht geladen werden. Prüfe deine Internetverbindung und aktualisiere die Seite.');
-    }
-  });
+  state.tiles=createTileLayer().addTo(map);
+  state.tiles.on('tileload',()=>{tileLoadedCount++;tileLastHealthyAt=Date.now()});
+  state.tiles.on('tileerror',onTileError);
+  // If Safari is stuck waiting for broken tiles, offer one alternative after a delay.
+  setTimeout(()=>{
+    // A mobile viewport normally needs many tiles. Three or fewer after 10 seconds
+    // can leave large black gaps even without an explicit tileerror event.
+    if(tileProviderIndex===0 && tileLoadedCount<=3) switchTileProvider(1,'Karte unvollständig nach 10 Sekunden');
+  },10000);
+  // Recalculate Leaflet's viewport when Safari's dynamic toolbar or orientation
+  // changes the available height. Do not continuously redraw tiles.
+  function resizeMap(){ if(state.map && typeof state.map.invalidateSize==='function')state.map.invalidateSize({pan:false,debounceMoveend:true}); }
+  window.addEventListener('resize',resizeMap,{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(resizeMap,250),{passive:true});
+  if(window.visualViewport) window.visualViewport.addEventListener('resize',resizeMap,{passive:true});
+  window.addEventListener('pageshow',()=>setTimeout(resizeMap,180),{passive:true});
+  setTimeout(resizeMap,450);
+  setTimeout(resizeMap,1700);
   state.layer=L.layerGroup().addTo(map);
   L.control.zoom({position:'bottomleft'}).addTo(map);
-  map.on('zoomend',()=>$('map').classList.toggle('map-zoomed-out',map.getZoom()<11));
+  map.on('moveend',updateViewportBadge);
+  map.on('zoomend',()=>{ $('map').classList.toggle('map-zoomed-out',map.getZoom()<11);updateViewportBadge(); });
   $('map').classList.toggle('map-zoomed-out',map.getZoom()<11);
   return true;
 }
@@ -175,6 +257,11 @@ function animateTo(key,entry,target){
   const dist=current.distanceTo(dest);
   stopJob(key);
   if(dist<1.5)return;
+  // Keep hundreds of off-screen markers accurate without animating invisible DOM nodes.
+  if(state.map && typeof state.map.getBounds==='function'){
+    const view=state.map.getBounds();
+    if(!view.contains(current) && !view.contains(dest)){marker.setLatLng(dest);return;}
+  }
   if(dist>MAX_INTERPOLATION_METERS||reducedMotion.matches||document.hidden){marker.setLatLng(dest);return;}
   const oldAlong=entry.target?.along;
   const shapeCompatible=Boolean(target.path && entry.target?.path === target.path &&
@@ -262,6 +349,13 @@ async function refreshFeeds(){
     for(const [key,upd] of state.updates)if(now-upd.fetchedAt>DETAIL_MAX_AGE)state.updates.delete(key);
     state.failCount=ENDPOINTS.filter(s=>state.statuses[s]!=='ok').length;
     statusLabel();refreshMarkers();displayStats();refreshScheduleMatches();
+    if(!initiallyLocated && state.vehicles.size && state.map){
+      initiallyLocated=true;
+      // On the first successful update, find real positions if the default viewport is empty.
+      // Do not reposition the map again or override user navigation.
+      if(mapMetrics().inside===0){fitMap();}
+    }
+    updateViewportBadge();
     if(state.selectedKey && state.activeSheet==='vehicle'){
       if(state.vehicles.has(state.selectedKey))drawVehicleDetails(state.selectedKey,false);
       else {closeSheets();setNotice('<strong>Fahrzeug verschwunden:</strong> Dieser Zug oder Bus wird nicht mehr im aktuellen Positionsfeed gemeldet. Es wird keine Position erfunden.');}
@@ -271,7 +365,7 @@ async function refreshFeeds(){
     $('statusText').textContent='FEHLER';$('statusBtn').classList.add('error');
   }finally{state.busy=false;}
 }
-function setFilter(which){state.filter=which;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter===which));refreshMarkers();refreshScheduleMatches();}
+function setFilter(which){state.filter=which;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter===which));refreshMarkers();refreshScheduleMatches();updateViewportBadge();}
 function openSheet(which){
   closeSheets(false);
   state.activeSheet=which;
@@ -369,9 +463,10 @@ function selectVehicle(key){
 }
 function fitMap(){
   const locations=[...state.markers.values()].map(e=>e.marker.getLatLng());
-  if(locations.length>1)state.map.fitBounds(L.latLngBounds(locations),{paddingTopLeft:[25,155],paddingBottomRight:[25,100],maxZoom:11});
+  if(locations.length>1)state.map.fitBounds(L.latLngBounds(locations),{paddingTopLeft:[35,158],paddingBottomRight:[35,125],maxZoom:11});
   else if(locations.length===1)state.map.setView(locations[0],12);
   else state.map.setView([46.64,11.35],9);
+  updateViewportBadge();
 }
 async function showStations(){
   openSheet('station');$('stationBoard').hidden=true;$('stationResults').hidden=false;
@@ -497,18 +592,29 @@ function setupSheetTouchGuards(){
 function setupControls(){
   setupSheetTouchGuards();
   for(const b of document.querySelectorAll('[data-filter]'))b.addEventListener('click',()=>setFilter(b.dataset.filter));
-  let debounce=0;$('search').oninput=e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.query=e.target.value.toLocaleLowerCase('de').trim();refreshMarkers();refreshScheduleMatches()},130)};
+  let debounce=0;$('search').oninput=e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.query=e.target.value.toLocaleLowerCase('de').trim();refreshMarkers();refreshScheduleMatches();updateViewportBadge()},130)};
   $('statusBtn').onclick=showSourceStatus;
-  $('refreshBtn').onclick=()=>{if(Date.now()-state.fetchedAt>=manualRefreshDelayMs)refreshFeeds()};
+  $('refreshBtn').onclick=()=>{
+    if(Date.now()-state.fetchedAt>=manualRefreshDelayMs)refreshFeeds();
+    // Recheck the viewport; only switch tile providers on user action or failures.
+    if(tileErrorCount>0 && state.tiles && typeof state.tiles.redraw==='function'){
+      state.tiles.redraw();
+    }
+    if(state.map && typeof state.map.invalidateSize==='function')state.map.invalidateSize({pan:false});
+    updateViewportBadge();
+  };
   $('themeToggle').onclick=()=>changeTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
   $('noticeClose').onclick=()=> $('notice').hidden=true;
   $('closeSheet').onclick=()=>closeSheets();$('closeStations').onclick=()=>closeSheets();$('scrim').onclick=()=>closeSheets();
   $('fitBtn').onclick=fitMap;$('stationBtn').onclick=showStations;
+  $('viewportBadge').onclick=fitMap;
+  $('areaBtn').onclick=()=>{ $('areaPicker').hidden=!$('areaPicker').hidden; };
+  for(const btn of document.querySelectorAll('[data-place]'))btn.onclick=()=>moveToPlace(btn.dataset.place);
   $('stationSearch').oninput=renderStationResults;$('backStations').onclick=()=>{$('stationBoard').hidden=true;$('stationResults').hidden=false};
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheets()});
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden){for(const [key,job] of state.jobs){const e=state.markers.get(key);if(e)e.marker.setLatLng([job.to.lat,job.to.lon]);}state.jobs.clear();}
-    else if(Date.now()-state.fetchedAt>30000)refreshFeeds();
+    else { if(Date.now()-state.fetchedAt>30000)refreshFeeds();if(state.map)state.map.invalidateSize({pan:false}); }
   });
 }
 async function init(){
