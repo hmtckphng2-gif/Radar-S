@@ -1,0 +1,106 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07111f"><meta name="color-scheme" content="light dark"><title>Südtirol Radar 2.0</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif}*{box-sizing:border-box}body{margin:0;background:#07111f;color:#f5f7fc}header{padding:calc(12px + env(safe-area-inset-top)) 17px 12px;display:flex;align-items:center;justify-content:space-between;background:#0d1b2e}h1{font-size:19px;margin:0;letter-spacing:-.5px}small,.muted{color:#a1b3c8}.brand{display:flex;gap:10px;align-items:center}.logo{background:#2276f6;border-radius:12px;padding:9px}.pill{font-size:11px;border:1px solid #34455e;border-radius:100px;padding:7px 10px;color:#d4e1f2}main{position:relative}#map{height:calc(100dvh - 213px);min-height:350px;background:#122339}.tools{display:flex;gap:8px;align-items:center;padding:12px;background:#0a1626;overflow-x:auto}.tools button,.refresh{background:#172941;color:#d7e8fc;border:1px solid #30425b;padding:9px 14px;border-radius:13px;font-weight:650;white-space:nowrap}.tools button.active{background:#1f6af0;border-color:#1f6af0;color:white}.search{background:#122238;border:1px solid #30425b;border-radius:12px;color:white;padding:10px;min-width:110px;width:100%;outline:none}.searchwrap{flex:1;min-width:120px}.bottom{background:#0d1b2e;padding:12px 16px calc(14px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-between;gap:10px}.stats{display:flex;gap:16px}.stat strong{display:block;font-size:19px}.stat small{font-size:10px}.status{font-size:11px;max-width:150px;text-align:right;color:#b1c3d9}.banner{position:absolute;top:12px;left:12px;right:12px;z-index:500;background:#0b1b30ed;border:1px solid #36516d;border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.4;display:none}.banner.show{display:block}.legend{position:absolute;bottom:16px;left:12px;z-index:400;background:#0b1b30eb;padding:9px 11px;border-radius:12px;font-size:11px;line-height:1.9}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.train{background:#38a6ff}.bus{background:#ffc76d}.unknown{background:#a5b4c9}.sheet{position:absolute;z-index:900;bottom:0;left:0;right:0;max-height:55%;overflow:auto;background:#0c1a2bf5;border-radius:22px 22px 0 0;padding:18px;box-shadow:0 -10px 40px #0006;display:none}.sheet.show{display:block}.sheet h2{margin:0 0 10px;font-size:19px}.sheet p{font-size:13px;color:#bed0e4}.close{float:right;background:#20334a;color:white;border:0;border-radius:9px;padding:7px 11px}.leaflet-container{font-family:inherit}.vehicle-pin{border:2px solid white;border-radius:50%;box-shadow:0 2px 10px #0009;background:#338cff;color:white;display:flex;align-items:center;justify-content:center;font-size:15px}.vehicle-pin.bus{background:#ecaa3f}.vehicle-pin.unknown{background:#72849b}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#11253b;color:white}#sources{padding:10px 16px;font-size:11px;color:#8fa8c5;background:#0a1626}a{color:#83b6ff}
+
+/* Radar 2.1: responsive theme, halo markers, clearer detail */
+:root{color-scheme:light dark;--page:#07111f;--panel:#0d1b2e;--tools:#0a1626;--text:#f5f7fc;--muted:#a1b3c8;--border:#30425b;--field:#122238;--accent:#2584ff}
+html[data-theme="light"]{color-scheme:light;--page:#f1f5fa;--panel:#fff;--tools:#edf3fb;--text:#142337;--muted:#546b82;--border:#d5e0ed;--field:#fff;--accent:#1768e9}
+html[data-theme="dark"]{color-scheme:dark}
+body{background:var(--page)!important;color:var(--text)!important}
+header,.bottom{background:var(--panel)!important}small,.muted{color:var(--muted)!important}
+.tools,#sources{background:var(--tools)!important}.tools button,.refresh,.search{background:var(--field)!important;color:var(--text)!important;border-color:var(--border)!important}
+.tools button.active{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
+.pill{color:var(--text)!important;border-color:var(--border)!important}
+#themeToggle{min-width:43px;padding:9px 11px;cursor:pointer}
+.vehicle-pin{position:relative;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:16px;box-shadow:0 0 0 3px rgba(255,255,255,.8),0 3px 12px rgba(0,0,0,.3),0 0 17px 5px rgba(42,143,255,.45);background:#1468f6;border:1px solid #93c6ff;transition:box-shadow .25s;}
+.vehicle-pin.bus{background:#f5a623;border-color:#ffdf98;box-shadow:0 0 0 3px rgba(255,255,255,.85),0 3px 12px rgba(0,0,0,.28),0 0 16px 4px rgba(255,164,37,.4)}
+.vehicle-pin.unknown{background:#536b89;border-color:#b8c8da;box-shadow:0 0 0 2px rgba(255,255,255,.85),0 3px 9px rgba(0,0,0,.23);font-size:13px}
+html[data-theme="light"] .vehicle-pin{box-shadow:0 0 0 3px #fff,0 3px 11px rgba(0,0,0,.22),0 0 11px 2px rgba(42,143,255,.22)}
+html[data-theme="light"] .vehicle-pin.bus{box-shadow:0 0 0 3px #fff,0 3px 11px rgba(0,0,0,.22),0 0 11px 2px rgba(255,164,37,.22)}
+html[data-theme="light"] .vehicle-pin.unknown{box-shadow:0 0 0 2px #fff,0 2px 8px rgba(0,0,0,.2)}
+.sheet{background:var(--panel)!important;color:var(--text)!important;border:1px solid var(--border);box-shadow:0 -12px 35px rgba(0,0,0,.18)}
+.sheet p{line-height:1.45;overflow-wrap:anywhere}.sheet p b{color:var(--text)}
+#detail .detailrow{padding:9px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;justify-content:space-between;align-items:baseline}
+#detail .detailrow span{color:var(--muted)}#detail .detailrow strong{text-align:right;font-size:13px;max-width:65%;overflow-wrap:anywhere}
+#detail .note{color:var(--muted);font-size:12px;line-height:1.5;margin-top:12px}
+html[data-theme="light"] .legend,html[data-theme="light"] .banner{background:rgba(255,255,255,.94)!important;color:#17283c!important}
+@media(prefers-reduced-motion:reduce){.vehicle-pin{transition:none}}
+</style></head><body><header><div class="brand"><div class="logo">🚆</div><div><h1>Südtirol Radar <span style="color:#62a6ff">2.0</span></h1><small>Trentino · Alto Adige</small></div></div><span class="pill" id="indicator">VERBINDE …</span></header><div class="tools"><button id="all" class="active">Alle</button><button id="trains">🚆 Züge</button><button id="buses">🚌 Busse</button><div class="searchwrap"><input id="search" class="search" placeholder="Linie / Fahrzeug suchen"></div><button id="refresh" class="refresh" aria-label="Aktualisieren">↻</button><button id="themeToggle" aria-label="Darstellung wechseln" title="Darstellung wechseln">◐</button></div><main><div id="map"></div><div class="banner show" id="banner">Datenquellen werden geprüft …</div><div class="legend"><span class="dot train"></span>Zug <span class="dot bus"></span>Bus<br><span class="dot unknown"></span>Typ unbekannt · Position nur bei vorhandenem Feed</div><section id="sheet" class="sheet"><button class="close" id="close">✕</button><h2 id="detailtitle"></h2><div id="detail"></div></section></main><div class="bottom"><div class="stats"><div class="stat"><strong id="total">0</strong><small>Fahrzeuge</small></div><div class="stat"><strong id="counttrains">0</strong><small>Züge*</small></div><div class="stat"><strong id="countbuses">0</strong><small>Busse*</small></div></div><div class="status" id="status">Warte auf Daten</div></div><div id="sources">Daten: <a href="https://proxy.busone.app/" target="_blank">BusOne</a> · <a href="https://www.trentinotrasporti.it/it/opendata-it" target="_blank">Trentino Trasporti</a> · Trenitalia-Zugpositionen, falls verfügbar, sind <b>geschätzt</b>, kein GPS · *Typ nur soweit anhand der Feed-Daten erkennbar · Bewegung zwischen Updates optisch animiert</div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>
+const $=id=>document.getElementById(id);let vehicles=[],filter='all',map,layer,updates=new Map(),markers=new Map(),lastLoad=0;
+let setTiles=()=>{};const now=()=>Math.floor(Date.now()/1000);
+const systemTheme=window.matchMedia('(prefers-color-scheme: dark)');
+let themeChoice='auto';
+try{themeChoice=localStorage.getItem('radar-theme')||'auto'}catch(e){}
+function isDark(){return themeChoice==='dark'||(themeChoice==='auto'&&systemTheme.matches)}
+function applyTheme(){document.documentElement.dataset.theme=isDark()?'dark':'light';$('themeToggle').textContent=themeChoice==='auto'?'◐':isDark()?'☀️':'🌙';if(typeof setTiles==='function'&&map)setTiles(isDark())}
+$('themeToggle').onclick=()=>{themeChoice=themeChoice==='auto'?'dark':themeChoice==='dark'?'light':'auto';try{localStorage.setItem('radar-theme',themeChoice)}catch(e){}applyTheme()};
+systemTheme.addEventListener?.('change',()=>{if(themeChoice==='auto')applyTheme()});
+
+if(window.L){map=L.map('map',{zoomControl:false}).setView([46.35,11.18],9);let tileLayer=null;
+setTiles=function(dark){if(tileLayer)map.removeLayer(tileLayer);tileLayer=L.tileLayer(dark?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:dark?'© OpenStreetMap © CARTO':'© OpenStreetMap',maxZoom:19,subdomains:dark?'abcd':'abc'}).addTo(map)}
+setTiles(isDark());L.control.zoom({position:'bottomright'}).addTo(map);layer=L.layerGroup().addTo(map)}else{$('banner').textContent='Kartenbibliothek konnte nicht geladen werden. Internetverbindung prüfen.'}
+function kind(v){
+ const rt=Number(v.route?.type??v.route_type??v.trip?.routeType);
+ if([0,1,2,5,6,7,12].includes(rt))return 'train';
+ if([3,11].includes(rt))return 'bus';
+ // Do not infer a train from a random vehicle ID or substring.
+ const route=String(v.trip?.routeId??v.trip?.route_id??'').trim();
+ if(/^(?:RE|RV|EC|IC|FR|RJX?|REG|S[1-9][0-9]?)[ -]?[0-9]+$/i.test(route))return 'train';
+ return 'unknown';
+}
+function updateIndex(data,region){
+ const es=Array.isArray(data)?data:data.entity||data.entities||data.data?.entity||[];
+ for(const e of es){const u=e.tripUpdate||e.trip_update||e;
+  const t=u.trip||{};const trip=String(t.tripId??t.trip_id??'');
+  if(!trip)continue;
+  const stops=u.stopTimeUpdate||u.stop_time_update||[];
+  let delay=Number(u.delay);if(!Number.isFinite(delay))delay=null;
+  if(delay===null){for(const st of stops){const d=Number(st.arrival?.delay??st.departure?.delay);if(Number.isFinite(d)){delay=d;break}}}
+  const key=region+':'+trip;
+  updates.set(key,{delay,stops:stops.length});
+ }
+}
+function delayText(v){const u=updates.get((v.region==='trains'?'trains':v.region)+':'+v.tripId);
+ if(!u||u.delay===null)return 'Nicht verfügbar / nicht verknüpft';
+ const min=Math.round(u.delay/60);
+ return min>0?'+'+min+' Min.':min<0?min+' Min.':'Pünktlich laut Fahrtupdate';
+}
+function normalize(obj,region){const entities=Array.isArray(obj)?obj:obj.entity||obj.entities||obj.data?.entity||obj.data?.entities||[];return entities.map((e,i)=>{const v=e.vehicle||e.vehiclePosition||e;const p=v.position||{};const lat=Number(p.latitude??p.lat),lng=Number(p.longitude??p.lon??p.lng);if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<45.3||lat>47.4||lng<9.5||lng>12.9)return null;return {...v,region,lat,lng,id:String(e.id||v.vehicle?.id||i),timestamp:Number(v.timestamp||obj.header?.timestamp||0),source:region,route:String(v.trip?.routeId||v.trip?.route_id||''),tripId:String(v.trip?.tripId||v.trip?.trip_id||''),label:String(v.vehicle?.label||v.vehicle?.id||''),simulated:region==='trains'?true:null,kind:region==='trains'?'train':kind({...v,region})}}).filter(Boolean)}
+function show(v){
+ const title=(v.kind==='train'?'🚆 ':v.kind==='bus'?'🚌 ':'📍 ')+(v.route||v.label||'Fahrzeug');
+ $('detailtitle').textContent=title;
+ const age=v.timestamp?Math.max(0,now()-v.timestamp):null;
+ const source=v.region==='sta'?'STA Südtirol (BusOne)':v.region==='trains'?'Trenitalia (BusOne)':'Trentino Trasporti (BusOne)';
+ const quality=v.simulated===true?'⚠️ Geschätzte Position':'Feed-Position · GPS nicht bestätigt';
+ const row=(label,value)=>`<div class="detailrow"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+ const delay=delayText(v);
+ $('detail').innerHTML=row('Datenquelle',source)+row('Fahrzeugtyp',v.kind==='train'?'Zug':v.kind==='bus'?'Bus':'Nicht eindeutig')+row('Position',quality)+row('Datenalter',age===null?'Nicht angegeben':Math.round(age/60)+' Min.')+row('Linie',v.route||'Nicht verfügbar')+row('Fahrtziel','Nicht im Feed zugeordnet')+row('Verspätung',delay)+row('Fahrt-ID',v.tripId||'Nicht verfügbar')+row('Fahrzeug-ID',v.label||v.id)+row('Koordinaten',v.lat.toFixed(5)+', '+v.lng.toFixed(5))+'<p class="note">Positionen und Zuordnungen stammen aus externen Feeds. Ein animierter Marker ist keine sekundengenaue GPS-Verfolgung. Fahrtziel und Haltestellen benötigen verifizierte Fahrplandaten.</p>';
+ $('sheet').classList.add('show');
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){if(!layer)return;
+ const q=$('search').value.toLowerCase();
+ const filtered=vehicles.filter(v=>(filter==='all'||v.kind===(filter==='trains'?'train':'bus'))&&[v.route,v.label,v.tripId].some(x=>x.toLowerCase().includes(q)));
+ const active=new Set();
+ for(const v of filtered){const key=v.region+':'+(v.label||v.id)+':'+v.tripId;active.add(key);
+  let m=markers.get(key);
+  if(!m){const cls=v.kind==='train'?'':v.kind==='bus'?'bus':'unknown';
+   m=L.marker([v.lat,v.lng],{icon:L.divIcon({className:'',html:`<div class="vehicle-pin ${cls}" style="width:29px;height:29px">${v.kind==='train'?'🚆':v.kind==='bus'?'🚌':'•'}</div>`,iconSize:[29,29],iconAnchor:[14,14]})}).addTo(layer);
+   markers.set(key,m);
+  }else{const start=m.getLatLng(),end=L.latLng(v.lat,v.lng);
+   if(start.distanceTo(end)>1 && start.distanceTo(end)<2500){
+    const begin=performance.now(),duration=1800;
+    const animate=t=>{if(markers.get(key)!==m)return;const f=Math.min(1,(t-begin)/duration);const ease=f*f*(3-2*f);
+      m.setLatLng([start.lat+(end.lat-start.lat)*ease,start.lng+(end.lng-start.lng)*ease]);if(f<1)requestAnimationFrame(animate)};
+    requestAnimationFrame(animate);
+   }else m.setLatLng(end);
+  }
+  m.off('click');m.on('click',()=>show(v));
+ }
+ for(const [key,m] of markers)if(!active.has(key)){layer.removeLayer(m);markers.delete(key)}
+ $('total').textContent=filtered.length;
+ $('counttrains').textContent=filtered.filter(v=>v.kind==='train').length;
+ $('countbuses').textContent=filtered.filter(v=>v.kind==='bus').length;
+}
+async function load(){const names=['sta','trentino','trains','sta_updates','trentino_updates'];$('indicator').textContent='AKTUALISIERE …';const results=await Promise.allSettled(names.map(async name=>{const r=await fetch('/api/'+name,{cache:'no-store'});const data=await r.json();if(!r.ok||data.error)throw Error(data.error||`HTTP ${r.status}`);return name.endsWith('_updates')?{updates:data,region:name.replace('_updates','')}:normalize(data,name)}));vehicles=[];let errors=[];results.forEach((r,i)=>{if(r.status==='fulfilled')vehicles.push(...r.value);else errors.push(names[i]+': '+r.reason.message)});const unique=new Map();for(const v of vehicles)unique.set(v.region+':'+(v.label||v.id)+':'+v.tripId,v);vehicles=[...unique.values()];render();$('indicator').textContent=errors.length===names.length?'OFFLINE':errors.length?'TEILWEISE':'FEEDS OK';$('status').textContent='Abruf '+new Date().toLocaleTimeString('de-IT',{hour:'2-digit',minute:'2-digit'});$('banner').classList.toggle('show',!!errors.length||!vehicles.length);$('banner').textContent=errors.length?'Einige Quellen nicht erreichbar: '+errors.join(' · '):!vehicles.length?'Datenquelle erreichbar, aber derzeit keine verwertbaren Fahrzeugpositionen. Keine Positionen erfunden.':''}
+for(const id of ['all','trains','buses'])$(id).onclick=()=>{filter=id;for(const b of ['all','trains','buses'])$(b).classList.toggle('active',b===id);render()};$('search').oninput=render;$('refresh').onclick=load;$('close').onclick=()=>$('sheet').classList.remove('show');load();setInterval(load,45000);
+</script></body></html>
