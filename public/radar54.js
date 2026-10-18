@@ -106,13 +106,18 @@ function init(){
  if(started)return;bridge=window.SuedtirolRadar37;if(!bridge?.state?.map)return;started=true;
  dialog=mk('dialog','sr54-dialog');dialog.id='sr54TrainDialog';dialog.setAttribute('aria-label','Zugfahrt und Verspätungsverlauf');body=mk('div','sr54-dialog-body');dialog.append(body);document.body.append(dialog);
  dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close()}});
- const version=()=>{const v=document.querySelector('.brand-title em');if(v&&v.textContent!=='5.5')v.textContent='5.5';document.title='Südtirol Radar 5.5 · Züge & Busse'};
+ const version=()=>{const v=document.querySelector('.brand-title em');if(v&&v.textContent!=='5.6')v.textContent='5.6';document.title='Südtirol Radar 5.6 · Züge & Busse'};
  version();const brand=document.querySelector('.brand-title');if(brand)new MutationObserver(version).observe(brand,{subtree:true,childList:true,characterData:true});
  const viewport=$('viewportBadge');if(viewport)viewport.setAttribute('title','Fahrzeuge im Kartenausschnitt · Tippen für Übersicht');
  document.addEventListener('sr37:feeds',capture);document.addEventListener('sr54:open-train',e=>openTrain(e.detail));
  window.SuedtirolRadar54={version:'5.4',openTrain};capture();
  // Update freshness and stop old animation jobs even if feeds stop responding.
- setInterval(()=>{if(!document.hidden){bridge.refreshMarkers()}},15000);
+ setInterval(()=>{
+  const mapTab=document.getElementById('sr50MapTab');
+  // Do not repaint hundreds of map markers while a non-map dashboard is open.
+  // Keep the original renderer, animation timing and Map-Sync implementation.
+  if(!document.hidden && (!mapTab || !mapTab.classList.contains('sr50-map-inactive')))bridge.refreshMarkers();
+ },15000);
 }
 document.addEventListener('sr37:ready',init);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

@@ -58,7 +58,7 @@ function createViews(){
  const dep=el('section','sr50-tab-view');dep.id='sr50DeparturesView';dep.setAttribute('aria-label','Abfahrten');
  dep.innerHTML=`<header class="sr50-header"><div class="sr50-overline">FAHRPLAN · SÜDTIROL</div><h1>Abfahrten</h1><p>Bahnhof oder Haltestelle suchen. Abfahrten ohne Kartenwechsel ansehen.</p></header><div class="sr50-dashboard"><div class="sr50-card"><label for="sr50DepSearch" class="sr50-field-label">Haltestelle oder Bahnhof</label><div class="sr50-search-box"><input type="search" id="sr50DepSearch" placeholder="z. B. Bozen, Meran…" autocapitalize="off" autocomplete="off"/></div><div class="sr50-tip">Abfahrten direkt hier ansehen: Plan und bestätigte GTFS-RT-Meldungen klar getrennt.</div><div id="sr50DepResults" class="sr50-results" aria-live="polite"></div></div><div id="sr51InlineBoard" class="sr51-board sr50-card" hidden></div></div>`;
  const stats=el('section','sr50-tab-view');stats.id='sr50StatsView';stats.setAttribute('aria-label','Statistiken');
- stats.innerHTML=`<header class="sr50-header"><div class="sr50-overline">NETWORK INTELLIGENCE · 5.4</div><h1>Statistik</h1><p>Transparente Echtzeitdaten statt geschätzter Pünktlichkeit.</p></header><div class="sr50-dashboard">
+ stats.innerHTML=`<header class="sr50-header"><div class="sr50-overline">NETWORK INTELLIGENCE · 5.6</div><h1>Statistik</h1><p>Transparente Echtzeitdaten statt geschätzter Pünktlichkeit.</p></header><div class="sr50-dashboard">
  <section class="sr50-card"><div class="sr50-card-title"><span>Netzwerk jetzt</span><span id="sr50StatsTime" class="sr50-stamp">Noch kein Feed</span></div><div class="sr50-kpi-grid">
  <div class="sr50-kpi-box"><span>Fahrzeuge im Feed</span><strong id="sr50StatTotal">–</strong></div><div class="sr50-kpi-box green"><span>Frische Positionen</span><strong id="sr50StatCurrent">–</strong></div><div class="sr50-kpi-box"><span>Züge / Busse</span><strong id="sr50StatSplit">–</strong></div><div class="sr50-kpi-box orange"><span>Alt / ungeklärt</span><strong id="sr50StatStale">–</strong></div></div>
  <div class="sr50-meter"><div id="sr50MeterFresh"></div><div id="sr50MeterStale"></div></div><p id="sr50QualityNote" class="sr50-tip">„Frisch“ heißt Feedmeldung innerhalb von fünf Minuten – nicht garantiert GPS.</p></section>
@@ -224,7 +224,7 @@ async function renderInlineBoard(){
  const savedBoardScroll=container.querySelector('.sr51-departure-list')?.scrollTop||0;
  container.hidden=false;container.replaceChildren();
  const head=el('div','sr51-board-head');
- const title=el('div','');title.append(el('small','sr50-overline','ABFAHRTSMONITOR · 5.4'),el('h2','',stationSelected.name));
+ const title=el('div','');title.append(el('small','sr50-overline','ABFAHRTSMONITOR · 5.6'),el('h2','',stationSelected.name));
  const back=button('sr51-back','← Suche',()=>{stationSelected=null;boardRequest++;container.hidden=true;container.replaceChildren();if($('sr50DepResults'))$('sr50DepResults').hidden=false;renderStations()});
  head.append(title,back);container.append(head,el('p','sr50-tip','Lade Fahrplan und verfügbare GTFS-RT-Meldungen …'));
  // No new network requests: getStationList already made all station details available.
@@ -293,8 +293,8 @@ function start(){
  if(started)return;bridge=window.SuedtirolRadar37;
  if(!bridge?.state?.map||!bridge?.getStationList)return;
  started=true;history=new HistoricalStorage();createNavigation();createViews();switchTab(['#departures','#stats','#favorites'].includes(location.hash)?location.hash.slice(1):'map');
- const em=document.querySelector('.brand-title em');if(em)em.textContent='5.5';
- document.title='Südtirol Radar 5.5 · Züge & Busse';
+ const em=document.querySelector('.brand-title em');if(em)em.textContent='5.6';
+ document.title='Südtirol Radar 5.6 · Züge & Busse';
  document.addEventListener('sr37:feeds',()=>{const s=bridge?.state;if(s?.fetchedAt)history.saveSnapshot(calculateNetworkStats(s.vehicles,s.statuses,s.indexes),s.fetchedAt);if(tab==='stats')renderStats();if(tab==='departures'&&stationSelected){clearTimeout(boardFeedTimer);boardFeedTimer=setTimeout(renderInlineBoard,700)}});
  if(bridge.state.fetchedAt)history.saveSnapshot(calculateNetworkStats(bridge.state.vehicles,bridge.state.statuses,bridge.state.indexes),bridge.state.fetchedAt);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden && tab==='stats')renderStats()});
