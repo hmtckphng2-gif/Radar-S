@@ -1,109 +1,87 @@
-/* Radar 5.8: factual, source-aware issues and vehicle metadata. */
-import {isRailRoute} from './core.js';
-import {platformInfo} from './radar54-logic.mjs';
+/* Radar 5.8 Traffic Intelligence: conservative GTFS-RT-only signal processing.
+ * Pure data layer: never infer an incident from a missing vehicle or failed feed. */
 import {freshUpdate,tripCancelled} from './radar56-logic.mjs';
 import {romeDay,romeSeconds,dateGTFSValid} from './radar51-logic.mjs';
+import {isRailRoute} from './core.js';
 
-const cleanDelay=value=>value===null||value===undefined||value===''?null:Number.isFinite(Number(value))?Number(value):null;
-function nearestStopEvidence(update,times,nowSec,stops={}){
- if(!Array.isArray(update?.stops)||!Array.isArray(times))return null;
- const upcoming=times.map(t=>({id:String(t[0]),sec:Number(t[2]??t[1]),seq:Number(t[3])}))
-  .filter(t=>Number.isFinite(t.sec)&&t.sec>=nowSec-180&&t.sec<=nowSec+14400)
+function nextRelevantStop(u,times,nowSec){
+ if(!Array.isArray(times)||!Array.isArray(u?.stops))return null;
+ const relevant=times.map(t=>({stopId:String(t[0]),sec:Number(t[2]??t[1])}))
+  .filter(t=>Number.isFinite(t.sec)&&t.sec>=nowSec-180&&t.sec<nowSec+4*3600)
   .sort((a,b)=>a.sec-b.sec);
- for(const t of upcoming){
-  const entry=update.stops.find(x=>String(x.stopId??x.stop_id??'')===t.id);
-  if(!entry)continue;
-  const eventSeq=Number(entry.stopSequence??entry.stop_sequence);
-  if(Number.isFinite(eventSeq)&&eventSeq>0&&Number.isFinite(t.seq)&&t.seq>0&&eventSeq!==t.seq)continue;
-  const delay=cleanDelay(entry.departure?.delay??entry.arrival?.delay);
-  if(delay!==null)return {delay,stopId:t.id,stopName:String(stops[t.id]?.[0]||t.id)};
+ for(const t of relevant){
+  const st=u.stops.find(s=>String(s.stopId??s.stop_id??'')===t.stopId);
+  if(!st)continue;
+  const value=st.departure?.delay??st.arrival?.delay;
+  if(value==null||!Number.isFinite(Number(value)))continue;
+  return {delay:Number(value),stopId:t.stopId};
  }
  return null;
 }
 export function collectTrafficIssues(state,now=Date.now(),limit=80){
- const out=[],date=new Date(now),day=romeDay(date),nowSec=romeSeconds(date);
- for(const [key,update] of state?.updates||[]){
-  const split=key.indexOf(':');if(split<1)continue;
-  const source=key.slice(0,split),tripId=key.slice(split+1);
-  const db=state.indexes?.[source],trip=db?.trips?.[tripId],det=state.details?.[source];
-  if(!trip||trip[5]===false||!dateGTFSValid(db,date)||!freshUpdate(update,source,state.statuses,day,now))continue;
-  const times=det?.times?.[tripId];
-  if(!Array.isArray(times)||!times.length)continue;
-  // A still-fresh message for a completed journey must not remain an active warning.
-  if(!times.some(t=>Number(t[2]??t[1])>=nowSec-3600&&Number(t[1]??t[2])<=nowSec+21600))continue;
-  const route=db.routes?.[trip[0]],kind=isRailRoute(route?.[2])?'train':'bus';
-  const line=String(kind==='train'?(trip[3]||route?.[0]||tripId):(route?.[0]||tripId));
-  const cancelled=tripCancelled(update,source,state.statuses,day,now);
-  const stop=!cancelled?nearestStopEvidence(update,times,nowSec,det?.stops):null;
-  const delay=stop?.delay>=600?stop.delay:cleanDelay(update.delay),kindOfDelay=stop?.delay>=600?'stop':'trip';
-  const affectedStops=times.map(t=>String(t[0]));
-  if(cancelled||delay!==null&&delay>=600){
-   const minutes=cancelled?null:Math.round(delay/60),severity=cancelled?'danger':'delay';
-   const title=(kind==='train'?'Zug ':'Bus ')+line+(cancelled?' · Ausfall':' · +'+minutes+' Min.');
-   const detail=cancelled?'Ausfall per GTFS-RT TripUpdate bestätigt':kindOfDelay==='trip'?'Fahrtweite Verspätungsmeldung (nicht zwangsläufig jeder Halt)':'Verspätung für Halt '+stop.stopName+' gemeldet';
-   out.push({id:source+':'+tripId+':'+severity,source,tripId,line,kind,severity,minutes,title,detail,stopId:stop?.stopId||'',stopIds:affectedStops,confirmed:true});
-  }
-  // A skipped stop or a platform reassignment is distinct from a full trip cancellation.
-  for(const entry of Array.isArray(update.stops)?update.stops:[]){
-   const stopId=String(entry.stopId??entry.stop_id??'');
-   if(!stopId||!affectedStops.includes(stopId))continue;
-   const timing=times.find(t=>String(t[0])===stopId);
-   const stopSec=Number(timing?.[2]??timing?.[1]);
-   if(!Number.isFinite(stopSec)||stopSec<nowSec-1800||stopSec>nowSec+14400)continue;
-   const stopName=String(det?.stops?.[stopId]?.[0]||stopId);
-   if(/^(SKIPPED|1)$/i.test(String(entry.scheduleRelationship??entry.schedule_relationship??''))){
-    out.push({id:source+':'+tripId+':skipped:'+stopId,source,tripId,line,kind,severity:'danger',minutes:null,
-      title:(kind==='train'?'Zug ':'Bus ')+line+' · Halt entfällt',detail:stopName+' laut GTFS-RT als übersprungen gemeldet',stopIds:[stopId],confirmed:true});
-   }
-   if(kind==='train'){
-    const platform=platformInfo(det?.stops?.[stopId],entry,det?.stops);
-    if(platform.live&&platform.changed)out.push({id:source+':'+tripId+':platform:'+stopId,
-      source,tripId,line,kind,severity:'info',minutes:null,
-      title:'Gleiswechsel · '+line,detail:stopName+': Gleis '+platform.planned+' → '+platform.current+' (GTFS-RT)',
-      stopIds:[stopId],confirmed:true});
-   }
-  }
+ const results=[],date=new Date(now),day=romeDay(date),nowSec=romeSeconds(date);
+ for(const [key,u] of state?.updates||[]){
+  const n=String(key).indexOf(':');if(n<=0)continue;
+  const source=key.slice(0,n),tripId=key.slice(n+1);
+  const db=state.indexes?.[source],trip=db?.trips?.[tripId];
+  if(!trip||trip[5]===false||!dateGTFSValid(db,date)||!freshUpdate(u,source,state.statuses,day,now))continue;
+  const times=state.details?.[source]?.times?.[tripId];
+  if(Array.isArray(times)&&times.length&&!times.some(t=>{
+   const dep=Number(t[2]??t[1]),arr=Number(t[1]??t[2]);
+   return Number.isFinite(dep)&&Number.isFinite(arr)&&dep>=nowSec-3600&&arr<=nowSec+21600;
+  }))continue;
+  const route=db.routes?.[trip[0]],kind=isRailRoute(route?.[2])||source==='trains'?'train':'bus';
+  const line=kind==='train'?String(trip[3]||route?.[0]||'Zug'):String(route?.[0]||trip[3]||'Bus');
+  const cancelled=tripCancelled(u,source,state.statuses,day,now);
+  const stopInfo=nextRelevantStop(u,times,nowSec);
+  const raw=stopInfo?.delay??u.delay;
+  const delay=raw===null||raw===undefined||!Number.isFinite(Number(raw))?null:Number(raw);
+  if(!cancelled&&(delay===null||delay<600))continue;
+  const severity=cancelled?'danger':'delay',minutes=cancelled?null:Math.round(delay/60);
+  const scope=stopInfo?'Haltgenaue GTFS-RT-Meldung für einen kommenden Halt':'Fahrtweite GTFS-RT-Meldung; nicht zwingend jeder Halt betroffen';
+  results.push({
+   id:source+':'+tripId+':'+severity,source,tripId,line,kind,severity,minutes,verified:true,
+   title:(kind==='train'?'Zug ':'Bus ')+line+(cancelled?' · Ausfall':' · +'+minutes+' Min.'),
+   detail:cancelled?'Aktuelle GTFS-RT-Ausfallmeldung':scope,
+   stopIds:Array.isArray(times)?times.map(x=>String(x[0])):[]
+  });
  }
- out.sort((a,b)=>({danger:0,delay:1,info:2}[a.severity]??3)-({danger:0,delay:1,info:2}[b.severity]??3)||(b.minutes??0)-(a.minutes??0));
- return out.slice(0,Math.max(1,limit));
-}
-export function summarizeNetwork(issues){
- const grouped=new Map();
- for(const issue of issues||[]){
-  const id=issue.source+':'+issue.kind+':'+issue.line;
-  const row=grouped.get(id)||{source:issue.source,kind:issue.kind,line:issue.line,cancelled:0,delayed:0,changed:0,maxDelay:0};
-  if(issue.severity==='danger')row.cancelled++;
-  else if(issue.severity==='delay'){row.delayed++;row.maxDelay=Math.max(row.maxDelay,issue.minutes||0)}
-  else if(issue.severity==='info')row.changed++;
-  grouped.set(id,row);
- }
- return [...grouped.values()].sort((a,b)=>b.cancelled-a.cancelled||b.maxDelay-a.maxDelay||a.line.localeCompare(b.line));
+ results.sort((a,b)=>Number(b.severity==='danger')-Number(a.severity==='danger')||(b.minutes??0)-(a.minutes??0));
+ return results.slice(0,limit);
 }
 export function feedDiagnostics(statuses){
  return Object.entries(statuses||{}).map(([source,status])=>({source,status:String(status),ok:status==='ok'}))
- .sort((a,b)=>Number(a.ok)-Number(b.ok)||a.source.localeCompare(b.source));
+  .sort((a,b)=>Number(a.ok)-Number(b.ok)||a.source.localeCompare(b.source));
 }
-export function matchingFavorite(issue,favorites,state){
- return (favorites||[]).some(f=>{
-  if(!f||!['line','train','station'].includes(f.type))return false;
-  if(f.source && String(f.source)!==issue.source)return false;
-  const value=String(f.value||'').trim().toLowerCase();if(!value)return false;
-  if(f.type==='line')return value===issue.line.toLowerCase()||value==='bus '+issue.line.toLowerCase();
-  if(f.type==='train'){
-   const trip=state?.indexes?.[issue.source]?.trips?.[issue.tripId];
-   return value===String(trip?.[3]||'').toLowerCase()||value===issue.line.toLowerCase();
-  }
-  return String(issue.stopId||'').toLowerCase()===value || (state?.details?.[issue.source]?.times?.[issue.tripId]||[])
-    .some(st=>String(st[0]).toLowerCase()===value);
+export function summarizeNetwork(issues){
+ const byLine=new Map();
+ for(const x of issues){
+  const key=x.source+':'+x.kind+':'+x.line;
+  const item=byLine.get(key)||{source:x.source,kind:x.kind,line:x.line,cancelled:0,delayed:0,maxDelay:0};
+  if(x.severity==='danger')item.cancelled++;
+  else{item.delayed++;item.maxDelay=Math.max(item.maxDelay,x.minutes||0)}
+  byLine.set(key,item);
+ }
+ return [...byLine.values()].sort((a,b)=>b.cancelled-a.cancelled||b.maxDelay-a.maxDelay||a.line.localeCompare(b.line));
+}
+export function matchesFavorite(issue,favorites=[]){
+ if(!issue||!Array.isArray(favorites))return false;
+ const norm=x=>String(x??'').trim().toLocaleLowerCase('de').replace(/\s+/g,' ');
+ return favorites.some(f=>{
+  if(!f||f.source&&norm(f.source)!==norm(issue.source))return false;
+  const value=norm(f.value);if(!value)return false;
+  if(f.type==='line')return value===norm(issue.line);
+  if(f.type==='train')return issue.kind==='train'&&(value===norm(issue.line)||value===norm(issue.tripId));
+  if(f.type==='station')return (issue.stopIds||[]).some(x=>norm(x)===value);
+  return false;
  });
 }
-export function rollingStockEvidence(vehicle){
- if(!vehicle||vehicle.kind!=='train')return {name:'Unbekannt',source:'Kein Zugdatensatz'};
- for(const field of ['vehicleModel','rollingStockType','modelName']){
-  const value=vehicle[field];
-  if(typeof value==='string' && value.trim())return {name:value.trim().slice(0,90),source:'Modellbezeichnung aus Fahrzeugdaten'};
+export function vehicleModelEvidence(vehicle){
+ if(!vehicle||vehicle.stale)return {model:null,status:'unknown',note:'Keine frischen Fahrzeugdaten'};
+ for(const field of ['vehicleModel','rollingStockType','trainType','modelName']){
+  const raw=vehicle[field];
+  if(typeof raw==='string'&&raw.trim().length>=2&&raw.trim().length<=80)
+   return {model:raw.trim(),status:'provided',note:'Modellbezeichnung aus Fahrzeugdaten'};
  }
- return {name:'Unbekannt',source:'GTFS-RT enthält keine eindeutige Modellzuordnung'};
+ return {model:null,status:'unknown',note:'Keine eindeutig bestätigte Fahrzeugbaureihe'};
 }
-
-export const matchesFavorite=(issue,favorites,state)=>matchingFavorite(issue,favorites,state);
