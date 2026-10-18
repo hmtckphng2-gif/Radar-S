@@ -1,0 +1,44 @@
+/* Radar 4.5 — genuine OpenFreeMap vector dark mode, NOT a CSS-filtered OSM raster. */
+/* Minimal local layout fallback if the extra CDN stylesheet is slow. */
+#map .maplibregl-map{position:relative;overflow:hidden;font:12px/20px system-ui,sans-serif;}
+#map .maplibregl-canvas-container{height:100%;width:100%;}
+#map .maplibregl-canvas{position:absolute;left:0;top:0;}
+html.sr45-vector.sr44-radar #map,
+html.sr45-vector.sr44-radar #map.leaflet-container {background:#070c13!important;}
+/* The original 4.4 40%-opacity raster pane would also darken GL canvases.
+   Restore 100% only when the real GL basemap is running. */
+html.sr45-vector.sr44-radar #map .leaflet-tile-pane {opacity:1!important;filter:none!important;-webkit-filter:none!important;}
+html.sr45-vector #map .maplibregl-canvas,
+html.sr45-vector #map .maplibregl-map {filter:none!important;-webkit-filter:none!important;opacity:1!important;}
+/* When GL is unavailable the safe raster fallback remains free of per-tile
+   CSS inversion, which caused Safari tile gaps in earlier versions. */
+html.sr44-classic #map .leaflet-tile-pane {opacity:1!important;filter:none!important;}
+html.sr44-classic #map img.leaflet-tile,
+html.sr44-classic.sr43-clean-map[data-theme='dark'] #map img.leaflet-tile,
+html.sr44-classic.sr43-clean-map[data-theme='light'] #map img.leaflet-tile {filter:none!important;-webkit-filter:none!important;}
+.sr45-map-status {position:fixed;z-index:1050;top:calc(134px + env(safe-area-inset-top));left:14px;right:14px;
+ max-width:370px;border:1px solid #397ab4;color:#d9eeff;background:#0e2236ee;border-radius:10px;
+ padding:9px 12px;box-shadow:0 8px 22px #0008;font:700 11px Inter,system-ui,-apple-system,sans-serif;pointer-events:none;}
+.sr45-map-status.sr45-warning{background:#3c291cee;border-color:#b78a52;color:#ffe6b5;}
+.sr45-map-status[hidden]{display:none!important;}
+.sr45-motion-status {margin:12px 0 4px;padding:9px 10px;background:var(--panel2);border:1px solid var(--edge);
+ border-radius:10px;color:var(--muted);font-size:11px;line-height:1.45;}
+/* Keep line and train number attached visually to the vehicle, never floating
+   in oversized independent boxes across the map. */
+html.sr44-radar #map .marker-wrap .marker-label {
+ max-width:68px;font-size:8px;line-height:11px;padding:1px 4px;border-radius:5px;
+ background:#071320f0;border:1px solid #5d789b90;box-shadow:0 2px 6px #000a;}
+html.sr44-radar #map .marker-wrap .sr40-delay{font-size:7.5px;line-height:11px;padding:1px 3px;}
+/* Selected numbers remain visible at any zoom. */
+html.sr44-radar #map .marker-wrap.selected .marker-label {display:block!important;}
+@media(min-width:750px){.sr45-map-status{top:182px;left:18px;}}
+
+/* 4.5.1: MapLibre is a direct noninteractive child of #map, below Leaflet's
+   pane tree. Leaflet handles gestures; the dark camera follows every move. */
+#map #sr451-dark-base {position:absolute!important;inset:0!important;width:100%!important;
+  height:100%!important;z-index:0!important;pointer-events:none!important;overflow:hidden!important;}
+#map #sr451-dark-base, #map #sr451-dark-base * {pointer-events:none!important;}
+#map #sr451-dark-base .maplibregl-map{width:100%;height:100%;}
+#map #sr451-dark-base .maplibregl-control-container{display:none!important;}
+html.sr451-vector #map .leaflet-tile-pane {visibility:hidden!important;opacity:0!important;}
+html.sr451-vector #map .leaflet-map-pane {background:transparent!important;}
