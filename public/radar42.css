@@ -1,0 +1,40 @@
+/* Südtirol Radar 4.2: draggable details; the map never remounts. */
+html.sr42-ready .scrim.show {opacity:0!important;pointer-events:none!important;}
+.sheet.sr42-sheet.open {
+  height:var(--sr42-height)!important;
+  max-height:calc(100dvh - env(safe-area-inset-top) - 14px)!important;
+  transform:translateY(0)!important;
+  overflow:hidden;
+  transition:height .23s cubic-bezier(.2,.8,.3,1),transform .23s ease;
+  padding-top:5px;
+}
+.sheet.sr42-sheet.sr42-dragging.open {transition:none!important;}
+.sheet.sr42-sheet .sr42-grip {
+  flex:0 0 29px; width:100%; display:grid;place-items:center;
+  padding:0;background:transparent;border:0;touch-action:none;
+  cursor:ns-resize;-webkit-tap-highlight-color:transparent;
+}
+.sheet.sr42-sheet .sr42-grip .handle {margin:0;pointer-events:none;width:46px;height:5px;}
+.sheet.sr42-sheet .sheet-heading {flex:0 0 auto;touch-action:none;cursor:ns-resize;user-select:none;-webkit-user-select:none;}
+.sheet.sr42-sheet .sheet-heading button {touch-action:manipulation;cursor:pointer;}
+.sheet.sr42-sheet .sr42-minimize {
+  width:34px;height:34px;flex:0 0 34px;border-radius:50%;
+  background:var(--panel2);border:1px solid var(--edge);
+  color:var(--text);font-size:21px;line-height:1;
+}
+.sheet.sr42-sheet .sheet-scroll {flex:1 1 auto;min-height:0;max-height:none!important;overflow-y:auto;}
+.sheet.sr42-sheet[data-sr42-snap="peek"] .sheet-scroll {display:none!important;}
+.sheet.sr42-sheet[data-sr42-snap="peek"] .sheet-heading {align-items:center;margin-top:0;}
+.sheet.sr42-sheet[data-sr42-snap="peek"] .sheet-title {font-size:18px;margin:2px 0;}
+.sheet.sr42-sheet[data-sr42-snap="peek"] .eyebrow {font-size:9px;}
+.sheet.sr42-sheet[data-sr42-snap="peek"] .sheet-subtitle {font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sheet.sr42-sheet[data-sr42-snap="peek"] .sr42-minimize {background:rgba(59,144,255,.16);}
+@media(min-width:750px){.sheet.sr42-sheet.open{max-height:min(86dvh,820px)!important;}}
+@media(prefers-reduced-motion:reduce){.sheet.sr42-sheet.open{transition:none!important;}}
+/* Markers: declutter at large geographic zoom levels, preserve selected info. */
+#map.sr42-far .sr40-delay, #map.sr42-far .marker-label{display:none!important;}
+#map.sr42-medium .sr40-delay.on-time{display:none!important;}
+#map.sr42-far .marker-wrap.selected .marker-label,
+#map.sr42-far .marker-wrap.selected .sr40-delay {display:block!important;}
+/* compact delay pill, anchored near the vehicle without floating far away */
+#map .marker-wrap.bus .sr40-delay {top:23px;left:calc(50% + 6px);font-size:7.5px;line-height:1;padding:1px 2px;}
