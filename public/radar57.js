@@ -46,6 +46,17 @@ function addHistoryChart(h){
  }
  return chart;
 }
+function vehicleType(row){
+ // Vehicle ID / GTFS labels are not vehicle-model identifiers. Only accept an
+ // explicitly model-bearing, non-stale feed field, never infer from train number.
+ if(row.kind!=='train')return {name:'Kein Zug',confidence:'n/a'};
+ const vehicles=bridge?.state?.vehicles;
+ const vehicle=vehicles&&[...vehicles.values()].find(v=>v.kind==='train'&&v.source===row.source&&v.tripId===row.tripId&&!v.stale);
+ if(!vehicle)return {name:'Unbekannt',confidence:'Keine Fahrzeugkennung im Live-Feed'};
+ const raw=[vehicle.vehicleModel,vehicle.rollingStockType,vehicle.trainType,vehicle.modelName].find(v=>typeof v==='string'&&v.trim());
+ if(raw)return {name:raw.trim(),confidence:'Modellbezeichnung aus Fahrzeugdaten'};
+ return {name:'Unbekannt',confidence:'Fahrzeug-ID '+String(vehicle.vehicleId||'nicht vorhanden')+' · kein verifiziertes Modell'};
+}
 function showDetails(row){
  if(!dialog){dialog=el('dialog','sr57-dialog');document.body.append(dialog);dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()})}
  dialog.replaceChildren();
@@ -57,6 +68,7 @@ function showDetails(row){
  radar.append(el('small','','ERWARTETE AUFHOLUNG'),el('strong','',recovery?'↘ '+recovery.gained+' min':'–'));
  stats.append(official,radar);dialog.append(stats);
  dialog.append(el('p','sr57-explain',row.cancelled?'Diese Fahrt ist laut frischer GTFS-RT-Meldung ausgefallen. Es wird keine Zeitaufholung prognostiziert.':recovery?'An diesem Halt prognostiziert GTFS-RT '+recovery.gained+' Minuten weniger Verspätung als am vorherigen gemeldeten Halt. Radar zeigt die Differenz; es ist keine zusätzliche KI-Vorhersage.':'Noch keine unabhängig belastbare Prognose zur Zeitaufholung. GTFS-RT-Verspätung und Ist-/Soll-Abstand bleiben getrennt.'));
+ const vehicleInfo=vehicleType(row);if(row.kind==='train')dialog.append(el('p','sr57-vehicle-type','Fahrzeugtyp: '+vehicleInfo.name+' · '+vehicleInfo.confidence));
  const schedule=el('div','sr57-schedule');schedule.append(el('span','','Fahrplan '+clock(row.sec)),el('span','',row.forecast===null?'Livezeit unbekannt':'Gemeldet '+clock(row.forecast)));dialog.append(schedule);
  if(row.kind==='train'){
   const h=historySummary(row.number);
@@ -114,8 +126,8 @@ function render(){
  if(!rows.length){board.append(el('p','sr57-empty',res.reasons.length?'Keine gültigen Fahrplandaten für diesen Bahnhof.':'Keine Abfahrten im aktuellen Zeitraum gefunden.'));return}
  for(const row of rows){
   const item=button('',()=>showDetails(row),'sr57-row');
-  const time=el('div','sr57-time');time.append(el('strong','',clock(row.sec)),el('small','',row.kind==='train'?'ZUG':'BUS'));
-  const route=el('div','sr57-route');route.append(el('strong','',row.headsign),el('small','',row.number+(row.platform?.current?' · '+(row.kind==='train'?'Gleis ':'Steig ')+row.platform.current:'')));
+  const time=el('div','sr57-time');time.append(el('strong','',clock(row.sec)),el('small','',row.kind==='train'?'🚆 ZUG':'🚌 BUS'));
+  const route=el('div','sr57-route');route.append(el('strong','sr57-route-number',row.number),el('span','sr57-route-destination',row.headsign+(row.platform?.current?' · '+(row.kind==='train'?'Gleis ':'Steig ')+row.platform.current:'')));
   const delay=el('div','sr57-delay');
   delay.append(el('strong',row.cancelled?'sr57-bad':row.delaySec>0?'sr57-late':'',row.cancelled?'Ausfall':row.delaySec===null?'–':labelDelay(row.delaySec)));
   const gain=evidence(row);delay.append(el('small','',gain?'↘ '+gain.gained+' min GTFS-RT':row.delaySec===null?'Nur Fahrplan':'GTFS-RT'));
