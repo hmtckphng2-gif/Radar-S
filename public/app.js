@@ -1,4 +1,4 @@
-import {motionDuration} from './radar54-logic.mjs';
+import {motionDuration,platformInfo} from './radar54-logic.mjs';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
@@ -649,10 +649,17 @@ function renderStops(v,details){
   const update=state.updates.get(v.source+':'+v.tripId);
   $('scheduleSource').textContent='GTFS-Fahrplan'+(update?.stops?.length?' + TripUpdates':'');
   const lookup=new Map((update?.stops||[]).map(u=>[txt(u.stopId??u.stop_id),u]));
+  const sameDay=!update?.tripStartDate||txt(update.tripStartDate).replaceAll('-','')===gtfsLocalDate().replaceAll('-','');
+  const platformLive=Boolean(update&&sameDay&&state.statuses[v.source+'_updates']==='ok'&&Number.isFinite(update.fetchedAt)&&Date.now()-update.fetchedAt<=120000&&Date.now()>=update.fetchedAt-30000);
   for(const row of rows){
     const li=document.createElement('li');li.className='stop';
     const left=document.createElement('div');const name=document.createElement('b');name.textContent=row.name;left.append(name);
-    const upd=lookup.get(row.stopId);
+    const upd=lookup.get(row.stopId)||(update?.stops||[]).find(u=>!txt(u.stopId??u.stop_id)&&Number(u.stopSequence??u.stop_sequence)===Number(row.seq));
+    const platform=platformInfo(details.stops?.[row.stopId],platformLive?upd:null,details.stops);
+    const track=document.createElement('small');track.className='stop-platform';
+    track.textContent=(v.kind==='bus'?'Steig ':'Gleis ')+(platform.current||'unbekannt')+(platform.changed?' · geändert':platform.live?' · gemeldet':platform.current?' · Plan':'');
+    if(platform.changed)track.style.color='#ffc37d';
+    left.append(track);
     const d=upd?(upd.departure?.delay??upd.arrival?.delay):null;
     const skipped=/^(?:SKIPPED|1)$/i.test(txt(upd?.scheduleRelationship??upd?.schedule_relationship));
     const info=document.createElement('small');info.textContent=skipped?'Halt entfällt':d!=null?'GTFS-RT: '+formatDelay(Number(d)):'Planzeit';left.append(info);
