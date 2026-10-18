@@ -153,6 +153,8 @@ export function trainScheduledPosition(vehicle, indexes,details,shapes,now=new D
  if(!scheduled)return null;
  return {scheduled,observed:{lat,lon},plannedMeters:scheduledAlong,observedMeters:observed.along,
   differenceKm:Math.round(Math.abs(scheduledAlong-observed.along)/100)/10,
+  segmentStartMeters:segment.a.along,segmentEndMeters:segment.b.along,
+  segmentStartSeconds:segment.start,segmentEndSeconds:segment.end,
   relative:observed.along>=scheduledAlong?'vor dem Soll-Punkt':'hinter dem Soll-Punkt',
   from:segment.a.name,to:segment.b.name,
   // The schedule interpolation is an illustration, NOT GPS or an exact punctuality measurement.

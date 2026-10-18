@@ -3,7 +3,7 @@
 import {findStations,nearbyStationGroup,buildDepartureRows,romeDay} from './radar51-logic.mjs';
 import {mergeStationDepartures} from './radar53-logic.mjs';
 import {trainHistory,supportedRecovery} from './radar57-logic.mjs';
-import {trainScheduledPosition} from './radar51-logic.mjs';
+import {trainScheduledPosition} from './radar51-logic.mjs';\nimport {estimatePositionDelay} from './radar58-logic.mjs';
 (()=>{
 'use strict';
 const KEY='sr57_station_v1',HISTORY='sr54_train_observations_v1';
@@ -91,7 +91,13 @@ function showDetails(row){
     const legend=el('div','sr57-position-legend');legend.append(el('span','','● Ist-Position'),el('span','','◆ Soll-Position'));
     comparison.append(el('div','sr57-position-endpoints',compare.from+' → '+compare.to),track,legend);
     comparison.append(el('strong','sr57-position-distance',compare.differenceKm.toFixed(1)+' km '+compare.relative));
-    const info=el('details','sr57-position-info');info.append(el('summary','','Wie wird das berechnet?'),el('p','sr57-explain',compare.note+' Die Grafik ist schematisch, nicht maßstabsgetreu. Kilometerdifferenz ist keine berechnete Verspätung.'));
+    const estimate=estimatePositionDelay(compare,v,new Date());
+    const gpsDelay=el('div','sr58-gps-delay');
+    gpsDelay.append(el('small','','GESCHÄTZTE VERSPÄTUNG · POSITION'));
+    gpsDelay.append(el('strong','',estimate?(estimate.minutes>0?'+':'')+estimate.minutes+' Min.':'Nicht verfügbar'));
+    gpsDelay.append(el('small','',estimate?'Letzte Positionsmeldung vor '+estimate.ageSeconds+' Sek. · keine offizielle GTFS-RT-Zeit':'Keine aktuelle, verifizierbare Position auf diesem Fahrplanabschnitt'));
+    comparison.append(gpsDelay);
+    const info=el('details','sr57-position-info');info.append(el('summary','','Wie wird das berechnet?'),el('p','sr57-explain',compare.note+' Die Grafik ist schematisch, nicht maßstabsgetreu. Die Minutenangabe darunter ist eine unabhängige Näherung aus der gemeldeten Position und dem Fahrplan, nicht die offizielle Verspätung.'));
     comparison.append(info);dialog.append(comparison);
    }
   }
