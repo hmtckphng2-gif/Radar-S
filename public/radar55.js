@@ -51,7 +51,10 @@ function setupFollow(){
  const bar=$('sr46Actions');if(!bar||$('sr55Follow'))return false;
  followBtn=button('◎ Live folgen',()=>{setFollow(!follow,!follow?'Live-Folge beendet':'Live-Folge aktiviert')});
  followBtn.id='sr55Follow';followBtn.setAttribute('aria-pressed','false');followBtn.title='Kamera folgt neuen gemeldeten Positionen. Bei manueller Kartenbewegung wird sie angehalten.';
- bar.append(followBtn);
+ const menu=$('sr53ActionMenu');
+ if(!menu)return false;
+ followBtn.classList.add('sr46-action');
+ menu.append(followBtn);
  map.on('dragstart',()=>{if(follow)setFollow(false,'Live-Folge durch Kartenbewegung beendet')});
  map.on('zoomstart',()=>{if(follow)setFollow(false,'Live-Folge durch Zoom beendet')});
  // Focus from 5.2 is allowed to finish before the first tracking pan.
@@ -138,9 +141,11 @@ function openAnalytics(){
  panelBody.append(make('p','sr55-empty','Momentaufnahme, keine historische Pünktlichkeitsquote. Für Trends sind wiederholte valide Messungen nötig.'));
 }
 function extras(){
- const attempt=()=>{const bar=$('sr46Actions');if(!bar||$('sr55Connections'))return false;
- bar.append(button('↔ Anschlüsse',openConnections));bar.lastChild.id='sr55Connections';
- return true};
+ const attempt=()=>{
+  const menu=$('sr53ActionMenu');if(!menu||$('sr55Connections'))return false;
+  const b=button('↔ Anschlüsse',openConnections,'sr46-action');b.id='sr55Connections';menu.append(b);
+  return true;
+ };
  let tries=0;const spin=()=>{if(!attempt()&&++tries<35)setTimeout(spin,220)};spin();
  // Extra tools live in existing stats/departures view, no fifth navigation tab.
  const nav=document.querySelector('.sr50-bottom-nav');if(!nav)return;
@@ -148,6 +153,33 @@ function extras(){
  const analyticsButton=button('▥ Analytics',openAnalytics);analyticsButton.id='sr55Analytics';
  const insert=()=>{const view=$('sr50StatsView');if(view&&!view.querySelector('#sr55Analytics')){const row=make('div','sr55-tools');row.append(analyticsButton,panelButton);view.prepend(row)}};
  insert();document.addEventListener('click',e=>{if(e.target.closest('.sr50-nav-btn'))setTimeout(insert,80)});
+}
+function setupMoreMenuPortal(){
+ const menu=$('sr53ActionMenu'),trigger=$('sr53More'),sheet=$('sheet');
+ if(!menu||!trigger||!sheet)return false;
+ if(menu.parentElement!==document.body)document.body.append(menu);
+ const place=()=>{
+  if(menu.hidden)return;
+  const rect=trigger.getBoundingClientRect();
+  const width=Math.max(170,Math.min(224,window.innerWidth-24));
+  menu.style.position='fixed';
+  menu.style.width=width+'px';
+  menu.style.left=Math.max(12,Math.min(window.innerWidth-width-12,rect.left))+'px';
+  menu.style.top=Math.max(12,Math.min(window.innerHeight-menu.offsetHeight-12,rect.bottom+7))+'px';
+  menu.style.right='auto';
+  menu.style.zIndex='14000';
+ };
+ // Handler runs after the existing 5.3 toggle listener.
+ trigger.addEventListener('click',()=>requestAnimationFrame(place));
+ const close=()=>{menu.hidden=true;trigger.setAttribute('aria-expanded','false')};
+ document.addEventListener('pointerdown',e=>{if(!menu.hidden&&!menu.contains(e.target)&&!trigger.contains(e.target))close()});
+ document.addEventListener('sr37:sheet-closed',close);
+ document.addEventListener('sr37:selection',close);
+ const scroll=sheet.querySelector('.sheet-scroll');
+ scroll?.addEventListener('scroll',()=>{if(scroll.scrollTop>38)close()},{passive:true});
+ window.addEventListener('resize',()=>{if(!menu.hidden)place()},{passive:true});
+ menu.addEventListener('click',e=>{if(e.target.closest('button')&&e.target.id!=='sr55Follow')close()});
+ return true;
 }
 function sheetGestures(){
  const sheet=$('sheet'),handle=sheet?.querySelector('.handle');if(!handle)return;
@@ -203,6 +235,7 @@ function init(){
  if(ready)return;bridge=window.SuedtirolRadar37;map=bridge?.state?.map;
  if(!map||!$('sheet')||!document.querySelector('.sr50-bottom-nav'))return;
  ready=true;document.body.classList.add('sr55-ready');versionGuard();tools();prepareSearch();extras();sheetGestures();setupCompactBadge();setupScrollActions();
+ let menuTries=0;const mount=()=>{if(!setupMoreMenuPortal()&&++menuTries<40)setTimeout(mount,160)};mount();
  if(!setupFollow()){let n=0;const poll=()=>{if(!setupFollow()&&++n<30)setTimeout(poll,200)};setTimeout(poll,220)}
  setupInformation();
  document.addEventListener('sr37:selection',()=>setTimeout(setupInformation,250));

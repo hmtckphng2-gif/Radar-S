@@ -138,3 +138,40 @@ body.sr55-ready #sheet.sr55-scrolled .sr53-delay-pill::after{
  body.sr55-ready #sheet .sheet-title,
  body.sr55-ready #sheet .sr53-delay-pill{transition:none!important;transform:none!important}
 }
+
+/* 5.5 mobile: show only three core actions, keeping advanced actions in More. */
+body.sr55-ready #sheet .sr46-actions{
+ display:flex!important;
+ width:100%;
+ max-width:100%;
+ flex-wrap:nowrap!important;
+ align-items:center;
+ justify-content:space-between;
+ min-width:0;
+}
+body.sr55-ready #sheet .sr46-actions>.sr46-action,
+body.sr55-ready #sheet .sr46-actions>.sr53-action-wrap{
+ flex:0 1 auto!important;
+ min-width:0!important;
+}
+body.sr55-ready #sheet .sr46-actions>.sr46-action{
+ white-space:nowrap;
+}
+body.sr55-ready .sr53-action-menu{
+ max-height:min(50dvh,360px);
+ overflow-y:auto!important;
+ overscroll-behavior:contain;
+}
+body.sr55-ready .sr53-action-menu .sr46-action{
+ display:block;
+ width:100%;
+ text-align:left;
+ min-height:42px!important;
+ white-space:normal;
+}
+body.sr55-ready #sheet.sr55-scrolled .sr46-actions{pointer-events:none}
+@media(max-width:375px){
+ body.sr55-ready #sheet .sr46-action{padding:5px 7px!important;font-size:10px!important}
+}
+
+body.sr55-ready #sheet .sr46-actions[hidden]{display:none!important}
