@@ -204,32 +204,19 @@ function setupScrollActions(){
  const sheet=$('sheet'),scroller=sheet?.querySelector('.sheet-scroll');
  if(!sheet||!scroller)return;
  let frame=0,collapsed=false;
- // Keep the transition precisely matched to the toolbar's intrinsic height.
- const measure=()=>{
-   const bar=$('sr46Actions');if(!bar)return;
-   const height=bar.scrollHeight;
-   if(height>0)bar.style.setProperty('--sr55-toolbar-height',height+'px');
- };
  const refresh=()=>{
    frame=0;
    if(!sheet.classList.contains('open'))return;
-   const y=scroller.scrollTop;
-   // Hysteresis stops toggle flicker while layout height is animating.
-   const next=collapsed?y>8:y>38;
+   const top=scroller.scrollTop;
+   const next=collapsed?top>10:top>42;
    if(next===collapsed)return;
    collapsed=next;
-   if(!collapsed)measure();
    sheet.classList.toggle('sr55-scrolled',collapsed);
  };
  const schedule=()=>{if(!frame)frame=requestAnimationFrame(refresh)};
  scroller.addEventListener('scroll',schedule,{passive:true});
- document.addEventListener('sr37:selection',()=>{
-   collapsed=false;sheet.classList.remove('sr55-scrolled');
-   requestAnimationFrame(()=>{measure();schedule()});
- });
+ document.addEventListener('sr37:selection',()=>{collapsed=false;sheet.classList.remove('sr55-scrolled')});
  document.addEventListener('sr37:sheet-closed',()=>{collapsed=false;sheet.classList.remove('sr55-scrolled')});
- window.addEventListener('resize',()=>{if(!collapsed)requestAnimationFrame(measure)},{passive:true});
- requestAnimationFrame(measure);
 }
 function init(){
  if(ready)return;bridge=window.SuedtirolRadar37;map=bridge?.state?.map;

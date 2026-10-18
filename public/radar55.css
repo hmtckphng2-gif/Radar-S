@@ -175,3 +175,64 @@ body.sr55-ready #sheet.sr55-scrolled .sr46-actions{pointer-events:none}
 }
 
 body.sr55-ready #sheet .sr46-actions[hidden]{display:none!important}
+
+/* Radar 5.5.5 — stable three-action mobile toolbar.
+   Previous dynamic max-height sometimes clipped the text and pushed Details aside. */
+body.sr55-ready #sheet .sr46-actions:not([hidden]){
+ display:grid!important;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:8px!important;
+ width:100%!important;
+ box-sizing:border-box;
+ min-width:0;
+ min-height:44px;
+ max-height:58px!important;
+ margin:9px 0 10px!important;
+ padding:0!important;
+ align-items:stretch!important;
+ justify-content:initial!important;
+ overflow:hidden;
+ transition:max-height 290ms cubic-bezier(.22,1,.36,1),min-height 290ms cubic-bezier(.22,1,.36,1),margin 290ms cubic-bezier(.22,1,.36,1),opacity 180ms ease,transform 290ms cubic-bezier(.22,1,.36,1)!important;
+}
+body.sr55-ready #sheet .sr46-actions>.sr46-action,
+body.sr55-ready #sheet .sr46-actions>.sr53-action-wrap{
+ width:100%!important;
+ min-width:0!important;
+ max-width:none!important;
+ min-height:44px!important;
+ height:44px!important;
+ padding:0!important;
+ margin:0!important;
+ align-self:stretch!important;
+ box-sizing:border-box!important;
+}
+body.sr55-ready #sheet .sr46-actions>.sr46-action,
+body.sr55-ready #sheet .sr46-actions>.sr53-action-wrap>.sr46-action{
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ width:100%!important;
+ min-width:0!important;
+ height:44px!important;
+ min-height:44px!important;
+ padding:0 6px!important;
+ margin:0!important;
+ border-radius:12px!important;
+ font-size:12px!important;
+ line-height:1.15!important;
+ white-space:nowrap;
+ text-align:center!important;
+}
+body.sr55-ready #sheet .sr46-actions>.sr53-action-wrap{display:flex!important}
+body.sr55-ready #sheet .sr46-actions>.sr53-extra{margin-left:0!important}
+body.sr55-ready #sheet.sr55-scrolled .sr46-actions:not([hidden]){
+ min-height:0!important;
+ max-height:0!important;
+ margin-top:0!important;
+ margin-bottom:0!important;
+ opacity:0;
+ transform:translateY(-8px);
+ pointer-events:none;
+}
+@media(max-width:360px){body.sr55-ready #sheet .sr46-actions:not([hidden]){gap:5px!important}body.sr55-ready #sheet .sr46-actions>.sr46-action,body.sr55-ready #sheet .sr46-actions>.sr53-action-wrap>.sr46-action{font-size:11px!important;padding:0 3px!important}}
+@media(prefers-reduced-motion:reduce){body.sr55-ready #sheet .sr46-actions:not([hidden]){transition:none!important;transform:none!important}}
