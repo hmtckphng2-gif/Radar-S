@@ -158,10 +158,27 @@ function sheetGestures(){
  handle.addEventListener('pointercancel',()=>{y=null});
  handle.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sr53Expand')?.click()}});
 }
+function setupScrollActions(){
+ const sheet=$('sheet'),scroller=sheet?.querySelector('.sheet-scroll');
+ if(!sheet||!scroller)return;
+ // The 4.6 toolbar is in the fixed sheet heading, outside the scrollable journey.
+ // Collapse it once the user actually scrolls through the itinerary.
+ let frame=0;
+ const refresh=()=>{
+   frame=0;
+   const hiding=sheet.classList.contains('open')&&scroller.scrollTop>24;
+   sheet.classList.toggle('sr55-scrolled',hiding);
+ };
+ const schedule=()=>{if(!frame)frame=requestAnimationFrame(refresh)};
+ scroller.addEventListener('scroll',schedule,{passive:true});
+ document.addEventListener('sr37:selection',()=>{sheet.classList.remove('sr55-scrolled');schedule()});
+ document.addEventListener('sr37:sheet-closed',()=>sheet.classList.remove('sr55-scrolled'));
+ refresh();
+}
 function init(){
  if(ready)return;bridge=window.SuedtirolRadar37;map=bridge?.state?.map;
  if(!map||!$('sheet')||!document.querySelector('.sr50-bottom-nav'))return;
- ready=true;document.body.classList.add('sr55-ready');versionGuard();tools();prepareSearch();extras();sheetGestures();
+ ready=true;document.body.classList.add('sr55-ready');versionGuard();tools();prepareSearch();extras();sheetGestures();setupScrollActions();
  if(!setupFollow()){let n=0;const poll=()=>{if(!setupFollow()&&++n<30)setTimeout(poll,200)};setTimeout(poll,220)}
  setupInformation();
  document.addEventListener('sr37:selection',()=>setTimeout(setupInformation,250));

@@ -56,3 +56,7 @@ body.sr55-ready .sr51-departure-row{padding:8px 1px!important}
 @media(prefers-reduced-motion:reduce){body.sr55-ready #sheet *,body.sr55-ready .sr50-tab-view.active{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 [data-theme=light] .sr55-popover,[data-theme=light] .sr55-toolmenu{background:#f5f9ff;color:#1c344d}
 [data-theme=light] .sr55-popover p,[data-theme=light] .sr55-empty{color:#526d88}
+
+/* 5.5.1: Give the itinerary the screen height when scrolling down. */
+body.sr55-ready #sheet.sr55-scrolled .sr46-actions{display:none!important}
+body.sr55-ready #sheet.sr55-scrolled .sheet-heading{padding-bottom:2px!important}
