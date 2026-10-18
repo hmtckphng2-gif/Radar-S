@@ -1,0 +1,47 @@
+/* Südtirol Radar 4.3. API-key-free OSM tiles, cleaner rendering only. */
+html.sr43-clean-map[data-theme='dark'] #map img.leaflet-tile {
+  -webkit-filter:brightness(.79) invert(1) hue-rotate(180deg) saturate(.7) grayscale(.16)!important;
+  filter:brightness(.79) invert(1) hue-rotate(180deg) saturate(.7) grayscale(.16)!important;
+}
+/* Far zoom: no text wall. Selection and cluster counts remain readable. */
+html.sr43-wide #map .marker-wrap:not(.selected) .marker-label,
+html.sr43-wide #map .marker-wrap:not(.selected) .sr40-delay {display:none!important;}
+html.sr43-very-wide #map .marker-wrap:not(.selected) .sr40-heading {display:none!important;}
+#map .sr43-in-cluster {visibility:hidden!important;pointer-events:none!important;}
+#map .sr43-cluster-icon {background:transparent;border:0;}
+.sr43-cluster-circle {width:56px;height:56px;display:flex;flex-direction:column;justify-content:center;align-items:center;
+  color:#fff;background:linear-gradient(145deg,#22549c,#102c55);border:2px solid #9fd5ff;
+  border-radius:50%;box-shadow:0 4px 17px #000a;font-family:Inter,system-ui,sans-serif;}
+.sr43-cluster-circle strong{font-size:19px;line-height:21px;font-weight:800;font-variant-numeric:tabular-nums;}
+.sr43-cluster-circle small{font-size:9px;opacity:.91;line-height:13px;white-space:nowrap;}
+/* Late observations remain visible but cannot be mistaken for moving live buses. */
+#map .marker-wrap.sr43-stale .marker-circle{filter:grayscale(.8);opacity:.68;}
+#map .marker-wrap.sr43-stale:after {content:'NICHT LIVE';position:absolute;left:50%;top:37px;
+  transform:translateX(-50%);background:#27303e;color:#fff;border:1px solid #88919b;
+  border-radius:4px;padding:2px 3px;white-space:nowrap;font-size:7px;font-weight:900;pointer-events:none;z-index:7;}
+#map .marker-wrap.sr43-stale .sr40-delay,#map .marker-wrap.sr43-stale .sr40-heading{display:none!important;}
+/* Mini journey card lives INSIDE the draggable panel, never covering the map. */
+.sr43-mini {display:none;flex-shrink:0;margin:0 8px 4px;border-radius:9px;background:var(--panel2);
+  border:1px solid var(--edge);padding:7px 9px;line-height:1.35;min-width:0;}
+.sr43-mini[hidden]{display:none!important;}
+.sr43-mini strong{font-size:11px;color:var(--blue);white-space:nowrap;margin-right:6px;}
+.sr43-mini-stop{font-size:11px;font-weight:700;color:var(--text);display:inline;overflow-wrap:anywhere;}
+.sr43-mini small{display:block;color:var(--muted);font-size:9px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sheet.sr42-sheet[data-sr42-snap='peek'] .sr43-mini {display:block;}
+/* Interactive GTFS station markers appear only when user requests them. */
+.sr43-stops-button {display:inline-block;margin-top:9px;border:1px solid #4f97de;background:var(--panel2);
+  color:var(--text);padding:8px 10px;border-radius:10px;font-size:11px;font-weight:700;}
+.sr43-stop-pin{background:transparent;border:0;}
+.sr43-stop-dot{display:grid;place-items:center;width:28px;height:28px;color:white;background:#153e72;
+  font-size:13px;border:2px solid #c5e6ff;border-radius:50%;box-shadow:0 2px 7px #0009;}
+.sr43-stop-pin-toggle {position:fixed;z-index:960;left:12px;bottom:calc(146px + env(safe-area-inset-bottom));
+  border:1px solid #8ac4ff;border-radius:11px;background:var(--panel);box-shadow:var(--shadow);
+  color:var(--text);font-size:11px;font-weight:800;padding:9px 12px;}
+.sr43-stop-count{position:fixed;z-index:960;left:12px;bottom:calc(191px + env(safe-area-inset-bottom));
+  background:var(--panel);border:1px solid var(--edge);border-radius:8px;color:var(--muted);
+  padding:6px 9px;font-size:10px;}
+.sr43-stop-pin-toggle[hidden],.sr43-stop-count[hidden]{display:none!important;}
+.sr43-station-filter{font-size:11px;color:var(--text);display:flex;gap:7px;align-items:center;padding:7px 0;}
+.sr43-station-filter input{accent-color:var(--blue);width:17px;height:17px;}
+.radar37-departure[hidden]{display:none!important;}
+@media(max-width:370px){.sr43-mini{padding:6px;}.sr43-mini-stop{font-size:10px;}}
