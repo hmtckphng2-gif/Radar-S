@@ -1,0 +1,59 @@
+/* Südtirol Radar 5.1 — mobile-first cleanup without changing map positioning or engine */
+:root{--sr51-bg:#0b1728;--sr51-contrast:#eaf4ff}
+.sr50-header h1{letter-spacing:-.045em}
+.sr50-tab-view input,.sr50-search-box input,#sr50DepSearch,#search,#stationSearch{font-size:16px!important} /* iOS Safari: prevent auto-zoom on input focus */
+.sr50-tab-view{overscroll-behavior:contain}
+#sr51InlineBoard[hidden]{display:none!important}
+.sr51-board{gap:13px;border-color:#32537b;background:linear-gradient(140deg,#132a43,#0e1e33)}
+.sr51-board-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sr51-board-head h2{font-size:22px;margin:2px 0 0;line-height:1.2;color:#f1f8ff;letter-spacing:-.03em}
+.sr51-board-head .sr50-overline{font-size:10px}
+.sr51-back,.sr51-toggle,.sr51-map-station{border:1px solid #456991;border-radius:11px;color:#cde4ff;background:#203c5b;padding:9px 11px;font-weight:720;font-size:12px;white-space:nowrap}
+.sr51-board-controls{display:flex;flex-wrap:wrap;gap:8px}.sr51-board-summary{color:#8db6d7;font-size:12px;font-weight:650}
+.sr51-departure-list{display:flex;flex-direction:column;gap:8px;max-height:min(53dvh,590px);overflow-y:auto;overscroll-behavior:contain}
+.sr51-departure-row{padding:11px 12px;border-radius:12px;background:#182b44;border:1px solid #344b66;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sr51-departure-main{display:flex;flex-direction:column;gap:5px;min-width:0}.sr51-departure-main strong{font-size:13px;line-height:1.35;overflow-wrap:anywhere;color:#ecf6ff}.sr51-departure-main small{font-size:11px;color:#6bd6ba}
+.sr51-departure-time{display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}.sr51-departure-time strong{font-size:16px;font-variant-numeric:tabular-nums}.sr51-departure-time small{font-size:10px;color:#9badc8}
+.sr51-cancelled{opacity:.65}.sr51-cancelled .sr51-departure-main small{color:#ff9e9e}
+.sr50-badge.sr51-delay-late{background:#63361a;color:#ffcb83}.sr50-badge.sr51-delay-zero{background:#18544a;color:#91ffdc}.sr50-badge.sr51-delay-early{background:#1d416a;color:#99cfff}
+/* Route label badges: only printed for verified, recent matched TripUpdates. */
+.marker-label .sr51-map-delay{display:inline-block;margin-left:4px;border-radius:5px;padding:1px 3px;background:#274e6a;color:#e8f7ff;font-size:9px;font-weight:800}
+.marker-label .sr51-map-delay.late{background:#94532a;color:#fff1bc}.marker-label .sr51-map-delay.early{background:#1b567e;color:#d1f1ff}.marker-label .sr51-map-delay.ontime{background:#13644c;color:#b6ffda}
+#sr50MapTab .map-actions>button:not(#refreshBtn):not(#fitBtn):not(#sr51MoreBtn){display:none!important}
+#sr50MapTab #sr51MoreBtn{font-size:22px;line-height:1}
+#sr50MapTab .info-banner.sr51-compact-notice[hidden]{display:none!important}
+#sr50MapTab .info-banner.sr51-compact-notice.sr51-notice-visible{display:block!important;z-index:1250}
+.sr51-tools{position:absolute;z-index:1800;right:60px;top:max(140px,calc(env(safe-area-inset-top,0px) + 140px));width:min(256px,calc(100vw - 86px));padding:9px;display:flex;flex-direction:column;gap:5px;background:#0e1b2df7;border:1px solid #4c6687;border-radius:16px;box-shadow:0 9px 25px #000b;backdrop-filter:blur(12px)}
+.sr51-tools[hidden]{display:none!important}
+.sr51-menu-item{background:#162c44;color:#d3e9ff;border:1px solid #2e4765;border-radius:10px;text-align:left;padding:11px;font-size:12px;font-weight:650;min-height:43px}
+.sr51-menu-item:active{background:#29466a}
+.sr51-train-compare{padding:13px;border:1px solid #3a5776;border-radius:14px;background:#142b42;margin:12px 0;display:flex;flex-direction:column;gap:6px}
+.sr51-train-compare[hidden]{display:none!important}.sr51-train-title{font-size:14px;font-weight:760;color:#eaf6ff}
+.sr51-train-compare svg{width:100%;height:76px;display:block}.sr51-cmp-line{color:#a0d7dc;font-size:11px;line-height:1.4}
+.sr51-gap{color:#f2d395;font-size:13px}.sr51-quiet{color:#9fb8d0;font-size:11px;line-height:1.48;margin:2px 0}.sr51-caution{color:#f3c081;font-size:10.5px;line-height:1.5}
+.leaflet-tooltip.sr51-map-tooltip{border:1px solid #6795b5;border-radius:6px;background:#142944ec;color:#f3f9ff;box-shadow:0 2px 10px #0008;font:700 10px system-ui;padding:2px 6px}
+/* Cleaner mobile hierarchy. Unneeded diagnostics are in the ⋯ menu. */
+@media(max-width:600px){
+ #sr50MapTab .topbar{padding:13px 13px 11px!important}
+ #sr50MapTab .toprow{gap:7px}
+ #sr50MapTab .brand-sub{font-size:10px}
+ #sr50MapTab .brand-title{font-size:16px}
+ #sr50MapTab .controls{gap:7px;margin-top:9px}
+ #sr50MapTab .search-wrap{height:37px;min-width:90px}
+ #sr50MapTab .segments{gap:3px}
+ #sr50MapTab .segments .chip{padding:9px 8px;font-size:11px}
+ #sr50MapTab .map-actions{gap:9px;right:10px}
+ #sr50MapTab .stats{font-size:11px;padding:8px 10px;max-width:calc(100vw - 22px);box-sizing:border-box}
+ #sr50MapTab .stats-time{font-size:10px}
+ #sr50MapTab #viewportBadge{max-width:min(190px,52vw);font-size:11px}
+ .sr51-tools{top:155px}
+}
+@media(max-width:370px){
+ #sr50MapTab .brand-sub{display:none}
+ #sr50MapTab .segments .chip{padding-inline:6px}
+ #sr50MapTab .stats .stat{gap:2px}
+ .sr51-departure-row{padding:9px}
+ .sr51-board-head h2{font-size:19px}
+}
+
+#sr50DepResults[hidden]{display:none!important}.sr51-board{scroll-margin-top:90px}
