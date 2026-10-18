@@ -170,4 +170,6 @@ function init(){
 }
 document.addEventListener('sr37:ready',init);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+// Radar 5.0 builds navigation asynchronously; do not depend on module execution order.
+let attempts=0;const bootCheck=setInterval(()=>{if(ready||++attempts>50){clearInterval(bootCheck);return}init()},200);
 })();
