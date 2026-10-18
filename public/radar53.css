@@ -1,0 +1,46 @@
+/* Radar 5.3 – calmer controls, minimal hierarchy, reduced motion support. */
+.sr53-title-line{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;width:100%;max-width:100%;margin:2px 0 3px}
+.sr53-title-line .sheet-title{margin:0;flex:1 1 auto;min-width:0;font-size:clamp(21px,5.3vw,28px);letter-spacing:-.035em}
+.sr53-delay-pill{font:750 11px/1.25 Inter,-apple-system,system-ui,sans-serif;padding:8px 11px;border-radius:999px;white-space:nowrap;border:1px solid #365778;background:#17324b;color:#c9e2f6;box-shadow:0 3px 18px #0002;font-variant-numeric:tabular-nums}
+.sr53-delay-pill[hidden]{display:none!important}
+.sr53-delay-pill.late{border-color:#a77840;background:#3a2a20;color:#ffca81}
+.sr53-delay-pill.ontime{border-color:#267e65;background:#143f37;color:#65e8bb}
+.sr53-delay-pill.early{border-color:#39749e;background:#18354d;color:#87ceff}
+.sr53-delay-pill.unknown{opacity:.78}
+/* The comparison remains useful, but 5.1's long explanatory paragraphs are behind technical details. */
+#sr51TrainCompare{gap:6px!important;padding:12px!important;border-color:#2c4d69!important;background:linear-gradient(145deg,#12283e,#0e1c30)!important}
+#sr51TrainCompare .sr51-train-title{font-size:12px;color:#a8bfda;font-weight:700}
+#sr51TrainCompare .sr51-cmp-line{font-size:10px;letter-spacing:.01em}
+#sr51TrainCompare .sr51-quiet,#sr51TrainCompare .sr51-caution{display:none!important}
+#sr51TrainCompare .sr51-gap{font-size:14px;color:#f3cf8a}
+.sr53-approx{display:inline-flex;align-self:flex-start;border-radius:999px;font:720 11px/1.35 -apple-system,Inter,system-ui,sans-serif;padding:6px 10px;background:#3b2d22;border:1px solid #85572e;color:#ffd194}
+.sr53-approx.missing{background:#1c3044;border-color:#304b65;color:#95b0c8}
+/* Keep basic route/progress and concise timetable on the default screen. Power-user panels expand on demand. */
+#sheet:not(.sr53-expanded) #details,#sheet:not(.sr53-expanded) #sheetNote,#sheet:not(.sr53-expanded) #sr46Quality,#sheet:not(.sr53-expanded) #sr47TrackNote,#sheet:not(.sr53-expanded) #sr52DelayCard,#sheet:not(.sr53-expanded) #sr52LineCard{display:none!important}
+#sheet:not(.sr53-expanded) #sr52RouteCard{border:0!important;background:transparent!important;padding:5px 0!important;margin:5px 0!important;box-shadow:none!important}
+#sheet:not(.sr53-expanded) #sr52RouteCard .sr52-muted{display:none!important}
+#sheet:not(.sr53-expanded) #sr47Progress .sr47-card-head small{display:none}
+#sheet .sr46-actions{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;padding:1px 0;margin-top:9px}
+#sheet .sr46-actions>.sr46-action,#sheet .sr46-actions>.sr53-action-wrap{flex:0 0 auto}
+#sheet .sr46-action{font-size:11px;font-weight:690;padding:8px 11px;border-radius:11px;background:#1a304a;border-color:#36526e;min-height:36px}
+#sheet .sr46-action:active{transform:scale(.98)}
+.sr53-action-wrap{position:relative}
+.sr53-action-menu{position:absolute;z-index:200;top:calc(100% + 6px);right:-6px;display:flex;flex-direction:column;gap:6px;background:#0d1e31;border:1px solid #3d5b7c;border-radius:13px;padding:7px;min-width:132px;box-shadow:0 12px 34px #000a}
+.sr53-action-menu[hidden]{display:none!important}
+.sr53-action-menu .sr46-action{text-align:left;min-width:110px}
+#sheet .sr53-extra{margin-left:auto;white-space:nowrap}
+/* 5.1 clean tool dock and familiar navigation, slightly more deliberate transitions. */
+.sr50-bottom-nav{background:rgba(9,18,32,.97)!important;box-shadow:0 -6px 24px #050a1166}
+.sr50-nav-btn{transition:background-color .22s ease,color .2s ease,transform .24s cubic-bezier(.2,.8,.2,1)}
+.sr50-nav-btn:active{transform:scale(.96)}
+.sr50-tab-view.active{animation:sr53In .30s cubic-bezier(.16,1,.3,1) both}
+@keyframes sr53In{from{opacity:.55;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+#sheet.open .sheet-heading-main{animation:sr53In .32s cubic-bezier(.16,1,.3,1) both!important}
+#sheet.open .sheet-scroll{animation:sr53In .42s cubic-bezier(.16,1,.3,1) both!important}
+.sr51-departure-row{border-radius:13px!important;box-shadow:0 4px 15px #0001;transition:border-color .2s ease,background-color .2s ease}
+.sr51-departure-row:active{background:#203853}
+.sr51-board{gap:10px}.sr51-board .sr50-tip{line-height:1.4}
+@media(max-width:380px){.sr53-title-line .sheet-title{font-size:21px}.sr53-delay-pill{font-size:10px;padding:7px 9px}#sheet .sr46-action{padding:7px 8px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){.sr50-tab-view.active,#sheet.open .sheet-heading-main,#sheet.open .sheet-scroll{animation:none!important}.sr50-nav-btn,.sr51-departure-row{transition:none!important}}
+/* Large legacy delay banner is redundant with the verified title pill. */
+#sheet:not(.sr53-expanded) #radar40Delay{display:none!important}
