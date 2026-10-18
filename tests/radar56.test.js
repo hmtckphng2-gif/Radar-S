@@ -22,7 +22,7 @@ test('connection confidence requires two fresh stop-specific updates',()=>{
  assert.equal(connectionAssessment({plan:5000,rt:0},{plan:6000,rt:0}).kind,'likely');
 });
 test('findConnections uses exact station, valid index, and ignores cancelled trips',()=>{
- const db={meta:{days:[day]},trips:{a:['RA','Meran','S','100',0,true],b:['RB','Trento','S','200',0,true],c:['RB','Trento','S','201',0,true]},routes:{RA:['100','',2],RB:['200','',2]}};
+ const db={meta:{ready:true,days:[day]},trips:{a:['RA','Meran','S','100',0,true],b:['RB','Trento','S','200',0,true],c:['RB','Trento','S','201',0,true]},routes:{RA:['100','',2],RB:['200','',2]}};
  const details={times:{a:[['A',3500,3505,1],['BZ',4100,4200,2]],b:[['BZ',4700,4705,1]],c:[['XX',4600,4650,1]]},stops:{BZ:['Bolzano']}};
  const ups=new Map([['sta:a',incoming],['sta:b',outgoing]]);
  const r=findConnections({source:'sta',tripId:'a',db,details,updates:ups,statuses:status,serviceDay:day,nowSec:4000,now});

@@ -38,7 +38,7 @@ export function connectionAssessment(arrival,departure,minTransfer=240){
 }
 export function findConnections({source,tripId,stops,db,details,updates,statuses,serviceDay,nowSec,now=Date.now(),minTransfer=240,max=14}){
  const journey=details?.times?.[tripId];
- if(!Array.isArray(journey)||!db?.trips?.[tripId]||!db?.meta?.days?.includes(serviceDay))return {station:null,rows:[],reason:'Kein heute gültiger GTFS-Fahrtverlauf'};
+ if(!Array.isArray(journey)||!db?.trips?.[tripId]||!db?.meta?.ready||!db?.meta?.days?.includes(serviceDay))return {station:null,rows:[],reason:'Kein heute gültiger GTFS-Fahrtverlauf'};
  let station=null;
  for(let i=0;i<journey.length;i++){
   const row=journey[i],arr=numberOrNull(row[1]??row[2]);

@@ -79,7 +79,7 @@ function journey(){
  const ratio=progress.total?Math.max(0,Math.min(100,progress.plannedPassed/Math.max(1,progress.total-1)*100)):0;
  const track=mk('div','sr56-progress');const fill=mk('div','sr56-progress-fill');fill.style.width=ratio+'%';track.append(fill);journeyCard.append(track);
  const next=progress.next;
- const name=next?s.details[v.source].stops?.[String(next[0])]?.[0]||'Halt unbekannt':'Fahrplanende';
+ const name=next?(s.details[v.source].stops?.[String(next[0])]?.[0]||'Halt unbekannt'):'Fahrplanende';
  const text=next?'Planmäßig als Nächstes: '+name+' · '+txtTime(next[1]??next[2]):'Alle Halte laut Fahrplan erreicht';
  journeyCard.append(mk('p','sr56-note',text+' · '+progress.plannedPassed+'/'+progress.total+' planmäßig vorherige Halte'));
  if(v.currentStopId){journeyCard.append(mk('p','sr56-note','Vom Feed gemeldeter nächster Halt: '+String(s.details[v.source].stops?.[v.currentStopId]?.[0]||v.currentStopId)))}
