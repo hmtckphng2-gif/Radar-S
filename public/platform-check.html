@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gleis-Check · Radar 5.4.3</title>
+<style>
+:root{color-scheme:dark;font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1420;color:#edf4ff}*{box-sizing:border-box}body{margin:0;padding:28px 18px 50px}main{max-width:640px;margin:auto}h1{font-size:27px;margin:8px 0}p{line-height:1.5;color:#aebed1}small{color:#83b4ff;letter-spacing:.1em}form{display:flex;gap:10px;margin:24px 0}input{width:100%;min-width:0;padding:15px;border:1px solid #3a4e67;border-radius:14px;background:#17273c;color:inherit;font-size:18px}button,a{font:inherit}button{border:0;border-radius:14px;padding:14px 18px;background:#4d8dff;color:white;cursor:pointer}button:disabled{opacity:.6}section{padding:18px;background:#142235;border:1px solid #30425a;border-radius:18px;margin:16px 0}#status{font-weight:650;font-size:19px}#code{display:block;margin-top:12px;font-size:14px;overflow-wrap:anywhere;color:#ffd08c}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.5}a{color:#91bcff}li{padding:10px 0;line-height:1.4;border-bottom:1px solid #30425a}#result:empty{display:none}
+</style></head><body><main>
+<small>SÜDTIROL RADAR · 5.4.3</small><h1>Gleis-Abruf prüfen</h1><p>Diese Seite prüft den tatsächlichen Serverabruf. Sie zeigt, an welchem Schritt Gleisdaten fehlen.</p>
+<form id="form"><input id="number" aria-label="Zugnummer" inputmode="numeric" pattern="[0-9]{2,6}" value="3846" required><button id="check">Prüfen</button></form>
+<section aria-live="polite"><div id="status">Bereit für den Test</div><code id="code"></code><p id="message">Tippe auf „Prüfen“. Danach reicht ein Screenshot dieses Ergebnisses.</p></section>
+<section id="result"></section><details id="details" hidden><summary>Technische Antwort</summary><pre id="raw"></pre></details>
+<p><a href="/#map">Zurück zum Radar</a></p>
+<script type="module">
+const $=id=>document.getElementById(id);
+const stage={lookup:'Zugsuche',journey:'Fahrtverlauf',parse:'Datenformat',complete:'Abgeschlossen'};
+const reason={'upstream-http':'Die offizielle Quelle hat eine Fehlerantwort geliefert.',network:'Der Server konnte die offizielle Quelle nicht erreichen.',timeout:'Die offizielle Quelle hat nicht rechtzeitig geantwortet.','invalid-json':'Die Quelle hat kein lesbares Fahrtdaten-JSON geliefert.','unexpected-journey':'Die zurückgegebene Fahrt passt nicht zur gesuchten Zugnummer.','no-unique-journey':'Für diesen Tag ist keine eindeutig passende offizielle Fahrt verfügbar.'};
+$('form').addEventListener('submit',async event=>{
+ event.preventDefault();const number=$('number').value.trim();if(!/^\d{2,6}$/.test(number))return;
+ const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
+ const day=`${parts.year}-${parts.month}-${parts.day}`;
+ $('check').disabled=true;$('status').textContent='Prüfe Zug '+number+' …';$('message').textContent='Abruf läuft. Das kann bis zu 20 Sekunden dauern.';$('code').textContent='';$('result').replaceChildren();$('details').hidden=true;
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),23000);
+ try{
+  const response=await fetch('/api/train-platforms/'+number+'?day='+day,{cache:'no-store',signal:controller.signal});
+  const text=await response.text();let data;try{data=JSON.parse(text)}catch{throw new Error('Serverantwort ist kein JSON · HTTP '+response.status)}
+  $('details').hidden=false;$('raw').textContent=JSON.stringify({http:response.status,day,...data},null,2);
+  const d=data.diagnostic;
+  if(d?.version!=='5.4.3'){
+   $('status').textContent='Diagnose-Backend noch nicht installiert';$('code').textContent='Backend-Version: '+(d?.version||'nicht vorhanden')+' · HTTP '+response.status;
+   $('message').textContent='Bitte worker.js aus dem ZIP im Hauptordner von Radar-S ersetzen und den Cloudflare-Build abwarten. Nur die HTML-Datei hochzuladen reicht nicht.';return;
+  }
+  if(!response.ok){
+   $('status').textContent='Gleis-Abruf fehlgeschlagen';$('code').textContent=[stage[d.stage]||d.stage,'API HTTP '+response.status,d.upstreamStatus?'Quelle HTTP '+d.upstreamStatus:null,d.reason].filter(Boolean).join(' · ');
+   $('message').textContent=(reason[d.reason]||data.error)+(d.message?' '+d.message:'');return;
+  }
+  const stops=Array.isArray(data.stops)?data.stops:[],withTrack=stops.filter(s=>s.actualDeparture||s.plannedDeparture||s.actualArrival||s.plannedArrival);
+  $('status').textContent=withTrack.length?'Gleisdaten erfolgreich empfangen':'Fahrt erreichbar · keine Gleise geliefert';
+  $('code').textContent=`Zug ${number} · ${withTrack.length} von ${stops.length} Halten mit Gleisangaben · Backend ${d.version}`;
+  $('message').textContent='Quelle: '+data.source+'. Planmäßige und gemeldete Gleise bleiben getrennt.';
+  const list=document.createElement('ul');
+  for(const s of withTrack){const li=document.createElement('li'),actual=s.actualDeparture||s.actualArrival,planned=s.plannedDeparture||s.plannedArrival;li.textContent=s.name+' · Gleis '+(actual||planned)+(actual?' · gemeldet':' · Plan');list.append(li)}
+  if(withTrack.length)$('result').append(list);
+ }catch(error){$('status').textContent='Test konnte nicht abgeschlossen werden';$('code').textContent=error.name==='AbortError'?'Zeitüberschreitung nach 23 Sekunden':'Verbindung oder Antwortformat';$('message').textContent=error.name==='AbortError'?'Der Radar-Server hat nicht rechtzeitig geantwortet.':error.message}
+ finally{clearTimeout(timer);$('check').disabled=false}
+});
+</script></main></body></html>
