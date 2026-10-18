@@ -158,6 +158,16 @@ function sheetGestures(){
  handle.addEventListener('pointercancel',()=>{y=null});
  handle.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sr53Expand')?.click()}});
 }
+function setupCompactBadge(){
+ const pill=$('sr53DelayPill');if(!pill)return;
+ const update=()=>{
+   const value=pill.textContent||'';
+   const minutes=value.match(/([+−-]?\d+)\s*(?:Min\.|′|min)/i);
+   pill.dataset.short=minutes?minutes[1].replace('−','-'):(/pünktlich/i.test(value)?'0':'–');
+ };
+ update();
+ new MutationObserver(update).observe(pill,{childList:true,characterData:true,subtree:true});
+}
 function setupScrollActions(){
  const sheet=$('sheet'),scroller=sheet?.querySelector('.sheet-scroll');
  if(!sheet||!scroller)return;
@@ -192,7 +202,7 @@ function setupScrollActions(){
 function init(){
  if(ready)return;bridge=window.SuedtirolRadar37;map=bridge?.state?.map;
  if(!map||!$('sheet')||!document.querySelector('.sr50-bottom-nav'))return;
- ready=true;document.body.classList.add('sr55-ready');versionGuard();tools();prepareSearch();extras();sheetGestures();setupScrollActions();
+ ready=true;document.body.classList.add('sr55-ready');versionGuard();tools();prepareSearch();extras();sheetGestures();setupCompactBadge();setupScrollActions();
  if(!setupFollow()){let n=0;const poll=()=>{if(!setupFollow()&&++n<30)setTimeout(poll,200)};setTimeout(poll,220)}
  setupInformation();
  document.addEventListener('sr37:selection',()=>setTimeout(setupInformation,250));
