@@ -1,6 +1,5 @@
 /* Radar 5.8: factual, source-aware issues and vehicle metadata. */
 import {isRailRoute} from './core.js';
-import {platformInfo} from './radar54-logic.mjs';
 import {freshUpdate,tripCancelled} from './radar56-logic.mjs';
 import {romeDay,romeSeconds,dateGTFSValid} from './radar51-logic.mjs';
 
@@ -35,7 +34,7 @@ export function collectTrafficIssues(state,now=Date.now(),limit=80){
   const line=String(kind==='train'?(trip[3]||route?.[0]||tripId):(route?.[0]||tripId));
   const cancelled=tripCancelled(update,source,state.statuses,day,now);
   const stop=!cancelled?nearestStopEvidence(update,times,nowSec,det?.stops):null;
-  const delay=stop?.delay>=600?stop.delay:cleanDelay(update.delay),kindOfDelay=stop?.delay>=600?'stop':'trip';
+  const delay=stop?stop.delay:cleanDelay(update.delay),kindOfDelay=stop?'stop':'trip';
   const affectedStops=times.map(t=>String(t[0]));
   if(cancelled||delay!==null&&delay>=600){
    const minutes=cancelled?null:Math.round(delay/60),severity=cancelled?'danger':'delay';
@@ -71,10 +70,9 @@ export function summarizeNetwork(issues){
  const grouped=new Map();
  for(const issue of issues||[]){
   const id=issue.source+':'+issue.kind+':'+issue.line;
-  const row=grouped.get(id)||{source:issue.source,kind:issue.kind,line:issue.line,cancelled:0,delayed:0,changed:0,maxDelay:0};
+  const row=grouped.get(id)||{source:issue.source,kind:issue.kind,line:issue.line,cancelled:0,delayed:0,maxDelay:0};
   if(issue.severity==='danger')row.cancelled++;
   else if(issue.severity==='delay'){row.delayed++;row.maxDelay=Math.max(row.maxDelay,issue.minutes||0)}
-  else if(issue.severity==='info')row.changed++;
   grouped.set(id,row);
  }
  return [...grouped.values()].sort((a,b)=>b.cancelled-a.cancelled||b.maxDelay-a.maxDelay||a.line.localeCompare(b.line));
