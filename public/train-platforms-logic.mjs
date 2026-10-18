@@ -55,3 +55,4 @@ export function matchPlatform(data,c,now=Date.now()){
  if(!current&&!planned)return null;
  return {planned,current:current||planned,changed:Boolean(current&&planned&&equivalentTrack(current)!==equivalentTrack(planned)),live:Boolean(current),source:data.source};
 }
+export {track as displayTrack,stationNames};

@@ -1,6 +1,6 @@
 /* Radar 5.4 — openable timetable journeys and honest device-local delay history. */
 import {aggregateDays,recordObservation,trainNumber,platformInfo} from './radar54-logic.mjs';
-import {enrichTrainPlatform} from './train-platforms.js';
+import {enrichTrainPlatform} from './train-platforms.js?v=5.4.4';
 import {romeDay,dateGTFSValid} from './radar51-logic.mjs';
 import {isRailRoute,formatClock,vehicleDelayInfo} from './core.js';
 (()=>{
@@ -76,7 +76,7 @@ function render(){
     const li=mk('li','sr54-stop'),left=mk('div','');
     const platform=platformInfo(st,rt,det.stops),track=mk('small','',platformText(platform));
     left.append(mk('strong','',st?.[0]||'Haltestelle unbekannt'),track);
-    enrichTrainPlatform(track,{number:selection.number,serviceDay:romeDay(),source:selection.source,stopId,stopName:st?.[0],arrival,departure},platform);
+    enrichTrainPlatform(track,{number:selection.number,serviceDay:romeDay(),source:selection.source,stopId,stopName:st?.[0],arrival,departure,terminal:times.at(-1)?.[0]===stopId&&times.at(-1)?.[3]===seq},platform);
     const skipped=/^(SKIPPED|1)$/i.test(String(rt?.scheduleRelationship??rt?.schedule_relationship??''));
     const time=departure??arrival;const delay=rt?.departure?.delay??rt?.arrival?.delay;
     const clock=mk('div','sr54-stop-clock');clock.append(mk('strong','',cancelled||skipped?'Entfällt':formatClock(time)));

@@ -2,7 +2,7 @@
 import {calculateNetworkStats,searchTrainStats,searchBusLineStats,vehicleAgeSeconds,HistoricalStorage,tidy} from './radar50-logic.mjs';
 import {findStations,nearbyStationGroup,buildDepartureRows,romeSeconds,busDelayLabel} from './radar51-logic.mjs';
 import {mergeStationDepartures} from './radar53-logic.mjs';
-import {enrichTrainPlatform} from './train-platforms.js';
+import {enrichTrainPlatform} from './train-platforms.js?v=5.4.4';
 (() => {
 'use strict';
 const $=id=>document.getElementById(id);
@@ -264,7 +264,7 @@ async function renderInlineBoard(){
   if(platform?.changed)track.classList.add('sr54-platform-changed');
   if(d.kind==='train'){
    const det=bridge.state.details[d.source],timing=det?.times?.[d.tripId]?.find(t=>String(t[0])===String(d.stopId)&&Number(t[2]??t[1])===d.sec);
-   enrichTrainPlatform(track,{number:d.number,serviceDay:d.serviceDay,source:d.source,stopId:d.stopId,stopName:det?.stops?.[d.stopId]?.[0],arrival:timing?.[1],departure:timing?.[2]},platform);
+   enrichTrainPlatform(track,{number:d.number,serviceDay:d.serviceDay,source:d.source,stopId:d.stopId,stopName:det?.stops?.[d.stopId]?.[0],arrival:timing?.[1],departure:timing?.[2],terminal:Boolean(timing&&timing===det?.times?.[d.tripId]?.at(-1))},platform);
   }
   if(d.kind==='train'&&/^\d{2,6}$/.test(d.number)){
    row.setAttribute('role','button');row.tabIndex=0;row.classList.add('sr50-actionable');

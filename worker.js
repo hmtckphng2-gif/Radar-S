@@ -1,4 +1,5 @@
 import {resolveTrain,normalizeTrain,romeTime} from './public/train-platforms-logic.mjs';
+import {rfiStation,parseMonitor} from './public/rfi-platforms-logic.mjs';
 /** Read-only transit proxies, with fixed upstream hosts and bounded caching. */
 const FEEDS = Object.freeze({
   sta: 'https://proxy.busone.app/sta/gtfs-rt/vehicle-positions.json',
@@ -52,6 +53,19 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
     if (request.method !== 'GET' && request.method !== 'HEAD') return respond({ error: 'Method not allowed' }, 405);
     const name = url.pathname.substring(5);
+    if(name.startsWith('station-platforms/')){
+      const id=name.slice('station-platforms/'.length),arrivals=url.searchParams.get('arrivals')||'0';
+      if(!rfiStation(id)||!['0','1'].includes(arrivals))return respond({error:'Invalid RFI station or board'},400,{'cache-control':'no-store'});
+      const diagnostic={version:'5.4.4',source:'RFI',stationId:id,upstreamStatus:null};
+      try{
+        const upstream=await fetch(`https://iechub.rfi.it/ArriviPartenze/arrivalsdepartures/monitor?arrivals=${arrivals==='1'?'true':'false'}&placeid=${id}&search=`,{headers:{accept:'text/html'},signal:AbortSignal.timeout(9000),cf:{cacheEverything:true,cacheTtl:30}});
+        diagnostic.upstreamStatus=upstream.status;
+        if(!upstream.ok)return respond({error:'RFI monitor unavailable',diagnostic},502,{'cache-control':'no-store'});
+        const board=parseMonitor(await upstream.text(),id,arrivals==='1');
+        if(!board)return respond({error:'Unexpected RFI board format',diagnostic},502,{'cache-control':'no-store'});
+        return respond({...board,diagnostic},200,{'cache-control':'public, max-age=30'});
+      }catch(error){return respond({error:'RFI monitor request failed',diagnostic:{...diagnostic,reason:error?.name==='TimeoutError'?'timeout':'network'}},502,{'cache-control':'no-store'})}
+    }
     if(name.startsWith('train-platforms/'))return trainPlatforms(request,url,name);
     if (name === 'health') return respond({ ok: true, version:'5.4.3', status: 'Proxy bereit (kein Live-Feed-Test)', feeds: Object.keys(FEEDS), time: new Date().toISOString() }, 200, { 'cache-control': 'no-store' });
     if (!Object.hasOwn(FEEDS, name)) return respond({ error: 'Unknown feed' }, 404);

@@ -71,3 +71,13 @@ test('verified local station alias Ponte Adige matches official Ponte d’Adige'
  const d=logic.normalizeTrain({...raw,fermate:[{...raw.fermate[0],id:'S02225',stazione:"PONTE D'ADIGE"}]},'17270',day,stamp);
  assert.equal(logic.matchPlatform(d,{...context,source:'sta',stopId:'it:22021:1',stopName:'Ponte Adige'},stamp)?.current,'4');
 });
+test('failed official lookup exposes the failed stage and upstream HTTP status',async()=>{
+ const original=globalThis.fetch;
+ globalThis.fetch=async()=>new Response('unavailable',{status:503,headers:{'content-type':'text/plain'}});
+ try{const r=await worker.fetch(new Request('https://radar.test/api/train-platforms/3846?day='+logic.romeTime(Date.now()).day),{});const d=await r.json();assert.equal(r.status,502);assert.equal(d.diagnostic?.stage,'lookup');assert.equal(d.diagnostic?.upstreamStatus,503);assert.equal(d.diagnostic?.version,'5.4.3');}finally{globalThis.fetch=original}
+});
+test('failed official journey distinguishes network failure from missing track data',async()=>{
+ const original=globalThis.fetch;let count=0;
+ globalThis.fetch=async()=>{if(count++===0)return new Response(`3846 - BOLOGNA|3846-S05043-${Date.now()}\n`);throw new TypeError('fetch failed')};
+ try{const r=await worker.fetch(new Request('https://radar.test/api/train-platforms/3846?day='+logic.romeTime(Date.now()).day),{});const d=await r.json();assert.equal(d.diagnostic?.stage,'journey');assert.equal(d.diagnostic?.reason,'network');assert.equal(d.diagnostic?.upstreamStatus,null)}finally{globalThis.fetch=original}
+});
