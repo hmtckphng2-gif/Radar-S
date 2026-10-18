@@ -6,7 +6,7 @@ import {romeDay,romeSeconds} from './radar51-logic.mjs';
 'use strict';
 const $=id=>document.getElementById(id),e=(tag,cls='',txt)=>{const n=document.createElement(tag);n.className=cls;if(txt!==undefined)n.textContent=String(txt);return n};
 const btn=(txt,fn,cls='sr58-btn')=>{const b=e('button',cls,txt);b.type='button';b.addEventListener('click',fn);return b};
-let bridge,banner,dialog,body,issues=[],diagnostics=[],alarmIds=new Set(),lastUpdate=0,stationCache=null,notificationsSeeded=false;
+let bridge,banner,dialog,body,issues=[],diagnostics=[],alarmIds=new Set(),lastUpdate=0,stationCache=null,notificationsSeeded=false,dismissedAlertIds=new Set();
 const STORE='sr58_alert_preferences_v1';
 let prefs={enabled:false,delay:10,cancel:true,delayAlerts:true,platform:true,favoritesOnly:true};
 try{prefs={...prefs,...JSON.parse(localStorage.getItem(STORE)||'{}')}}catch{}
@@ -21,11 +21,13 @@ function refresh(){
  const cancel=issues.filter(x=>x.severity==='danger'),severe=issues.filter(x=>x.severity==='delay'&&x.minutes>=10);
  const alerts=[...cancel,...severe],groups=summarizeNetwork(alerts);
  if(alerts.length){
-  banner.hidden=false;banner.classList.add('sr58-warning');
+  const activeIds=alerts.map(x=>x.id);
+  const hasNew=activeIds.some(id=>!dismissedAlertIds.has(id));
+  banner.hidden=!hasNew;banner.classList.add('sr58-warning');
   $('sr58BannerTitle').textContent=groups.length+' betroffene Linien · '+alerts.length+' Meldungen';
   $('sr58BannerDetail').textContent=groups.slice(0,2).map(x=>(x.kind==='train'?'Zug ':'Bus ')+x.line+(x.cancelled?' · Problem/Ausfall':' · +'+x.maxDelay+' Min.')).join('  ·  ');
  }else{
-  banner.hidden=true;
+  banner.hidden=true;dismissedAlertIds.clear();
  }
  if(dialog?.open && ['issues','network','health','vehicles'].includes(current))renderCurrent();
  const allNotices=issues.filter(x=>x.severity==='danger'||x.severity==='info'||x.severity==='delay'&&x.minutes>=5);
@@ -146,14 +148,46 @@ function renderCurrent(){
   body.append(e('p','sr58-muted','Nur eindeutig identische Haltestellen innerhalb desselben GTFS-Feeds. Keine garantierte Anschlusssicherung.'));
  }
 }
+
+function initLiquidNav(){
+ const nav=document.getElementById('sr50BottomNav');
+ if(!nav||nav.querySelector('.sr58-liquid-pill'))return;
+ const pill=e('span','sr58-liquid-pill');
+ pill.setAttribute('aria-hidden','true');
+ nav.prepend(pill);nav.classList.add('sr58-liquid-nav');
+ const buttons=[...nav.querySelectorAll('.sr50-nav-btn')];
+ let initialized=false;
+ const move=()=>{
+  const active=nav.querySelector('.sr50-nav-btn.active')||buttons[0];
+  if(!active)return;
+  const a=active.getBoundingClientRect(),n=nav.getBoundingClientRect();
+  pill.style.width=a.width+'px';
+  pill.style.height=a.height+'px';
+  pill.style.transform='translate3d('+(a.left-n.left)+'px,'+(a.top-n.top)+'px,0)';
+  if(!initialized){pill.classList.add('sr58-liquid-ready');initialized=true}
+ };
+ // Observe class updates from the existing tab controller without changing its behavior.
+ const observer=new MutationObserver(move);
+ for(const b of buttons)observer.observe(b,{attributes:true,attributeFilter:['class']});
+ window.addEventListener('resize',move,{passive:true});
+ if(window.ResizeObserver)new ResizeObserver(move).observe(nav);
+ requestAnimationFrame(()=>requestAnimationFrame(move));
+}
+
 function init(){
  bridge=window.SuedtirolRadar37;
  if(!bridge?.state?.map||!window.SuedtirolRadar57||banner)return;
  banner=btn('',()=>open('issues'),'sr58-banner');banner.id='sr58Banner';banner.hidden=true;
- const heading=e('div','sr58-banner-heading');heading.append(e('span','','⚠ VERKEHRSSTÖRUNGEN'),e('span','','Details ›'));
+ const heading=e('div','sr58-banner-heading');heading.append(e('span','','⚠ VERKEHRSSTÖRUNGEN'));
+ const controls=e('span','sr58-banner-controls');controls.append(e('span','','Details ›'));
+ const close=btn('✕',event=>{},'sr58-banner-close');
+ close.setAttribute('aria-label','Verkehrsstörungen schließen');
+ close.addEventListener('click',event=>{event.stopPropagation();dismissedAlertIds=new Set(issues.filter(x=>x.severity==='danger'||x.severity==='delay'&&x.minutes>=10).map(x=>x.id));banner.hidden=true});
+ controls.append(close);heading.append(controls);
  const title=e('strong');title.id='sr58BannerTitle';
  const detail=e('small');detail.id='sr58BannerDetail';banner.append(heading,title,detail);
  document.body.append(banner);
+ initLiquidNav();
  // Dedicated switchboard button outside the map. Existing navigation untouched.
  const quick=btn('◉ Radar',()=>open('issues'),'sr58-quick');quick.setAttribute('aria-label','Radar 5.8 Störungen, Suche und Datenqualität');document.body.append(quick);
  document.addEventListener('sr37:feeds',refresh);

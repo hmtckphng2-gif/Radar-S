@@ -13,3 +13,15 @@ body.sr58-has-warning #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-a
 @media(max-width:390px){.sr58-banner{left:8px;right:8px}.sr58-quick{right:8px}.sr58-dialog{width:97vw}.sr58-body{padding:12px}}
 
 .sr58-issue.info{border-left-color:#79b8ef}.sr58-issue.info strong{color:#b4d7fc}.sr58-vehicle-tabs{margin:12px 0}.sr58-dialog .sr58-issue button{touch-action:manipulation}
+
+/* 5.8.1 – sliding liquid-glass selection. Existing four-tab navigation stays intact. */
+#sr50BottomNav.sr58-liquid-nav{isolation:isolate;background:rgba(9,18,32,.74)!important;-webkit-backdrop-filter:blur(28px) saturate(160%)!important;backdrop-filter:blur(28px) saturate(160%)!important}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{position:relative;z-index:2;background:transparent!important;transition:color .26s ease,transform .26s ease}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn.active{background:transparent!important;color:#d3e8ff!important}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn:active{transform:scale(.96)}
+#sr50BottomNav .sr58-liquid-pill{position:absolute;z-index:1;top:0;left:0;border-radius:19px;pointer-events:none;opacity:0;background:linear-gradient(160deg,rgba(182,218,255,.24),rgba(93,158,242,.13) 45%,rgba(50,103,188,.25));border:1px solid rgba(202,226,255,.27);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(115,172,255,.07),0 5px 18px rgba(0,0,0,.14);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);transition:transform .48s cubic-bezier(.2,1.18,.27,1),width .35s ease,height .35s ease,opacity .2s ease;will-change:transform}
+#sr50BottomNav .sr58-liquid-pill.sr58-liquid-ready{opacity:1}
+.sr58-banner-heading .sr58-banner-controls{display:flex;align-items:center;gap:14px}
+.sr58-banner-close{background:rgba(255,255,255,.11);border:1px solid rgba(255,225,230,.23);color:#ffe2e5;border-radius:50%;width:27px;height:27px;display:grid;place-items:center;font-size:13px;line-height:1;cursor:pointer;flex:none}
+.sr58-banner-close:active{transform:scale(.91)}
+@media(prefers-reduced-motion:reduce){#sr50BottomNav .sr58-liquid-pill,#sr50BottomNav .sr50-nav-btn{transition:none!important}}
