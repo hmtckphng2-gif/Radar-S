@@ -7,7 +7,7 @@ import {mergeStationDepartures} from './radar53-logic.mjs';
 const $=id=>document.getElementById(id);
 const el=(tag,cls='',txt=null)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==null)e.textContent=String(txt);return e};
 const button=(cls,text,fn)=>{const b=el('button',cls,text);b.type='button';b.addEventListener('click',fn);return b};
-let bridge=null,history=null,started=false,tab='map',searchTimer=null,stationRequest=0,stationCache=null,searchTrain='',searchLine='',stationSelected=null,boardAllDay=false,boardRequest=0,boardFeedTimer=null;
+let bridge=null,history=null,started=false,tab='map',searchTimer=null,stationRequest=0,stationCache=null,searchTrain='',searchLine='',stationSelected=null,boardAllDay=false,boardRequest=0,boardFeedTimer=null,boardKind='all';
 const FAV_KEY='sr50_final_favorites_v1';
 const saved=()=>{try{
  let f=JSON.parse(localStorage.getItem(FAV_KEY)||'[]');if(!Array.isArray(f))f=[];
@@ -57,7 +57,7 @@ function createViews(){
  const dep=el('section','sr50-tab-view');dep.id='sr50DeparturesView';dep.setAttribute('aria-label','Abfahrten');
  dep.innerHTML=`<header class="sr50-header"><div class="sr50-overline">FAHRPLAN · SÜDTIROL</div><h1>Abfahrten</h1><p>Bahnhof oder Haltestelle suchen. Abfahrten ohne Kartenwechsel ansehen.</p></header><div class="sr50-dashboard"><div class="sr50-card"><label for="sr50DepSearch" class="sr50-field-label">Haltestelle oder Bahnhof</label><div class="sr50-search-box"><input type="search" id="sr50DepSearch" placeholder="z. B. Bozen, Meran…" autocapitalize="off" autocomplete="off"/></div><div class="sr50-tip">Abfahrten direkt hier ansehen: Plan und bestätigte GTFS-RT-Meldungen klar getrennt.</div><div id="sr50DepResults" class="sr50-results" aria-live="polite"></div></div><div id="sr51InlineBoard" class="sr51-board sr50-card" hidden></div></div>`;
  const stats=el('section','sr50-tab-view');stats.id='sr50StatsView';stats.setAttribute('aria-label','Statistiken');
- stats.innerHTML=`<header class="sr50-header"><div class="sr50-overline">NETWORK INTELLIGENCE · 5.0</div><h1>Statistik</h1><p>Transparente Echtzeitdaten statt geschätzter Pünktlichkeit.</p></header><div class="sr50-dashboard">
+ stats.innerHTML=`<header class="sr50-header"><div class="sr50-overline">NETWORK INTELLIGENCE · 5.4</div><h1>Statistik</h1><p>Transparente Echtzeitdaten statt geschätzter Pünktlichkeit.</p></header><div class="sr50-dashboard">
  <section class="sr50-card"><div class="sr50-card-title"><span>Netzwerk jetzt</span><span id="sr50StatsTime" class="sr50-stamp">Noch kein Feed</span></div><div class="sr50-kpi-grid">
  <div class="sr50-kpi-box"><span>Fahrzeuge im Feed</span><strong id="sr50StatTotal">–</strong></div><div class="sr50-kpi-box green"><span>Frische Positionen</span><strong id="sr50StatCurrent">–</strong></div><div class="sr50-kpi-box"><span>Züge / Busse</span><strong id="sr50StatSplit">–</strong></div><div class="sr50-kpi-box orange"><span>Alt / ungeklärt</span><strong id="sr50StatStale">–</strong></div></div>
  <div class="sr50-meter"><div id="sr50MeterFresh"></div><div id="sr50MeterStale"></div></div><p id="sr50QualityNote" class="sr50-tip">„Frisch“ heißt Feedmeldung innerhalb von fünf Minuten – nicht garantiert GPS.</p></section>
@@ -138,11 +138,15 @@ function renderTrain(){
   const row=makeRow(v.name,v.headsign+(v.estimated?' · berechnete Position':' · Feedposition'),v.delayMin===null?'Verspätung unbekannt':(v.delayMin>0?'+':'')+v.delayMin+' Min.');
   const meta=el('small','sr50-tip',(v.fresh?'Frische Meldung · ':'Letzte/ungeprüfte Meldung · ')+ageLabel(v.age)+' · '+v.source.toUpperCase());
   row.querySelector('.sr50-list-info').append(meta);row.classList.add('sr50-actionable');row.setAttribute('role','button');row.tabIndex=0;
-  row.onclick=()=>openVehicle(v.key);row.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openVehicle(v.key)}};target.append(row)
+  row.onclick=()=>window.SuedtirolRadar54?.openTrain({source:v.source,tripId:v.tripId,number:result.query,key:v.key});row.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();row.click()}};target.append(row)
  }
  if(result.planned.length){const title=el('p','sr50-tip','Heutiger GTFS-Fahrplan (keine bestätigte Live-Ortung):');target.append(title);
-  for(const trip of result.planned.slice(0,8))target.append(makeRow(trip.source.toUpperCase()+' · '+result.query,trip.headsign,'Plan'));
+  for(const trip of result.planned.slice(0,8)){
+   const row=button('sr50-list-row sr50-actionable', '',()=>window.SuedtirolRadar54?.openTrain({...trip,number:result.query}));
+   row.append(el('strong','',trip.source.toUpperCase()+' · '+result.query),el('span','',trip.headsign),el('small','','Fahrt & Verlauf ↗'));target.append(row);
+  }
  }
+ target.append(button('sr54-history-open','▥ Verspätungen · 7 / 30 Tage',()=>window.SuedtirolRadar54?.openTrain({number:result.query})));
  if(!result.live.length&&!result.planned.length)target.append(el('p','sr50-tip','Keine geprüfte Zuordnung im aktuellen Feed oder heutigen GTFS-Index. Das bedeutet nicht, dass der Zug ausfällt.'));
 }
 function renderBus(){
@@ -214,12 +218,12 @@ async function openStation(st){
 async function renderInlineBoard(){
  const container=$('sr51InlineBoard');if(!container||!stationSelected)return;
  if($('sr50DepResults'))$('sr50DepResults').hidden=true;
- if(container.previousElementSibling?.classList.contains('sr50-card'))container.parentElement.insertBefore(container,container.previousElementSibling);
+ // Search stays above the board; no nested scroll area.
  const seq=++boardRequest;
  const savedBoardScroll=container.querySelector('.sr51-departure-list')?.scrollTop||0;
  container.hidden=false;container.replaceChildren();
  const head=el('div','sr51-board-head');
- const title=el('div','');title.append(el('small','sr50-overline','ABFAHRTSMONITOR · 5.3'),el('h2','',stationSelected.name));
+ const title=el('div','');title.append(el('small','sr50-overline','ABFAHRTSMONITOR · 5.4'),el('h2','',stationSelected.name));
  const back=button('sr51-back','← Suche',()=>{stationSelected=null;boardRequest++;container.hidden=true;container.replaceChildren();if($('sr50DepResults'))$('sr50DepResults').hidden=false;renderStations()});
  head.append(title,back);container.append(head,el('p','sr50-tip','Lade Fahrplan und verfügbare GTFS-RT-Meldungen …'));
  // No new network requests: getStationList already made all station details available.
@@ -227,8 +231,8 @@ async function renderInlineBoard(){
  if(seq!==boardRequest)return;
  const state=bridge?.state;const group=nearbyStationGroup(stationCache||[stationSelected],stationSelected);
  const chosen=group.filter(x=>x?.source && x?.stopId);
- const result=buildDepartureRows(chosen,state?.indexes,state?.details,state?.updates,state?.statuses,{allDay:boardAllDay});
- const visibleRows=mergeStationDepartures(result.rows);
+ const result=buildDepartureRows(chosen,state?.indexes,state?.details,state?.updates,state?.statuses,{allDay:boardAllDay,kind:boardKind});
+ const visibleRows=mergeStationDepartures(result.rows).filter(r=>boardKind==='all'||r.kind===boardKind);
  if(seq!==boardRequest)return;
  container.replaceChildren(head);
  const note=el('p','sr50-tip','GTFS-Fahrplan für heute · Zeitangaben Europe/Rome · Echtzeit nur bei frischen, passenden TripUpdates.');
@@ -238,6 +242,9 @@ async function renderInlineBoard(){
  controls.append(button('sr51-map-station','⌖ Auf Karte',()=>{
    bridge.openStationFromMap?.(stationSelected).then(()=>switchTab('map')).catch(()=>{});
  }));
+ for(const [value,label] of [['all','Alle'],['train','Züge'],['bus','Busse']]){
+  const b=button('sr54-filter',label,()=>{boardKind=value;renderInlineBoard()});b.setAttribute('aria-pressed',String(boardKind===value));controls.append(b);
+ }
  container.append(controls);
  const summary=el('div','sr51-board-summary',`${visibleRows.length} ${boardAllDay?'Fahrplaneinträge heute':'Abfahrten innerhalb der nächsten 4 Stunden'} · ${chosen.length} Haltestellen-Datensatz${chosen.length===1?'':'e'}`);
  container.append(summary);
@@ -251,6 +258,14 @@ async function renderInlineBoard(){
   const row=el('div','sr51-departure-row');
   const main=el('div','sr51-departure-main');
   main.append(el('strong','',d.number+' · '+d.headsign),el('small','',d.source.toUpperCase()+' · '+(d.cancelled?'Ausfall laut GTFS-RT':d.delaySec===null?'Nur Fahrplan':'GTFS-RT: '+(d.delaySec>0?'+':'')+Math.round(d.delaySec/60)+' Min.')));
+  const platform=d.platform;
+  const track=el('small','sr54-platform',(d.kind==='train'?'Gleis ':'Steig ')+(platform?.current||'unbekannt')+(platform?.changed?' · geändert':platform?.live?' · gemeldet':platform?.current?' · Plan':''));main.append(track);
+  if(platform?.changed)track.classList.add('sr54-platform-changed');
+  if(d.kind==='train'&&/^\d{2,6}$/.test(d.number)){
+   row.setAttribute('role','button');row.tabIndex=0;row.classList.add('sr50-actionable');
+   row.onclick=()=>window.SuedtirolRadar54?.openTrain({source:d.source,tripId:d.tripId,number:d.number});
+   row.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();row.click()}};
+  }
   const sec=d.forecast??d.sec;
   const fmt=n=>`${String(Math.floor(n/3600)%24).padStart(2,'0')}:${String(Math.floor(n%3600/60)).padStart(2,'0')}${n>=86400?' +1':''}`;
   const clock=el('div','sr51-departure-time');clock.append(el('strong','',fmt(sec)));
@@ -273,13 +288,13 @@ function start(){
  if(started)return;bridge=window.SuedtirolRadar37;
  if(!bridge?.state?.map||!bridge?.getStationList)return;
  started=true;history=new HistoricalStorage();createNavigation();createViews();switchTab(['#departures','#stats','#favorites'].includes(location.hash)?location.hash.slice(1):'map');
- const em=document.querySelector('.brand-title em');if(em)em.textContent='5.3';
- document.title='Südtirol Radar 5.3 · Züge & Busse';
+ const em=document.querySelector('.brand-title em');if(em)em.textContent='5.4';
+ document.title='Südtirol Radar 5.4 · Züge & Busse';
  document.addEventListener('sr37:feeds',()=>{const s=bridge?.state;if(s?.fetchedAt)history.saveSnapshot(calculateNetworkStats(s.vehicles,s.statuses,s.indexes),s.fetchedAt);if(tab==='stats')renderStats();if(tab==='departures'&&stationSelected){clearTimeout(boardFeedTimer);boardFeedTimer=setTimeout(renderInlineBoard,700)}});
  if(bridge.state.fetchedAt)history.saveSnapshot(calculateNetworkStats(bridge.state.vehicles,bridge.state.statuses,bridge.state.indexes),bridge.state.fetchedAt);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden && tab==='stats')renderStats()});
  window.addEventListener('hashchange',()=>{const next=location.hash.slice(1);if(['map','departures','stats','favorites'].includes(next)&&next!==tab)switchTab(next)});
- window.SuedtirolRadar50={version:'5.3',switchTab,updateStatsTab:renderStats,openVehicle,openStation};
+ window.SuedtirolRadar50={version:'5.4',switchTab,updateStatsTab:renderStats,openVehicle,openStation};
 }
 document.addEventListener('sr37:ready',start);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();

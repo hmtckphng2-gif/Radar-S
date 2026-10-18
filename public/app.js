@@ -1,3 +1,4 @@
+import {motionDuration} from './radar54-logic.mjs';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
@@ -332,6 +333,10 @@ function animationLoop(now){
   for(const [key,job] of state.jobs){
     const marker=state.markers.get(key)?.marker;
     if(!marker){state.jobs.delete(key);continue;}
+    const v=state.vehicles.get(key);
+    if(!motionDuration(v,null,Date.now(),reducedMotion.matches)){
+      if(v)marker.setLatLng([v.lat,v.lon]);state.jobs.delete(key);continue;
+    }
     const f=Math.min(1,(now-job.start)/job.duration);
     let pos;
     if(job.path && job.fromAlong!==null && job.toAlong!==null){
@@ -346,6 +351,10 @@ function animationLoop(now){
   for(const [key,track] of state.busTracks){
     const entry=state.markers.get(key), marker=entry?.marker;
     if(!marker || now-track.lastSeen>BUS_TRACK_MAX_GAP_MS){state.busTracks.delete(key);continue;}
+    const v=state.vehicles.get(key);
+    if(!motionDuration(v,null)){
+      if(v)marker.setLatLng([v.lat,v.lon]);state.busTracks.delete(key);continue;
+    }
     if(track.samples.length<2)continue;
     const newest=track.samples.at(-1);
     const newestPos=pointAtDistance(track.path,newest.along,track.latReference);
@@ -371,6 +380,8 @@ function animateTo(key,entry,target){
   const marker=entry.marker, current=marker.getLatLng(), dest=L.latLng(target.lat,target.lon);
   const dist=current.distanceTo(dest);
   stopJob(key);
+  const duration=motionDuration(state.vehicles.get(key),entry.feedTimestamp,Date.now(),reducedMotion.matches);
+  if(!duration){marker.setLatLng(dest);return;}
   if(dist<1.5)return;
   if(state.map && typeof state.map.getBounds==='function'){
     const view=state.map.getBounds();
@@ -387,7 +398,7 @@ function animateTo(key,entry,target){
     (!previousVerified || Math.abs(target.along-oldAlong)<3000));
   const shapeJustLoaded=followShape && !previousVerified;
   state.jobs.set(key,{start:performance.now(),
-    duration:shapeJustLoaded?Math.min(1700,AVERAGE_POLL_MS-500):AVERAGE_POLL_MS-500,
+    duration,
     from:current,to:{lat:target.lat,lon:target.lon},
     path:followShape?target.path:null,fromAlong:followShape?fromSnap.along:null,
     toAlong:followShape?target.along:null,latReference:current.lat});
@@ -433,14 +444,15 @@ function refreshMarkers(){
   for(const [key,v] of state.vehicles){
     if(!visible(v))continue;
     active.add(key);
-    const target=mapTarget(v);
+    const rawTarget={lat:v.lat,lon:v.lon,path:null,along:null};
+    const target=motionDuration(v,null)?mapTarget(v):rawTarget;
     const aged=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
     const iconKey=`${v.kind}|${v.name}|${state.selectedKey===key}|${aged}`;
     let entry=state.markers.get(key);
     if(!entry){
       const marker=L.marker([target.lat,target.lon],{icon:markerIcon(v),keyboard:true,title:v.name}).addTo(state.layer);
       marker.on('click',()=>selectVehicle(key));
-      entry={marker,iconKey,target};state.markers.set(key,entry);
+      entry={marker,iconKey,target,feedTimestamp:v.timestamp};state.markers.set(key,entry);
       // First bus position is a real feed observation, not a predicted position.
       if(v.kind==='bus' && !v.stale && v.timestamp && Date.now()/1000-v.timestamp<=300 &&
          target.path && Number.isFinite(target.along)){
@@ -455,6 +467,10 @@ function refreshMarkers(){
         else animateTo(key,entry,target);
         entry.target=target;
       }
+    }
+    entry.feedTimestamp=v.timestamp;
+    if(!motionDuration(v,null)){
+      stopJob(key);state.busTracks.delete(key);entry.marker.setLatLng([v.lat,v.lon]);
     }
     if(v.kind==='bus' && v.stale && state.busTracks.has(key)){
       state.busTracks.delete(key);
@@ -516,7 +532,7 @@ async function refreshFeeds(){
       for(const [key,v] of latest){
         const old=state.vehicles.get(key);
         // Never replace a newer observation with an older stale-feed response.
-        if(staleFeed && old?.timestamp && old.timestamp>v.timestamp)continue;
+        if(old?.timestamp && v.timestamp && old.timestamp>v.timestamp)continue;
         const stale=staleFeed || (v.timestamp && now/1000-v.timestamp>300);
         state.vehicles.set(key,{...v,lastRealSeen:now,stale:Boolean(stale)});
       }

@@ -58,7 +58,7 @@ export function searchTrainStats(queryNum, vehicles = [], indexes = {}, updates 
     for(const [tripId,trip] of Object.entries(db.trips||{})) {
       if(!Array.isArray(trip)||String(trip[3]??'')!==target||trip[5]===false)continue;
       const routeType=Number(db.routes?.[trip[0]]?.[2]);
-      const rail=source==='trains'||[1,2].includes(routeType)||(routeType>=100&&routeType<200)||(routeType>=300&&routeType<700);
+      const rail=[1,2].includes(routeType)||(routeType>=100&&routeType<200)||(routeType>=300&&routeType<700);
       if(!rail || live.some(v=>v.tripId===tripId&&v.source===source))continue;
       if(planned.length>=12)break;
       planned.push({source,tripId,headsign:tidy(trip[1])||'Ziel unbekannt'});

@@ -139,7 +139,7 @@ def compile_source(region, source_zip, days):
             if not sid:continue
             try:lat=float(row['stop_lat']);lon=float(row['stop_lon'])
             except (ValueError,KeyError):lat=0;lon=0
-            stops[sid]=[name,round(lat,5),round(lon,5)]
+            stops[sid]=[name,round(lat,5),round(lon,5),row.get('platform_code','').strip(),row.get('parent_station','')]
             if inside(lat,lon):nearby.add(sid)
         # Nationwide Trenitalia GTFS is filtered by all trips that stop in our geographic area.
         localTrips=None

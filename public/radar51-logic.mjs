@@ -1,5 +1,6 @@
+import {platformInfo} from './radar54-logic.mjs';
 /* Südtirol Radar 5.1 — pure, independently testable transit logic. No GPS is invented. */
-import {shapeProject,pointAtDistance,vehicleDelayInfo} from './core.js';
+import {shapeProject,pointAtDistance,vehicleDelayInfo,isRailRoute} from './core.js';
 
 export const normalizeStation = text => String(text??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('de').replace(/\b(bahnhof|stazione|station|fermata|halte|bhf|staz)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 const aliasGroups = [
@@ -86,15 +87,19 @@ export function buildDepartureRows(stations,indexes,details,updates,statuses,opt
     const sec=Number(dep??arr);
     if(!Number.isFinite(sec) || sec<0 || (opts.allDay ? sec>=86400 : sec<nowSec-180||sec>nowSec+days))continue;
     const route=db.routes?.[trip[0]];
-    const number=source==='trains' ? String(trip[3]||'Zug'):String(route?.[0]||'Bus');
+    const kind=isRailRoute(route?.[2])?'train':'bus';
+    if(opts.kind&&opts.kind!=='all'&&opts.kind!==kind)continue;
+    const number=kind==='train' ? String(trip[3]||route?.[0]||'Zug'):String(route?.[0]||'Bus');
     const upd=updates?.get?.(source+':'+tripId);
     const update=upd?.tripStartDate && String(upd.tripStartDate).replaceAll('-','')!==romeDay(now).replaceAll('-','')?null:upd;
     const rtDelay=getRT(update,stopId,seq,source,null,now.getTime(),statuses?.[source+'_updates']);
     const cancellation=String(update?.scheduleRelationship||'').toUpperCase();
-    const validUpdate=update&&statuses?.[source+'_updates']==='ok'&&now.getTime()-Number(update.fetchedAt)<=120000;
-    out.push({source,tripId,stopId,sec,number,headsign:String(trip[1]||'Ziel unbekannt'),
+    const validUpdate=update&&statuses?.[source+'_updates']==='ok'&&Number.isFinite(Number(update.fetchedAt))&&now.getTime()>=Number(update.fetchedAt)-30000&&now.getTime()-Number(update.fetchedAt)<=120000;
+    const rtStop=validUpdate?(update.stops||[]).find(x=>String(x.stopId??x.stop_id)===String(stopId)||(!(x.stopId??x.stop_id)&&Number(x.stopSequence??x.stop_sequence)===Number(seq))):null;
+    out.push({source,tripId,stopId,sec,number,kind,serviceDay:romeDay(now),directionId:String(trip[6]??''),
+      stationKey:normalizeStation(group[0]?.name||''),platform:platformInfo(det.stops?.[stopId],rtStop,det.stops),headsign:String(trip[1]||'Ziel unbekannt'),
       delaySec:rtDelay,forecast:rtDelay===null?null:sec+rtDelay,
-      cancelled:Boolean(validUpdate && /CANCELED|CANCELLED/.test(cancellation)),
+      cancelled:Boolean(validUpdate && /^(CANCELED|CANCELLED|3)$/.test(cancellation)),
       key:source+':'+tripId+':'+stopId+':'+sec});
    }
   }

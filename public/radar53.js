@@ -38,7 +38,7 @@ function refresh(){
  const cmp=$('sr51TrainCompare');if(cmp&&!cmp.hidden){
   const km=cmp.querySelector('.sr51-gap');let approx=$('sr53ApproxDelay');
   if(km&&!approx){approx=mk('span','sr53-approx');approx.id='sr53ApproxDelay';km.after(approx)}
-  if(approx){approx.textContent=min===null?'Zeitverspätung: keine bestätigte Meldung':`≈ ${delayPill(min)} laut GTFS-RT`;
+  if(approx){approx.textContent=min===null?'Zeitverspätung: keine bestätigte Meldung':`${delayPill(min)} gemeldet`;
    approx.className='sr53-approx '+(min===null?'missing':'known');
    approx.title='Nicht aus den Kilometern berechnet. Diese Zahl stammt aus einer passenden Echtzeitmeldung.'}
   const labels=cmp.querySelector('.sr51-cmp-line');if(labels)labels.textContent='● Feedposition     ● Soll laut Fahrplan (Modell)';
@@ -51,8 +51,8 @@ function setup(){
  booted=true;setupTitle();
  const tryActions=()=>{setupActions();if(!$('sr53More'))setTimeout(tryActions,200)};
  tryActions();
- const version=document.querySelector('.brand-title em');if(version)version.textContent='5.3';
- document.title='Südtirol Radar 5.3 · Züge & Busse';
+ const version=document.querySelector('.brand-title em');if(version)version.textContent='5.4';
+ document.title='Südtirol Radar 5.4 · Züge & Busse';
  document.addEventListener('sr37:selection',()=>{
   $('sheet')?.classList.remove('sr53-expanded');const b=$('sr53Expand');if(b){b.textContent='Details ▾';b.setAttribute('aria-expanded','false')}
   closeMenu();queueRefresh();setTimeout(refresh,500);

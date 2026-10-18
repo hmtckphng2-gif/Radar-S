@@ -13,16 +13,21 @@ const active=()=>bridge?.state?.activeSheet==='vehicle'&&!!current();
 function clearLayers(){routeLayer?.clearLayers()}
 function focus(v){
  if(!map||!Number.isFinite(Number(v.lat))||!Number.isFinite(Number(v.lon)))return;
+ if(focusKey===v.key)return;
  if(focusKey!==v.key){previous={center:map.getCenter(),zoom:map.getZoom()};userMoved=false}
  focusKey=v.key;
  const marker=bridge.state.markers.get(v.key)?.marker;
  const pos=marker?.getLatLng?.()||[v.lat,v.lon];
  const zoom=Math.min(map.getMaxZoom?.()||17,Math.max(13,Math.min(15,map.getZoom()+2)));
+ const height=$('sheet')?.getBoundingClientRect().height||200;
+ const offset=Math.min(map.getSize().y*.24,height*.45);
+ const centered=map.unproject(map.project(pos,zoom).add([0,offset]),zoom);
+ map.stop();
  animating=true;clearTimeout(focusTimer);
  try{
-  if(rm.matches)map.setView(pos,zoom,{animate:false});
-  else map.flyTo(pos,zoom,{animate:true,duration:1.05,easeLinearity:0.22});
- }catch(e){console.info('Radar 5.2 focus fallback',e);map.setView(pos,zoom,{animate:false})}
+  if(rm.matches)map.setView(centered,zoom,{animate:false});
+  else map.flyTo(centered,zoom,{animate:true,duration:.75,easeLinearity:0.22});
+ }catch(e){console.info('Radar 5.2 focus fallback',e);map.setView(centered,zoom,{animate:false})}
  focusTimer=setTimeout(()=>{animating=false},1400);
 }
 function resetFocus(){
@@ -148,6 +153,10 @@ function init(){
  if(!map||!window.L||!$('sheet')||!$('sr50MapTab'))return;
  started=true;routeLayer=L.layerGroup().addTo(map);makeCards();
  map.on('movestart',()=>{if(focusKey&&!animating)userMoved=true});
+ const interrupt=()=>{if(focusKey){userMoved=true;map.stop();animating=false;clearTimeout(focusTimer)}};
+ map.on('dragstart',interrupt);
+ map.getContainer().addEventListener('wheel',interrupt,{passive:true});
+ map.getContainer().addEventListener('touchstart',e=>{if(e.touches.length>1)interrupt()},{passive:true});
  document.addEventListener('sr37:selection',selected);
  document.addEventListener('sr37:sheet-closed',resetFocus);
  document.addEventListener('sr37:feeds',refresh);

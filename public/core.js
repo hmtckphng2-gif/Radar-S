@@ -51,7 +51,8 @@ export function parseVehicles(feed, source, staticData = {}, nowMs = Date.now())
     const identity = vehicleId || tripId || entityId;
     if (!identity) { invalid.missingIdentity++; continue; }
     const mapped = tripLookup(staticData, source, tripId, routeId);
-    const isTrain = source === 'trains' || isRailRoute(mapped.route?.[2]);
+    const routeType=mapped.route?.[2];
+    const isTrain = routeType!==null && routeType!==undefined && routeType!=='' ? isRailRoute(routeType) : source === 'trains';
     const name = isTrain ? gtfsNumber(label, mapped.tripShortName) : mapped.line || 'Linie unbekannt';
     // A route-direction can have an official UNIQUE shape even if the realtime
     // feed omitted trip_id. Do not attribute the route's destination or timetable.
@@ -97,6 +98,7 @@ export function parseUpdates(feed, source, nowMs = Date.now()) {
     const tripDelay = numericDelay(update.delay);
     out.set(source + ':' + tripId, {
       tripStartDate:txt(update.trip?.startDate ?? update.trip?.start_date),
+      timestamp:Number(update.timestamp??feed.header?.timestamp)||null,
       delay:tripDelay,
       stops:rawStops, scheduleRelationship:txt(update.trip?.scheduleRelationship ?? update.trip?.schedule_relationship), fetchedAt:nowMs
     });
