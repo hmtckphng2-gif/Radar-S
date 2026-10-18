@@ -1,0 +1,175 @@
+/* Radar 5.5 Mobile Experience: additive enhancement on top of 5.4.
+   Source positions and timetable remain the source of truth; no synthetic GPS or delays. */
+import {isRailRoute,formatClock} from './core.js';
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e};
+const button=(text,fn,cls='sr55-action')=>{const b=make('button',cls,text);b.type='button';b.addEventListener('click',fn);return b};
+let bridge,map,ready=false,follow=false,followKey=null,followStopUntil=0,followLast=null,followBtn,toolMenu,panel,panelBody,searchList,stationCache=null,searchSeq=0;
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+const selected=()=>bridge?.state?.activeSheet==='vehicle'?bridge.state.vehicles.get(bridge.state.selectedKey):null;
+const visible=()=>!$('sr50MapTab')?.classList.contains('sr50-map-inactive');
+const today=()=>{const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day};
+const nowSeconds=()=>{const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Rome',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));return Number(p.hour)*3600+Number(p.minute)*60+Number(p.second)};
+function announce(text){let a=$('sr55Announce');if(!a){a=make('div','sr55-sr-only');a.id='sr55Announce';a.setAttribute('aria-live','polite');document.body.append(a)}a.textContent=text}
+function setVersion(){const brand=document.querySelector('.brand-title em');if(brand)brand.textContent='5.5';document.title='Südtirol Radar 5.5 · Züge & Busse';const description=document.querySelector('meta[name=description]');if(description)description.content='Südtirol Radar 5.5: Mobile Live-Karte, Ist-/Soll-Position, Fahrpläne und Anschlussinformationen.'}
+function versionGuard(){setVersion();const brand=document.querySelector('.brand-title');if(brand)new MutationObserver(()=>{if(brand.querySelector('em')?.textContent!=='5.5')setVersion()}).observe(brand,{childList:true,subtree:true,characterData:true})}
+function openPanel(title,description){if(!panel){panel=make('section','sr55-popover');panel.id='sr55Panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Zusatzinformationen');const heading=make('div','sr55-row');const titleEl=make('h3','');titleEl.id='sr55PanelTitle';heading.append(titleEl,button('✕',()=>closePanel()));panelBody=make('div');panelBody.id='sr55PanelBody';panel.append(heading,panelBody);document.body.append(panel)}$('sr55PanelTitle').textContent=title;panelBody.replaceChildren();if(description)panelBody.append(make('p','',description));panel.hidden=false}
+function closePanel(){if(panel)panel.hidden=true}
+function tools(){
+ const group=document.querySelector('.map-actions');if(!group||$('sr55ToolBtn'))return;
+ const b=button('⋯',()=>{toolMenu.hidden=!toolMenu.hidden;b.setAttribute('aria-expanded',String(!toolMenu.hidden))},'sr55-toolbtn');b.id='sr55ToolBtn';b.title='Weitere Kartenwerkzeuge';b.setAttribute('aria-expanded','false');b.setAttribute('aria-label','Kartenwerkzeuge öffnen');
+ toolMenu=make('div','sr55-toolmenu');toolMenu.id='sr55ToolMenu';toolMenu.hidden=true;
+ for(const [label,id] of [['▦ Haltestellen','stationBtn'],['📍 Ort wählen','areaBtn'],['🗺 Kartenstil','tileBtn']]){
+   toolMenu.append(button(label,()=>{toolMenu.hidden=true;b.setAttribute('aria-expanded','false');$(id)?.click()}));
+ }
+ group.append(b,toolMenu);
+ document.addEventListener('click',e=>{if(!group.contains(e.target)){toolMenu.hidden=true;b.setAttribute('aria-expanded','false')}});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){toolMenu.hidden=true;b.setAttribute('aria-expanded','false');closePanel()}});
+}
+function setFollow(on,reason=''){
+ follow=!!on&&!!selected()&&visible();followKey=follow?selected().key:null;followLast=null;
+ if(followBtn){followBtn.setAttribute('aria-pressed',String(follow));followBtn.textContent=follow?'◉ Folge aktiv':'◎ Live folgen'}
+ if(reason)announce(reason);
+}
+function updateFollow(){
+ if(!follow||!visible()||Date.now()<followStopUntil)return;
+ const v=selected();if(!v||v.key!==followKey){setFollow(false);return}
+ if(v.stale||!Number.isFinite(Number(v.lat))||!Number.isFinite(Number(v.lon)))return;
+ const pos=bridge.state.markers.get(v.key)?.marker?.getLatLng?.();
+ if(!pos||!Number.isFinite(pos.lat)||!Number.isFinite(pos.lng))return;
+ // Do not interpolate across implausible jumps; prefer reported positions.
+ if(followLast){const distance=map.distance(followLast,pos);if(distance>4000){followLast=pos;return}if(distance<12)return}
+ followLast=pos;
+ const size=map.getSize();const sheet=$('sheet');const height=sheet?.classList.contains('open')?Math.min(size.y*.48,sheet.getBoundingClientRect().height):0;
+ const zoom=map.getZoom();const adjusted=map.unproject(map.project(pos,zoom).add([0,height*.32]),zoom);
+ if(map.distance(map.getCenter(),adjusted)<20)return;
+ map.panTo(adjusted,{animate:!reduced.matches,duration:reduced.matches?0:.7,easeLinearity:.3});
+}
+function setupFollow(){
+ const bar=$('sr46Actions');if(!bar||$('sr55Follow'))return false;
+ followBtn=button('◎ Live folgen',()=>{setFollow(!follow,!follow?'Live-Folge beendet':'Live-Folge aktiviert')});
+ followBtn.id='sr55Follow';followBtn.setAttribute('aria-pressed','false');followBtn.title='Kamera folgt neuen gemeldeten Positionen. Bei manueller Kartenbewegung wird sie angehalten.';
+ bar.append(followBtn);
+ map.on('dragstart',()=>{if(follow)setFollow(false,'Live-Folge durch Kartenbewegung beendet')});
+ map.on('zoomstart',()=>{if(follow)setFollow(false,'Live-Folge durch Zoom beendet')});
+ // Focus from 5.2 is allowed to finish before the first tracking pan.
+ document.addEventListener('sr37:selection',()=>{if(follow)setFollow(false)});
+ document.addEventListener('sr37:sheet-closed',()=>setFollow(false));
+ document.addEventListener('sr37:feeds',()=>{if(follow){followStopUntil=Date.now()+800;setTimeout(updateFollow,850)}});
+ return true;
+}
+function setupInformation(){
+ const cmp=$('sr51TrainCompare');if(!cmp||$('sr55DataExplainer'))return;
+ const b=button('ⓘ Daten erklärt',()=>{
+  openPanel('Wie zuverlässig sind die Werte?','Die Ist-Position stammt aus einem Feed und kann gemeldet oder geschätzt sein. Die Soll-Position ist ein Fahrplanmodell. 10 km hinter Soll bedeuten nicht automatisch 10 Minuten Verspätung. Die Verspätungsanzeige ist ein eigener GTFS-RT-Wert und kann trotz großer Positionsabweichung +0 melden.');
+  panelBody.append(make('p','sr55-empty','Bei fehlenden oder alten Meldungen kann keine tatsächliche Ankunftszeit bestätigt werden.'))
+ });b.id='sr55DataExplainer';b.style.marginTop='4px';cmp.append(b);
+}
+function prepareSearch(){
+ const input=$('search');if(!input||$('sr55Suggest'))return;
+ const wrap=input.closest('.search-wrap');if(!wrap)return;
+ wrap.style.position='relative';searchList=make('div','sr55-toolmenu');searchList.id='sr55Suggest';searchList.hidden=true;searchList.style.cssText='left:0;right:0;bottom:auto;top:calc(100% + 5px);width:auto;max-height:42dvh;overflow:auto';wrap.append(searchList);
+ input.setAttribute('placeholder','Zug, Bus oder Bahnhof');
+ let timer=0;input.addEventListener('input',()=>{clearTimeout(timer);const q=input.value.trim().toLocaleLowerCase('de');const seq=++searchSeq;if(q.length<2){searchList.hidden=true;return}timer=setTimeout(()=>suggest(q,seq),180)});
+ input.addEventListener('keydown',e=>{if(e.key==='Escape')searchList.hidden=true});
+ document.addEventListener('click',e=>{if(!wrap.contains(e.target))searchList.hidden=true});
+}
+async function suggest(q,seq){
+ if(!bridge)return;
+ searchList.replaceChildren();
+ const matches=[...bridge.state.vehicles.values()].filter(v=>(String(v.name||'')+' '+String(v.headsign||'')).toLocaleLowerCase('de').includes(q)).slice(0,4);
+ for(const v of matches){searchList.append(button((v.kind==='train'?'🚆 ':'🚌 ')+(v.name||'Fahrzeug')+' · '+(v.headsign||''),()=>{searchList.hidden=true;$('search').blur();bridge.state.markers.get(v.key)?.marker?.fire('click')}))}
+ try{if(!stationCache)stationCache=await bridge.getStationList?.();}catch{stationCache=[]}
+ if(seq!==searchSeq)return;
+ const seen=new Set();for(const s of (stationCache||[])){
+  if(seen.size>=5)break;
+  const name=String(s.name||'');if(!name.toLocaleLowerCase('de').includes(q)||seen.has(name.toLocaleLowerCase('de')))continue;seen.add(name.toLocaleLowerCase('de'));
+  searchList.append(button('▦ '+name,()=>{searchList.hidden=true;$('search').blur();document.querySelector('.sr50-nav-btn[data-tab="departures"]')?.click();setTimeout(()=>{const i=$('sr50DepSearch');if(i){i.value=name;i.dispatchEvent(new Event('input',{bubbles:true}));i.focus()}},100)}));
+ }
+ searchList.hidden=!searchList.children.length;
+}
+function nextStopAndConnections(v){
+ const s=bridge.state,source=v.source,db=s.indexes[source],details=s.details[source],times=details?.times?.[v.tripId];
+ if(!Array.isArray(times)||!db?.trips?.[v.tripId]||!details?.times||!details?.stops||!db?.meta?.days?.includes(today()))return null;
+ const now=nowSeconds(),arrivals=times.filter(x=>Number.isFinite(Number(x[1]??x[2]))&&Number(x[1]??x[2])>=now-300);
+ const next=arrivals[0];if(!next)return null;
+ const arrival=Number(next[1]??next[2]);const stopId=String(next[0]);const stopName=details.stops[stopId]?.[0]||'Nächster Halt';
+ const rows=[];
+ for(const [tripId,stops] of Object.entries(details.times)){
+  if(tripId===v.tripId||!Array.isArray(stops))continue;
+  const trip=db.trips?.[tripId];if(!trip||trip[5]===false)continue;
+  const dep=stops.find(x=>String(x[0])===stopId&&Number.isFinite(Number(x[2]))&&Number(x[2])>=arrival+180&&Number(x[2])<arrival+3600);
+  if(!dep)continue;
+  const dest=String(trip[1]||'Ziel unbekannt');const rail=isRailRoute(db.routes?.[trip[0]]?.[2]);
+  rows.push({tripId,dest,dep:Number(dep[2]),buffer:Number(dep[2])-arrival,rail});
+ }
+ rows.sort((a,b)=>a.dep-b.dep);
+ return {next,stopName,arrival,rows:rows.slice(0,12)};
+}
+function openConnections(){
+ const v=selected();if(!v)return;
+ openPanel('Anschluss-Radar','Fahrplanprüfung am nächsten Halt. Echtzeit-Erreichbarkeit wird nicht bestätigt, solange keine verlässlichen Prognosen für beide Fahrten vorliegen.');
+ const data=nextStopAndConnections(v);
+ if(!data){panelBody.append(make('p','sr55-empty','Kein eindeutig zugeordneter aktueller Fahrtverlauf. Anschlüsse können nicht zuverlässig geprüft werden.'));return}
+ panelBody.append(make('p','sr55-label',data.stopName+' · geplante Ankunft '+formatClock(data.arrival)));
+ if(!data.rows.length){panelBody.append(make('p','sr55-empty','Keine passenden Anschlussfahrten aus dieser Fahrplandatenquelle im nächsten Zeitfenster gefunden. Andere Verkehrsunternehmen sind möglicherweise nicht enthalten.'));return}
+ for(const r of data.rows){
+  const row=make('div','sr55-row');const left=make('div');left.append(make('strong','',(r.rail?'🚆 ':'🚌 ')+r.dest),make('div','sr55-muted','Abfahrt '+formatClock(r.dep)+' · '+Math.round(r.buffer/60)+' Min. planmäßige Umsteigezeit'));
+  row.append(left,make('small','sr55-muted','Nur Plan'));panelBody.append(row)
+ }
+ panelBody.append(make('p','sr55-empty','Verbindungen basieren auf Stop-ID und Fahrplan derselben Quelle; Gleiswege, Ausfälle und andere Datenquellen sind hier nicht vollständig geprüft.'));
+}
+function openDisruptions(){
+ openPanel('Störungscenter','Aktuelle Fahrtausfälle und unvollständige Feedmeldungen. Dies ist keine amtliche Gesamtliste aller Betriebsstörungen.');
+ const s=bridge.state,affected=[];
+ for(const [key,u] of s.updates||[]){if(/^(CANCELED|CANCELLED|3)$/i.test(String(u.scheduleRelationship||''))&&Date.now()-(u.fetchedAt||0)<120000)affected.push(key)}
+ if(affected.length){panelBody.append(make('p','sr55-label',affected.length+' aktuelle Ausfallmeldungen'));for(const k of affected.slice(0,25))panelBody.append(make('div','sr55-row','Fahrt '+k+' · Ausfall laut Feed'))}
+ else panelBody.append(make('p','sr55-empty','Keine aktuellen Ausfallmeldungen im empfangenen Trip-Update-Cache erkannt. Das bedeutet nicht, dass es keine Störungen gibt.'));
+ for(const [key,status] of Object.entries(s.statuses||{}))if(status!=='ok')panelBody.append(make('div','sr55-row',key+': '+status));
+}
+function openAnalytics(){
+ openPanel('Analytics Pro','Datenqualität und Anzahl der aktuell empfangenen Fahrzeuge. Die Verspätungshistorie einzelner Züge bleibt in den bestehenden 5.4-Zugdetails.');
+ const s=bridge.state,vehicles=[...s.vehicles.values()];const trains=vehicles.filter(v=>v.kind==='train').length;
+ for(const [name,value] of [['Fahrzeuge im Feed',vehicles.length],['Züge',trains],['Busse',vehicles.filter(v=>v.kind==='bus').length],['Letzte bekannte Position',vehicles.filter(v=>v.stale).length]]){
+  const row=make('div','sr55-row');row.append(make('span','',name),make('strong','',String(value)));panelBody.append(row)
+ }
+ panelBody.append(make('p','sr55-empty','Momentaufnahme, keine historische Pünktlichkeitsquote. Für Trends sind wiederholte valide Messungen nötig.'));
+}
+function extras(){
+ const attempt=()=>{const bar=$('sr46Actions');if(!bar||$('sr55Connections'))return false;
+ bar.append(button('↔ Anschlüsse',openConnections));bar.lastChild.id='sr55Connections';
+ return true};
+ let tries=0;const spin=()=>{if(!attempt()&&++tries<35)setTimeout(spin,220)};spin();
+ // Extra tools live in existing stats/departures view, no fifth navigation tab.
+ const nav=document.querySelector('.sr50-bottom-nav');if(!nav)return;
+ const panelButton=button('⚠ Störungen',openDisruptions);panelButton.id='sr55Disruptions';
+ const analyticsButton=button('▥ Analytics',openAnalytics);analyticsButton.id='sr55Analytics';
+ const insert=()=>{const view=$('sr50StatsView');if(view&&!view.querySelector('#sr55Analytics')){const row=make('div','sr55-tools');row.append(analyticsButton,panelButton);view.prepend(row)}};
+ insert();document.addEventListener('click',e=>{if(e.target.closest('.sr50-nav-btn'))setTimeout(insert,80)});
+}
+function sheetGestures(){
+ const sheet=$('sheet'),handle=sheet?.querySelector('.handle');if(!handle)return;
+ handle.setAttribute('role','button');handle.setAttribute('tabindex','0');handle.setAttribute('aria-label','Fahrzeugdetails schließen oder erweitern');
+ let y=null;
+ handle.addEventListener('pointerdown',e=>{if(e.isPrimary)y=e.clientY});
+ handle.addEventListener('pointerup',e=>{if(y===null)return;const distance=e.clientY-y;y=null;if(distance>65){$('closeSheet')?.click()}else if(distance< -60){$('sr53Expand')?.click()}});
+ handle.addEventListener('pointercancel',()=>{y=null});
+ handle.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sr53Expand')?.click()}});
+}
+function init(){
+ if(ready)return;bridge=window.SuedtirolRadar37;map=bridge?.state?.map;
+ if(!map||!$('sheet')||!document.querySelector('.sr50-bottom-nav'))return;
+ ready=true;document.body.classList.add('sr55-ready');versionGuard();tools();prepareSearch();extras();sheetGestures();
+ if(!setupFollow()){let n=0;const poll=()=>{if(!setupFollow()&&++n<30)setTimeout(poll,200)};setTimeout(poll,220)}
+ setupInformation();
+ document.addEventListener('sr37:selection',()=>setTimeout(setupInformation,250));
+ document.addEventListener('sr37:feeds',()=>{stationCache=null});
+ window.SuedtirolRadar55={version:'5.5',openConnections,openAnalytics,openDisruptions};
+}
+document.addEventListener('sr37:ready',init);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+// Radar 5.0 builds navigation asynchronously; do not depend on module execution order.
+let attempts=0;const bootCheck=setInterval(()=>{if(ready||++attempts>50){clearInterval(bootCheck);return}init()},200);
+})();

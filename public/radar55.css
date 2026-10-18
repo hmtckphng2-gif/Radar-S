@@ -1,0 +1,58 @@
+/* Radar 5.5 — compact, accessible mobile experience. No map renderer overrides. */
+:root{--sr55-touch:42px}
+body.sr55-ready .topbar{padding:8px 10px!important;gap:6px!important;max-width:100vw;box-sizing:border-box}
+body.sr55-ready .toprow{gap:7px!important;min-height:35px}
+body.sr55-ready .brand-badge{width:30px!important;height:30px!important;font-size:15px!important}
+body.sr55-ready .brand-title{font-size:15px!important;white-space:nowrap}
+body.sr55-ready .brand-sub{font-size:9px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.sr55-ready .controls{gap:6px!important}
+body.sr55-ready .segments .chip{font-size:11px!important;padding:6px 10px!important;min-height:34px!important}
+body.sr55-ready #search{font-size:16px!important}
+body.sr55-ready .map-actions .round-action{width:39px!important;height:39px!important;min-height:39px!important}
+body.sr55-ready .map-actions #stationBtn,body.sr55-ready .map-actions #areaBtn,body.sr55-ready .map-actions #tileBtn{display:none!important}
+body.sr55-ready .sr55-toolbtn{width:39px;height:39px;display:grid;place-items:center;border:1px solid #4b6684;border-radius:12px;background:#16283d;color:#ecf6ff;font-size:20px;box-shadow:0 5px 18px #0005}
+body.sr55-ready .sr55-toolmenu{position:absolute;right:0;bottom:calc(100% + 9px);width:192px;display:grid;gap:5px;background:#122236;border:1px solid #426184;border-radius:15px;padding:8px;box-shadow:0 15px 35px #0009;z-index:1500}
+body.sr55-ready .sr55-toolmenu[hidden]{display:none!important}
+body.sr55-ready .sr55-toolmenu button{font:600 13px system-ui;text-align:left;min-height:43px;color:#e4efff;background:#213750;border:1px solid #335270;border-radius:9px;padding:8px 10px}
+body.sr55-ready #sheet{max-height:min(84dvh,740px)!important;border-radius:19px 19px 0 0!important}
+body.sr55-ready #sheet .handle{margin:5px auto 3px!important}
+body.sr55-ready #sheet .sheet-heading{padding:5px 13px 5px!important;gap:7px!important}
+body.sr55-ready #sheet .sheet-title{font-size:clamp(18px,5vw,23px)!important}
+body.sr55-ready #sheet .sheet-subtitle{font-size:11px!important;margin-top:1px!important}
+body.sr55-ready #sheet .eyebrow{font-size:9px!important;line-height:1.3!important}
+body.sr55-ready #sheet .sr53-title-line{margin:0!important;gap:5px!important}
+body.sr55-ready #sheet .sr53-delay-pill{padding:5px 8px!important;font-size:10px!important}
+body.sr55-ready #sheet .sheet-scroll{padding:6px 13px max(22px,env(safe-area-inset-bottom))!important;overscroll-behavior:contain}
+body.sr55-ready #sheet .sr46-actions{margin:4px 0!important;gap:5px!important}
+body.sr55-ready #sheet .sr46-action{padding:5px 8px!important;min-height:37px!important;border-radius:10px!important;font-size:11px!important}
+body.sr55-ready #sheet .badge-row{margin:2px 0!important;gap:4px!important}
+body.sr55-ready #sr51TrainCompare{padding:9px 11px!important;margin:5px 0!important}
+body.sr55-ready #sr51TrainCompare .sr51-gap{font-size:15px!important}
+body.sr55-ready #sr52RouteCard{margin:3px 0!important}
+body.sr55-ready .sr54-dialog{max-height:90dvh!important}
+body.sr55-ready .sr54-dialog-body{padding:14px 13px calc(20px + env(safe-area-inset-bottom))!important}
+body.sr55-ready .sr54-stop{padding:8px 0!important}
+body.sr55-ready .sr54-history{margin-top:12px!important;padding-top:12px!important}
+body.sr55-ready .sr50-bottom-nav{height:calc(58px + env(safe-area-inset-bottom))!important}
+body.sr55-ready .sr50-nav-btn{min-height:49px!important;gap:3px!important;font-size:10px!important}
+body.sr55-ready .sr50-icon{font-size:19px!important}
+body.sr55-ready #sr50DeparturesView .sr50-card{padding:10px!important}
+body.sr55-ready .sr51-departure-row{padding:8px 1px!important}
+.sr55-action{display:inline-flex;align-items:center;justify-content:center;min-height:36px;gap:6px;background:#193856;border:1px solid #41648b;border-radius:10px;color:#dbecff;font:650 11px Inter,system-ui;padding:6px 9px}
+.sr55-action[aria-pressed=true]{background:#145a59;border-color:#36ac9c;color:#bcfff4}
+.sr55-action:disabled{opacity:.5}
+.sr55-tools{display:flex;gap:6px;flex-wrap:wrap;margin:5px 0}
+.sr55-popover{position:fixed;z-index:12000;inset:auto 10px calc(66px + env(safe-area-inset-bottom)) 10px;max-height:70dvh;overflow:auto;border:1px solid #456483;border-radius:18px;background:#102238;color:#edf4ff;box-shadow:0 15px 55px #000b;padding:15px;font:13px/1.5 Inter,system-ui}
+.sr55-popover[hidden]{display:none!important}
+.sr55-popover h3{font-size:17px;margin:0 0 6px}
+.sr55-popover p{margin:5px 0 10px;color:#acc4df}
+.sr55-popover .sr55-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #2a425d}
+.sr55-popover .sr55-row strong{font-size:12px}
+.sr55-popover .sr55-muted{font-size:11px;color:#9bb4d0}
+.sr55-empty{font-size:12px;color:#a7bfd8;line-height:1.55}
+.sr55-label{font-size:10px;color:#93b8d7;text-transform:uppercase;letter-spacing:.08em}
+.sr55-sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:375px){body.sr55-ready .brand-sub{display:none}body.sr55-ready #sheet .sr46-action{font-size:10px!important;padding:5px 6px!important}}
+@media(prefers-reduced-motion:reduce){body.sr55-ready #sheet *,body.sr55-ready .sr50-tab-view.active{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+[data-theme=light] .sr55-popover,[data-theme=light] .sr55-toolmenu{background:#f5f9ff;color:#1c344d}
+[data-theme=light] .sr55-popover p,[data-theme=light] .sr55-empty{color:#526d88}

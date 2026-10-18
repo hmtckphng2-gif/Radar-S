@@ -51,8 +51,8 @@ function setup(){
  booted=true;setupTitle();
  const tryActions=()=>{setupActions();if(!$('sr53More'))setTimeout(tryActions,200)};
  tryActions();
- const version=document.querySelector('.brand-title em');if(version)version.textContent='5.4';
- document.title='Südtirol Radar 5.4 · Züge & Busse';
+ const version=document.querySelector('.brand-title em');if(version)version.textContent='5.5';
+ document.title='Südtirol Radar 5.5 · Züge & Busse';
  document.addEventListener('sr37:selection',()=>{
   $('sheet')?.classList.remove('sr53-expanded');const b=$('sr53Expand');if(b){b.textContent='Details ▾';b.setAttribute('aria-expanded','false')}
   closeMenu();queueRefresh();setTimeout(refresh,500);
