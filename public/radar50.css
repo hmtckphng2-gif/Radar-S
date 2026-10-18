@@ -1,0 +1,57 @@
+/* Südtirol Radar 5.0 Final — isolierte Premium-Navigation, ursprüngliche Kartenstile bleiben erhalten */
+:root{--sr50-bg:#08111e;--sr50-panel:#101e31;--sr50-panel-elevated:#162941;--sr50-border:rgba(158,190,230,.17);--sr50-accent-blue:#76b9ff;--sr50-accent-green:#42d6b1;--sr50-accent-orange:#ffd183;--sr50-text:#f3f8ff;--sr50-text-muted:#9aafcb;--sr50-nav-height:66px}
+body{background-color:var(--sr50-bg)!important}
+#sr50MapTab{position:fixed;inset:0 0 calc(var(--sr50-nav-height) + env(safe-area-inset-bottom,0px)) 0;display:block}
+#sr50MapTab.sr50-map-inactive{visibility:hidden;pointer-events:none}
+.sr50-bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:10010;height:calc(var(--sr50-nav-height) + env(safe-area-inset-bottom,0px));padding:5px 6px env(safe-area-inset-bottom,0px);display:grid;grid-template-columns:repeat(4,1fr);align-items:center;gap:2px;background:rgba(10,20,34,.96);border-top:1px solid rgba(171,199,235,.19);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-sizing:border-box}
+.sr50-nav-btn{color:#8da6c5!important;background:transparent!important;border:0!important;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 1px!important;min-width:0;height:53px;line-height:1.2;font:600 10px/1.3 -apple-system,BlinkMacSystemFont,Inter,sans-serif!important;letter-spacing:.01em;touch-action:manipulation}
+.sr50-nav-btn .sr50-icon{font-family:system-ui,sans-serif;font-size:21px;line-height:1.2;font-weight:600}
+.sr50-nav-btn.active{background:rgba(62,127,212,.18)!important;color:#95c9ff!important}
+.sr50-tab-view{position:fixed;inset:0 0 calc(var(--sr50-nav-height) + env(safe-area-inset-bottom,0px)) 0;z-index:10000;display:none;flex-direction:column;background:linear-gradient(180deg,#0b1727,#08101d 65%);color:var(--sr50-text);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;font:14px/1.48 -apple-system,BlinkMacSystemFont,Inter,system-ui,sans-serif!important;user-select:text;-webkit-user-select:text}
+.sr50-tab-view.active{display:flex!important}
+.sr50-tab-view *{box-sizing:border-box}
+.sr50-header{position:sticky;top:0;z-index:8;background:rgba(10,19,32,.94);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);padding:calc(15px + env(safe-area-inset-top,0px)) 18px 18px;border-bottom:1px solid var(--sr50-border)}
+.sr50-overline{font-size:10px;letter-spacing:.14em;font-weight:800;color:#78b8ff;margin:0 0 7px}
+.sr50-header h1{font-size:27px;line-height:1.15;font-weight:800;letter-spacing:-.04em;margin:0 0 6px;color:#f5f9ff}
+.sr50-header p{margin:0;font-size:12px;color:#9db2ce;max-width:500px}
+.sr50-dashboard{padding:15px 13px 28px;display:flex;flex-direction:column;gap:13px;width:100%;max-width:720px;margin:0 auto}
+.sr50-card{padding:15px;background:linear-gradient(145deg,#13233a,#0e1b2d);border:1px solid var(--sr50-border);border-radius:17px;box-shadow:0 5px 24px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:11px;min-width:0}
+.sr50-card-title{display:flex;justify-content:space-between;align-items:center;gap:9px;font-size:12px;letter-spacing:.05em;font-weight:780;text-transform:uppercase;color:#dceaff}
+.sr50-stamp,.sr50-sourcetag{color:#82a4c9;font-size:10px;letter-spacing:.01em;white-space:nowrap;font-weight:650}
+.sr50-kpi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.sr50-kpi-box{display:flex;flex-direction:column;gap:6px;background:#192a41;border:1px solid rgba(144,186,239,.13);border-radius:12px;padding:12px;min-height:88px}
+.sr50-kpi-box span{color:#9bb2d0;font-size:11px;line-height:1.3}.sr50-kpi-box strong{font-size:24px;font-weight:800;letter-spacing:-.045em;color:#e8f3ff;font-variant-numeric:tabular-nums}.sr50-kpi-box.green strong{color:#60debc}.sr50-kpi-box.orange strong{color:#ffcb83}
+.sr50-meter{display:flex;height:7px;overflow:hidden;border-radius:12px;background:#283b52;gap:0}.sr50-meter #sr50MeterFresh{background:#36d6ae;width:0;transition:width .3s}.sr50-meter #sr50MeterStale{background:#e3a45d;width:100%;transition:width .3s}
+.sr50-tip{margin:0;color:#93a9c5;font-size:11px;line-height:1.55}.sr50-note{font-size:12px;color:#ffc78a;line-height:1.5}.sr50-field-label{font-size:12px;font-weight:650;color:#c7d8ed}
+.sr50-search-box{background:#172943;border:1px solid #344e71;border-radius:13px;display:flex;gap:5px;padding:5px;align-items:center;min-width:0;margin:0}
+.sr50-search-box input{appearance:none;-webkit-appearance:none;background:transparent!important;color:#f5faff!important;border:0!important;outline:0;flex:1;min-width:0;padding:9px 8px!important;font:500 14px/1.3 -apple-system,BlinkMacSystemFont,Inter,system-ui,sans-serif!important;box-shadow:none!important}.sr50-search-box input::placeholder{color:#819bbb!important}
+.sr50-btn{font-size:12px;font-weight:760;min-height:39px;background:#3c8ee5;color:#fff;border:0;border-radius:10px;padding:8px 14px;white-space:nowrap;cursor:pointer}
+.sr50-results{display:flex;flex-direction:column;gap:8px;min-width:0}
+.sr50-subtitle{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:#bfd0e5;line-height:1.4}
+.sr50-list-row{display:flex;align-items:center;justify-content:space-between;gap:9px;background:#17283e;border:1px solid rgba(139,169,208,.16);border-radius:11px;padding:11px 12px;min-width:0;color:#e4f0ff;font-size:12px}
+.sr50-list-info{display:flex;flex:1;flex-direction:column;min-width:0;gap:3px}.sr50-list-info strong{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sr50-list-info small{font-size:11px;color:#9cb2d0;line-height:1.35}.sr50-actionable{cursor:pointer;touch-action:manipulation}.sr50-actionable:active{background:#223b5a}.sr50-badge{font-size:10px;font-weight:700;color:#84beff;background:#254669;border-radius:7px;padding:5px 7px;flex-shrink:0;max-width:120px;text-align:center}.sr50-favorite{background:none;border:1px solid #40546c;border-radius:9px;color:#96acc5;font-size:19px;min-width:34px;height:32px;flex-shrink:0;cursor:pointer}.sr50-favorite.selected{color:#ffda86;background:#57432247;border-color:#a27d3c}
+.sr50-periods{display:flex;gap:6px}.sr50-periods button{flex:1;border:1px solid #36506e;border-radius:10px;background:#1c314b;color:#a5bad6;font:700 12px system-ui;padding:10px 5px}.sr50-periods button.active{background:#3265a3;color:white;border-color:#6194d3}
+.sr50-history-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.sr50-history-cell{border-radius:10px;background:#192d45;padding:10px;display:flex;flex-direction:column;gap:3px}.sr50-history-cell small{color:#95b0d0;font-size:10px}.sr50-history-cell strong{font-size:18px;font-weight:790;color:#e5f5ff}.sr50-chart{min-width:0}.sr50-chart svg{display:block;max-width:100%;width:100%;height:114px;background:#132439;border:1px solid #243c59;border-radius:12px;padding:9px}
+.sr50-feed-list{display:flex;flex-direction:column;gap:6px}.sr50-feed-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;padding:8px 2px;border-bottom:1px solid rgba(144,186,239,.11);color:#b6c8dc}.sr50-feed-row strong{font-size:11px}.sr50-feed-row strong.good{color:#58dfb6}.sr50-feed-row strong.warn{color:#ffc87b}.sr50-feed-row strong.bad{color:#ff878c}
+.sr50-fav-row{display:flex}.sr50-fav-open{border:1px solid #416b9d;background:#22436c;color:#d7edff;padding:7px 10px;border-radius:9px;font:700 11px system-ui}.sr50-fav-remove{border:0;background:transparent;color:#adbed1;font-size:17px;min-width:28px}
+@media(min-width:650px){.sr50-dashboard{padding:22px 20px 40px}.sr50-header{text-align:left;padding-left:max(22px,calc((100vw - 680px)/2))}.sr50-bottom-nav{left:50%;right:auto;transform:translateX(-50%);width:min(100%,720px);border:1px solid var(--sr50-border);border-radius:20px 20px 0 0}}
+@media(prefers-reduced-motion:reduce){.sr50-meter>div{transition:none!important}}
+
+/* Release 5.0: safe-area support and interaction refinements */
+:root{--sr50-nav-height:66px;--sr50-text:#f3f8ff;--sr50-text-muted:#94accb;--sr50-border:rgba(171,199,235,.17)}
+.sr50-bottom-nav{padding-bottom:max(4px,env(safe-area-inset-bottom,0px))!important}
+.sr50-nav-btn:focus-visible,.sr50-btn:focus-visible,.sr50-favorite:focus-visible,.sr50-periods button:focus-visible{outline:2px solid #7fd0ff;outline-offset:2px}
+.sr50-tab-view{padding-bottom:18px;scrollbar-color:#3b5676 transparent;scrollbar-width:thin}
+.sr50-tab-view .sr50-header{padding-top:max(22px,env(safe-area-inset-top,0px))}
+.sr50-btn:active,.sr50-fav-open:active{transform:scale(.98)}
+.sr50-list-row:focus-visible{outline:2px solid #78b8ff;outline-offset:1px}
+.sr50-card{box-shadow:0 12px 30px rgba(0,0,0,.16)}
+.sr50-tab-view[aria-hidden="true"]{pointer-events:none}
+@media(max-width:350px){.sr50-card{padding:11px}.sr50-search-box{padding:5px}.sr50-btn{padding-inline:8px}.sr50-dashboard{padding-inline:10px}}
+
+/* Interactive discoverability: verified trains and lines from the current feed */
+.sr50-quick-links{display:flex;flex-direction:column;gap:9px}
+.sr50-quick-row{display:flex;flex-wrap:wrap;gap:7px}
+.sr50-quick-btn{border:1px solid #365c85;border-radius:10px;background:#203a5a;color:#cde7ff;font:700 12px system-ui;padding:10px 12px;min-height:38px;touch-action:manipulation}
+.sr50-quick-btn:focus-visible{outline:2px solid #78c6ff;outline-offset:2px}
+.sr50-quick-btn:active{background:#315784}
