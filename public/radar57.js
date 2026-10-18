@@ -79,8 +79,15 @@ function showDetails(row){
 function choose(st){chosen=st;save(st);picker.hidden=true;search.value='';$('sr57Station').textContent=st.name;render()}
 function renderPicker(q=''){
  const list=$('sr57Options');list.replaceChildren();
- for(const st of findStations(stations,q,q?45:30)){
-  list.append(button(st.name+' · '+st.source.toUpperCase(),()=>choose(st),'sr57-option'));
+ const unique=new Map();
+ for(const st of findStations(stations,q,Math.max(200,stations.length))){
+  const key=String(st.name||'').normalize('NFKC').trim().toLocaleLowerCase('de').replace(/\s+/g,' ');
+  if(!key||unique.has(key))continue;
+  unique.set(key,st);
+  if(unique.size>=30)break;
+ }
+ for(const st of unique.values()){
+  list.append(button(st.name,()=>choose(st),'sr57-option'));
  }
  if(!list.children.length)list.append(el('p','sr57-explain','Keine passende Station in den geladenen GTFS-Daten.'));
 }
