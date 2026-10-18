@@ -229,6 +229,6 @@ function init(){
 }
 let attempts=0;
 function boot(){if(window.SuedtirolRadar58)return;if(window.SuedtirolRadar37?.state?.map&&window.SuedtirolRadar57){init();return}if(attempts++<90)setTimeout(boot,200)}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{installLiquidNav();boot()},{once:true});else{installLiquidNav();boot()}
 document.addEventListener('sr37:ready',()=>setTimeout(boot,250));
 })();
