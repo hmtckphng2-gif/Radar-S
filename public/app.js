@@ -1,4 +1,5 @@
 import {motionDuration,platformInfo} from './radar54-logic.mjs';
+import {enrichTrainPlatform} from './train-platforms.js';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
@@ -660,6 +661,10 @@ function renderStops(v,details){
     track.textContent=(v.kind==='bus'?'Steig ':'Gleis ')+(platform.current||'unbekannt')+(platform.changed?' · geändert':platform.live?' · gemeldet':platform.current?' · Plan':'');
     if(platform.changed)track.style.color='#ffc37d';
     left.append(track);
+    if(v.kind==='train'){
+      const timing=details.times?.[v.tripId]?.find(t=>String(t[0])===String(row.stopId)&&Number(t[3])===Number(row.seq));
+      enrichTrainPlatform(track,{number:state.indexes[v.source]?.trips?.[v.tripId]?.[3]||v.name,serviceDay:v.tripStartDate||gtfsLocalDate(),source:v.source,stopId:row.stopId,stopName:row.name,arrival:timing?.[1],departure:timing?.[2]},platform);
+    }
     const d=upd?(upd.departure?.delay??upd.arrival?.delay):null;
     const skipped=/^(?:SKIPPED|1)$/i.test(txt(upd?.scheduleRelationship??upd?.schedule_relationship));
     const info=document.createElement('small');info.textContent=skipped?'Halt entfällt':d!=null?'GTFS-RT: '+formatDelay(Number(d)):'Planzeit';left.append(info);

@@ -2,6 +2,7 @@
 import {calculateNetworkStats,searchTrainStats,searchBusLineStats,vehicleAgeSeconds,HistoricalStorage,tidy} from './radar50-logic.mjs';
 import {findStations,nearbyStationGroup,buildDepartureRows,romeSeconds,busDelayLabel} from './radar51-logic.mjs';
 import {mergeStationDepartures} from './radar53-logic.mjs';
+import {enrichTrainPlatform} from './train-platforms.js';
 (() => {
 'use strict';
 const $=id=>document.getElementById(id);
@@ -261,6 +262,10 @@ async function renderInlineBoard(){
   const platform=d.platform;
   const track=el('small','sr54-platform',(d.kind==='train'?'Gleis ':'Steig ')+(platform?.current||'unbekannt')+(platform?.changed?' · geändert':platform?.live?' · gemeldet':platform?.current?' · Plan':''));main.append(track);
   if(platform?.changed)track.classList.add('sr54-platform-changed');
+  if(d.kind==='train'){
+   const det=bridge.state.details[d.source],timing=det?.times?.[d.tripId]?.find(t=>String(t[0])===String(d.stopId)&&Number(t[2]??t[1])===d.sec);
+   enrichTrainPlatform(track,{number:d.number,serviceDay:d.serviceDay,source:d.source,stopId:d.stopId,stopName:det?.stops?.[d.stopId]?.[0],arrival:timing?.[1],departure:timing?.[2]},platform);
+  }
   if(d.kind==='train'&&/^\d{2,6}$/.test(d.number)){
    row.setAttribute('role','button');row.tabIndex=0;row.classList.add('sr50-actionable');
    row.onclick=()=>window.SuedtirolRadar54?.openTrain({source:d.source,tripId:d.tripId,number:d.number});
