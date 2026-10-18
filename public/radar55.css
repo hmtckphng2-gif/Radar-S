@@ -58,5 +58,21 @@ body.sr55-ready .sr51-departure-row{padding:8px 1px!important}
 [data-theme=light] .sr55-popover p,[data-theme=light] .sr55-empty{color:#526d88}
 
 /* 5.5.1: Give the itinerary the screen height when scrolling down. */
-body.sr55-ready #sheet.sr55-scrolled .sr46-actions{display:none!important}
-body.sr55-ready #sheet.sr55-scrolled .sheet-heading{padding-bottom:2px!important}
+body.sr55-ready #sheet .sr46-actions{
+  box-sizing:border-box;
+  overflow:hidden;
+  max-height:var(--sr55-toolbar-height,150px);
+  opacity:1;
+  transform:translateY(0);
+  transition:max-height 300ms cubic-bezier(.22,1,.36,1),opacity 170ms ease,transform 270ms cubic-bezier(.22,1,.36,1),margin 300ms cubic-bezier(.22,1,.36,1)!important;
+  will-change:max-height,opacity;
+}
+body.sr55-ready #sheet.sr55-scrolled .sr46-actions{
+  max-height:0!important;
+  margin-top:0!important;
+  margin-bottom:0!important;
+  opacity:0;
+  transform:translateY(-9px);
+  pointer-events:none;
+}
+@media(prefers-reduced-motion:reduce){body.sr55-ready #sheet .sr46-actions{transition:none!important;transform:none!important}}
