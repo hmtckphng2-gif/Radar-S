@@ -174,6 +174,35 @@ function initLiquidNav(){
  requestAnimationFrame(()=>requestAnimationFrame(move));
 }
 
+
+function installLiquidNav(){
+ let attempts=0;
+ const attach=()=>{
+  const nav=document.getElementById('sr50BottomNav');
+  if(!nav){if(attempts++<90)setTimeout(attach,200);return}
+  if(nav.querySelector('.sr58-liquid-pill'))return;
+  const pill=e('span','sr58-liquid-pill');
+  pill.setAttribute('aria-hidden','true');
+  nav.prepend(pill);nav.classList.add('sr58-liquid-nav');
+  const buttons=[...nav.querySelectorAll('.sr50-nav-btn')];
+  const update=()=>{
+   const active=nav.querySelector('.sr50-nav-btn.active')||buttons[0];
+   if(!active)return;
+   const rect=active.getBoundingClientRect(),base=nav.getBoundingClientRect();
+   pill.style.width=rect.width+'px';pill.style.height=rect.height+'px';
+   pill.style.transform='translate3d('+(rect.left-base.left)+'px,'+(rect.top-base.top)+'px,0)';
+   pill.classList.add('sr58-liquid-ready');
+  };
+  const observer=new MutationObserver(update);
+  for(const b of buttons)observer.observe(b,{attributes:true,attributeFilter:['class']});
+  for(const b of buttons)b.addEventListener('click',()=>requestAnimationFrame(update));
+  window.addEventListener('resize',update,{passive:true});
+  if(window.ResizeObserver)new ResizeObserver(update).observe(nav);
+  requestAnimationFrame(()=>requestAnimationFrame(update));
+ };
+ attach();
+}
+
 function init(){
  bridge=window.SuedtirolRadar37;
  if(!bridge?.state?.map||!window.SuedtirolRadar57||banner)return;
@@ -187,7 +216,7 @@ function init(){
  const title=e('strong');title.id='sr58BannerTitle';
  const detail=e('small');detail.id='sr58BannerDetail';banner.append(heading,title,detail);
  document.body.append(banner);
- initLiquidNav();
+ installLiquidNav();
  // Dedicated switchboard button outside the map. Existing navigation untouched.
  const quick=btn('◉ Radar',()=>open('issues'),'sr58-quick');quick.setAttribute('aria-label','Radar 5.8 Störungen, Suche und Datenqualität');document.body.append(quick);
  document.addEventListener('sr37:feeds',refresh);

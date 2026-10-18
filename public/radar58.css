@@ -25,3 +25,10 @@ body.sr58-has-warning #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-a
 .sr58-banner-close{background:rgba(255,255,255,.11);border:1px solid rgba(255,225,230,.23);color:#ffe2e5;border-radius:50%;width:27px;height:27px;display:grid;place-items:center;font-size:13px;line-height:1;cursor:pointer;flex:none}
 .sr58-banner-close:active{transform:scale(.91)}
 @media(prefers-reduced-motion:reduce){#sr50BottomNav .sr58-liquid-pill,#sr50BottomNav .sr50-nav-btn{transition:none!important}}
+
+/* 5.8.2 glass layer and language control */
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn.active{background:transparent!important}
+#sr50BottomNav .sr58-liquid-pill{transition:transform .48s cubic-bezier(.19,1.15,.26,1),width .3s ease,height .3s ease,opacity .18s ease}
+.sr58-language-toggle{position:fixed;z-index:10012;top:calc(env(safe-area-inset-top,0px) + 7px);right:13px;width:35px;height:29px;border:1px solid rgba(170,206,255,.35);border-radius:9px;background:rgba(24,39,60,.84);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:#e7f4ff;font:800 11px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:.05em;box-shadow:0 4px 12px #0004}
+body:has(.sr58-banner:not([hidden])) .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 122px)}
+@media(max-width:390px){.sr58-language-toggle{right:8px}}
