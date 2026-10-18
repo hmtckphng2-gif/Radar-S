@@ -106,7 +106,7 @@ function init(){
  if(started)return;bridge=window.SuedtirolRadar37;if(!bridge?.state?.map)return;started=true;
  dialog=mk('dialog','sr54-dialog');dialog.id='sr54TrainDialog';dialog.setAttribute('aria-label','Zugfahrt und Verspätungsverlauf');body=mk('div','sr54-dialog-body');dialog.append(body);document.body.append(dialog);
  dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close()}});
- const version=()=>{const v=document.querySelector('.brand-title em');if(v&&v.textContent!=='5.6')v.textContent='5.6';document.title='Südtirol Radar 5.6 · Züge & Busse'};
+ const version=()=>{const v=document.querySelector('.brand-title em');if(window.SuedtirolRadar57 || Number.parseFloat(v?.textContent||'0')>=5.7)return;if(v&&v.textContent!=='5.6')v.textContent='5.6';document.title='Südtirol Radar 5.6 · Züge & Busse'};
  version();const brand=document.querySelector('.brand-title');if(brand)new MutationObserver(version).observe(brand,{subtree:true,childList:true,characterData:true});
  const viewport=$('viewportBadge');if(viewport)viewport.setAttribute('title','Fahrzeuge im Kartenausschnitt · Tippen für Übersicht');
  document.addEventListener('sr37:feeds',capture);document.addEventListener('sr54:open-train',e=>openTrain(e.detail));
