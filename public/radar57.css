@@ -22,3 +22,5 @@ body:has(.sr57-view:not(.sr57-hidden)){background:#090c11}
 .sr57-history-day small{font-size:10px;color:#7e91a7}
 #sr50DeparturesView:has(.sr57-view){background:#0a0d12!important}
 .sr57-dialog{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+
+.sr57-position{background:#171f29;border:1px solid #303b49;border-radius:14px;padding:16px 14px;margin-top:12px}.sr57-position-endpoints{font-size:11px;color:#a7b8ca;text-align:center;margin-bottom:16px}.sr57-position-track{position:relative;height:4px;border-radius:6px;background:linear-gradient(90deg,#56748e,#8398a7);margin:16px 18px 19px}.sr57-position-pin{position:absolute;top:50%;transform:translate(-50%,-50%);font-size:23px;line-height:1}.sr57-position-observed{color:#83c3ed}.sr57-position-planned{color:#edc18d}.sr57-position-legend{display:flex;justify-content:space-between;font-size:11px;color:#a8bdd2}.sr57-position-distance{display:block;font-size:15px;margin-top:18px;color:#edf3fa;text-align:center}.sr57-position-info{margin-top:12px;border-top:1px solid #33404f;padding-top:10px}.sr57-position-info summary{font-size:11px;color:#8ea6c1;cursor:pointer}

@@ -69,7 +69,18 @@ function showDetails(row){
    const compare=trainScheduledPosition(v,bridge.state.indexes,bridge.state.details,bridge.state.shapes,new Date());
    if(compare){
     dialog.append(el('h3','','Ist-/Soll-Position'));
-    dialog.append(el('p','sr57-explain',compare.differenceKm.toFixed(1)+' km '+compare.relative+' · '+compare.from+' → '+compare.to+'. '+compare.note+' Die Distanz ist keine berechnete Verspätung.'));
+    const comparison=el('div','sr57-position');
+    const track=el('div','sr57-position-track');
+    const before=compare.relative==='hinter dem Soll-Punkt';
+    const observed=el('span','sr57-position-pin sr57-position-observed','●');
+    const planned=el('span','sr57-position-pin sr57-position-planned','◆');
+    observed.style.left=before?'30%':'70%';planned.style.left=before?'70%':'30%';
+    track.append(observed,planned);
+    const legend=el('div','sr57-position-legend');legend.append(el('span','','● Ist-Position'),el('span','','◆ Soll-Position'));
+    comparison.append(el('div','sr57-position-endpoints',compare.from+' → '+compare.to),track,legend);
+    comparison.append(el('strong','sr57-position-distance',compare.differenceKm.toFixed(1)+' km '+compare.relative));
+    const info=el('details','sr57-position-info');info.append(el('summary','','Wie wird das berechnet?'),el('p','sr57-explain',compare.note+' Die Grafik ist schematisch, nicht maßstabsgetreu. Kilometerdifferenz ist keine berechnete Verspätung.'));
+    comparison.append(info);dialog.append(comparison);
    }
   }
   dialog.append(button('Fahrtverlauf und Historie öffnen ↗',()=>{dialog.close();window.SuedtirolRadar54?.openTrain({source:row.source,tripId:row.tripId,number:row.number})},'sr57-primary'));

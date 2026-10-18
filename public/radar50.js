@@ -286,7 +286,7 @@ async function renderFavorites(){
  const open=button('sr50-fav-open','Öffnen',async()=>{
   if(f.type==='train'){switchTab('stats');$('sr50TrainInput').value=f.value;searchTrain=f.value;renderTrain()}
   else if(f.type==='line'){switchTab('stats');$('sr50BusInput').value=f.value;searchLine=f.value;renderBus()}
-  else{switchTab('departures');try{const list=stationCache||await bridge.getStationList();stationCache=list;const found=list.find(s=>(s.stopId===f.value||s.name===f.value||s.name===f.title)&&(!f.source||s.source===f.source));if(found)openStation(found);else $('sr50DepResults').textContent='Haltestelle im aktuellen Fahrplan nicht gefunden.'}catch{}}
+  else{switchTab('departures');try{const list=stationCache||await bridge.getStationList();stationCache=list;const found=list.find(s=>(s.stopId===f.value||s.name===f.value||s.name===f.title)&&(!f.source||s.source===f.source));if(found){if(window.SuedtirolRadar57?.openStation)window.SuedtirolRadar57.openStation(found);else openStation(found)}else $('sr50DepResults').textContent='Haltestelle im aktuellen Fahrplan nicht gefunden.'}catch{}}
  });const del=button('sr50-fav-remove','✕',()=>{store(saved().filter(x=>x.id!==f.id));renderFavorites()});del.setAttribute('aria-label','Favorit entfernen');row.append(open,del);target.append(row)}
 }
 function start(){
