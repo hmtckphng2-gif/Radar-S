@@ -6,7 +6,7 @@ import {romeDay,romeSeconds} from './radar51-logic.mjs';
 'use strict';
 const $=id=>document.getElementById(id),e=(tag,cls='',txt)=>{const n=document.createElement(tag);n.className=cls;if(txt!==undefined)n.textContent=String(txt);return n};
 const btn=(txt,fn,cls='sr58-btn')=>{const b=e('button',cls,txt);b.type='button';b.addEventListener('click',fn);return b};
-let bridge,banner,dialog,body,issues=[],diagnostics=[],alarmIds=new Set(),lastUpdate=0,stationCache=null;
+let bridge,banner,dialog,body,issues=[],diagnostics=[],alarmIds=new Set(),lastUpdate=0,stationCache=null,stations=[];
 const STORE='sr58_alert_preferences_v1';
 let prefs={enabled:false,delay:10,cancel:true,delayAlerts:true,favoritesOnly:true};
 try{prefs={...prefs,...JSON.parse(localStorage.getItem(STORE)||'{}')}}catch{}
