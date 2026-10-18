@@ -6,9 +6,9 @@ import {romeDay,romeSeconds} from './radar51-logic.mjs';
 'use strict';
 const $=id=>document.getElementById(id),e=(tag,cls='',txt)=>{const n=document.createElement(tag);n.className=cls;if(txt!==undefined)n.textContent=String(txt);return n};
 const btn=(txt,fn,cls='sr58-btn')=>{const b=e('button',cls,txt);b.type='button';b.addEventListener('click',fn);return b};
-let bridge,banner,dialog,body,issues=[],diagnostics=[],alarmIds=new Set(),lastUpdate=0,stationCache=null;
+let bridge,banner,dialog,body,issues=[],diagnostics=[],alarmIds=new Set(),lastUpdate=0,stationCache=null,notificationsSeeded=false;
 const STORE='sr58_alert_preferences_v1';
-let prefs={enabled:false,delay:10,cancel:true,delayAlerts:true,favoritesOnly:true};
+let prefs={enabled:false,delay:10,cancel:true,delayAlerts:true,platform:true,favoritesOnly:true};
 try{prefs={...prefs,...JSON.parse(localStorage.getItem(STORE)||'{}')}}catch{}
 function persist(){try{localStorage.setItem(STORE,JSON.stringify(prefs))}catch{}}
 function favorites(){try{const data=JSON.parse(localStorage.getItem('sr50_final_favorites_v1')||'[]');return Array.isArray(data)?data:[]}catch{return []}}
@@ -22,23 +22,24 @@ function refresh(){
  const alerts=[...cancel,...severe],groups=summarizeNetwork(alerts);
  if(alerts.length){
   banner.hidden=false;banner.classList.add('sr58-warning');
-  $('sr58BannerTitle').textContent=groups.length+' betroffene Linien · '+alerts.length+' Fahrten';
-  $('sr58BannerDetail').textContent=groups.slice(0,2).map(x=>(x.kind==='train'?'Zug ':'Bus ')+x.line+(x.cancelled?' · Ausfall':' · +'+x.maxDelay+' Min.')).join('  ·  ');
+  $('sr58BannerTitle').textContent=groups.length+' betroffene Linien · '+alerts.length+' Meldungen';
+  $('sr58BannerDetail').textContent=groups.slice(0,2).map(x=>(x.kind==='train'?'Zug ':'Bus ')+x.line+(x.cancelled?' · Problem/Ausfall':' · +'+x.maxDelay+' Min.')).join('  ·  ');
  }else{
   banner.hidden=true;
  }
  if(dialog?.open && ['issues','network','health','vehicles'].includes(current))renderCurrent();
- if(prefs.enabled){
-  const favs=favorites();
-  let shown=0;
-  for(const x of alerts){
+ const allNotices=issues.filter(x=>x.severity==='danger'||x.severity==='info'||x.severity==='delay'&&x.minutes>=5);
+ const newlySeen=allNotices.filter(x=>{if(alarmIds.has(x.id))return false;alarmIds.add(x.id);return true});
+ // Never show a storm of old alerts when the page starts or alerts are enabled.
+ if(!notificationsSeeded){notificationsSeeded=true;return}
+ if(prefs.enabled&&!document.hidden){
+  const favs=favorites();let shown=0;
+  for(const x of newlySeen){
    if(prefs.favoritesOnly&&!matchesFavoriteIssue(x,favs))continue;
-   if(x.severity==='danger'&&!prefs.cancel||x.severity==='delay'&&(!prefs.delayAlerts||x.minutes<prefs.delay))continue;
-   if(alarmIds.has(x.id))continue;alarmIds.add(x.id);
-   if(shown>=2)continue;
-   // Notifications remain in-app while this page is running; not background push.
+   if(x.severity==='danger'&&!prefs.cancel||x.severity==='info'&&!prefs.platform||x.severity==='delay'&&(!prefs.delayAlerts||x.minutes<prefs.delay))continue;
+   if(shown>=2)break;
    const toast=e('div','sr58-toast',x.title);
-   toast.addEventListener('click',()=>{toast.remove();open('issues')});
+   toast.setAttribute('role','status');toast.addEventListener('click',()=>{toast.remove();open('issues')});
    document.body.append(toast);shown++;setTimeout(()=>toast.remove(),8000);
   }
  }
@@ -73,7 +74,7 @@ function renderCurrent(){
   body.append(e('h2','','Netzwerk-Radar'));
   const groups=summarizeNetwork(issues);
   if(!groups.length)body.append(e('p','sr58-muted','Keine verwertbaren Störungsmeldungen. Keine Aussage über das gesamte Verkehrsnetz.'));
-  for(const x of groups.slice(0,60))body.append(textRow((x.kind==='train'?'🚆 ':'🚌 ')+x.line,(x.cancelled?x.cancelled+' gemeldete Ausfälle · ':'')+(x.delayed?x.delayed+' verspätete Fahrten · maximal +'+x.maxDelay+' Min.':'')));
+  for(const x of groups.slice(0,60))body.append(textRow((x.kind==='train'?'🚆 ':'🚌 ')+x.line,[x.cancelled?x.cancelled+' Ausfälle/entfallene Halte':'',x.delayed?x.delayed+' verspätete Fahrten · max. +'+x.maxDelay+' Min.':'',x.changed?x.changed+' Gleiswechsel':''].filter(Boolean).join(' · '),x.cancelled?'danger':x.delayed?'delay':'info'));
  }
  if(current==='health'){
   body.append(e('h2','','Feed Health Center'));
@@ -85,8 +86,9 @@ function renderCurrent(){
  if(current==='alerts'){
   body.append(e('h2','','Benachrichtigungen'));
   const en=e('label','sr58-setting'),ck=e('input');ck.type='checkbox';ck.checked=prefs.enabled;ck.onchange=()=>{prefs.enabled=ck.checked;if(!ck.checked)alarmIds.clear();persist()};en.append(ck,e('span','','Hinweise während der Nutzung'));body.append(en);
-  const only=e('label','sr58-setting'),oc=e('input');oc.type='checkbox';oc.checked=prefs.favoritesOnly;oc.onchange=()=>{prefs.favoritesOnly=oc.checked;alarmIds.clear();persist()};only.append(oc,e('span','','Nur favorisierte Linien und Züge'));body.append(only);
+  const only=e('label','sr58-setting'),oc=e('input');oc.type='checkbox';oc.checked=prefs.favoritesOnly;oc.onchange=()=>{prefs.favoritesOnly=oc.checked;alarmIds.clear();persist()};only.append(oc,e('span','','Nur favorisierte Linien, Züge und Haltestellen'));body.append(only);
   const cn=e('label','sr58-setting'),cc=e('input');cc.type='checkbox';cc.checked=prefs.cancel;cc.onchange=()=>{prefs.cancel=cc.checked;persist()};cn.append(cc,e('span','','Ausfallmeldungen'));body.append(cn);
+  const pn=e('label','sr58-setting'),pc=e('input');pc.type='checkbox';pc.checked=prefs.platform;pc.onchange=()=>{prefs.platform=pc.checked;persist()};pn.append(pc,e('span','','Gleiswechsel'));body.append(pn);
   const dn=e('label','sr58-setting'),dc=e('input');dc.type='checkbox';dc.checked=prefs.delayAlerts;dc.onchange=()=>{prefs.delayAlerts=dc.checked;persist()};dn.append(dc,e('span','','Verspätungsmeldungen'));body.append(dn);
   const delay=e('label','sr58-setting');delay.append(e('span','','Verspätung ab (Minuten)'));
   const select=e('select');for(const m of [5,10,15,20,30]){const o=e('option','',m);o.value=m;if(m===prefs.delay)o.selected=true;select.append(o)}select.onchange=()=>{prefs.delay=Number(select.value);persist()};delay.append(select);body.append(delay);
