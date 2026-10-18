@@ -3,7 +3,8 @@
 import {findStations,nearbyStationGroup,buildDepartureRows,romeDay} from './radar51-logic.mjs';
 import {mergeStationDepartures} from './radar53-logic.mjs';
 import {trainHistory,supportedRecovery} from './radar57-logic.mjs';
-import {trainScheduledPosition} from './radar51-logic.mjs';\nimport {estimatePositionDelay} from './radar58-logic.mjs';
+import {trainScheduledPosition} from './radar51-logic.mjs';
+import {estimatePositionDelay} from './radar58-logic.mjs';
 (()=>{
 'use strict';
 const KEY='sr57_station_v1',HISTORY='sr54_train_observations_v1';
