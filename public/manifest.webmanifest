@@ -1,0 +1,1 @@
+{"name": "Südtirol Radar", "short_name": "Radar", "description": "Züge und Busse in Südtirol und Trentino", "start_url": "/", "scope": "/", "display": "standalone", "background_color": "#07101d", "theme_color": "#07101d", "icons": [{"src": "/radar55-icon.png", "sizes": "192x192 512x512", "type": "image/png", "purpose": "any maskable"}]}

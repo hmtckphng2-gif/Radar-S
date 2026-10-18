@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#070c14">
-<meta name="description" content="Südtirol Radar 5.4: Final Edition mit Zug- und Bus-Echtzeittracking, Abfahrtsmonitor und Statistik-Dashboard.">
-<title>Südtirol Radar 5.4 · Züge & Busse</title>
+<meta name="description" content="Südtirol Radar 5.5: Mobile Experience mit Zug- und Bus-Echtzeittracking, Abfahrtsmonitor und Statistik-Dashboard.">
+<title>Südtirol Radar 5.5 · Züge & Busse</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
@@ -25,6 +25,11 @@
 <link rel="stylesheet" href="/radar52.css?v=5.2">
 <link rel="stylesheet" href="/radar53.css?v=5.4">
 <link rel="stylesheet" href="/radar54.css?v=5.4">
+<link rel="stylesheet" href="/radar55.css?v=5.5">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/radar55-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 <div id="sr50MapTab" class="sr50-map-tab">
@@ -32,7 +37,7 @@
   <header class="topbar">
     <div class="toprow">
       <div class="brand-badge" aria-hidden="true">🚆</div>
-      <div class="brand"><div class="brand-title">Südtirol Radar <em>5.4</em></div><div class="brand-sub">Trentino · Alto Adige · Züge & Busse</div></div>
+      <div class="brand"><div class="brand-title">Südtirol Radar <em>5.5</em></div><div class="brand-sub">Trentino · Alto Adige · Züge & Busse</div></div>
       <button id="statusBtn" class="status" aria-label="Status und Datenquellen" title="Datenquellen ansehen"><span class="status-dot"></span><span id="statusText">VERBINDE</span></button>
       <button id="themeToggle" class="iconbtn" aria-label="Hell-/Dunkelmodus wechseln" title="Theme wechseln">☀</button>
     </div>
@@ -101,5 +106,6 @@
 <script type="module" src="/radar52.js?v=5.4"></script>
 <script type="module" src="/radar53.js?v=5.4"></script>
 <script type="module" src="/radar54.js?v=5.4.4"></script>
+<script type="module" src="/radar55.js?v=5.5"></script>
 </body>
 </html>

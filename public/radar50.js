@@ -293,8 +293,8 @@ function start(){
  if(started)return;bridge=window.SuedtirolRadar37;
  if(!bridge?.state?.map||!bridge?.getStationList)return;
  started=true;history=new HistoricalStorage();createNavigation();createViews();switchTab(['#departures','#stats','#favorites'].includes(location.hash)?location.hash.slice(1):'map');
- const em=document.querySelector('.brand-title em');if(em)em.textContent='5.4';
- document.title='Südtirol Radar 5.4 · Züge & Busse';
+ const em=document.querySelector('.brand-title em');if(em)em.textContent='5.5';
+ document.title='Südtirol Radar 5.5 · Züge & Busse';
  document.addEventListener('sr37:feeds',()=>{const s=bridge?.state;if(s?.fetchedAt)history.saveSnapshot(calculateNetworkStats(s.vehicles,s.statuses,s.indexes),s.fetchedAt);if(tab==='stats')renderStats();if(tab==='departures'&&stationSelected){clearTimeout(boardFeedTimer);boardFeedTimer=setTimeout(renderInlineBoard,700)}});
  if(bridge.state.fetchedAt)history.saveSnapshot(calculateNetworkStats(bridge.state.vehicles,bridge.state.statuses,bridge.state.indexes),bridge.state.fetchedAt);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden && tab==='stats')renderStats()});
