@@ -1,5 +1,5 @@
 /* Radar 5.8 Traffic Intelligence: additive, no replacement of 5.7 map logic */
-import {collectTrafficIssues,feedDiagnostics,summarizeNetwork,matchesFavorite,vehicleModelEvidence} from './radar58-logic.mjs';
+import {collectTrafficIssues,feedDiagnostics,summarizeNetwork,matchesFavoriteIssue,resolveRollingStock} from './radar58-logic.mjs';
 import {findConnections} from './radar56-logic.mjs';
 import {romeDay,romeSeconds} from './radar51-logic.mjs';
 (()=>{
@@ -27,20 +27,17 @@ function refresh(){
  }else{
   banner.hidden=true;
  }
- if(dialog?.open && ['issues','network','health'].includes(current))renderCurrent();
+ if(dialog?.open && ['issues','network','health','vehicles'].includes(current))renderCurrent();
  if(prefs.enabled){
   const favs=favorites();
-  let shown=0;
-  const activeIds=new Set(issues.map(x=>x.id));for(const id of alarmIds)if(!activeIds.has(id))alarmIds.delete(id);
-  for(const x of issues){
-   if(prefs.favoritesOnly&&!matchesFavorite(x,favs))continue;
-   if((x.severity==='danger'&&!prefs.cancel)||(x.severity==='delay'&&(!prefs.delayAlerts||x.minutes<prefs.delay)))continue;
-   if(alarmIds.has(x.id))continue;alarmIds.add(x.id);
-   if(shown>=3)continue;shown++;
+  let shown=0;\n  for(const x of alerts){
+   if(prefs.favoritesOnly&&!matchesFavoriteIssue(x,favs))continue;
+   if(x.severity==='danger'&&!prefs.cancel||x.severity==='delay'&&(!prefs.delayAlerts||x.minutes<prefs.delay))continue;
+   if(alarmIds.has(x.id))continue;alarmIds.add(x.id);\n   if(shown>=2)continue;
    // Notifications remain in-app while this page is running; not background push.
    const toast=e('div','sr58-toast',x.title);
    toast.addEventListener('click',()=>{toast.remove();open('issues')});
-   document.body.append(toast);setTimeout(()=>toast.remove(),8000);
+   document.body.append(toast);shown++;setTimeout(()=>toast.remove(),8000);
   }
  }
 }
@@ -61,7 +58,7 @@ function textRow(title,detail,level=''){
 function renderCurrent(){
  body.replaceChildren();
  const tabs=e('nav','sr58-tabs');
- for(const [key,name] of [['issues','Störungen'],['network','Netzwerk'],['health','Daten'],['search','Suche'],['vehicles','Fahrzeuge'],['connections','Anschlüsse'],['alerts','Alarme']]){
+ for(const [key,name] of [['issues','Störungen'],['network','Netzwerk'],['connections','Anschlüsse'],['health','Daten'],['search','Suche'],['vehicles','Fahrzeuge'],['alerts','Alarme']]){
   const b=btn(name,()=>open(key),'sr58-tab');b.setAttribute('aria-pressed',String(current===key));tabs.append(b)
  }
  body.append(tabs);
@@ -125,8 +122,8 @@ function renderCurrent(){
   for(const v of vs){
    const label=e('div','sr58-issue');
    label.append(e('strong','',v.name||v.tripId),e('small','','Fahrzeug-ID: '+(v.vehicleId||'unbekannt')+' · '+v.source.toUpperCase()));
-   const evidence=vehicleModelEvidence(v),model=evidence.model;
-   label.append(e('small','',model?'Fahrzeugtyp (Feed): '+model:'Fahrzeugtyp: unbekannt · '+evidence.note));
+   const model=resolveRollingStock(v);
+   label.append(e('small','','Fahrzeugtyp: '+model.name+' · '+model.evidence));
    label.append(btn('Auf Karte ansehen →',()=>{dialog.close();window.SuedtirolRadar50?.openVehicle?.(v.key)},'sr58-inline-btn'));
    label.append(btn('Anschluss-Radar →',()=>showConnections(v),'sr58-inline-btn'));
    body.append(label);
@@ -138,7 +135,7 @@ function renderCurrent(){
   if(!v){body.append(e('p','sr58-muted','Bitte zuerst im Fahrzeug-Explorer einen Zug oder Bus auswählen.'));return}
   const s=bridge.state,data=findConnections({source:v.source,tripId:v.tripId,db:s.indexes[v.source],details:s.details[v.source],updates:s.updates,statuses:s.statuses,serviceDay:romeDay(),nowSec:romeSeconds(),minTransfer:240});
   body.append(e('p','sr58-muted',v.name+' · '+(v.headsign||'Ziel unbekannt')+' · Mindestumstieg 4 Min. (Fußweg nicht geprüft)'));
-  if(!data.station){body.append(e('p','sr58-muted',data.reason||'Keine ausreichend passenden Anschlussdaten'));return}
+  if(!data.station){body.append(e('p','sr58-muted',data.reason));return}
   body.append(textRow('Nächster Halt: '+data.station.name,'Geplant '+fmt(data.station.arr)+(data.station.arrivalDelay===null?' · keine Ankunftsprognose':' · mit Echtzeitmeldung')));
   if(!data.rows.length)body.append(e('p','sr58-muted',data.reason||'Keine passenden Anschlüsse'));
   for(const c of data.rows.slice(0,14))body.append(textRow(c.line+' → '+c.destination,fmt(c.departure+(c.assessment.live?(c.departureDelaySec||0):0))+' · '+c.assessment.label+' · '+Math.round(c.assessment.margin/60)+' Min. Umsteigezeit',c.assessment.kind));
@@ -156,10 +153,10 @@ function init(){
  // Dedicated switchboard button outside the map. Existing navigation untouched.
  const quick=btn('◉ Radar',()=>open('issues'),'sr58-quick');quick.setAttribute('aria-label','Radar 5.8 Störungen, Suche und Datenqualität');document.body.append(quick);
  document.addEventListener('sr37:feeds',refresh);
+ bridge.getStationList?.().then(list=>{stations=Array.isArray(list)?list:[]}).catch(()=>{});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
  refresh();
- document.title='Südtirol Radar 5.8 · Traffic Intelligence';const brand=document.querySelector('.brand-title em');if(brand)brand.textContent='5.8';
- window.SuedtirolRadar58={version:'5.8',open,refresh,getIssues:()=>issues};
+ window.SuedtirolRadar58={version:'5.8',open,refresh,getIssues:()=>issues,getFeedHealth:()=>diagnostics};\n document.title='Südtirol Radar 5.8 · Traffic Intelligence';\n const version=document.querySelector('.brand-title em');if(version)version.textContent='5.8';
 }
 let attempts=0;
 function boot(){if(window.SuedtirolRadar58)return;if(window.SuedtirolRadar37?.state?.map&&window.SuedtirolRadar57){init();return}if(attempts++<90)setTimeout(boot,200)}
