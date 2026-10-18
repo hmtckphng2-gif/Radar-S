@@ -1,0 +1,94 @@
+/* Radar 5.6 — cohesive dark iPhone UI, additive to working 5.5. */
+.sr56-overlay{
+ position:fixed;z-index:12500;
+ inset:auto max(10px,env(safe-area-inset-right)) calc(67px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+ width:min(calc(100% - 20px),650px);margin:0 auto;
+ box-sizing:border-box;max-height:min(79dvh,760px);
+ overflow:hidden;display:flex;flex-direction:column;
+ border-radius:22px;border:1px solid #3a5878;
+ background:linear-gradient(160deg,#12243b,#0c192b 80%);
+ color:#e9f3ff;box-shadow:0 16px 60px #000c;
+ font:13px/1.45 Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+}
+.sr56-overlay[hidden]{display:none!important}
+.sr56-overlay-head{padding:12px 15px 10px;display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid #2b4562;flex:none}
+.sr56-overlay-head h2{margin:0;font-size:17px;font-weight:750;letter-spacing:-.035em}
+.sr56-overlay-body{padding:12px 14px calc(15px + env(safe-area-inset-bottom));overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;min-height:0}
+.sr56-note{font:400 11px/1.48 Inter,-apple-system,system-ui,sans-serif;color:#adc2db;margin:5px 0 7px}
+.sr56-footnote{font:400 10px/1.5 Inter,-apple-system,system-ui,sans-serif;color:#849dbb;margin:12px 0 0}
+.sr56-close{width:37px;height:37px;border:1px solid #3e5879;border-radius:12px;color:#e6f3ff;background:#1c334d;flex-shrink:0}
+.sr56-btn{min-height:40px;background:#1e3854;border:1px solid #3e5f82;color:#e8f5ff;border-radius:12px;font:650 12px/1.3 Inter,-apple-system,system-ui,sans-serif;padding:8px 12px;white-space:nowrap;touch-action:manipulation}
+.sr56-btn:active{background:#2d5276}
+.sr56-station-open{font-size:11px;padding:7px 10px;margin-left:auto}
+.sr56-quality{margin:6px 0 5px;padding:7px 10px;border:1px solid #2c5068;border-radius:11px;background:#12283b}
+.sr56-quality[hidden],.sr56-journey[hidden],.sr56-compare[hidden]{display:none!important}
+.sr56-quality .sr56-line{padding:0;border:0}
+.sr56-quality .sr56-note{margin:2px 0 0;font-size:10px}
+.sr56-quality.reported .sr56-quality-label{color:#78e1c2}
+.sr56-quality.estimated .sr56-quality-label{color:#d8b27b}
+.sr56-quality.stale .sr56-quality-label{color:#ffb8b7}
+.sr56-quality.unknown .sr56-quality-label{color:#a8b8cd}
+.sr56-compare,.sr56-journey{padding:9px 11px;border-radius:12px;border:1px solid #31506c;background:#13283e;margin:6px 0}
+.sr56-title-line,.sr56-line{display:flex;gap:10px;justify-content:space-between;align-items:center;min-width:0}
+.sr56-title-line strong,.sr56-line strong{font-size:12px;white-space:normal}
+.sr56-line{padding:10px 0;border-bottom:1px solid #2c445e}
+.sr56-line span{font-size:11px;color:#afc2da;min-width:0}
+.sr56-kicker{font-size:9px!important;font-weight:700!important;letter-spacing:.05em;color:#7fa9cf!important;text-align:right}
+.sr56-big{display:block;font-size:20px;letter-spacing:-.035em;color:#ffd39a}
+.sr56-delay{display:block;font-size:16px;color:#a8e0ff}
+.sr56-compare-values{display:flex;justify-content:space-between;gap:12px;margin:7px 0}
+.sr56-compare-values>div{display:flex;flex-direction:column;gap:3px}
+.sr56-compare-values>div:last-child{text-align:right}
+.sr56-compare-values small{font-size:10px;color:#9db7d3}
+.sr56-alert{padding:7px 9px;border-radius:9px;background:#503822;color:#ffcd93;font-size:11px;line-height:1.45;margin:5px 0}
+.sr56-progress{height:5px;background:#2b4560;border-radius:100px;overflow:hidden;margin:8px 0}
+.sr56-progress-fill{height:100%;background:linear-gradient(90deg,#4ba8f9,#6cdfd0);border-radius:inherit;transition:width .32s cubic-bezier(.22,1,.36,1)}
+.sr56-journey .sr56-note{font-size:10.5px}
+.sr56-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+.sr56-kpi{background:#1a324c;border:1px solid #2c506f;border-radius:12px;padding:9px 10px;min-width:0}
+.sr56-kpi strong{display:block;font-size:19px;line-height:1.2;font-variant-numeric:tabular-nums;color:#eaf4ff}
+.sr56-kpi small{display:block;font-size:10px;line-height:1.35;color:#a7bdd6;margin-top:3px}
+.sr56-small-head{font-size:14px;letter-spacing:-.02em;margin:16px 0 7px}
+.sr56-item{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #29415b;padding:10px 0}
+.sr56-item-body{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.sr56-item strong{font-size:12px;color:#f4f8ff;font-weight:680;overflow-wrap:anywhere}
+.sr56-item small{font-size:10.5px;color:#a6bbd4;line-height:1.4}
+.sr56-item-time{font-size:13px;flex:none;font-variant-numeric:tabular-nums;font-weight:710;color:#ebf5ff}
+.sr56-connection{padding:11px;border:1px solid #3a5879;border-radius:13px;margin:8px 0;background:#192e46}
+.sr56-connection-top{font-size:12px;font-weight:730;overflow-wrap:anywhere}
+.sr56-connection-meta{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:7px 0}
+.sr56-connection-meta strong{font-size:15px;font-variant-numeric:tabular-nums}
+.sr56-connection small{font-size:10px;color:#aac0da}
+.sr56-chip{padding:5px 8px;border-radius:999px;background:#233b55;font-size:10px;font-weight:740;white-space:normal}
+.sr56-chip.likely{background:#184b42;color:#87efc1}
+.sr56-chip.tight{background:#4d4029;color:#ffd38e}
+.sr56-chip.risk{background:#563138;color:#ffb0ae}
+.sr56-chip.plan,.sr56-chip.unknown{background:#294056;color:#bacfe7}
+.sr56-filter{display:flex;gap:6px;overflow-x:auto;padding:3px 0 9px}
+.sr56-filter button{border:1px solid #3b5877;background:#192f48;color:#c2d2e4;border-radius:9px;padding:7px 9px;min-height:36px;white-space:nowrap;font:630 11px system-ui}
+.sr56-filter button[aria-pressed=true]{background:#346ca7;border-color:#689edc;color:white}
+.sr56-chart{margin:12px 0}
+.sr56-chart-row{display:grid;grid-template-columns:38px minmax(0,1fr) 75px;align-items:center;gap:8px;margin:6px 0;font-size:10px}
+.sr56-chart-row strong{text-align:right;font-size:10px}
+.sr56-chart-track{height:13px;border-radius:5px;background:#243850;overflow:hidden}
+.sr56-chart-fill{height:100%;background:#65baff;border-radius:inherit}
+body.sr56-ready #sr50StatsView .sr50-card{content-visibility:auto;contain-intrinsic-size:auto 320px}
+body.sr56-ready .sr51-departure-row{transition:background-color .18s ease}
+body.sr56-ready .sr51-board-head{gap:7px;flex-wrap:wrap}
+body.sr56-ready #sheet .sr56-quality{font-size:10px}
+body.sr56-ready .sr55-popover{border-color:#406087}
+@media(max-width:385px){
+ .sr56-station-open{width:100%;margin-left:0}
+ .sr56-overlay{inset-inline:8px;width:calc(100% - 16px)}
+ .sr56-overlay-body{padding:10px}
+ .sr56-line{gap:6px}
+}
+@media(prefers-reduced-motion:no-preference){
+ .sr56-overlay:not([hidden]){animation:sr56Rise .27s cubic-bezier(.16,1,.3,1) both}
+ @keyframes sr56Rise{from{transform:translateY(12px);opacity:.4}to{transform:translateY(0);opacity:1}}
+}
+@media(prefers-reduced-motion:reduce){.sr56-overlay,.sr56-progress-fill,body.sr56-ready .sr51-departure-row{animation:none!important;transition:none!important}}
+[data-theme=light] .sr56-overlay{background:#f6f9fe;color:#203955;border-color:#b4c7dc}
+[data-theme=light] .sr56-item strong,[data-theme=light] .sr56-kpi strong{color:#223c5b}
+[data-theme=light] .sr56-note,[data-theme=light] .sr56-footnote,[data-theme=light] .sr56-line span{color:#4b6580}
+[data-theme=light] .sr56-kpi,[data-theme=light] .sr56-connection,[data-theme=light] .sr56-quality,[data-theme=light] .sr56-compare,[data-theme=light] .sr56-journey{background:#e8f0fa;border-color:#bacbdf}
