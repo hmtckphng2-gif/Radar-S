@@ -1,0 +1,67 @@
+/* Südtirol Radar 4.4 — two modes using the same key-free OSM tiles.
+   Safari safety: never apply new per-tile filters in RADAR mode. */
+html.sr44-radar #map, html.sr44-radar #map.leaflet-container {background:#030a13!important;}
+html.sr44-radar #map .leaflet-tile-pane {opacity:.40!important;}
+html.sr44-radar #map img.leaflet-tile {
+  filter:none!important;-webkit-filter:none!important;
+  image-rendering:auto!important;
+}
+html.sr44-classic #map .leaflet-tile-pane {opacity:1!important;}
+/* Clusters must not dominate a city-wide viewport. */
+#map .sr43-cluster-icon {width:40px!important;height:40px!important;}
+#map .sr43-cluster-circle {width:40px;height:40px;border-width:1.5px;background:linear-gradient(145deg,#174375,#112843);box-shadow:0 2px 9px #0009;}
+#map .sr43-cluster-circle strong {font-size:15px;line-height:17px;}
+#map .sr43-cluster-circle small {font-size:7.3px;line-height:10px;}
+/* Small number above each selected marker; automatic zoom-aware thinning. */
+#map .marker-wrap .marker-label {
+  max-width:78px;padding:1px 4px;font-size:9px;line-height:13px;
+  border-radius:5px;letter-spacing:-.15px;background:#0c1c30ed;
+  box-shadow:0 1px 4px #0008;
+}
+#map .marker-wrap.bus .marker-label {top:20px;}
+#map .marker-wrap.train .marker-label {top:12px;}
+#map .marker-wrap.bus .marker-circle {width:19px;height:19px;font-size:10px;}
+#map .marker-wrap.train .marker-circle {width:27px;height:27px;}
+#map .marker-wrap.bus .sr40-delay {top:24px;left:calc(50% + 11px);padding:1px 3px;font-size:7.5px;}
+#map .marker-wrap.train .sr40-delay {top:25px;left:calc(50% + 15px);padding:1px 3px;font-size:7.5px;}
+/* Far: no labels unless selected. Middle: train numbers but not bus numbers.
+   Near: bus/train number and available, verified delay. */
+html.sr44-far #map .marker-wrap:not(.selected) .marker-label,
+html.sr44-far #map .marker-wrap:not(.selected) .sr40-delay,
+html.sr44-city #map .marker-wrap.bus:not(.selected) .marker-label,
+html.sr44-city #map .marker-wrap:not(.selected) .sr40-delay {display:none!important;}
+html.sr44-far #map .marker-wrap.selected .marker-label,
+html.sr44-city #map .marker-wrap.selected .marker-label,
+html.sr44-near #map .marker-wrap.selected .marker-label {display:block!important;}
+/* The 4.3.1 class sr431-midwide hides delays until z14; selected remains readable. */
+html.sr44-far #map .marker-wrap.selected .sr40-delay,
+html.sr44-city #map .marker-wrap.selected .sr40-delay {display:block!important;}
+html.sr44-far #map .marker-wrap.sr43-stale:after {display:none;}
+html.sr44-far #map .marker-wrap.sr43-stale .marker-circle {outline:2px dashed #c3a98a;outline-offset:2px;}
+/* Keep the trip progress visually distinct but restrained. */
+#map .leaflet-pane.leaflet-overlay-pane path {stroke-linejoin:round;stroke-linecap:round;}
+/* Small, native-feeling sheet, with the mini card still accessible by touch. */
+.sheet.sr42-sheet[data-sr42-snap='peek'] .sr43-mini {
+  display:block;cursor:pointer;padding:5px 9px;margin:0 8px;
+}
+.sheet.sr42-sheet[data-sr42-snap='peek'] .sheet-heading {margin-bottom:2px;}
+.sheet.sr42-sheet[data-sr42-snap='peek'] .sheet-subtitle {max-width:64vw;}
+#sr43Mini:focus-visible {outline:2px solid #68b8ff;}
+.sr44-mode {padding:8px 0 12px;border-bottom:1px solid var(--edge);}
+.sr44-mode-title {display:block;font-size:12px;margin-bottom:7px;}
+.sr44-mode-tabs {display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.sr44-mode-tabs button {border:1px solid var(--edge);border-radius:10px;background:var(--panel2);padding:10px;font-size:12px;font-weight:700;}
+.sr44-mode-tabs button.selected {border-color:#5fa7ff;background:#20538e;color:#fff;}
+.sr44-mode small {display:block;font-size:10px;line-height:1.45;color:var(--muted);margin-top:7px;}
+#radar40Settings .sr40-setting-row[hidden]{display:none!important;}
+.sr44-connection {position:fixed;z-index:965;left:12px;bottom:calc(153px + env(safe-area-inset-bottom));max-width:calc(100vw - 100px);
+ background:#382717ee;border:1px solid #fbbf6a;border-radius:10px;padding:8px 11px;color:#ffe7ca;
+ font:700 11px Inter,system-ui,sans-serif;box-shadow:0 4px 14px #0007;pointer-events:none;}
+.sr44-connection[hidden]{display:none!important;}
+@media(min-width:750px){.sr44-connection{left:16px;bottom:144px;}}
+/* Higher specificity than 4.3.1's dark inverted-tile rule: Radar mode uses
+   one uniform opacity layer, avoiding per-image Safari compositing seams. */
+html.sr44-radar.sr43-clean-map[data-theme='dark'] #map img.leaflet-tile,
+html.sr44-radar.sr43-clean-map[data-theme='light'] #map img.leaflet-tile {
+ filter:none!important;-webkit-filter:none!important;
+}
