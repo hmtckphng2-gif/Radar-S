@@ -1,0 +1,43 @@
+/* Südtirol Radar 4.7 – isolated UI styles; does not modify map transforms or 4.5.2 sync. */
+#sr47Progress[hidden],#sr47TrackNote[hidden],#sr47BoardBar[hidden],#sr47Diagnostics[hidden],#sr47BoardBar p[hidden]{display:none!important}
+.sr47-progress{border:1px solid var(--edge);border-radius:13px;background:var(--panel2);padding:12px;margin:8px 0 10px;display:flex;flex-direction:column;gap:9px}
+.sr47-card-head,.sr47-board-title{display:flex;align-items:baseline;justify-content:space-between;gap:9px;flex-wrap:wrap}
+.sr47-card-head strong,.sr47-board-title strong{color:var(--text);font-size:12px}
+.sr47-card-head small,.sr47-board-title small{color:var(--muted);font-size:10px}
+.sr47-progress-meta{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:10px}
+.sr47-progress-meta strong{color:var(--text)}.sr47-progress-meta span{color:var(--muted)}
+.sr47-progressbar{width:100%;height:7px;border-radius:99px;overflow:hidden;background:rgba(143,165,184,.22)}
+.sr47-progress-fill{height:100%;border-radius:99px;background:#4fe0c0;transition:width .25s ease}
+.sr47-progress-next{margin:0;font-size:11px;color:var(--text)}
+.sr47-subtle{margin:0;color:var(--muted);font-size:11px;line-height:1.5}
+.sr47-muted{margin:3px 0;color:var(--muted);font-size:11px;line-height:1.4}
+.sr47-tracknote{font-size:10px;line-height:1.45;color:var(--muted);border-left:2px solid #74edd4;padding:4px 0 4px 9px;margin:7px 0 10px}
+#sr47TrailBtn[hidden]{display:none!important}
+.sr47-boardbar{display:flex;flex-direction:column;gap:9px;margin:10px 0;padding:11px;border:1px solid var(--edge);border-radius:12px;background:var(--panel2)}
+.sr47-board-options{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.sr47-board-info{color:var(--muted);font-size:10px;line-height:1.35}
+.sr47-secondary{font-size:10px;font-weight:750;color:var(--text);background:var(--panel);border:1px solid var(--edge);border-radius:8px;min-height:31px;padding:6px 9px}
+.sr47-secondary[aria-pressed=true]{background:rgba(17,125,110,.25);border-color:#4fe0c0}
+.radar37-departure[hidden]{display:none!important}
+.sr47-diagnostics{position:fixed;right:12px;bottom:calc(105px + env(safe-area-inset-bottom,0px));z-index:1450;max-height:min(68vh,570px);width:min(380px,calc(100vw - 24px));overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--edge);border-radius:17px;background:var(--panel);color:var(--text);box-shadow:0 15px 48px rgba(0,0,0,.5);backdrop-filter:blur(14px)}
+.sr47-diagnostic-head{display:flex;justify-content:space-between;gap:8px;align-items:start;padding:14px;border-bottom:1px solid var(--edge)}
+.sr47-diagnostic-head>div{display:flex;flex-direction:column;gap:3px}
+.sr47-diagnostic-head strong{font-size:14px}
+.sr47-diagnostic-head small{font-size:10px;color:var(--muted)}
+.sr47-close{border:1px solid var(--edge);background:var(--panel2);color:var(--text);border-radius:8px;width:30px;height:30px}
+.sr47-diagnostic-content{overflow-y:auto;overscroll-behavior:contain;min-height:0;padding:10px 14px 14px;display:flex;flex-direction:column;gap:12px}
+.sr47-diagnostic-group{display:flex;flex-direction:column;gap:6px}
+.sr47-diagnostic-group h3{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:4px 0}
+.sr47-diagnostic-row{display:flex;justify-content:space-between;align-items:baseline;gap:9px;font-size:11px}
+.sr47-diagnostic-row span{color:var(--muted)}
+.sr47-diagnostic-row strong{text-align:right;font-size:11px}
+.sr47-diagnostic-row .good,.sr47-source-state.good{color:#61dbb1}
+.sr47-diagnostic-row .warn,.sr47-source-state.warn{color:#f6bc6b}
+.sr47-source-state.bad{color:#ff8d8d}
+.sr47-diagnostic-source{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--edge);padding-top:8px}
+.sr47-diagnostic-source>div{display:flex;flex-direction:column;gap:3px}
+.sr47-diagnostic-source strong{font-size:11px}.sr47-diagnostic-source small{font-size:10px;color:var(--muted)}
+.sr47-source-state{font-size:9px;font-weight:850;letter-spacing:.04em;text-align:right}
+.sr47-source-detail{color:var(--muted);font-size:10px}
+@media(max-width:390px){.sr47-diagnostics{bottom:calc(98px + env(safe-area-inset-bottom,0px))}.sr47-progress-meta{flex-wrap:wrap}.sr47-board-info{flex-basis:100%}}
+@media(prefers-reduced-motion:reduce){.sr47-progress-fill{transition:none}}
