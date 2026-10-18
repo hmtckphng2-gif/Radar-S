@@ -2,7 +2,8 @@
    Reuses existing GTFS rows and Radar 5.4 train history. No map rendering changes. */
 import {findStations,nearbyStationGroup,buildDepartureRows,romeDay} from './radar51-logic.mjs';
 import {mergeStationDepartures} from './radar53-logic.mjs';
-import {aggregateDays} from './radar54-logic.mjs';
+import {trainHistory,supportedRecovery} from './radar57-logic.mjs';
+import {trainScheduledPosition} from './radar51-logic.mjs';
 (()=>{
 'use strict';
 const KEY='sr57_station_v1',HISTORY='sr54_train_observations_v1';
@@ -18,17 +19,31 @@ function samples(number){
  try{const a=JSON.parse(localStorage.getItem(HISTORY)||'[]');return Array.isArray(a)?a.filter(x=>x&&String(x.number)===String(number)&&Number.isFinite(x.minutes)&&Number.isFinite(x.t)):[]}catch{return []}
 }
 function historySummary(number){
- const days=aggregateDays(samples(number),String(number),30,romeDay()),present=days.filter(x=>x.count);
- const count=present.reduce((s,x)=>s+x.count,0);
- if(!count)return {count:0,days:0,avg:null,description:'Für diesen Zug wurden auf diesem Gerät noch keine historischen Verspätungen gemessen.'};
- const mean=present.reduce((s,x)=>s+x.minutes*x.count,0)/count;
- return {count,days:present.length,avg:mean,description:'In '+count+' gespeicherten Messungen an '+present.length+' Tagen lag die gemeldete Verspätung durchschnittlich bei '+(mean>0?'+':'')+mean.toFixed(1)+' Minuten. Das sind Beobachtungen, keine garantierte Ankunftsprognose.'};
+ const h=trainHistory(samples(number),String(number),romeDay());
+ const count=h.count,days=h.dayCount,avg=h.mean;
+ const description=!count?'Für diesen Zug wurden auf diesem Gerät noch keine historischen Verspätungen gemessen.':
+ 'In '+count+' gespeicherten Messungen an '+days+' Tagen lag die gemeldete Verspätung durchschnittlich bei '+(avg>0?'+':'')+avg.toFixed(1)+' Minuten. Messwerte, keine verifizierten Endankünfte.';
+ return {...h,days,avg,description};
 }
-function forecast(row){
- // A fresh stop-specific GTFS-RT prediction is authoritative for this stop.
- // No recovery claim from distance alone, nor historical samples from different segments.
- if(row.delaySec===null)return {value:null,description:'Keine aktuelle, stoppspezifische Echtzeitprognose verfügbar.'};
- return {value:row.delaySec,description:'Für diesen Halt gilt die aktuelle GTFS-RT-Meldung. Eine zusätzliche Radar-Zeitaufholung wird erst angezeigt, wenn belastbare Streckenmessungen vorliegen.'};
+function evidence(row){
+ const s=bridge?.state,update=s?.updates?.get?.(row.source+':'+row.tripId);
+ return supportedRecovery(row,update,s?.statuses,Date.now(),row.serviceDay);
+}
+function addHistoryChart(h){
+ const chart=el('div','sr57-history-chart');
+ chart.setAttribute('role','img');chart.setAttribute('aria-label','Historische gemeldete Verspätungen je Tag, fehlende Tage ohne Messung');
+ const recent=h.points.slice(-7);
+ const max=Math.max(1,...recent.filter(x=>x.count).map(x=>Math.abs(x.minutes)));
+ for(const r of recent){
+  const cell=el('div','sr57-history-day');
+  cell.append(el('span','',r.count?(r.minutes>0?'+':'')+r.minutes.toFixed(0):'–'));
+  const bar=el('div','sr57-history-bar'+(r.count?'':' sr57-history-missing'));
+  bar.style.height=(r.count?(10+Math.abs(r.minutes)/max*50):8)+'px';
+  cell.append(bar,el('small','',r.day.slice(8)));
+  cell.title=r.day+': '+(r.count?r.count+' Messungen · Ø '+r.minutes+' Minuten':'Keine Daten');
+  chart.append(cell);
+ }
+ return chart;
 }
 function showDetails(row){
  if(!dialog){dialog=el('dialog','sr57-dialog');document.body.append(dialog);dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()})}
@@ -37,16 +52,25 @@ function showDetails(row){
  dialog.append(top,el('h2','sr57-title',row.number),el('p','sr57-destination',row.headsign));
  const stats=el('div','sr57-metrics'),official=el('div','sr57-metric'),radar=el('div','sr57-metric');
  official.append(el('small','','OFFIZIELL'),el('strong','',row.delaySec===null?'–':labelDelay(row.delaySec)));
- const pred=forecast(row);
- radar.append(el('small','','RADAR PROGNOSE'),el('strong','',pred.value===null?'–':labelDelay(pred.value)));
+ const recovery=evidence(row);
+ radar.append(el('small','','RADAR · BESTÄTIGT'),el('strong','',pred.value===null?'–':labelDelay(pred.value)));
  stats.append(official,radar);dialog.append(stats);
- dialog.append(el('p','sr57-explain',pred.description));
+ dialog.append(el('p','sr57-explain',recovery?'An diesem Halt prognostiziert GTFS-RT '+recovery.gained+' Minuten weniger Verspätung als am vorherigen gemeldeten Halt. Radar zeigt die Differenz; es ist keine zusätzliche KI-Vorhersage.':'Noch keine unabhängig belastbare Prognose zur Zeitaufholung. GTFS-RT-Verspätung und Ist-/Soll-Abstand bleiben getrennt.'));
  const schedule=el('div','sr57-schedule');schedule.append(el('span','','Fahrplan '+clock(row.sec)),el('span','',row.forecast===null?'Livezeit unbekannt':'Gemeldet '+clock(row.forecast)));dialog.append(schedule);
  if(row.kind==='train'){
   const h=historySummary(row.number);
   dialog.append(el('h3','','Historische Verspätungen'),el('p','sr57-explain',h.description));
+  if(h.count)dialog.append(addHistoryChart(h));
   if(h.count)dialog.append(el('p','sr57-count','Datengrundlage: '+h.count+' Messungen / '+h.days+' Tage · nur dieses Gerät'));
-  dialog.append(el('h3','','Radar Intelligence'),el('p','sr57-explain',h.count>=8&&h.days>=3?'Die aktuelle offizielle Meldung liegt '+(row.delaySec===null?'nicht vor.':(Math.round(row.delaySec/60)>h.avg?'über':'bei oder unter')+' dem lokal gemessenen Durchschnitt.'): 'Für eine aussagekräftige KI-artige Zusammenfassung fehlen noch genügend unabhängige Messungen.'));
+  dialog.append(el('h3','','Radar Intelligence'),el('p','sr57-explain',h.sufficient?'Die aktuelle offizielle Meldung liegt '+(row.delaySec===null?'nicht vor.':(Math.round(row.delaySec/60)>h.avg?'über':'bei oder unter')+' dem lokal gemessenen Durchschnitt. Diese Daten allein erlauben keine zuverlässige Zeitaufholungsprognose.'): 'Für eine aussagekräftige KI-artige Zusammenfassung fehlen noch genügend unabhängige Messungen.'));
+  const v=[...bridge.state.vehicles.values()].find(x=>x.kind==='train'&&x.source===row.source&&x.tripId===row.tripId);
+  if(v){
+   const compare=trainScheduledPosition(v,bridge.state.indexes,bridge.state.details,bridge.state.shapes,new Date());
+   if(compare){
+    dialog.append(el('h3','','Ist-/Soll-Position'));
+    dialog.append(el('p','sr57-explain',compare.differenceKm.toFixed(1)+' km '+compare.relative+' · '+compare.from+' → '+compare.to+'. '+compare.note+' Die Distanz ist keine berechnete Verspätung.'));
+   }
+  }
   dialog.append(button('Fahrtverlauf und Historie öffnen ↗',()=>{dialog.close();window.SuedtirolRadar54?.openTrain({source:row.source,tripId:row.tripId,number:row.number})},'sr57-primary'));
  }
  dialog.showModal();
@@ -75,7 +99,7 @@ function render(){
   const route=el('div','sr57-route');route.append(el('strong','',row.headsign),el('small','',row.number+(row.platform?.current?' · '+(row.kind==='train'?'Gleis ':'Steig ')+row.platform.current:'')));
   const delay=el('div','sr57-delay');
   delay.append(el('strong',row.cancelled?'sr57-bad':row.delaySec>0?'sr57-late':'',row.cancelled?'Ausfall':row.delaySec===null?'–':labelDelay(row.delaySec)));
-  delay.append(el('small','',row.delaySec===null?'Nur Fahrplan':'GTFS-RT'));
+  const gain=evidence(row);delay.append(el('small','',gain?'↘ '+gain.gained+' min erwartet':row.delaySec===null?'Nur Fahrplan':'GTFS-RT'));
   item.append(time,route,delay);board.append(item);
  }
 }
@@ -103,7 +127,7 @@ function start(){
  bridge.getStationList().then(list=>{stations=Array.isArray(list)?list:[];if(prior){const st=stations.find(x=>x.source===prior.source&&String(x.stopId)===String(prior.stopId));if(st)choose(st)}if(!chosen){picker.hidden=false;renderPicker()}render()}).catch(()=>board.append(el('p','sr57-empty','Bahnhöfe konnten nicht geladen werden. Bitte Verbindung prüfen.')));
  document.addEventListener('sr37:feeds',()=>{clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(!view.classList.contains('sr57-hidden'))render()},900)});
  // The monitor is the new home. Keep all existing tabs, map and Map-Sync intact.
- if(!['#map','#stats','#favorites'].includes(location.hash))original('departures');
+ original('departures');
  active();
  document.title='Südtirol Radar 5.7 · Graphite Intelligence';
  const version=document.querySelector('.brand-title em');if(version)version.textContent='5.7';
