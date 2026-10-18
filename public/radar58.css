@@ -8,21 +8,8 @@
 
 .sr58-action{width:100%;padding:14px;color:white;background:#385778;border:0;border-radius:12px;font-weight:700}
 
-body:has(#sr58Banner:not([hidden])) #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-area-inset-top) + 98px)!important}
-.sr58-quick{touch-action:manipulation}
-.sr58-dialog .sr58-tabs{position:sticky;top:0;z-index:1;background:#111923}
-.sr58-inline-btn{display:inline-block;background:#2d455c;color:#d8edff;border:1px solid #436383;border-radius:8px;padding:8px 10px;margin:7px 8px 0 0;font-size:11px}
-.sr58-dialog button:focus-visible,.sr58-banner:focus-visible{outline:2px solid #a2d7ff;outline-offset:2px}
-@media(max-width:390px){.sr58-dialog{width:96vw}.sr58-quick{padding:7px 11px}.sr58-banner{left:8px;right:8px}}
-@media(prefers-reduced-motion:reduce){.sr58-dialog,.sr58-banner{animation:none!important}}
+.sr58-inline-btn{display:inline-block;margin:9px 6px 0 0;border:1px solid #4c6683;border-radius:8px;background:#25384d;color:#dceafa;padding:8px 11px;font-size:11px;font-weight:700}.sr58-vehicle-tabs{display:flex;gap:7px}
+body.sr58-has-warning #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-area-inset-top) + 112px)}
+@media(max-width:390px){.sr58-banner{left:8px;right:8px}.sr58-quick{right:8px}.sr58-dialog{width:97vw}.sr58-body{padding:12px}}
 
-/* Liquid Glass: layered translucency, delicate specular edges, accessible contrast */
-:root{--sr58-glass:rgba(23,34,49,.78);--sr58-glass-line:rgba(211,233,255,.21)}
-.sr57-view,.sr57-dialog,.sr58-dialog{background:linear-gradient(150deg,rgba(103,145,183,.13),transparent 35%),var(--sr58-glass)!important;border:1px solid var(--sr58-glass-line)!important;backdrop-filter:blur(28px) saturate(145%);-webkit-backdrop-filter:blur(28px) saturate(145%);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 18px 55px rgba(0,0,0,.32)}
-.sr57-row,.sr57-position,.sr57-metric,.sr58-issue{background:linear-gradient(135deg,rgba(206,231,255,.11),rgba(65,89,121,.08) 42%,rgba(22,34,49,.43))!important;border:1px solid rgba(207,229,251,.15)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 4px 15px rgba(0,0,0,.14)}
-.sr58-banner{background:linear-gradient(120deg,rgba(146,44,63,.85),rgba(65,20,34,.83));backdrop-filter:blur(25px) saturate(160%);-webkit-backdrop-filter:blur(25px) saturate(160%);border:1px solid rgba(255,183,195,.44);box-shadow:inset 0 1px 0 rgba(255,255,255,.21),0 10px 30px rgba(0,0,0,.38)}
-.sr58-quick,.sr58-tab,.sr57-primary{backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 14px rgba(0,0,0,.2)}
-.sr58-gps-delay{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:12px;padding:13px 9px;border-radius:13px;background:linear-gradient(135deg,rgba(90,145,183,.18),rgba(20,35,52,.54));border:1px solid rgba(155,209,250,.24);text-align:center}
-.sr58-gps-delay strong{font-size:25px;letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:#e6f5ff}
-.sr58-gps-delay small{font-size:10px;color:#b5ccdf;line-height:1.4}
-@media(prefers-reduced-transparency:reduce){.sr57-view,.sr57-dialog,.sr58-dialog,.sr58-banner{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:#172332!important}}
+.sr58-issue.info{border-left-color:#79b8ef}.sr58-issue.info strong{color:#b4d7fc}.sr58-vehicle-tabs{margin:12px 0}.sr58-dialog .sr58-issue button{touch-action:manipulation}
