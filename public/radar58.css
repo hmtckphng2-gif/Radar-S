@@ -32,3 +32,5 @@ body.sr58-has-warning #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-a
 .sr58-language-toggle{position:fixed;z-index:10012;top:calc(env(safe-area-inset-top,0px) + 7px);right:13px;width:35px;height:29px;border:1px solid rgba(170,206,255,.35);border-radius:9px;background:rgba(24,39,60,.84);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:#e7f4ff;font:800 11px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:.05em;box-shadow:0 4px 12px #0004}
 body:has(.sr58-banner:not([hidden])) .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 122px)}
 @media(max-width:390px){.sr58-language-toggle{right:8px}}
+
+#sr50BottomNav.sr58-liquid-nav{touch-action:pan-y}#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{touch-action:pan-y}#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{touch-action:none}

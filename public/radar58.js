@@ -198,11 +198,67 @@ function installLiquidNav(){
   for(const b of buttons)b.addEventListener('click',()=>requestAnimationFrame(update));
   window.addEventListener('resize',update,{passive:true});
   if(window.ResizeObserver)new ResizeObserver(update).observe(nav);
+  // Finger-drag over the glass tab bar; snap to the nearest real tab on release.
+  let startX=0,dragging=false,tracked=false,dragPointer=null,suppressUntil=0;
+  nav.addEventListener('click',event=>{if(event.isTrusted&&performance.now()<suppressUntil){event.preventDefault();event.stopImmediatePropagation()}},true);
+  nav.addEventListener('pointerdown',ev=>{
+   if(ev.pointerType==='mouse'&&ev.button!==0)return;
+   const rect=nav.getBoundingClientRect();
+   startX=ev.clientX;dragging=false;tracked=true;dragPointer=ev.pointerId;
+   pill.style.transition='none';
+  });
+  nav.addEventListener('pointermove',ev=>{
+   if(!tracked||ev.pointerId!==dragPointer)return;
+   const dx=ev.clientX-startX;
+   if(Math.abs(dx)<8&&!dragging)return;
+   dragging=true;
+   const rect=nav.getBoundingClientRect();
+   const width=pill.getBoundingClientRect().width||buttons[0].getBoundingClientRect().width;
+   const x=Math.max(0,Math.min(rect.width-width,ev.clientX-rect.left-width/2));
+   pill.style.transform='translate3d('+x+'px,0,0)';
+  });
+  const finish=ev=>{
+   if(!tracked||ev.pointerId!==dragPointer)return;
+   tracked=false;
+   pill.style.transition='';
+   if(dragging){
+    const closest=buttons.reduce((best,b)=>{
+     const rect=b.getBoundingClientRect();
+     const d=Math.abs(ev.clientX-(rect.left+rect.width/2));
+     return d<best.d?{b,d}:best;
+    },{b:buttons[0],d:Infinity}).b;
+    // Select via the existing tab controller; block Safari's delayed click on the old tab.
+    suppressUntil=performance.now()+450;
+    window.SuedtirolRadar50?.switchTab?.(closest.dataset.tab);
+    requestAnimationFrame(update);
+   }else update();
+   dragging=false;
+  };
+  nav.addEventListener('pointerup',finish);
+  nav.addEventListener('pointercancel',()=>{tracked=false;dragging=false;pill.style.transition='';update()});
   requestAnimationFrame(()=>requestAnimationFrame(update));
  };
  attach();
 }
 
+function enhanceMapGestures(){
+ const map=bridge?.state?.map;if(!map||map._sr58GestureTuned)return;
+ map._sr58GestureTuned=true;
+ // Keep real vehicle markers exactly where their feeds place them.
+ // These options affect only user map gestures and animations.
+ Object.assign(map.options,{
+  inertia:true,inertiaDeceleration:2400,inertiaMaxSpeed:1800,
+  easeLinearity:0.28,zoomAnimation:true,markerZoomAnimation:true,
+  fadeAnimation:true,zoomAnimationThreshold:5
+ });
+ if(map.dragging&&!map.dragging.enabled())map.dragging.enable();
+ if(map.touchZoom&&!map.touchZoom.enabled())map.touchZoom.enable();
+ // Reduce jump after returning from a tab while Safari's bottom toolbar settles.
+ document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&document.getElementById('sr50MapTab')&&!document.getElementById('sr50MapTab').classList.contains('sr50-map-inactive'))
+   requestAnimationFrame(()=>map.invalidateSize({pan:false,debounceMoveend:true}));
+ });
+}
 function init(){
  bridge=window.SuedtirolRadar37;
  if(!bridge?.state?.map||!window.SuedtirolRadar57||banner)return;
@@ -217,6 +273,7 @@ function init(){
  const detail=e('small');detail.id='sr58BannerDetail';banner.append(heading,title,detail);
  document.body.append(banner);
  installLiquidNav();
+ enhanceMapGestures();
  // Dedicated switchboard button outside the map. Existing navigation untouched.
  const quick=btn('◉ Radar',()=>open('issues'),'sr58-quick');quick.setAttribute('aria-label','Radar 5.8 Störungen, Suche und Datenqualität');document.body.append(quick);
  document.addEventListener('sr37:feeds',refresh);

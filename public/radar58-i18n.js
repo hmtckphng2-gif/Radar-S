@@ -36,7 +36,10 @@ const IT={
 'Live-Benachrichtigungen':'Notifiche in tempo reale',
 'Fahrt auswählen':'Seleziona corsa','Quelle':'Fonte',
 'Haltestelle oder Bahnhof':'Fermata o stazione',
-'Abfahrten · nächste 4 Stunden':'Partenze · prossime 4 ore'
+'Abfahrten · nächste 4 Stunden':'Partenze · prossime 4 ore',
+ 'Fahrtverlauf 3.0':'Percorso in tempo reale 3.0',
+ 'NETZWERKANALYSE':'ANALISI DELLA RETE',
+ 'DATEN OK':'DATI OK'
 };
 const replacements=[
 [/\bNur Fahrplan\b/g,'Solo orario'],[/\bFahrten\b/g,'corse'],
@@ -48,15 +51,47 @@ const replacements=[
 [/\bDatenquelle\b/g,'fonte dati'],[/\bNur Fahrplan\b/g,'Solo orario']
 ];
 const itToDe=new Map(Object.entries(IT).map(([de,it])=>[it,de]));
+const pairs=[
+ ['STAZIONE SELEZIONATA','AUSGEWÄHLTER BAHNHOF'],
+ ['PROSSIME 4 ORE','NÄCHSTE 4 STUNDEN'],
+ ['PARTENZE','ABFAHRTEN'],
+ ['Treni','Züge'],['Autobus','Busse'],['Tutti','Alle'],
+ ['Mappa','Karte'],['Partenze','Abfahrten'],['Statistiche','Statistik'],['Preferiti','Favoriten'],
+ ['Solo orario','Nur Fahrplan'],['Treno','Zug'],['Ritardo','Verspätung'],
+ ['Disagi alla circolazione','Verkehrsstörungen'],
+ ['Stazione selezionata','Ausgewählter Bahnhof'],
+ ['Stazione','Bahnhof'],['Fermata','Haltestelle'],
+ ['corse','Fahrten'],['segnalazioni','Meldungen'],['linee interessate','betroffene Linien'],
+ ['fonte dati','Datenquelle'],['Dettagli','Details'],['Cerca','Suche'],
+ ['Cancellato','Ausfall'],['Sconosciuto','Unbekannt'],
+ ['Live Journey 3.0','Fahrtverlauf 3.0'],['NETWORK INTELLIGENCE','NETZWERKANALYSE'],
+ ['STAZIONE SELEZIONATA','AUSGEWÄHLTER BAHNHOF'],['FEEDS OK','DATEN OK'],
+ ['REG','REG'],['Position vs. Fahrplan','Position und Fahrplan']
+];
 let lang='de',busy=false,observer;
 try{lang=localStorage.getItem(KEY)==='it'?'it':'de'}catch{}
 const original=new WeakMap();
-function translate(text,target){
- if(target==='de')return text;
+function replaceExact(text,from,to){
  const trimmed=text.trim();
- if(IT[trimmed])return text.replace(trimmed,IT[trimmed]);
+ return trimmed===from?text.replace(trimmed,to):text;
+}
+function canonical(text){
  let out=text;
+ for(const [it,de] of pairs)out=replaceExact(out,it,de);
+ for(const [it,de] of pairs){
+  if(it==='Treno'||it==='Autobus'||it==='corse'||it==='segnalazioni'||it==='linee interessate'||it==='Solo orario')
+   out=out.replace(new RegExp('\\b'+it+'\\b','g'),de);
+ }
+ return out;
+}
+function translate(text,target){
+ const source=canonical(text);
+ if(target==='de')return source;
+ const trimmed=source.trim();
+ if(IT[trimmed])return source.replace(trimmed,IT[trimmed]);
+ let out=source;
  for(const [regex,value] of replacements)out=out.replace(regex,value);
+ for(const [it,de] of pairs)out=replaceExact(out,de,it);
  return out;
 }
 function translateNode(node){
@@ -66,7 +101,9 @@ function translateNode(node){
  const now=node.nodeValue;
  if(!now?.trim()||now.length>450)return;
  let source=original.get(node);
- if(!source||now!==source&&now!==translate(source,'it')){source=now;original.set(node,source)}
+ if(!source||now!==translate(source,'de')&&now!==translate(source,'it')){
+  source=canonical(now);original.set(node,source);
+ }
  const desired=translate(source,lang);
  if(node.nodeValue!==desired)node.nodeValue=desired;
 }
