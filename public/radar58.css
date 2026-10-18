@@ -8,6 +8,4 @@
 
 .sr58-action{width:100%;padding:14px;color:white;background:#385778;border:0;border-radius:12px;font-weight:700}
 
-.sr58-inline-btn{display:inline-block;margin:9px 6px 0 0;border:1px solid #4c6683;border-radius:8px;background:#25384d;color:#dceafa;padding:8px 11px;font-size:11px;font-weight:700}.sr58-vehicle-tabs{display:flex;gap:7px}
-body.sr58-has-warning #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-area-inset-top) + 112px)}
-@media(max-width:390px){.sr58-banner{left:8px;right:8px}.sr58-quick{right:8px}.sr58-dialog{width:97vw}.sr58-body{padding:12px}}
+.sr58-inline{background:#253c54;color:#cfe8ff;border:1px solid #45617e;border-radius:9px;padding:8px 12px;font-size:11px;margin:8px 8px 0 0}.sr58-primary{background:#365d7e;color:#fff;border:0;border-radius:11px;padding:13px;font-size:12px;font-weight:750}.sr58-btn,.sr58-quick,.sr58-tab,.sr58-banner,.sr58-result,.sr58-inline{cursor:pointer}.sr58-dialog{box-sizing:border-box}.sr58-dialog *{box-sizing:border-box}.sr58-dialog:focus-visible,.sr58-search:focus-visible,.sr58-tab:focus-visible{outline:2px solid #8ab7e3;outline-offset:2px}.sr58-quick{touch-action:manipulation}body:has(#sr58Banner:not([hidden])) .sr57-view{padding-top:calc(env(safe-area-inset-top) + 95px)}
