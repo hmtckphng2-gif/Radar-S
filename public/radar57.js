@@ -26,6 +26,7 @@ function historySummary(number){
  return {...h,days,avg,description};
 }
 function evidence(row){
+ if(row.cancelled)return null;
  const s=bridge?.state,update=s?.updates?.get?.(row.source+':'+row.tripId);
  return supportedRecovery(row,update,s?.statuses,Date.now(),row.serviceDay);
 }
@@ -51,18 +52,18 @@ function showDetails(row){
  const top=el('div','sr57-dialog-head');top.append(el('div','sr57-kicker',row.kind==='train'?'ZUG INTELLIGENCE':'FAHRTDETAILS'),button('✕',()=>dialog.close(),'sr57-close'));
  dialog.append(top,el('h2','sr57-title',row.number),el('p','sr57-destination',row.headsign));
  const stats=el('div','sr57-metrics'),official=el('div','sr57-metric'),radar=el('div','sr57-metric');
- official.append(el('small','','OFFIZIELL'),el('strong','',row.delaySec===null?'–':labelDelay(row.delaySec)));
+ official.append(el('small','','OFFIZIELL'),el('strong','',row.cancelled?'Ausfall':row.delaySec===null?'–':labelDelay(row.delaySec)));
  const recovery=evidence(row);
- radar.append(el('small','','RADAR · BESTÄTIGT'),el('strong','',pred.value===null?'–':labelDelay(pred.value)));
+ radar.append(el('small','','ERWARTETE AUFHOLUNG'),el('strong','',recovery?'↘ '+recovery.gained+' min':'–'));
  stats.append(official,radar);dialog.append(stats);
- dialog.append(el('p','sr57-explain',recovery?'An diesem Halt prognostiziert GTFS-RT '+recovery.gained+' Minuten weniger Verspätung als am vorherigen gemeldeten Halt. Radar zeigt die Differenz; es ist keine zusätzliche KI-Vorhersage.':'Noch keine unabhängig belastbare Prognose zur Zeitaufholung. GTFS-RT-Verspätung und Ist-/Soll-Abstand bleiben getrennt.'));
+ dialog.append(el('p','sr57-explain',row.cancelled?'Diese Fahrt ist laut frischer GTFS-RT-Meldung ausgefallen. Es wird keine Zeitaufholung prognostiziert.':recovery?'An diesem Halt prognostiziert GTFS-RT '+recovery.gained+' Minuten weniger Verspätung als am vorherigen gemeldeten Halt. Radar zeigt die Differenz; es ist keine zusätzliche KI-Vorhersage.':'Noch keine unabhängig belastbare Prognose zur Zeitaufholung. GTFS-RT-Verspätung und Ist-/Soll-Abstand bleiben getrennt.'));
  const schedule=el('div','sr57-schedule');schedule.append(el('span','','Fahrplan '+clock(row.sec)),el('span','',row.forecast===null?'Livezeit unbekannt':'Gemeldet '+clock(row.forecast)));dialog.append(schedule);
  if(row.kind==='train'){
   const h=historySummary(row.number);
   dialog.append(el('h3','','Historische Verspätungen'),el('p','sr57-explain',h.description));
   if(h.count)dialog.append(addHistoryChart(h));
   if(h.count)dialog.append(el('p','sr57-count','Datengrundlage: '+h.count+' Messungen / '+h.days+' Tage · nur dieses Gerät'));
-  dialog.append(el('h3','','Radar Intelligence'),el('p','sr57-explain',h.sufficient?'Die aktuelle offizielle Meldung liegt '+(row.delaySec===null?'nicht vor.':(Math.round(row.delaySec/60)>h.avg?'über':'bei oder unter')+' dem lokal gemessenen Durchschnitt. Diese Daten allein erlauben keine zuverlässige Zeitaufholungsprognose.'): 'Für eine aussagekräftige KI-artige Zusammenfassung fehlen noch genügend unabhängige Messungen.'));
+  dialog.append(el('h3','','Radar Intelligence'),el('p','sr57-explain',!row.cancelled&&h.sufficient?'Die aktuelle offizielle Meldung liegt '+(row.delaySec===null?'nicht vor.':(Math.round(row.delaySec/60)>h.avg?'über':'bei oder unter')+' dem lokal gemessenen Durchschnitt. Diese Daten allein erlauben keine zuverlässige Zeitaufholungsprognose.'): 'Für eine aussagekräftige KI-artige Zusammenfassung fehlen noch genügend unabhängige Messungen.'));
   const v=[...bridge.state.vehicles.values()].find(x=>x.kind==='train'&&x.source===row.source&&x.tripId===row.tripId);
   if(v){
    const compare=trainScheduledPosition(v,bridge.state.indexes,bridge.state.details,bridge.state.shapes,new Date());
@@ -99,7 +100,7 @@ function render(){
   const route=el('div','sr57-route');route.append(el('strong','',row.headsign),el('small','',row.number+(row.platform?.current?' · '+(row.kind==='train'?'Gleis ':'Steig ')+row.platform.current:'')));
   const delay=el('div','sr57-delay');
   delay.append(el('strong',row.cancelled?'sr57-bad':row.delaySec>0?'sr57-late':'',row.cancelled?'Ausfall':row.delaySec===null?'–':labelDelay(row.delaySec)));
-  const gain=evidence(row);delay.append(el('small','',gain?'↘ '+gain.gained+' min erwartet':row.delaySec===null?'Nur Fahrplan':'GTFS-RT'));
+  const gain=evidence(row);delay.append(el('small','',gain?'↘ '+gain.gained+' min GTFS-RT':row.delaySec===null?'Nur Fahrplan':'GTFS-RT'));
   item.append(time,route,delay);board.append(item);
  }
 }
@@ -132,6 +133,7 @@ function start(){
  document.title='Südtirol Radar 5.7 · Graphite Intelligence';
  const version=document.querySelector('.brand-title em');if(version)version.textContent='5.7';
  window.SuedtirolRadar57={version:'5.7',openStation:choose,refresh:render};
+ window.SuedtirolRadar50.openStation=choose;
 }
 let retries=0;function boot(){if(window.SuedtirolRadar57)return;if(window.SuedtirolRadar37?.state?.map&&window.SuedtirolRadar50){start();return}if(retries++<60)setTimeout(boot,200)}
 document.addEventListener('sr37:ready',()=>setTimeout(boot,100));
