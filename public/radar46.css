@@ -1,0 +1,19 @@
+/* Südtirol Radar 4.6 — optional Live Quality panel. Keeps Leaflet/MapLibre untouched. */
+.sr46-actions{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0 3px;align-items:center}
+.sr46-actions[hidden],.sr46-quality[hidden]{display:none!important}
+.sr46-action{border:1px solid var(--edge);border-radius:9px;background:var(--panel2);color:var(--text);font-size:11px;font-weight:700;padding:7px 9px;min-height:31px;touch-action:manipulation;white-space:nowrap}
+.sr46-action[aria-pressed="true"]{border-color:rgba(66,213,165,.65);background:rgba(19,100,85,.28);color:var(--good)}
+.sr46-quality{margin:8px 0 10px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;border:1px solid var(--edge);border-radius:12px;background:var(--panel2);padding:10px 11px;font-size:11px;line-height:1.4}
+.sr46-quality strong{font-size:11px;color:var(--good)}
+.sr46-quality.not-live strong{color:var(--warn)}
+.sr46-quality span{color:var(--text);font-weight:600}
+.sr46-quality small{flex-basis:100%;color:var(--muted);font-size:10px}
+.sr46-settings{margin:12px 0 0;padding:10px;border:1px solid var(--edge);border-radius:11px;background:var(--panel2);display:flex;gap:7px;flex-direction:column}
+.sr46-settings strong{font-size:12px;color:var(--text)}
+.sr46-settings small{font-size:11px;color:var(--muted);line-height:1.4}
+#map .radar-custom.sr46-dim{opacity:.22!important;transition:opacity .16s linear}
+#map .sr43-cluster-icon.sr46-dim{opacity:.22!important;transition:opacity .16s linear}
+#map .radar-custom.sr46-highlight{opacity:1!important;z-index:2}
+#map .radar-custom.sr46-highlight .marker-circle{box-shadow:0 0 0 4px rgba(59,144,255,.42),0 3px 12px rgba(0,0,0,.6)}
+@media(max-width:375px){.sr46-actions{gap:4px}.sr46-action{font-size:10px;padding:6px 7px}}
+@media(prefers-reduced-motion:reduce){#map .radar-custom.sr46-dim,#map .sr43-cluster-icon.sr46-dim{transition:none}}
