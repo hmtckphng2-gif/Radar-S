@@ -348,10 +348,19 @@
     const st=bridge.state.stationChoice;if(!st)return;
     const list=$('stationDepartures');if(!list)return;
     const now=secItaly();
-    const departures=[];
+    const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Rome',day:'2-digit',month:'2-digit',year:'numeric'}).formatToParts(new Date());
+    const d=Object.fromEntries(parts.map(x=>[x.type,x.value]));
+    const serviceDay=d.year+'-'+d.month+'-'+d.day,displayDate=d.day+'.'+d.month+'.'+d.year;
+    const timetable=bridge.state.indexes?.[st.source];
+    if(!timetable?.meta?.ready||!timetable.meta.days?.includes(serviceDay)){
+      list.replaceChildren(make('p','radar37-muted','Für '+displayDate+' fehlen gültige GTFS-Fahrplandaten. Keine fiktiven Abfahrten.'));
+      return;
+    }
+    const departures=[],seen=new Set();
     for(const row of stationCache(st)) {
       const upd=bridge.state.updates.get(st.source+':'+row.tripId);
-      const recent=upd && Date.now()-upd.fetchedAt<120000;
+      const correctDay=!upd?.tripStartDate||String(upd.tripStartDate).replaceAll('-','')===serviceDay.replaceAll('-','');
+      const recent=upd&&correctDay&&Number.isFinite(+upd.fetchedAt)&&Date.now()>=Number(upd.fetchedAt)-30000&&Date.now()-Number(upd.fetchedAt)<120000;
       const cancelled=!!recent && /^(?:CANCELED|CANCELLED|3)$/i.test(text(upd.scheduleRelationship));
       const relevant=recent && upd.stops?.find(s=>text(s.stopId??s.stop_id)===st.stopId);
       const raw=relevant?.departure?.delay??relevant?.arrival?.delay;
@@ -364,6 +373,9 @@
       // a trip-wide delay. Convert to seconds relative to today's local clock.
       const predicted=validReportedTime ? now+(reportedTime-Date.now()/1000) : row.sec+(delay??0);
       if(predicted<now-180 || predicted>now+4*3600)continue;
+      const unique=st.source+':'+row.tripId+':'+row.sec;
+      if(seen.has(unique))continue;
+      seen.add(unique);
       departures.push({...row,delay,predicted,cancelled,realtime:!!recent&&(delay!==null||validReportedTime),
         reportedTime:validReportedTime,exactStopRt:raw!=null});
     }
@@ -376,15 +388,17 @@
     heading.replaceChildren();
     const fav=make('button','radar37-smallbtn',isFavorite(entry)?'★ Haltestelle gespeichert':'☆ Haltestelle merken');
     fav.type='button';fav.onclick=()=>toggleFavorite(entry);
-    heading.append(fav,make('small','radar37-muted','GTFS-Plan · Echtzeit nur bei passender GTFS-RT-Meldung. Keine Gleise ohne Daten.'));
+    heading.append(fav,make('small','radar37-muted','Heute · '+displayDate+' · GTFS-Plan · Echtzeit nur bei passender GTFS-RT-Meldung.'));
     for(const d of departures.slice(0,28)) {
       const row=make('div','radar37-departure');
       const left=make('div','radar37-departure-info');
       left.append(make('strong','',d.number+' · '+d.headsign));
+       if(st.source==='trains'&&!/^\\d{2,6}$/.test(String(d.number)))left.append(make('small','radar37-muted','Zugnummer nicht angegeben · Fahrt ab '+formatClock(d.sec)));
       const label=d.cancelled?'ENTFÄLLT (GTFS-RT)':d.realtime?
         (d.reportedTime?'GTFS-RT Zeitprognose': 'GTFS-RT '+readableDelay(d.delay)+(d.exactStopRt?' am Halt':' zur Fahrt')):'Nur Fahrplan';
       const meta=make('small',d.cancelled?'radar37-cancelled':d.realtime?'radar37-real':'radar37-muted',label+' · Plan '+formatClock(d.sec));
       left.append(meta);
+       left.append(make('small','radar37-muted','Quelle: '+({trains:'Trenitalia',sta:'STA',trentino:'Trentino'}[st.source]||st.source)+' · '+displayDate));
       const right=make('span','radar37-departure-clock',d.cancelled?'—':formatClock(d.predicted));
       row.append(left,right);list.append(row);
     }

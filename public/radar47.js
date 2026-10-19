@@ -155,7 +155,7 @@
   const key=st.source+':'+st.stopId;
   if(key!==boardKey){boardKey=key;boardOnlyRealtime=false;}
   const rows=stationRows(),c=U.boardCounts(rows);
-  if(boardInfo){boardInfo.textContent=c.all+' Abfahrten in 4 Std. · '+c.realtime+' mit GTFS-RT · '+c.planned+' nur Fahrplan';}
+  if(boardInfo){boardInfo.textContent=U.todayRome().split('-').reverse().join('.')+' · '+c.all+' einzelne Fahrten in 4 Std. · '+c.realtime+' mit GTFS-RT · '+c.planned+' nur Fahrplan';}
   if(boardOnlyBtn){boardOnlyBtn.setAttribute('aria-pressed',String(boardOnlyRealtime));
    boardOnlyBtn.textContent=boardOnlyRealtime?'✓ Nur GTFS-RT':'Alle / nur GTFS-RT';}
   for(const row of rows)row.el.hidden=boardOnlyRealtime&&!row.realtime&&!row.cancelled;
