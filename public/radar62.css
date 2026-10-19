@@ -1,0 +1,26 @@
+/* Radar 6.2 Train Experience: isolated train-only card */
+body.sr60 .sr62-train{margin:10px 0 13px;padding:13px;background:#172d3d;border:1px solid #38586a;border-radius:18px;color:#f2f6fb;font:inherit}
+body.sr60 .sr62-train[hidden]{display:none!important}
+body.sr60 .sr62-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:11px}
+body.sr60 .sr62-eyebrow{font-size:10px;font-weight:800;letter-spacing:.1em;color:#53e1c1}
+body.sr60 .sr62-head strong{font-size:13px}
+body.sr60 .sr62-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+body.sr60 .sr62-metric{background:#203b4c;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:5px;min-width:0}
+body.sr60 .sr62-metric small{font-size:10px;color:#b7cad4}
+body.sr60 .sr62-metric strong{font-size:17px;color:#f2f6fb;overflow-wrap:anywhere}
+body.sr60 .sr62-metric span,body.sr60 .sr62-disclaimer,body.sr60 .sr62-plan-note,body.sr60 .sr62-empty{font-size:11px;line-height:1.5;color:#a7b9c8}
+body.sr60 .sr62-disclaimer{margin:9px 0 12px}
+body.sr60 .sr62-section-title{font-size:13px;font-weight:750;margin-bottom:9px}
+body.sr60 .sr62-progress{height:6px;border-radius:9px;background:#344a5b;overflow:hidden}
+body.sr60 .sr62-progress-fill{height:100%;background:#53e1c1;border-radius:9px}
+body.sr60 .sr62-stops{list-style:none;padding:0;margin:10px 0 0}
+body.sr60 .sr62-stop{display:grid;grid-template-columns:48px minmax(0,1fr);gap:2px 10px;padding:9px 0 9px 14px;border-left:2px solid #496474;position:relative;font-size:12px}
+body.sr60 .sr62-stop::before{content:'';position:absolute;left:-5px;top:14px;width:8px;height:8px;border-radius:50%;background:#708da0}
+body.sr60 .sr62-stop.sr62-next::before{background:#53e1c1;box-shadow:0 0 0 4px #53e1c122}
+body.sr60 .sr62-stop-time{font-variant-numeric:tabular-nums;color:#b7cad4}
+body.sr60 .sr62-stop-name{font-weight:650}
+body.sr60 .sr62-stop small{grid-column:2;color:#91aab8;font-size:10px}
+body.sr60 .sr62-stop.sr62-past{opacity:.65}
+[data-theme=light] body.sr60 .sr62-train,body.sr60[data-theme=light] .sr62-train{background:#edf5f6;color:#152b39;border-color:#b7cbd1}
+[data-theme=light] body.sr60 .sr62-metric,body.sr60[data-theme=light] .sr62-metric{background:#dce9eb}
+[data-theme=light] body.sr60 .sr62-metric strong,body.sr60[data-theme=light] .sr62-metric strong{color:#152b39}
