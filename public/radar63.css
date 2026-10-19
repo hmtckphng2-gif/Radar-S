@@ -1,0 +1,17 @@
+/* Südtirol Radar 6.3 — station additions and device onboarding */
+body.sr60 .sr63-station-summary{border:1px solid rgba(83,225,193,.2);border-radius:15px;background:#203849;padding:12px;margin:12px 0;color:#f2f6fb}
+body.sr60 .sr63-station-summary .sr63-summary-title{font-size:13px;color:#53e1c1}
+body.sr60 .sr63-station-summary .sr60-info{font-size:12px;margin:8px 0 0}
+.sr63-tutorial-overlay{position:fixed;inset:0;z-index:50000;background:rgba(4,12,21,.83);display:flex;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 15px) 18px calc(env(safe-area-inset-bottom,0px) + 15px);box-sizing:border-box}
+.sr63-tutorial-panel{width:min(100%,440px);max-height:100%;overflow:auto;background:#182a3b;color:#f2f6fb;border:1px solid #416376;border-radius:24px;padding:23px 20px;box-sizing:border-box;box-shadow:0 24px 80px #0009;font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif}
+.sr63-tutorial-kicker{font-size:10px;letter-spacing:.14em;font-weight:800;color:#53e1c1}
+.sr63-tutorial-count{font-size:11px;color:#a7b9c8;margin:12px 0}
+.sr63-tutorial-panel h2{font-size:23px;letter-spacing:-.035em;line-height:1.2;margin:0 0 12px}
+.sr63-tutorial-panel p{font-size:14px;color:#bcd0da;line-height:1.55;min-height:66px}
+.sr63-tutorial-dots{display:flex;gap:6px;margin:16px 0 22px}
+.sr63-tutorial-dots span{height:5px;flex:1;border-radius:6px;background:#3f596c}.sr63-tutorial-dots span.sr63-current{background:#53e1c1}
+.sr63-tutorial-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sr63-tutorial-actions button{font-size:13px;font-weight:700;font-family:inherit;border-radius:12px;padding:12px;border:1px solid #4c697a;cursor:pointer;background:#274154;color:#edf5fb}
+.sr63-tutorial-actions .sr63-tutorial-skip{margin-right:auto;background:none;color:#adbfcc;border:none}
+.sr63-tutorial-actions .sr63-tutorial-next{background:#53e1c1;border-color:#53e1c1;color:#10202c}
+.sr63-tutorial-actions button:focus-visible{outline:2px solid #f2f6fb;outline-offset:2px}
