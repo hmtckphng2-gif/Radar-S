@@ -120,6 +120,7 @@
     };
     map.on?.('zoomend',updateZoom);updateZoom();
     document.addEventListener('sr37:selection',()=>setSnap($('sheet'),'half'));
+    window.SuedtirolRadar42={setVehicleSnap:snap=>setSnap($('sheet'),snap)};
     window.addEventListener('resize',()=>{
       for(const id of ['sheet','stationSheet']){const sheet=$(id);if(sheet?.classList.contains('open'))setSnap(sheet,sheet.dataset.sr42Snap||'half');}
     },{passive:true});

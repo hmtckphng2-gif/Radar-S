@@ -1,0 +1,21 @@
+/* Radar 7.1 – cinematic vehicle focus, no Leaflet pane rotation hacks. */
+#map{isolation:isolate}
+.sr71-cinematic{position:absolute;inset:0;z-index:800;pointer-events:none;opacity:0;transition:opacity .32s ease;overflow:hidden}
+.sr71-cinematic.sr71-is-running,.sr71-cinematic.sr71-is-done{opacity:1}
+.sr71-focus-ring{position:absolute;left:50%;top:50%;width:118px;height:118px;transform:translate(-50%,-50%) scale(1.13);border-radius:50%;border:1px solid rgba(115,187,255,.62);box-shadow:0 0 0 8px rgba(80,154,238,.055),inset 0 0 32px rgba(39,122,208,.10),0 0 42px rgba(67,167,255,.16);opacity:0;transition:transform 1.58s cubic-bezier(.14,.72,.18,1),opacity .4s ease}
+.sr71-is-running .sr71-focus-ring{opacity:.94;transform:translate(-50%,-50%) scale(.57)}
+.sr71-is-done .sr71-focus-ring{opacity:0;transform:translate(-50%,-50%) scale(.38);transition:opacity .6s ease,transform .7s ease}
+.sr71-focus-reticle{position:absolute;inset:13px;border-radius:50%;border:1px dashed rgba(124,199,255,.5)}
+.sr71-focus-caption{position:absolute;left:50%;top:calc(50% + 74px);min-width:155px;max-width:70vw;padding:9px 14px;border-radius:13px;transform:translate(-50%,16px);background:rgba(10,19,31,.91);border:1px solid rgba(112,162,220,.40);box-shadow:0 12px 32px rgba(0,0,0,.30);display:flex;flex-direction:column;align-items:center;gap:3px;color:#f1f7ff;opacity:0;transition:opacity .45s ease,transform .62s cubic-bezier(.15,.7,.2,1)}
+.sr71-is-running .sr71-focus-caption{opacity:1;transform:translate(-50%,0)}
+.sr71-is-done .sr71-focus-caption{opacity:0;transform:translate(-50%,-12px);transition-duration:.55s}
+#sr71FocusTitle{font-weight:750;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#sr71FocusQuality{font-size:9px;font-weight:650;letter-spacing:.075em;color:#9bb8d5}
+.sr71-heading-arrow{position:absolute;left:calc(50% + 38px);top:calc(50% - 38px);font-size:19px;color:#89ccff;transform:translate(-50%,-50%) rotate(var(--sr71-direction,0deg));text-shadow:0 0 10px #2e9cfa;transition:transform 1.5s ease}
+.sr71-heading-arrow[hidden]{display:none!important}
+body.sr71-focusing .marker-wrap:not(.selected){opacity:.45;transition:opacity .65s ease}
+body.sr71-focusing .map-actions,body.sr71-focusing .info-banner{opacity:.28;pointer-events:none;transition:opacity .35s ease}
+body.sr71-focusing #sheet.open,body.sr71-focusing #sheet.sr42-sheet.open{transform:translate3d(0,115%,0)!important;pointer-events:none!important;transition:transform .4s ease!important}
+body.sr71-focusing #scrim.show{opacity:0!important;pointer-events:none!important}
+body.sr71-focused #sheet.sr42-sheet[data-sr42-snap="peek"].open{transition:transform .7s cubic-bezier(.19,.8,.18,1),height .3s ease!important}
+@media(prefers-reduced-motion:reduce){.sr71-cinematic,.sr71-focus-ring,.sr71-focus-caption,.sr71-heading-arrow,body.sr71-focusing .marker-wrap,body.sr71-focusing #sheet.open{transition:none!important;animation:none!important}}

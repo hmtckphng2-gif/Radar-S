@@ -105,7 +105,7 @@ import {groupNearby} from './radar44-logic.mjs';
   updateMini();
  }
  function updateFollower(){
-  if(!map||!bridge?.followAPI)return;
+  if(!map||!bridge?.followAPI||document.body.classList.contains('sr71-focusing'))return;
   const key=bridge.followAPI.getKey?.();if(!key||bridge.followAPI.isPaused?.()||document.hidden)return;
   const entry=bridge.state.markers.get(key);const v=bridge.state.vehicles.get(key);
   if(!entry||status(v).kind!=='current')return;

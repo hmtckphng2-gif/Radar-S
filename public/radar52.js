@@ -12,6 +12,7 @@ const current=()=>bridge?.state?.vehicles?.get(bridge.state.selectedKey)||null;
 const active=()=>bridge?.state?.activeSheet==='vehicle'&&!!current();
 function clearLayers(){routeLayer?.clearLayers()}
 function focus(v){
+ if(window.SuedtirolRadar71?.enabled)return;
  if(!map||!Number.isFinite(Number(v.lat))||!Number.isFinite(Number(v.lon)))return;
  if(focusKey===v.key)return;
  if(focusKey!==v.key){previous={center:map.getCenter(),zoom:map.getZoom()};userMoved=false}

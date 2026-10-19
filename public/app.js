@@ -707,6 +707,7 @@ async function loadSchedule(key){
 }
 function selectVehicle(key){
   if(!state.vehicles.has(key))return;
+  if(window.SuedtirolRadar71?.enabled&&!document.hidden)document.body.classList.add('sr71-focusing');
   state.selectedKey=key;
   document.dispatchEvent(new Event('sr40:selection'));
   $('scheduleMatches').hidden=true;openSheet('vehicle');refreshMarkers();drawVehicleDetails(key,true);
