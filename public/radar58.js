@@ -29,6 +29,7 @@ function refresh(){
  }else{
   banner.hidden=true;dismissedAlertIds.clear();
  }
+ document.body.classList.toggle('sr58-has-banner',!banner.hidden);
  if(dialog?.open && ['issues','network','health','vehicles'].includes(current))renderCurrent();
  const allNotices=issues.filter(x=>x.severity==='danger'||x.severity==='info'||x.severity==='delay'&&x.minutes>=5);
  const newlySeen=allNotices.filter(x=>{if(alarmIds.has(x.id))return false;alarmIds.add(x.id);return true});
@@ -179,64 +180,69 @@ function installLiquidNav(){
  let attempts=0;
  const attach=()=>{
   const nav=document.getElementById('sr50BottomNav');
-  if(!nav){if(attempts++<90)setTimeout(attach,200);return}
+  if(!nav){if(attempts++<120)setTimeout(attach,200);return}
   if(nav.querySelector('.sr58-liquid-pill'))return;
-  const pill=e('span','sr58-liquid-pill');
-  pill.setAttribute('aria-hidden','true');
+  const pill=e('span','sr58-liquid-pill');pill.setAttribute('aria-hidden','true');
   nav.prepend(pill);nav.classList.add('sr58-liquid-nav');
   const buttons=[...nav.querySelectorAll('.sr50-nav-btn')];
-  const update=()=>{
+  if(!buttons.length)return;
+  let dragging=false,down=false,pointerId=null,startX=0,skipClickUntil=0;
+  const geometry=b=>{
+   const base=nav.getBoundingClientRect(),r=b.getBoundingClientRect();
+   return {x:r.left-base.left,y:r.top-base.top,width:r.width,height:r.height};
+  };
+  const move=()=>{
+   if(down&&dragging)return;
    const active=nav.querySelector('.sr50-nav-btn.active')||buttons[0];
-   if(!active)return;
-   const rect=active.getBoundingClientRect(),base=nav.getBoundingClientRect();
-   pill.style.width=rect.width+'px';pill.style.height=rect.height+'px';
-   pill.style.transform='translate3d('+(rect.left-base.left)+'px,'+(rect.top-base.top)+'px,0)';
+   const g=geometry(active);if(g.width<10)return;
+   pill.style.width=g.width+'px';pill.style.height=g.height+'px';
+   pill.style.top=g.y+'px';
+   pill.style.transform='translate3d('+g.x+'px,0,0)';
    pill.classList.add('sr58-liquid-ready');
   };
-  const observer=new MutationObserver(update);
+  const observer=new MutationObserver(move);
   for(const b of buttons)observer.observe(b,{attributes:true,attributeFilter:['class']});
-  for(const b of buttons)b.addEventListener('click',()=>requestAnimationFrame(update));
-  window.addEventListener('resize',update,{passive:true});
-  if(window.ResizeObserver)new ResizeObserver(update).observe(nav);
-  // Finger-drag over the glass tab bar; snap to the nearest real tab on release.
-  let startX=0,dragging=false,tracked=false,dragPointer=null,suppressUntil=0;
-  nav.addEventListener('click',event=>{if(event.isTrusted&&performance.now()<suppressUntil){event.preventDefault();event.stopImmediatePropagation()}},true);
+  nav.addEventListener('click',ev=>{
+   if(ev.isTrusted&&performance.now()<skipClickUntil){
+    ev.preventDefault();ev.stopImmediatePropagation();
+   }
+  },true);
   nav.addEventListener('pointerdown',ev=>{
    if(ev.pointerType==='mouse'&&ev.button!==0)return;
-   const rect=nav.getBoundingClientRect();
-   startX=ev.clientX;dragging=false;tracked=true;dragPointer=ev.pointerId;
-   pill.style.transition='none';
-  });
+   down=true;dragging=false;pointerId=ev.pointerId;startX=ev.clientX;
+  },{passive:true});
   nav.addEventListener('pointermove',ev=>{
-   if(!tracked||ev.pointerId!==dragPointer)return;
-   const dx=ev.clientX-startX;
-   if(Math.abs(dx)<8&&!dragging)return;
+   if(!down||pointerId!==ev.pointerId)return;
+   if(!dragging&&Math.abs(ev.clientX-startX)<10)return;
    dragging=true;
-   const rect=nav.getBoundingClientRect();
-   const width=pill.getBoundingClientRect().width||buttons[0].getBoundingClientRect().width;
-   const x=Math.max(0,Math.min(rect.width-width,ev.clientX-rect.left-width/2));
+   const base=nav.getBoundingClientRect(),g=geometry(buttons[0]);
+   const width=g.width||base.width/buttons.length;
+   const x=Math.max(0,Math.min(base.width-width,ev.clientX-base.left-width/2));
+   pill.style.transition='none';
+   pill.style.top=g.y+'px';
+   pill.style.width=width+'px';pill.style.height=g.height+'px';
    pill.style.transform='translate3d('+x+'px,0,0)';
-  });
-  const finish=ev=>{
-   if(!tracked||ev.pointerId!==dragPointer)return;
-   tracked=false;
+  },{passive:true});
+  function finish(ev,cancel=false){
+   if(!down||pointerId!==ev.pointerId)return;
+   down=false;pointerId=null;
    pill.style.transition='';
-   if(dragging){
-    const closest=buttons.reduce((best,b)=>{
-     const rect=b.getBoundingClientRect();
-     const d=Math.abs(ev.clientX-(rect.left+rect.width/2));
-     return d<best.d?{b,d}:best;
-    },{b:buttons[0],d:Infinity}).b;
-    // Select via the existing tab controller; block Safari's delayed click on the old tab.
-    suppressUntil=performance.now()+450;
-    window.SuedtirolRadar50?.switchTab?.(closest.dataset.tab);
-    requestAnimationFrame(update);
-   }else update();
+   if(dragging&&!cancel){
+    skipClickUntil=performance.now()+420;
+    const picked=buttons.reduce((best,b)=>{
+     const r=b.getBoundingClientRect(),dist=Math.abs(ev.clientX-r.left-r.width/2);
+     return dist<best.dist?{b,dist}:best;
+    },{b:buttons[0],dist:Infinity}).b;
+    window.SuedtirolRadar50?.switchTab?.(picked.dataset.tab);
+   }
    dragging=false;
-  };
-  nav.addEventListener('pointerup',finish);
-  nav.addEventListener('pointercancel',()=>{tracked=false;dragging=false;pill.style.transition='';update()});
-  requestAnimationFrame(()=>requestAnimationFrame(update));
+   requestAnimationFrame(move);
+  }
+  nav.addEventListener('pointerup',ev=>finish(ev));
+  nav.addEventListener('pointercancel',ev=>finish(ev,true));
+  window.addEventListener('resize',()=>requestAnimationFrame(move),{passive:true});
+  if(window.ResizeObserver)new ResizeObserver(move).observe(nav);
+  requestAnimationFrame(()=>requestAnimationFrame(move));
  };
  attach();
 }
@@ -267,11 +273,12 @@ function init(){
  const controls=e('span','sr58-banner-controls');controls.append(e('span','','Details ›'));
  const close=btn('✕',event=>{},'sr58-banner-close');
  close.setAttribute('aria-label','Verkehrsstörungen schließen');
- close.addEventListener('click',event=>{event.stopPropagation();dismissedAlertIds=new Set(issues.filter(x=>x.severity==='danger'||x.severity==='delay'&&x.minutes>=10).map(x=>x.id));banner.hidden=true});
+ close.addEventListener('click',event=>{event.stopPropagation();dismissedAlertIds=new Set(issues.filter(x=>x.severity==='danger'||x.severity==='delay'&&x.minutes>=10).map(x=>x.id));banner.hidden=true;document.body.classList.remove('sr58-has-banner')});
  controls.append(close);heading.append(controls);
  const title=e('strong');title.id='sr58BannerTitle';
  const detail=e('small');detail.id='sr58BannerDetail';banner.append(heading,title,detail);
  document.body.append(banner);
+ document.body.classList.toggle('sr58-has-banner',false);
  installLiquidNav();
  enhanceMapGestures();
  // Dedicated switchboard button outside the map. Existing navigation untouched.
@@ -281,8 +288,11 @@ function init(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
  refresh();
  window.SuedtirolRadar58={version:'5.8',open,refresh,getIssues:()=>issues,getFeedHealth:()=>diagnostics};
- document.title='Südtirol Radar 5.8 · Traffic Intelligence';
- const version=document.querySelector('.brand-title em');if(version)version.textContent='5.8';
+ document.title='Südtirol Radar 5.8.6 · Traffic Intelligence';
+ const monitorVersion=document.querySelector('.sr57-version');if(monitorVersion)monitorVersion.textContent='5.8.6';
+ const version=document.querySelector('.brand-title em');if(version)version.textContent='5.8.6';
+ const v57=document.querySelector('.sr57-version');if(v57)v57.textContent='5.8.6';
+ const monitorVersion=document.querySelector('.sr57-version');if(monitorVersion)monitorVersion.textContent='5.8';
 }
 let attempts=0;
 function boot(){if(window.SuedtirolRadar58)return;if(window.SuedtirolRadar37?.state?.map&&window.SuedtirolRadar57){init();return}if(attempts++<90)setTimeout(boot,200)}

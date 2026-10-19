@@ -30,7 +30,89 @@ body.sr58-has-warning #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-a
 #sr50BottomNav.sr58-liquid-nav .sr50-nav-btn.active{background:transparent!important}
 #sr50BottomNav .sr58-liquid-pill{transition:transform .48s cubic-bezier(.19,1.15,.26,1),width .3s ease,height .3s ease,opacity .18s ease}
 .sr58-language-toggle{position:fixed;z-index:10012;top:calc(env(safe-area-inset-top,0px) + 7px);right:13px;width:35px;height:29px;border:1px solid rgba(170,206,255,.35);border-radius:9px;background:rgba(24,39,60,.84);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:#e7f4ff;font:800 11px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:.05em;box-shadow:0 4px 12px #0004}
-body:has(.sr58-banner:not([hidden])) .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 122px)}
+
 @media(max-width:390px){.sr58-language-toggle{right:8px}}
 
 #sr50BottomNav.sr58-liquid-nav{touch-action:pan-y}#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{touch-action:pan-y}#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{touch-action:none}
+
+/* Radar 5.8.6: the pill stays on the icon+label grid cell; dragging preserves Y. */
+#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{
+ box-sizing:border-box!important;
+ inset:0 auto auto 0!important;
+ transform-origin:top left;
+ transition:transform .38s cubic-bezier(.22,.87,.23,1),width .18s ease,height .18s ease,opacity .18s ease!important;
+ border-radius:17px!important;
+}
+#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill.sr58-no-glass-motion{
+ transition:none!important;
+}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{
+ transform:none!important;
+ -webkit-tap-highlight-color:transparent;
+}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn:active{transform:none!important}
+#sr50BottomNav.sr58-liquid-nav{touch-action:pan-y}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{touch-action:pan-y}
+@media(prefers-reduced-motion:reduce){
+ #sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{transition:none!important}
+}
+/* Floating incident banner occupies safe space, without covering the selected stop. */
+body:has(#sr58Banner:not([hidden])) .sr57-view:not(.sr57-hidden) {
+ padding-top:calc(env(safe-area-inset-top,0px) + 110px)!important;
+}
+body:has(#sr58Banner:not([hidden])) .sr50-tab-view.active>.sr50-header{
+ padding-top:calc(env(safe-area-inset-top,0px) + 120px)!important;
+}
+.sr58-language-toggle{
+ top:calc(env(safe-area-inset-top,0px) + 8px)!important;
+ right:12px!important;
+}
+body:has(#sr58Banner:not([hidden])) .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 8px)!important}
+
+/* 5.8.6: glass pill stays on precisely the same Y position as tab buttons. */
+#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill {
+  left:0;top:0;box-sizing:border-box;contain:paint;
+  transition:transform .36s cubic-bezier(.18,.85,.28,1),width .25s,height .25s,opacity .2s;
+}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn.active {background:none!important}
+#sr50BottomNav.sr58-liquid-nav {touch-action:none}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn {touch-action:none}
+.sr58-language-toggle {top:calc(env(safe-area-inset-top,0px) + 9px)!important;right:12px!important}
+.sr58-banner {top:calc(env(safe-area-inset-top,0px) + 50px)!important;}
+body:has(.sr58-banner:not([hidden])) #sr50DeparturesView,
+body:has(.sr58-banner:not([hidden])) #sr50StatsView,
+body:has(.sr58-banner:not([hidden])) #sr50FavoritesView {padding-top:120px!important;}
+body:has(.sr58-banner:not([hidden])) .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 9px)!important}
+@media(prefers-reduced-motion:reduce){
+ #sr50BottomNav .sr58-liquid-pill{transition:none!important}
+}
+
+/* Radar 5.8.6: align the single glass pill inside the 53px navigation cell. */
+#sr50BottomNav.sr58-liquid-nav{position:fixed;align-items:center;overflow:hidden}
+#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{top:5px!important;bottom:auto!important;left:0!important;height:53px!important;box-sizing:border-box!important;transform-origin:center center;z-index:1}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{height:53px;align-self:center;z-index:2}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn.active{background:transparent!important}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn .sr50-icon,
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn span{pointer-events:none}
+/* The alert never covers the station selector or statistics header. */
+.sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 12px);right:14px}
+body:has(.sr58-banner:not([hidden])) .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 127px)}
+#sr50DeparturesView .sr57-view{padding-top:calc(env(safe-area-inset-top,0px) + 67px)}
+body:has(.sr58-banner:not([hidden])) #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-area-inset-top,0px) + 179px)!important}
+#sr50StatsView .sr50-header,#sr50FavoritesView .sr50-header{padding-top:calc(env(safe-area-inset-top,0px) + 65px)}
+body:has(.sr58-banner:not([hidden])) #sr50StatsView .sr50-header,
+body:has(.sr58-banner:not([hidden])) #sr50FavoritesView .sr50-header{padding-top:calc(env(safe-area-inset-top,0px) + 178px)!important}
+body:has(.sr58-banner:not([hidden])) #sr50MapTab{padding-top:0}
+@media(max-width:390px){body:has(.sr58-banner:not([hidden])) .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 135px)}}
+
+/* Radar 5.8.6 – fixed glass Y-axis, safe warning/language positions. */
+#sr50BottomNav.sr58-liquid-nav{overflow:hidden;touch-action:pan-y}
+#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{top:5px;max-height:53px;transform-origin:center center;box-sizing:border-box;pointer-events:none}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{transform:none!important;position:relative;z-index:2}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn .sr50-icon{pointer-events:none}
+.sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 7px)!important;right:12px!important;width:auto;min-width:46px;padding:0 7px}
+.sr58-banner{top:calc(env(safe-area-inset-top,0px) + 48px)!important}
+body.sr58-has-banner #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-area-inset-top,0px) + 155px)!important}
+body.sr58-has-banner #sr50StatsView .sr50-header,body.sr58-has-banner #sr50FavoritesView .sr50-header{padding-top:calc(env(safe-area-inset-top,0px) + 158px)!important}
+body.sr58-has-banner #sr50MapTab .sr50-map-tab{padding-top:0}
+@media (prefers-reduced-motion:reduce){#sr50BottomNav .sr58-liquid-pill{transition:none!important}}

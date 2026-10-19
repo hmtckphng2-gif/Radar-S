@@ -54,6 +54,7 @@ const itToDe=new Map(Object.entries(IT).map(([de,it])=>[it,de]));
 const pairs=[
  ['STAZIONE SELEZIONATA','AUSGEWÄHLTER BAHNHOF'],
  ['PROSSIME 4 ORE','NÄCHSTE 4 STUNDEN'],
+ ['STAZIONE SELEZIONATA','AUSGEWÄHLTER BAHNHOF'],
  ['PARTENZE','ABFAHRTEN'],
  ['Treni','Züge'],['Autobus','Busse'],['Tutti','Alle'],
  ['Mappa','Karte'],['Partenze','Abfahrten'],['Statistiche','Statistik'],['Preferiti','Favoriten'],
@@ -66,7 +67,8 @@ const pairs=[
  ['Cancellato','Ausfall'],['Sconosciuto','Unbekannt'],
  ['Live Journey 3.0','Fahrtverlauf 3.0'],['NETWORK INTELLIGENCE','NETZWERKANALYSE'],
  ['STAZIONE SELEZIONATA','AUSGEWÄHLTER BAHNHOF'],['FEEDS OK','DATEN OK'],
- ['REG','REG'],['Position vs. Fahrplan','Position und Fahrplan']
+ ['REG','REG'],['Position vs. Fahrplan','Position und Fahrplan'],
+ ['Solo orario','Nur Fahrplan'],['Treni','Züge'],['Statistiche','Statistik']
 ];
 let lang='de',busy=false,observer;
 try{lang=localStorage.getItem(KEY)==='it'?'it':'de'}catch{}
@@ -78,9 +80,18 @@ function replaceExact(text,from,to){
 function canonical(text){
  let out=text;
  for(const [it,de] of pairs)out=replaceExact(out,it,de);
- for(const [it,de] of pairs){
-  if(it==='Treno'||it==='Autobus'||it==='corse'||it==='segnalazioni'||it==='linee interessate'||it==='Solo orario')
-   out=out.replace(new RegExp('\\b'+it+'\\b','g'),de);
+ const canonicalPhrases=[
+  ['STAZIONE SELEZIONATA','AUSGEWÄHLTER BAHNHOF'],
+  ['Solo orario','Nur Fahrplan'],['Treno','Zug'],['Autobus','Bus'],
+  ['linee interessate','betroffene Linien'],['segnalazioni','Meldungen'],
+  ['corse','Fahrten'],['Treni','Züge'],['Tutti','Alle'],
+  ['Mappa','Karte'],['Partenze','Abfahrten'],['Statistiche','Statistik'],
+  ['Preferiti','Favoriten']
+ ];
+ // Strings can contain train numbers and delay values; don't rely on exact whole-node matching.
+ for(const [from,to] of canonicalPhrases){
+  const regex=new RegExp('(^|[^\\p{L}])'+from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^\\p{L}])','giu');
+  out=out.replace(regex,(_,prefix)=>prefix+to);
  }
  return out;
 }
@@ -92,8 +103,19 @@ function translate(text,target){
  let out=source;
  for(const [regex,value] of replacements)out=out.replace(regex,value);
  for(const [it,de] of pairs)out=replaceExact(out,de,it);
+ const phrases=[
+  ['AUSGEWÄHLTER BAHNHOF','STAZIONE SELEZIONATA'],
+  ['NÄCHSTE 4 STUNDEN','PROSSIME 4 ORE'],
+  ['betroffene Linien','linee interessate'],['Meldungen','segnalazioni'],
+  ['Fahrten','corse'],['Züge','Treni'],['Busse','Autobus'],
+  ['Nur Fahrplan','Solo orario'],['Zug','Treno']
+ ];
+ for(const [from,to] of phrases){
+  out=out.replace(new RegExp('(^|[^\\p{L}])'+from+'(?=$|[^\\p{L}])','giu'),(_,prefix)=>prefix+to);
+ }
  return out;
 }
+
 function translateNode(node){
  if(node.nodeType!==Node.TEXT_NODE||!node.parentElement)return;
  const parent=node.parentElement;
