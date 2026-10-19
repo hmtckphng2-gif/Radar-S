@@ -1,0 +1,8 @@
+/* Radar 7.0.5 – compact journeys with expandable distinct connections */
+.sr705-journey-group{display:block;margin-bottom:13px}
+.sr705-journey-group>.sr70-result{box-sizing:border-box;width:100%;margin-bottom:0}
+.sr705-journey-alternatives{background:#142031;border:1px solid #334960;border-radius:0 0 13px 13px;margin:0 5px 6px;padding:0 10px 10px}
+.sr705-journey-alternatives summary{padding:11px 5px;font-size:12px;font-weight:700;color:#a9d1ff;cursor:pointer;line-height:1.45;min-height:34px}
+.sr705-journey-alternatives .sr70-result{display:block;width:100%;box-sizing:border-box;margin:9px 0}
+.sr705-journey-alternatives[open] summary{border-bottom:1px solid #34506b;margin-bottom:12px}
+.sr703-results{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}

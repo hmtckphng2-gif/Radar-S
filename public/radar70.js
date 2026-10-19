@@ -3,6 +3,7 @@
 import {findStations,romeDay,romeSeconds} from './radar51-logic.mjs';
 import {buildTimetable,searchJourneys,walkEstimate,transferAssessment} from './radar70-route.mjs';
 import {assessJourneys,orderJourneys,explainRecommendation,answerLocally,summarizeJourneyOptions} from './radar703-advisor.mjs';
+import {groupJourneyChoices} from './radar705-groups.mjs';
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const E=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e};
@@ -96,7 +97,7 @@ function back(title,fn){const h=E('div','sr70-backrow');const b=B('sr70-back','Z
 function planChat(){
  const region=E('section','sr703-chat');
  region.append(E('div','sr703-chat-title','RADAR INTELLIGENCE · REISEBERATUNG'));
- const hint=E('p','sr703-muted','Stelle Fragen zu deinen gefundenen Verbindungen. Ohne verbundenes KI-Modell erhältst du eine ausdrücklich regelbasierte Empfehlung.');
+ const hint=E('p','sr703-muted','Radar prüft alle angezeigten Verbindungen bereits automatisch. Die echte KI erklärt die Fahrplanbewertung auf Nachfrage; bei Ausfall gibt es eine regelbasierte Antwort.');
  region.append(hint);
  const history=E('div','sr703-history');history.setAttribute('aria-live','polite');
  region.append(history);
@@ -133,16 +134,14 @@ function drawResults(from,to,reason){
  if(!journeys.length){stage.append(E('p','sr70-msg',reason||'Keine passende Verbindung gefunden'));home.scrollTo?.({top:0});return}
  const ranked=assessJourneys(journeys),top=ranked[0];
  const advice=E('section','sr703-advice');advice.append(E('small','sr703-kicker','RADAR EMPFIEHLT · FAHRPLANBASIERTE AUSWERTUNG'),E('strong','',clock(top.trip.departure)+' → '+clock(top.trip.arrival)),E('p','',explainRecommendation(top)));
- const note=E('small','sr703-muted','Alle gefundenen Fahrten bleiben sichtbar. Keine KI-Prognose und keine Anschlussgarantie.');
+ const note=E('small','sr703-muted','Alle unterschiedlichen Fahrten bleiben erreichbar; gleiche Varianten werden entfernt. Radar bewertet automatisch den gesamten Ergebnisbestand, die KI erklärt auf Nachfrage. Keine Anschlussgarantie.');
  advice.append(note);stage.append(advice);
  const sortbar=E('label','sr703-sort','Verbindungen sortieren');
  const sorter=E('select');sorter.setAttribute('aria-label','Verbindungen sortieren');
  for(const [key,label] of [['recommended','Empfohlen'],['departure','Nächste Abfahrt'],['fastest','Schnellste'],['fewest','Wenigste Umstiege']]){const o=E('option','',label);o.value=key;sorter.append(o)}
  sorter.value=rankingMode;sortbar.append(sorter);stage.append(sortbar);
  const list=E('div','sr703-results');stage.append(list);
- function renderList(){
-  list.replaceChildren();const sorted=orderJourneys(journeys,rankingMode);
-  for(const entry of sorted){
+ function makeJourneyCard(entry){
    const trip=entry.trip,card=B('sr70-result',undefined,()=>drawDetail(entry.index));const topRow=E('div','sr70-resulttop');
    topRow.append(E('strong','',clock(trip.departure)+' → '+clock(trip.arrival)),E('small','',Math.round((trip.arrival-trip.departure)/60)+' Min.'));
    card.append(topRow);
@@ -150,9 +149,22 @@ function drawResults(from,to,reason){
    const legs=E('div','sr70-legs');trip.legs.forEach((l,j)=>{legs.append(E('span',l.type==='train'?'sr70-train':'sr70-bus',l.name));if(j<trip.legs.length-1)legs.append(I('chev'))});card.append(legs);
    const risks=entry.missed?'Anschluss rechnerisch nicht erreichbar':entry.risky?'knapper Umstieg':'laut Fahrplan';
    card.append(E('small','',trip.legs.length===1?'Direkt · '+risks:(trip.legs.length-1)+' Umstieg(e) · '+risks));
-   list.append(card);
+   return card;
+ }
+ function renderList(){
+  list.replaceChildren();const sorted=orderJourneys(journeys,rankingMode),families=groupJourneyChoices(sorted);
+  for(const group of families){
+   const section=E('section','sr705-journey-group');section.append(makeJourneyCard(group.primary));
+   if(group.alternatives.length){
+    const more=E('details','sr705-journey-alternatives'),line=group.primary.trip.legs[0].name;
+    more.append(E('summary','',group.alternatives.length+' weitere Anschlussmöglichkeit'+(group.alternatives.length===1?'':'en')+' mit '+line));
+    for(const entry of group.alternatives)more.append(makeJourneyCard(entry));
+    section.append(more);
+   }
+   list.append(section);
   }
  }
+
  sorter.onchange=()=>{rankingMode=sorter.value;renderList()};renderList();
  stage.append(planChat());home.scrollTo?.({top:0});
 }
