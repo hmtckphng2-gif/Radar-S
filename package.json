@@ -1,8 +1,14 @@
 {
-  "name": "suedtirol-radar-3",
-  "version": "3.0.0",
+  "name": "suedtirol-radar",
+  "version": "7.0.6",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test tests/*.test.js", "check": "node --check worker.js && node --check public/core.js && node --check public/app.js" },
-  "engines": { "node": ">=20" }
+  "scripts": {
+    "check": "node tools/architecture-check.mjs",
+    "test": "node --test tests/*.test.js",
+    "verify": "npm run check && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
 }
