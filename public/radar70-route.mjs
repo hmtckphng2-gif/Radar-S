@@ -77,5 +77,51 @@ export function searchJourneys(net,origin,destination,now,{maxLegs=3,maxResults=
   if(!boardings)break;states=[...next.values()].flat();states.sort((a,b)=>(a.at+distanceMeters(net.stops.get(a.key),end)/16)-(b.at+distanceMeters(net.stops.get(b.key),end)/16));states=states.slice(0,300);
  }
  results.sort((a,b)=>a.departure-b.departure||a.arrival-b.arrival||a.legs.length-b.legs.length);
- return {results:results.slice(0,maxResults),reason:results.length?'':'Keine Verbindung in den verfügbaren Fahrplänen',sources:net.sources};
+ const distinct=collapseEquivalentJourneys(results);
+ return {results:distinct.slice(0,maxResults),reason:distinct.length?'':'Keine Verbindung in den verfügbaren Fahrplänen',sources:net.sources,combinedVariants:results.length-distinct.length};
+}
+/* Deterministic display deduplication. Never merge different line sequences or
+ * meaningful transfer towns. Prefer more robust transfer variants.
+ * AI may explain the results, but cannot remove scheduled connections.
+ */
+const normalizeLine=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('de').trim().replace(/\s+/g,' ');
+function visibleKey(j){
+ const legs=Array.isArray(j?.legs)?j.legs:[];
+ return [Math.round(j.departure/60),Math.round(j.arrival/60),legs.length,
+   ...legs.map(x=>(x.type||'')+':'+normalizeLine(x.name))].join('|');
+}
+function sameInterchange(a,b){
+ const x=a.legs||[],y=b.legs||[];
+ if(x.length!==y.length)return false;
+ for(let n=0;n<x.length-1;n++){
+  if(distanceMeters(x[n].toStop,y[n].toStop)>400 ||
+     distanceMeters(x[n+1].fromStop,y[n+1].fromStop)>400)return false;
+ }
+ return true;
+}
+function variantCost(j){
+ return (j.transfers||[]).reduce((sum,t)=>{
+  const penalty=t.status==='missed'?100000:t.status==='risk'?20000:0;
+  const distance=Number.isFinite(t.meters)?t.meters:1200;
+  const buffer=Number.isFinite(t.margin)?Math.min(Math.max(t.margin,0),2400):0;
+  return sum+penalty+distance-buffer/30;
+ },0);
+}
+export function collapseEquivalentJourneys(rows=[]){
+ const out=[],groups=new Map();
+ for(const journey of rows){
+  if(!journey||!Array.isArray(journey.legs)||!journey.legs.length)continue;
+  const key=visibleKey(journey),indices=groups.get(key)||[];
+  const same=indices.find(i=>sameInterchange(out[i],journey));
+  if(same===undefined){
+   indices.push(out.push({...journey,collapsedVariants:0})-1);
+   groups.set(key,indices);
+  }else{
+   const previous=out[same],combined=(previous.collapsedVariants||0)+1;
+   out[same]=variantCost(journey)<variantCost(previous)?
+     {...journey,collapsedVariants:combined}:
+     {...previous,collapsedVariants:combined};
+  }
+ }
+ return out;
 }
