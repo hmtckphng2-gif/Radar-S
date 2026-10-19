@@ -2,6 +2,7 @@
   "name": "suedtirol-radar-2",
   "main": "worker.js",
   "compatibility_date": "2026-10-01",
+  "triggers": {"crons": ["*/5 * * * *"]},
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",

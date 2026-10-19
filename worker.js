@@ -1,3 +1,4 @@
+import {collectHistory,historyApi} from './public/radar-history-worker.mjs';
 import {resolveTrain,normalizeTrain,romeTime} from './public/train-platforms-logic.mjs';
 import {rfiStation,parseMonitor} from './public/rfi-platforms-logic.mjs';
 import {buildSnapshot} from './public/radar66-api.mjs';
@@ -48,6 +49,10 @@ async function trainPlatforms(request,url,name){
   }catch(error){return failed(error?.name==='TimeoutError'?'timeout':diagnostic.stage==='parse'?'invalid-json':'network',502,String(error?.message||'Request failed').replace(/[\r\n]+/g,' ').slice(0,180))}
 }
 export default {
+  async scheduled(event,env,ctx){
+    if(!env.HISTORY_DB)return;
+    ctx.waitUntil(collectHistory(env).catch(error=>console.warn('History collection failed',String(error?.message||error).slice(0,160))));
+  },
   async fetch(request, env) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) {
@@ -101,6 +106,7 @@ export default {
       }catch{return respond({error:'Cloudflare AI temporarily unavailable or daily quota exhausted'},503,noCache)}
     }
     if (request.method !== 'GET' && request.method !== 'HEAD') return respond({ error: 'Method not allowed' }, 405);
+    if(url.pathname.startsWith('/api/history/'))return historyApi(request,env);
     const name = url.pathname.substring(5);
     if(name==='v1/vehicles'||name==='v1/diagnostics'){
       const client=String(env.BUSONE_CLIENT||'Suedtirol Radar read-only transit viewer').slice(0,180);
