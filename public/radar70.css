@@ -67,3 +67,11 @@ body.sr70-ready:has(.sr58-dialog[open]) #sr70Dock,
 body.sr70-ready:has(.sr60-pop:not([hidden])) #sr70Dock{display:none!important}
 /* Keyboard has priority over navigation on narrow screens. */
 body.sr70-ready:has(.sr70-home input:focus) #sr70Dock{display:none!important}
+/* Radar 7.0.2: distinct Home dashboard and Journey planner */
+.sr70-discover[hidden],.sr70-foot[hidden]{display:none!important}
+.sr70-home.sr70-journey-active .sr70-stage{background:linear-gradient(170deg,#13243a 0%,#101b29 42%,#0d1622 100%);border:1px solid #304864;border-radius:18px;padding:18px 16px 20px;box-sizing:border-box}
+.sr70-home.sr70-journey-active .sr70-title h1{font-size:clamp(28px,7vw,36px)}
+.sr70-journey-help{display:block;margin-top:18px;padding:14px;border-radius:12px;background:#182b41;border:1px solid #32516f}
+.sr70-journey-help strong{display:block;font-size:13px;color:#d5eaff;margin-bottom:6px}
+.sr70-journey-help p{margin:0;font-size:12px;line-height:1.5;color:#a5bbd0}
+@media(max-width:390px){.sr70-home.sr70-journey-active .sr70-stage{padding:14px 12px}}

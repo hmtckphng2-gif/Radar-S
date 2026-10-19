@@ -13,9 +13,15 @@ let bridge,home,more,dock,stage,page='home',pane='search',mode='journey',station
 function nativeTab(id){window.SuedtirolRadar50?.switchTab?.(id)}
 function navigate(to,hashChange=false){
  if(!['home','map','journey','more'].includes(to))to='home';
+ const previous=page;
  page=to;home.hidden=to==='map'||to==='more';more.hidden=to!=='more';
- if(to!=='map'&&to!=='more'){nativeTab('map');if(to==='journey'){mode='journey';drawSearch()}else if(pane!=='search')drawSearch()}
- else nativeTab('map');
+ home.classList.toggle('sr70-journey-active',to==='journey');
+ const discover=home.querySelector('.sr70-discover'),footer=home.querySelector('.sr70-foot');
+ if(discover)discover.hidden=to!=='home';
+ if(footer)footer.hidden=to!=='home';
+ nativeTab('map');
+ if(to==='journey'){mode='journey';if(previous!==to||pane==='search')drawSearch()}
+ else if(to==='home'&&(previous!==to||pane!=='search'))drawSearch();
  document.body.classList.toggle('sr70-home-active',!home.hidden);document.body.classList.toggle('sr70-more-active',!more.hidden);
  for(const b of dock.querySelectorAll('[data-page]'))b.setAttribute('aria-current',b.dataset.page===to?'page':'false');
  if(!hashChange)history.replaceState(null,'','#'+to);
@@ -52,17 +58,18 @@ function stationField(which,label){const box=E('div','sr70-field'),lab=E('label'
  input.addEventListener('input',()=>{selected[which]=null;list.replaceChildren();if(input.value.trim().length<2){list.hidden=true;return}for(const s of findStations(stations,input.value.trim(),9)){const b=B('sr70-suggestion',s.name+' · '+s.source.toUpperCase(),()=>choose(which,s));list.append(b)}list.hidden=!list.children.length});
  box.append(lab,input,list);return box}
 function drawSearch(){
- pane='search';stage.replaceChildren();const head=E('div','sr70-title');head.append(E('p','sr70-overline','PROJECT HORIZON · 7.0'),E('h1','',"Wohin geht's?"),E('p','', 'Finde deine nächste Verbindung.'));stage.append(head);
- const modes=E('div','sr70-modes');for(const [id,name] of [['journey','Verbindung'],['train','Zug'],['station','Bahnhof']]){const b=B('sr70-mode',name,()=>{mode=id;drawSearch()});b.setAttribute('aria-pressed',String(mode===id));modes.append(b)}stage.append(modes);
+ pane='search';stage.replaceChildren();const head=E('div','sr70-title');head.append(E('p','sr70-overline',page==='journey'?'DEIN REISEPLANER · HORIZON':'PROJECT HORIZON · 7.0'),E('h1','',page==='journey'?'Reisen planen':"Wohin geht's?"),E('p','',page==='journey'?'Finde passende Fahrten, vergleiche Umstiege und prüfe den Fahrplan.':'Finde deine nächste Verbindung.'));stage.append(head);
+ if(page==='home'){const modes=E('div','sr70-modes');for(const [id,name] of [['journey','Verbindung'],['train','Zug'],['station','Bahnhof']]){const b=B('sr70-mode',name,()=>{mode=id;drawSearch()});b.setAttribute('aria-pressed',String(mode===id));modes.append(b)}stage.append(modes);}
  if(mode==='journey'){
   const form=E('div','sr70-form');form.append(stationField('from','Abfahrt'),stationField('to','Ankunft'));for(const k of ['from','to'])if(selected[k])fields[k].input.value=selected[k].name;
   const swap=B('sr70-swap',undefined,()=>{[selected.from,selected.to]=[selected.to,selected.from];fields.from.input.value=selected.from?.name||'';fields.to.input.value=selected.to?.name||''});swap.append(I('swap'));swap.setAttribute('aria-label','Start und Ziel tauschen');form.append(swap);stage.append(form);
-  const row=E('div','sr70-controls'),time=E('label','', 'Abfahrt'),timeSelect=E('select'),clockInput=E('input');
+   if(page==='journey'){const row=E('div','sr70-controls'),time=E('label','', 'Abfahrt'),timeSelect=E('select'),clockInput=E('input');
   for(const [value,text] of [['now','Jetzt'],['later','Später (heute)']]){const x=E('option','',text);x.value=value;timeSelect.append(x)}timeSelect.value=departure;
   clockInput.type='time';clockInput.id='sr70Time';clockInput.value=clock(romeSeconds());clockInput.hidden=departure!=='later';
   timeSelect.onchange=()=>{departure=timeSelect.value;clockInput.hidden=departure!=='later'};time.append(timeSelect,clockInput);
-  const kind=E('label','', 'Verkehrsmittel'),kindSelect=E('select');for(const [v,name] of [['all','Zug + Bus'],['train','Nur Zug'],['bus','Nur Bus']]){const x=E('option','',name);x.value=v;kindSelect.append(x)}kindSelect.value=vehicleMode;kindSelect.onchange=()=>vehicleMode=kindSelect.value;kind.append(kindSelect);row.append(time,kind);stage.append(row);
-  const go=B('sr70-primary','Verbindungen suchen',search);go.prepend(I('route'));stage.append(go);
+   const kind=E('label','', 'Verkehrsmittel'),kindSelect=E('select');for(const [v,name] of [['all','Zug + Bus'],['train','Nur Zug'],['bus','Nur Bus']]){const x=E('option','',name);x.value=v;kindSelect.append(x)}kindSelect.value=vehicleMode;kindSelect.onchange=()=>vehicleMode=kindSelect.value;kind.append(kindSelect);row.append(time,kind);stage.append(row);}
+   const go=B('sr70-primary',page==='home'?'Verbindungen anzeigen':'Verbindungen suchen',page==='home'?()=>{navigate('journey');search()}:search);go.prepend(I('route'));stage.append(go);
+   if(page==='journey'){const helper=E('aside','sr70-journey-help');helper.append(E('strong','','Anschlüsse einschätzen'),E('p','','Wir prüfen den Fahrplan und zeigen geschätzte Umsteigewege. Echtzeit-Anschlüsse bewerten wir nur, wenn aktuelle Prognosen für beide Fahrten vorliegen.'));stage.append(helper)}
  }else{
   const input=E('input','sr70-query');input.type='search';input.placeholder=mode==='train'?'Zugnummer, z. B. 16712':'Bahnhof, z. B. Bozen';stage.append(input);const b=B('sr70-primary','Suchen',()=>simpleSearch(input.value));b.prepend(I('search'));stage.append(b);input.addEventListener('keydown',e=>{if(e.key==='Enter')simpleSearch(input.value)});
  }
