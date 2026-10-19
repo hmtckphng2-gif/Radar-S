@@ -54,15 +54,19 @@ import {groupNearby} from './radar44-logic.mjs';
    const pt=map.latLngToContainerPoint(entry.marker.getLatLng());
    points.push({key,x:pt.x,y:pt.y,kind:v.kind,stale:status(v).kind!=='current'});
   }
-  const grouped=groupNearby(points,zoom<=7?54:zoom<=9?47:40,active);
+  const clusterRadius=zoom<=6?58:zoom<=7?52:zoom<=8?44:zoom<=9?36:30;
+  const grouped=groupNearby(points,clusterRadius,active,zoom>=9?'kind':'all');
   for(const group of grouped.clusters){
    const pt=map.containerPointToLatLng([group.x,group.y]);
+   const dominant=group.trains&&!group.buses?'train':group.buses&&!group.trains?'bus':'mixed';
+   const detail=group.trains&&group.buses?group.trains+' Züge · '+group.buses+' Busse':group.trains?group.trains+' Züge':group.buses+' Busse';
+   const tier=group.count>=24?'xl':group.count>=12?'lg':group.count>=6?'md':'sm';
    const icon=L.divIcon({className:'sr43-cluster-icon',html:
-    '<div class="sr43-cluster-circle" aria-hidden="true"><strong>'+group.count+'</strong><small>'+ (group.trains ? group.trains+'🚆 ' : '') + (group.buses ? group.buses+'🚌' : '') +'</small>'+
+    '<div class="sr43-cluster-circle '+dominant+' '+tier+'" aria-hidden="true"><strong>'+group.count+'</strong><small>'+detail+'</small>'+
     (group.staleCount?'<span class="sr431-cluster-stale" title="Letzte bekannte Positionen">◷</span>':'')+'</div>',
-    iconSize:[40,40],iconAnchor:[20,20]});
+    iconSize:[46,46],iconAnchor:[23,23]});
    const marker=L.marker(pt,{icon,title:group.count+' Fahrzeuge'+(group.staleCount?', davon '+group.staleCount+' NICHT LIVE':'')+' – zum Vergrößern tippen',keyboard:true});
-   marker.on('click',()=>map.setView(pt,Math.min(12,zoom+2),{animate:true}));
+   marker.on('click',()=>map.setView(pt,Math.min(13,zoom+(zoom<=7?3:2)),{animate:true}));
    marker.addTo(clusters);
    for(const key of group.keys)bridge.state.markers.get(key)?.marker.getElement()?.classList.add('sr43-in-cluster');
   }

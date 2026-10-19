@@ -4,7 +4,7 @@ export function labelPolicy(zoom,kind,selected=false){
  if(selected)return {number:true,delay:true};
  return {number:zoom>=14||(kind==='train'&&zoom>=12),delay:zoom>=14};
 }
-export function groupNearby(points,radius=42,selectedKey=null){
+export function groupNearby(points,radius=42,selectedKey=null,mode='all'){
  const items=(points||[]).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y));
  const eligible=items.filter(p=>p.key!==selectedKey);
  const chosen=items.some(p=>p.key===selectedKey)?[selectedKey]:[];
@@ -15,7 +15,7 @@ export function groupNearby(points,radius=42,selectedKey=null){
   const p=eligible[i],gx=Math.floor(p.x/cell),gy=Math.floor(p.y/cell);
   for(let x=gx-1;x<=gx+1;x++)for(let y=gy-1;y<=gy+1;y++){
    for(const j of buckets.get(x+':'+y)||[]){
-    const q=eligible[j]; if((p.x-q.x)**2+(p.y-q.y)**2<=radius**2)join(i,j);
+    const q=eligible[j]; if(mode==='kind' && q.kind!==p.kind)continue; if((p.x-q.x)**2+(p.y-q.y)**2<=radius**2)join(i,j);
    }
   }
   const key=gx+':'+gy;if(!buckets.has(key))buckets.set(key,[]);buckets.get(key).push(i);

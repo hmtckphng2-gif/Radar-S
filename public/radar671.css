@@ -65,3 +65,19 @@ html.sr43-wide #map .marker-wrap:not(.selected) .marker-label{display:none!impor
 #map .marker-wrap .sr40-delay{font-size:8px!important;}
 #map .marker-wrap.selected .marker-label{display:block!important;}
 }
+
+
+/* 6.7.3: fit white bus pictogram inside orange marker */
+#map .marker-wrap.bus .marker-circle svg{width:12px!important;height:12px!important;stroke-width:1.65!important}
+#map .marker-wrap.train .marker-circle svg{width:15px!important;height:15px!important;stroke-width:1.85!important}
+/* Clean readable clusters: blue trains, amber buses, slate mixed */
+#map .sr43-cluster-icon{border:0!important;background:transparent!important}
+#map .sr43-cluster-circle{width:42px!important;height:42px!important;box-sizing:border-box!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:0!important;border:1.5px solid #64748b!important;background:#1e293bf5!important;border-radius:50%!important;box-shadow:0 2px 8px #0009!important;color:#f8fafc!important}
+#map .sr43-cluster-circle.train{background:#113462f5!important;border-color:#67a7ff!important}
+#map .sr43-cluster-circle.bus{background:#643b12f5!important;border-color:#ffbf6b!important}
+#map .sr43-cluster-circle.mixed{background:#283348f5!important;border-color:#b3bccd!important}
+#map .sr43-cluster-circle strong{font-size:14px!important;line-height:17px!important;font-weight:800!important}
+#map .sr43-cluster-circle small{max-width:64px!important;white-space:nowrap!important;font-size:7px!important;line-height:9px!important;letter-spacing:-.02em!important}
+#map .sr43-cluster-circle.lg{width:46px!important;height:46px!important}
+#map .sr43-cluster-circle.xl{width:50px!important;height:50px!important}
+#map .sr43-cluster-circle.xl strong{font-size:17px!important}
