@@ -116,3 +116,17 @@ body.sr58-has-banner #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-ar
 body.sr58-has-banner #sr50StatsView .sr50-header,body.sr58-has-banner #sr50FavoritesView .sr50-header{padding-top:calc(env(safe-area-inset-top,0px) + 158px)!important}
 body.sr58-has-banner #sr50MapTab .sr50-map-tab{padding-top:0}
 @media (prefers-reduced-motion:reduce){#sr50BottomNav .sr58-liquid-pill{transition:none!important}}
+
+/* 5.8.7: eliminate legacy pill dimensions/offsets and avoid double highlights. */
+#sr50BottomNav.sr58-liquid-nav{overflow:hidden!important;touch-action:none!important}
+#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{
+ position:absolute!important;left:0!important;top:0!important;bottom:auto!important;
+ max-height:none!important;box-sizing:border-box!important;pointer-events:none!important;
+ z-index:1!important;will-change:transform;
+ transition:transform .3s cubic-bezier(.22,.8,.25,1),width .25s!important
+}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{
+ flex:1 1 0!important;min-width:0!important;transform:none!important;
+ position:relative!important;z-index:2!important;background:transparent!important
+}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn.active{background:transparent!important}

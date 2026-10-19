@@ -18,7 +18,7 @@ function refresh(){
  lastUpdate=Date.now();
  issues=collectTrafficIssues(bridge.state);
  diagnostics=feedDiagnostics(bridge.state.statuses);
- const cancel=issues.filter(x=>x.severity==='danger'),severe=issues.filter(x=>x.severity==='delay'&&x.minutes>=10);
+ const cancel=issues.filter(x=>x.severity==='danger'),severe=issues.filter(x=>x.severity==='delay'&&x.minutes>=15);
  const alerts=[...cancel,...severe],groups=summarizeNetwork(alerts);
  if(alerts.length){
   const activeIds=alerts.map(x=>x.id);
@@ -180,69 +180,60 @@ function installLiquidNav(){
  let attempts=0;
  const attach=()=>{
   const nav=document.getElementById('sr50BottomNav');
-  if(!nav){if(attempts++<120)setTimeout(attach,200);return}
+  if(!nav){if(attempts++<100)setTimeout(attach,180);return}
   if(nav.querySelector('.sr58-liquid-pill'))return;
-  const pill=e('span','sr58-liquid-pill');pill.setAttribute('aria-hidden','true');
-  nav.prepend(pill);nav.classList.add('sr58-liquid-nav');
   const buttons=[...nav.querySelectorAll('.sr50-nav-btn')];
-  if(!buttons.length)return;
-  let dragging=false,down=false,pointerId=null,startX=0,skipClickUntil=0;
-  const geometry=b=>{
-   const base=nav.getBoundingClientRect(),r=b.getBoundingClientRect();
-   return {x:r.left-base.left,y:r.top-base.top,width:r.width,height:r.height};
+  if(buttons.length!==4)return;
+  const pill=e('span','sr58-liquid-pill');
+  pill.setAttribute('aria-hidden','true');
+  nav.append(pill);nav.classList.add('sr58-liquid-nav');
+  let gesture=null,suppressUntil=0;
+  const activeIndex=()=>Math.max(0,buttons.indexOf(nav.querySelector('.sr50-nav-btn.active')));
+  const metrics=()=>{
+   const n=nav.getBoundingClientRect(),a=buttons[0].getBoundingClientRect(),b=buttons[1].getBoundingClientRect();
+   return {width:a.width,height:a.height,x:a.left-n.left,y:a.top-n.top,pitch:b.left-a.left};
   };
-  const move=()=>{
-   if(down&&dragging)return;
-   const active=nav.querySelector('.sr50-nav-btn.active')||buttons[0];
-   const g=geometry(active);if(g.width<10)return;
+  function position(index){
+   const g=metrics();if(!g.width||!g.pitch)return;
    pill.style.width=g.width+'px';pill.style.height=g.height+'px';
-   pill.style.top=g.y+'px';
-   pill.style.transform='translate3d('+g.x+'px,0,0)';
+   pill.style.transform='translate3d('+(g.x+Math.max(0,Math.min(3,index))*g.pitch)+'px,'+g.y+'px,0)';
    pill.classList.add('sr58-liquid-ready');
-  };
-  const observer=new MutationObserver(move);
+  }
+  const sync=()=>{if(!gesture)position(activeIndex())};
+  const observer=new MutationObserver(sync);
   for(const b of buttons)observer.observe(b,{attributes:true,attributeFilter:['class']});
   nav.addEventListener('click',ev=>{
-   if(ev.isTrusted&&performance.now()<skipClickUntil){
-    ev.preventDefault();ev.stopImmediatePropagation();
-   }
+   if(ev.isTrusted&&performance.now()<suppressUntil){ev.preventDefault();ev.stopImmediatePropagation()}
   },true);
   nav.addEventListener('pointerdown',ev=>{
    if(ev.pointerType==='mouse'&&ev.button!==0)return;
-   down=true;dragging=false;pointerId=ev.pointerId;startX=ev.clientX;
-  },{passive:true});
+   gesture={id:ev.pointerId,start:ev.clientX,moved:false};
+   if(nav.setPointerCapture)try{nav.setPointerCapture(ev.pointerId)}catch{}
+  });
   nav.addEventListener('pointermove',ev=>{
-   if(!down||pointerId!==ev.pointerId)return;
-   if(!dragging&&Math.abs(ev.clientX-startX)<10)return;
-   dragging=true;
-   const base=nav.getBoundingClientRect(),g=geometry(buttons[0]);
-   const width=g.width||base.width/buttons.length;
-   const x=Math.max(0,Math.min(base.width-width,ev.clientX-base.left-width/2));
+   if(!gesture||ev.pointerId!==gesture.id)return;
+   if(Math.abs(ev.clientX-gesture.start)>8)gesture.moved=true;
+   if(!gesture.moved)return;
+   const g=metrics(),r=nav.getBoundingClientRect();
    pill.style.transition='none';
-   pill.style.top=g.y+'px';
-   pill.style.width=width+'px';pill.style.height=g.height+'px';
-   pill.style.transform='translate3d('+x+'px,0,0)';
-  },{passive:true});
+   position((ev.clientX-r.left-g.x-g.width/2)/g.pitch);
+  });
   function finish(ev,cancel=false){
-   if(!down||pointerId!==ev.pointerId)return;
-   down=false;pointerId=null;
-   pill.style.transition='';
-   if(dragging&&!cancel){
-    skipClickUntil=performance.now()+420;
-    const picked=buttons.reduce((best,b)=>{
-     const r=b.getBoundingClientRect(),dist=Math.abs(ev.clientX-r.left-r.width/2);
-     return dist<best.dist?{b,dist}:best;
-    },{b:buttons[0],dist:Infinity}).b;
-    window.SuedtirolRadar50?.switchTab?.(picked.dataset.tab);
+   if(!gesture||ev.pointerId!==gesture.id)return;
+   const moved=gesture.moved;gesture=null;pill.style.transition='';
+   if(moved&&!cancel){
+    const g=metrics(),r=nav.getBoundingClientRect();
+    const idx=Math.max(0,Math.min(3,Math.round((ev.clientX-r.left-g.x-g.width/2)/g.pitch)));
+    suppressUntil=performance.now()+350;
+    window.SuedtirolRadar50?.switchTab?.(buttons[idx].dataset.tab);
    }
-   dragging=false;
-   requestAnimationFrame(move);
+   requestAnimationFrame(sync);
   }
   nav.addEventListener('pointerup',ev=>finish(ev));
   nav.addEventListener('pointercancel',ev=>finish(ev,true));
-  window.addEventListener('resize',()=>requestAnimationFrame(move),{passive:true});
-  if(window.ResizeObserver)new ResizeObserver(move).observe(nav);
-  requestAnimationFrame(()=>requestAnimationFrame(move));
+  window.addEventListener('resize',()=>requestAnimationFrame(sync),{passive:true});
+  if(window.ResizeObserver)new ResizeObserver(sync).observe(nav);
+  requestAnimationFrame(()=>requestAnimationFrame(sync));
  };
  attach();
 }
@@ -273,7 +264,7 @@ function init(){
  const controls=e('span','sr58-banner-controls');controls.append(e('span','','Details ›'));
  const close=btn('✕',event=>{},'sr58-banner-close');
  close.setAttribute('aria-label','Verkehrsstörungen schließen');
- close.addEventListener('click',event=>{event.stopPropagation();dismissedAlertIds=new Set(issues.filter(x=>x.severity==='danger'||x.severity==='delay'&&x.minutes>=10).map(x=>x.id));banner.hidden=true;document.body.classList.remove('sr58-has-banner')});
+ close.addEventListener('click',event=>{event.stopPropagation();dismissedAlertIds=new Set(issues.filter(x=>x.severity==='danger'||x.severity==='delay'&&x.minutes>=15).map(x=>x.id));banner.hidden=true;document.body.classList.remove('sr58-has-banner')});
  controls.append(close);heading.append(controls);
  const title=e('strong');title.id='sr58BannerTitle';
  const detail=e('small');detail.id='sr58BannerDetail';banner.append(heading,title,detail);
