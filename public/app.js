@@ -1,4 +1,5 @@
 import {motionDuration,platformInfo} from './radar54-logic.mjs';
+import {selectRepresentatives,observationQuality} from './radar64-logic.mjs';
 import {enrichTrainPlatform} from './train-platforms.js?v=5.4.4';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
@@ -18,7 +19,7 @@ const state = {
   stationChoice: null, stationList: [], fetchedAt: 0, failCount: 0, scheduledSearch: null,
   busShapeManifests: {}, busShapePending: new Set(), busShapeLoaded: new Set(),
   busShapeFailures: new Set(),
-  busTracks: new Map()
+  busTracks: new Map(), fusion:{sources:new Map(),duplicates:0}, performance:{lastMarkerRefresh:0}
 };
 let frameId = 0;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -441,9 +442,10 @@ function updateBusMotion(key,entry,target,v){
 }
 function refreshMarkers(){
   if(!state.map)return;
+  const fusion=selectRepresentatives(state.vehicles.values(),state.selectedKey);state.fusion={sources:fusion.sources,duplicates:fusion.duplicates};
   const active=new Set();
   for(const [key,v] of state.vehicles){
-    if(!visible(v))continue;
+    if(!visible(v)||!fusion.keys.has(key))continue;
     active.add(key);
     const rawTarget={lat:v.lat,lon:v.lon,path:null,along:null};
     const target=motionDuration(v,null)?mapTarget(v):rawTarget;
@@ -479,6 +481,7 @@ function refreshMarkers(){
     }
     entry.marker.setOpacity(v.stale?.75:1);
   }
+  state.performance.lastMarkerRefresh=Date.now();
   for(const [key,entry] of state.markers)if(!active.has(key)){
     stopJob(key);state.busTracks.delete(key);state.layer.removeLayer(entry.marker);state.markers.delete(key);
   }
@@ -864,7 +867,7 @@ function currentVehicleDelay(v){
 window.SuedtirolRadar37={state,showStations,showStationBoard,getStationList,openStationFromMap,setFilter,refreshMarkers,refreshScheduleMatches,
   verifiedRouteCount:()=>[...state.vehicles.values()].filter(v=>v.kind==='bus' && v.tripId && v.shapeId && mapTarget(v).path).length,
   routeOnlyCount:()=>[...state.vehicles.values()].filter(v=>v.kind==='bus' && !v.shapeId && v.routeShapeId && mapTarget(v).path).length,
-  routeMatchFor:v=>mapTarget(v),vehicleDelay:currentVehicleDelay};
+  routeMatchFor:v=>mapTarget(v),vehicleDelay:currentVehicleDelay,qualityFor:v=>observationQuality(v),fusionInfo:()=>state.fusion};
 async function init(){
   try{changeTheme(localStorage.getItem('sr-theme')==='light'?'light':'dark')}catch{changeTheme('dark')}
   setupControls();if(!initMap())return;

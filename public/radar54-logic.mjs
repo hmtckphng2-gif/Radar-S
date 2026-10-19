@@ -3,7 +3,8 @@ export function motionDuration(v,previousTimestamp,now=Date.now(),reduced=false)
  const stamp=Number(v?.timestamp),age=now/1000-stamp;
  if(reduced||v?.stale||!Number.isFinite(stamp)||stamp<1e9||age>300||age< -30||
    (Number.isFinite(previousTimestamp)&&stamp<=previousTimestamp))return 0;
- return 650;
+ // Smooth transition between two received observations only. Never move beyond the latest feed coordinate.
+ return v?.kind==='train' ? 1800 : 650;
 }
 const clean=v=>v===null||v===undefined||String(v).trim()===''?null:String(v).trim();
 export function platformInfo(stop,update,stops={}){
