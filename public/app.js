@@ -8,6 +8,7 @@ import {
   vehicleDelayInfo, bufferedAlong
 } from './core.js';
 import {playbackLag} from './radar45-logic.mjs';
+import {trainReplayDuration} from './radar705-motion.mjs';
 import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs';
 
 const $ = id => document.getElementById(id);
@@ -355,7 +356,7 @@ function animationLoop(now){
       if(v)marker.setLatLng([v.lat,v.lon]);state.jobs.delete(key);continue;
     }
     const raw=Math.min(1,(now-job.start)/job.duration);
-    const f=raw*raw*(3-2*raw);
+    const f=job.replay?raw:raw*raw*(3-2*raw);
     let pos;
     if(job.path && job.fromAlong!==null && job.toAlong!==null){
       pos=pointAtDistance(job.path,job.fromAlong+(job.toAlong-job.fromAlong)*f,job.latReference);
@@ -396,6 +397,7 @@ function animationLoop(now){
 }
 function animateTo(key,entry,target){
   const marker=entry.marker, current=marker.getLatLng(), dest=L.latLng(target.lat,target.lon);
+  const vehicle=state.vehicles.get(key);
   const dist=current.distanceTo(dest);
   stopJob(key);
   const duration=motionDuration(state.vehicles.get(key),entry.feedTimestamp,Date.now(),reducedMotion.matches);
@@ -414,9 +416,10 @@ function animateTo(key,entry,target){
   const followShape=Boolean(target.path && fromSnap && fromSnap.distance<90 &&
     Number.isFinite(alongDelta) && Math.abs(alongDelta)<3000 && alongDelta>=-75 &&
     (!previousVerified || Math.abs(target.along-oldAlong)<3000));
-  const shapeJustLoaded=followShape && !previousVerified;
+  const replay=followShape?trainReplayDuration(vehicle,entry.feedTimestamp,dist,Date.now(),reducedMotion.matches):0;
   state.jobs.set(key,{start:performance.now(),
-    duration:Math.min(5500,Math.max(800,boundedMotionDuration(dist,state.vehicles.get(key)?.kind))),
+    duration:replay||Math.min(5500,Math.max(800,boundedMotionDuration(dist,vehicle?.kind))),
+    replay:Boolean(replay),
     from:current,to:{lat:target.lat,lon:target.lon},
     path:followShape?target.path:null,fromAlong:followShape?fromSnap.along:null,
     toAlong:followShape?target.along:null,latReference:current.lat});
@@ -659,6 +662,7 @@ function drawVehicleDetails(key,fetchSchedule){
   if(v.kind==='bus'&&!v.lineVerified)note+='Ohne passenden statischen GTFS-Eintrag keine bestätigte Liniennummer. ';
   if(v.kind==='bus')note+=mapTarget(v).path?'Kartenbewegung: zeitverzögert zwischen empfangenen Punkten entlang einer geprüften GTFS-Strecke; keine sekundengenaue GPS-Ortung. ':'Keine eindeutig passende GTFS-Straße: Nur tatsächlich empfangene Positionen, keine erfundene Bewegung. ';
   if(v.kind==='train'&&!v.nameVerified)note+='Die offizielle Zugnummer ist noch nicht zugeordnet. ';
+  if(v.kind==='train')note+=state.jobs.get(v.key)?.replay ? 'Markerbewegung ist eine zeitverzögerte Wiedergabe zwischen empfangenen Feedpositionen auf einer passenden GTFS-Strecke, keine sekundengenaue Live-GPS-Ortung. ' : 'Nur empfangene Feedpositionen – ohne zwei passende Messpunkte wird keine zusätzliche Zugbewegung dargestellt. ';
   $('sheetNote').textContent=note;
   if(fetchSchedule)loadSchedule(key);
   else if(state.details[v.source])renderStops(v,state.details[v.source]);
