@@ -2,7 +2,11 @@
   "name": "suedtirol-radar-2",
   "main": "worker.js",
   "compatibility_date": "2026-10-01",
-  "triggers": {"crons": ["*/5 * * * *"]},
+  "triggers": {
+    "crons": [
+      "*/5 * * * *"
+    ]
+  },
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
@@ -22,5 +26,12 @@
   ],
   "ai": {
     "binding": "AI"
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "HISTORY_DB",
+      "database_name": "radar-history",
+      "database_id": "99aa1fcd-23bb-433b-bb50-b4d62e834a4b"
+    }
+  ]
 }
