@@ -124,3 +124,25 @@ body.sr60:has(#sr50MapTab:not(.sr50-map-inactive)) #sr58Banner .sr58-banner-clos
 body.sr60 #sr50MapTab .topbar{z-index:1000!important}
 body.sr60 .sr60-dock{z-index:10030!important}
 @media(max-width:390px){body.sr60 #sr50MapTab .stats-counts{gap:5px!important}body.sr60 #sr50MapTab .stat b{font-size:13px!important}body.sr60 #sr50MapTab .stat span{font-size:9px!important}}
+
+/* Radar 6.1 — Liquid navigation; indicator follows active tab without replacing tab logic. */
+body.sr60 .sr60-dock{isolation:isolate}
+body.sr60 .sr61-indicator{position:absolute;top:0;left:0;z-index:0;pointer-events:none;box-sizing:border-box;border-radius:15px;background:rgba(83,225,193,.15);border:1px solid rgba(83,225,193,.10);opacity:0;transition:transform .37s cubic-bezier(.2,.8,.2,1),width .32s,height .32s,opacity .2s;will-change:transform}
+body.sr60 .sr60-dock.sr61-ready .sr61-indicator{opacity:1}
+body.sr60 .sr60-dock .sr60-navitem{position:relative;z-index:1;transition:color .22s,transform .22s}
+body.sr60 .sr60-dock .sr60-navitem[aria-current="page"]{background:transparent!important;color:#53e1c1}
+body.sr60 .sr60-navitem:active{transform:scale(.94)}
+/* Standalone iOS has a different usable viewport than Safari: adjust only installed app. */
+@media (display-mode:standalone){
+ body.sr60 #sr50MapTab:not(.sr50-map-inactive){bottom:calc(-1 * env(safe-area-inset-bottom,0px))!important;height:auto!important}
+ body.sr60 #sr50MapTab .topbar{top:40px!important}
+ body.sr60 .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 47px)!important}
+ body.sr60 #sr50MapTab .sr60-launch{top:calc(env(safe-area-inset-top,0px) + 205px)!important}
+ body.sr60 .sr60-launch{top:calc(env(safe-area-inset-top,0px) + 205px)!important}
+ body.sr60 .sr60-dock{bottom:8px!important}
+ body.sr60 #sr50MapTab .stats{bottom:102px!important}
+ body.sr60 #sr50MapTab .map-actions{bottom:177px!important}
+ body.sr60 #sr50MapTab .leaflet-bottom{bottom:91px!important}
+ body.sr60{--sr60-dock-clearance:94px}
+}
+@media(prefers-reduced-motion:reduce){body.sr60 .sr61-indicator,body.sr60 .sr60-navitem{transition:none!important}}
