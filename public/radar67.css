@@ -1,0 +1,42 @@
+/* Horizon 6.7-preview: map dominant, quiet controls, fewer competing surfaces */
+@media(max-width:749px){
+ body.sr60.rh-ready #sr50MapTab .topbar{position:absolute!important;left:9px!important;right:9px!important;top:calc(var(--sr611-safe-top,env(safe-area-inset-top,0px)) + 4px)!important;background:#112332f5!important;border:1px solid #385468!important;border-radius:18px!important;padding:8px 10px!important;box-shadow:0 6px 24px #0005!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;width:auto!important}
+ body.sr60.rh-ready #sr50MapTab .topbar .toprow{height:37px!important;gap:7px!important}
+ body.sr60.rh-ready #sr50MapTab .brand-badge{width:31px!important;min-width:31px!important;height:31px!important;border:none!important;box-shadow:none!important;background:#19443f!important;border-radius:9px!important}
+ body.sr60.rh-ready #sr50MapTab .brand-badge svg{width:22px!important;height:22px!important}
+ body.sr60.rh-ready #sr50MapTab .brand-title{font-size:15px!important;letter-spacing:0!important;font-weight:730!important;color:#f5f9fc!important}
+ body.sr60.rh-ready #sr50MapTab .brand-sub{font-size:8px!important;letter-spacing:.055em!important;opacity:.85}
+ body.sr60.rh-ready #sr50MapTab .status{background:transparent!important;border:none!important;padding:4px!important;box-shadow:none!important;min-width:0!important}
+ body.sr60.rh-ready #sr50MapTab #statusText{font-size:9px!important;max-width:70px!important}
+ body.sr60.rh-ready .rh-control{border:1px solid #486575;background:#1d3546;color:#ecf6fa;border-radius:12px;width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;cursor:pointer;padding:0;box-shadow:none}
+ body.sr60.rh-ready #rhSearchTrigger{margin-left:2px}
+ body.sr60.rh-ready .rh-search-panel{position:fixed;z-index:10020;top:calc(var(--sr611-safe-top,env(safe-area-inset-top,0px)) + 65px);left:9px;right:9px;padding:12px;background:#132b3bf8;border:1px solid #466575;border-radius:17px;box-shadow:0 12px 36px #0009}
+ body.sr60.rh-ready .rh-search-panel[hidden],body.sr60.rh-ready .rh-tools-panel[hidden]{display:none!important}
+ body.sr60.rh-ready .rh-search-panel .controls{margin:0!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
+ body.sr60.rh-ready .rh-search-panel .segments{width:100%;display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:5px!important;border:none!important;background:none!important;padding:0!important}
+ body.sr60.rh-ready .rh-search-panel .chip{border-radius:11px!important;font-size:12px!important;padding:10px 5px!important;box-shadow:none!important}
+ body.sr60.rh-ready .rh-search-panel .search-wrap{width:100%!important;box-sizing:border-box;height:42px!important;border-radius:11px!important;background:#1d3b4a!important}
+ body.sr60.rh-ready #rhToolsTrigger{position:fixed;z-index:10004;right:12px;top:calc(var(--sr611-header-bottom,80px) + 16px)}
+ body.sr60.rh-ready .rh-tools-panel{position:fixed;right:12px;top:calc(var(--sr611-header-bottom,80px) + 60px);z-index:10018;background:#152a3beb;border:1px solid #416274;border-radius:16px;padding:8px;box-shadow:0 12px 35px #0009}
+ body.sr60.rh-ready .rh-tools-panel .map-actions{position:static!important;right:auto!important;bottom:auto!important;display:flex!important;flex-direction:column!important;gap:6px!important}
+ body.sr60.rh-ready .rh-tools-panel .round-action{width:40px!important;height:40px!important;border-radius:11px!important;box-shadow:none!important;background:#213b4c!important}
+ body.sr60.rh-ready #sr58Banner:not([hidden]){position:fixed!important;left:12px!important;right:auto!important;top:calc(var(--sr611-header-bottom,80px) + 16px)!important;max-width:min(56vw,230px)!important;padding:8px 10px!important;border-radius:12px!important;background:#472b35ee!important;box-shadow:0 5px 14px #0006!important}
+ body.sr60.rh-ready #sr58Banner .sr58-banner-heading,body.sr60.rh-ready #sr58Banner small{display:none!important}
+ body.sr60.rh-ready #sr58Banner strong{font-size:10px!important;white-space:normal!important;line-height:1.35!important}
+ body.sr60.rh-ready #sr58Banner::before{content:'Störungen  ·  ';font-size:10px;color:#ffbabe;font-weight:700}
+ body.sr60.rh-ready .sr60-launch{top:auto!important;bottom:calc(var(--sr611-dock-space,96px) + 65px)!important;right:12px!important;font-size:11px!important;background:#163646f5!important;border-radius:13px!important;padding:10px 13px!important;z-index:10005!important;box-shadow:0 4px 12px #0005!important}
+ body.sr60.rh-ready #sr50MapTab .stats{left:12px!important;right:auto!important;bottom:calc(var(--sr611-dock-space,96px) + 8px)!important;width:auto!important;max-width:calc(100vw - 24px)!important;min-width:0!important;padding:7px 11px!important;background:#132b3aeb!important;border:1px solid #416170!important;border-radius:13px!important;box-shadow:0 5px 15px #0005!important;gap:0!important}
+ body.sr60.rh-ready .stats-counts{gap:12px!important;flex-wrap:nowrap!important}
+ body.sr60.rh-ready #sr50MapTab .stat{display:flex!important;align-items:baseline!important;gap:4px!important}
+ body.sr60.rh-ready #sr50MapTab .stat b{font-size:15px!important;color:#65dfc8!important}
+ body.sr60.rh-ready #sr50MapTab .stat span{font-size:9px!important}
+ body.sr60.rh-ready #sr50MapTab #lastUpdate{display:none!important}
+ body.sr60.rh-ready .sr60-dock{background:#112739f5!important;border:1px solid #426475!important;border-radius:19px!important;padding:5px!important;box-shadow:0 6px 20px #0007!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+ body.sr60.rh-ready .sr60-navitem{font-size:10px!important;padding:7px 6px!important;gap:2px!important}
+ body.sr60.rh-ready #sr50MapTab .sheet{border-radius:22px 22px 0 0!important}
+ body.sr60.rh-ready #sr50MapTab .sheet .sheet-scroll{scrollbar-width:thin}
+ body.sr60.rh-ready #sr50MapTab .info-banner{display:none!important}
+ body.sr60.rh-ready #sr50MapTab .viewport-badge{display:none!important}
+}
+
+@media(max-width:749px){body.sr60.rh-ready .marker-circle{display:grid!important;place-items:center!important;color:#f5fbff!important;font-size:0!important}body.sr60.rh-ready .marker-circle svg{width:19px;height:19px}body.sr60.rh-ready .marker-label{font-size:10px!important;letter-spacing:-.025em!important;border-radius:7px!important;box-shadow:none!important}}
