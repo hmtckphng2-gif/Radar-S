@@ -2,8 +2,7 @@
  * Existing Leaflet, GTFS, Ist/Soll, favorites and analysis modules are not replaced. */
 import {findStations,romeDay,romeSeconds} from './radar51-logic.mjs';
 import {buildTimetable,searchJourneys,walkEstimate,transferAssessment} from './radar70-route.mjs';
-import {orderJourneys} from './radar703-advisor.mjs';
-import {mountJourneyAdvisor} from './radar703-coach.mjs';
+import {assessJourneys,orderJourneys,explainRecommendation,answerLocally,summarizeJourneyOptions} from './radar703-advisor.mjs';
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const E=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e};
@@ -11,7 +10,8 @@ const B=(cls,txt,fn)=>{const b=E('button',cls,txt);b.type='button';if(fn)b.addEv
 const paths={home:'<path d="m3 10 9-7 9 7v10H3zM9 21v-7h6v7"/>',map:'<path d="m3 5 6-2 6 3 6-3v16l-6 3-6-3-6 2zM9 3v17m6-14v16"/>',route:'<circle cx="5" cy="5" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 5h9a3 3 0 0 1 3 3v9M17 19H8a3 3 0 0 1-3-3V8"/>',grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',train:'<rect x="5" y="2" width="14" height="18" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 20l-2 2m10-2 2 2"/>',star:'<path d="m12 3 2.8 5.8 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.7l6.2-.9z"/>',brain:'<path d="M12 4a4 4 0 0 0-7 3 4 4 0 0 0-1 7 4 4 0 0 0 4 6 4 4 0 0 0 4-3V4Zm0 0a4 4 0 0 1 7 3 4 4 0 0 1 1 7 4 4 0 0 1-4 6 4 4 0 0 1-4-3"/>',alert:'<path d="m12 3 10 18H2L12 3ZM12 9v5m0 3v.5"/>',network:'<circle cx="12" cy="4" r="2"/><circle cx="4" cy="20" r="2"/><circle cx="20" cy="20" r="2"/><path d="M12 6 4 18m8-12 8 12M6 20h12"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',swap:'<path d="M7 3v17m-4-4 4 4 4-4M17 21V4m-4 4 4-4 4 4"/>',back:'<path d="m15 18-6-6 6-6"/>',chev:'<path d="m9 18 6-6-6-6"/>'};
 function I(name){const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 24 24');s.setAttribute('fill','none');s.setAttribute('stroke','currentColor');s.setAttribute('stroke-width','1.8');s.setAttribute('stroke-linecap','round');s.setAttribute('stroke-linejoin','round');s.setAttribute('aria-hidden','true');s.innerHTML=paths[name]||paths.grid;return s}
 const clock=n=>Number.isFinite(n)?String(Math.floor(n/3600)%24).padStart(2,'0')+':'+String(Math.floor(n%3600/60)).padStart(2,'0'):'–';
-let bridge,home,more,dock,stage,page='home',pane='search',mode='journey',stationPromise=null,stations=[],net=null,netDay='',journeys=[],selected={from:null,to:null},fields={},departure='now',vehicleMode='all',recommendationSort='recommended';
+let bridge,home,more,dock,stage,page='home',pane='search',mode='journey',stationPromise=null,stations=[],net=null,netDay='',journeys=[],selected={from:null,to:null},fields={},departure='now',vehicleMode='all';
+let rankingMode='recommended',chatBusy=false,chatHistory=[];
 function nativeTab(id){window.SuedtirolRadar50?.switchTab?.(id)}
 function navigate(to,hashChange=false){
  if(!['home','map','journey','more'].includes(to))to='home';
@@ -88,18 +88,74 @@ async function search(){
  try{
   await loadStations();if(netDay!==day||!net){net=buildTimetable(bridge.state.indexes,bridge.state.details,day);netDay=day}
   let start=romeSeconds();if(departure==='later'){const str=$('sr70Time')?.value;if(!/^\d{2}:\d{2}$/.test(str||''))return message('Wähle eine Uhrzeit.');const t=str.split(':').map(Number);start=t[0]*3600+t[1]*60;if(start<romeSeconds()-120)return message('Bitte eine spätere Uhrzeit für heute auswählen.')}
-  const r=searchJourneys(net,a,b,start,{maxLegs:3,maxResults:12,types:vehicleMode==='all'?['train','bus']:[vehicleMode]});
+  chatHistory=[];const r=searchJourneys(net,a,b,start,{maxLegs:3,maxResults:12,types:vehicleMode==='all'?['train','bus']:[vehicleMode]});
   journeys=r.results;drawResults(a,b,r.reason);
  }catch(e){console.warn('Horizon Routensuche',e);message('Verbindungssuche fehlgeschlagen. Datenquellen prüfen.')}
 }
 function back(title,fn){const h=E('div','sr70-backrow');const b=B('sr70-back','Zurück',fn);b.prepend(I('back'));h.append(b,E('strong','',title));return h}
-function drawResults(from,to,reason){pane='results';stage.replaceChildren(back('Verbindungen',drawSearch));const head=E('div','sr70-resulthead');head.append(E('h2','',from.name+' → '+to.name),E('p','','GTFS-Fahrplan · Umstiege nicht live garantiert'));stage.append(head);
- if(!journeys.length)stage.append(E('p','sr70-msg',reason||'Keine passende Verbindung gefunden'));
- const bestIndex=mountJourneyAdvisor(stage,journeys,recommendationSort,next=>{recommendationSort=next;drawResults(from,to,reason)});
- for(const ranked of orderJourneys(journeys,recommendationSort)){const i=ranked.index,trip=ranked.trip,card=B('sr70-result',undefined,()=>drawDetail(i));if(i===bestIndex)card.classList.add('sr703-recommended');const top=E('div','sr70-resulttop');top.append(E('strong','',clock(trip.departure)+' → '+clock(trip.arrival)),E('small','',Math.round((trip.arrival-trip.departure)/60)+' Min.'));card.append(top);
- const legs=E('div','sr70-legs');trip.legs.forEach((l,j)=>{legs.append(E('span',l.type==='train'?'sr70-train':'sr70-bus',l.name));if(j<trip.legs.length-1)legs.append(I('chev'))});card.append(legs);
- card.append(E('small','',trip.legs.length===1?'Direkt · fahrplanmäßig':(trip.legs.length-1)+' Umstieg(e) · '+(trip.transfers.some(x=>x.status==='risk')?'knapp':'laut Fahrplan möglich')));stage.append(card)}
- home.scrollTo?.({top:0})}
+function planChat(){
+ const region=E('section','sr703-chat');
+ region.append(E('div','sr703-chat-title','RADAR INTELLIGENCE · REISEBERATUNG'));
+ const hint=E('p','sr703-muted','Stelle Fragen zu deinen gefundenen Verbindungen. Ohne verbundenes KI-Modell erhältst du eine ausdrücklich regelbasierte Empfehlung.');
+ region.append(hint);
+ const history=E('div','sr703-history');history.setAttribute('aria-live','polite');
+ region.append(history);
+ const input=E('textarea','sr703-question');input.rows=2;input.maxLength=280;input.placeholder='Zum Beispiel: Welche Verbindung würdest du empfehlen?';input.setAttribute('aria-label','Frage an Radar Intelligence');
+ const actions=E('div','sr703-chat-actions');
+ const send=B('sr703-send','Fragen',async ()=>{
+  const question=input.value.trim();if(!question||chatBusy)return;
+  input.value='';chatBusy=true;send.disabled=true;
+  const mine=E('p','sr703-bubble sr703-mine',question);history.append(mine);
+  const answer=E('p','sr703-bubble sr703-answer','KI-Anbindung wird geprüft …');history.append(answer);answer.scrollIntoView?.({block:'nearest'});
+  let text='',isAI=false;
+  try{
+   const controller=new AbortController(),id=setTimeout(()=>controller.abort(),13500);
+   try{
+    const response=await fetch('/api/ai/journey-chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question,journeys:summarizeJourneyOptions(journeys),history:chatHistory.slice(-6)}),signal:controller.signal});
+    const body=await response.json().catch(()=>({}));
+    if(response.ok&&typeof body.answer==='string'&&body.answer.trim()){text=body.answer.trim();isAI=body.ai===true}
+   }finally{clearTimeout(id)}
+  }catch(error){console.warn('Radar Journey Chat',error?.message||error)}
+  if(!text)text=answerLocally(question,journeys);
+  answer.textContent=(isAI?'KI-Einschätzung · ':'Fahrplananalyse · ')+text;
+  chatHistory.push({role:'user',content:question},{role:'assistant',content:text});chatHistory=chatHistory.slice(-6);
+  chatBusy=false;send.disabled=false;input.focus();
+ });
+ actions.append(input,send);region.append(actions);
+ for(const phrase of ['Welche Verbindung empfiehlst du?','Welche hat die wenigsten Umstiege?']){
+  const quick=B('sr703-prompt',phrase,()=>{input.value=phrase;input.focus()});region.append(quick);
+ }
+ return region;
+}
+function drawResults(from,to,reason){
+ pane='results';stage.replaceChildren(back('Verbindungen',drawSearch));
+ const head=E('div','sr70-resulthead');head.append(E('h2','',from.name+' → '+to.name),E('p','','GTFS-Fahrplan · Umstiege nicht live garantiert'));stage.append(head);
+ if(!journeys.length){stage.append(E('p','sr70-msg',reason||'Keine passende Verbindung gefunden'));home.scrollTo?.({top:0});return}
+ const ranked=assessJourneys(journeys),top=ranked[0];
+ const advice=E('section','sr703-advice');advice.append(E('small','sr703-kicker','RADAR EMPFIEHLT · FAHRPLANBASIERTE AUSWERTUNG'),E('strong','',clock(top.trip.departure)+' → '+clock(top.trip.arrival)),E('p','',explainRecommendation(top)));
+ const note=E('small','sr703-muted','Alle gefundenen Fahrten bleiben sichtbar. Keine KI-Prognose und keine Anschlussgarantie.');
+ advice.append(note);stage.append(advice);
+ const sortbar=E('label','sr703-sort','Verbindungen sortieren');
+ const sorter=E('select');sorter.setAttribute('aria-label','Verbindungen sortieren');
+ for(const [key,label] of [['recommended','Empfohlen'],['departure','Nächste Abfahrt'],['fastest','Schnellste'],['fewest','Wenigste Umstiege']]){const o=E('option','',label);o.value=key;sorter.append(o)}
+ sorter.value=rankingMode;sortbar.append(sorter);stage.append(sortbar);
+ const list=E('div','sr703-results');stage.append(list);
+ function renderList(){
+  list.replaceChildren();const sorted=orderJourneys(journeys,rankingMode);
+  for(const entry of sorted){
+   const trip=entry.trip,card=B('sr70-result',undefined,()=>drawDetail(entry.index));const topRow=E('div','sr70-resulttop');
+   topRow.append(E('strong','',clock(trip.departure)+' → '+clock(trip.arrival)),E('small','',Math.round((trip.arrival-trip.departure)/60)+' Min.'));
+   card.append(topRow);
+   if(entry.index===top.index)card.append(E('span','sr703-badge','Empfohlen · laut Fahrplan'));
+   const legs=E('div','sr70-legs');trip.legs.forEach((l,j)=>{legs.append(E('span',l.type==='train'?'sr70-train':'sr70-bus',l.name));if(j<trip.legs.length-1)legs.append(I('chev'))});card.append(legs);
+   const risks=entry.missed?'Anschluss rechnerisch nicht erreichbar':entry.risky?'knapper Umstieg':'laut Fahrplan';
+   card.append(E('small','',trip.legs.length===1?'Direkt · '+risks:(trip.legs.length-1)+' Umstieg(e) · '+risks));
+   list.append(card);
+  }
+ }
+ sorter.onchange=()=>{rankingMode=sorter.value;renderList()};renderList();
+ stage.append(planChat());home.scrollTo?.({top:0});
+}
 function freshDelay(leg,end){const state=bridge.state,upd=state.updates?.get?.(leg.source+':'+leg.tripId);if(!upd||state.statuses?.[leg.source+'_updates']!=='ok'||!Number.isFinite(+upd.fetchedAt)||Date.now()-Number(upd.fetchedAt)>120000||Date.now()<Number(upd.fetchedAt)-30000)return null;
  if(upd.tripStartDate&&String(upd.tripStartDate).replaceAll('-','')!==romeDay().replaceAll('-',''))return null;
  const stopId=end?leg.toStop.id:leg.fromStop.id;const row=upd.stops?.find(x=>String(x.stopId??x.stop_id??'')===String(stopId)),value=end?(row?.arrival||row?.departure):(row?.departure||row?.arrival);

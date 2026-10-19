@@ -53,7 +53,7 @@ function open(tab){
  current=tab;
  if(!dialog){
   dialog=e('dialog','sr58-dialog');dialog.setAttribute('aria-label','Radar Verkehrsintelligenz');
-  const head=e('header','sr58-dialog-head');head.append(e('strong','','RADAR 7.0 · LIVE CENTER'),btn('✕',()=>dialog.close(),'sr58-close'));
+  const head=e('header','sr58-dialog-head');head.append(e('strong','','RADAR INTELLIGENCE · HORIZON'),btn('✕',()=>dialog.close(),'sr58-close'));
   body=e('div','sr58-body');dialog.append(head,body);document.body.append(dialog);
  }
  renderCurrent();if(!dialog.open)dialog.showModal();
@@ -273,13 +273,13 @@ function init(){
  installLiquidNav();
  enhanceMapGestures();
  // Dedicated switchboard button outside the map. Existing navigation untouched.
- const quick=btn('◉ Radar 6.0',()=>open('issues'),'sr58-quick');quick.setAttribute('aria-label','Radar 6.0 Störungen, Suche und Datenqualität');document.body.append(quick);
+ const quick=btn('◉ Intelligence',()=>open('issues'),'sr58-quick');quick.setAttribute('aria-label','Radar Intelligence: Störungen, Suche und Datenqualität');document.body.append(quick);
  document.addEventListener('sr37:feeds',refresh);
  bridge.getStationList?.().then(list=>{stations=Array.isArray(list)?list:[]}).catch(()=>{});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
  refresh();
  window.SuedtirolRadar58={version:'6.0',open,refresh,getIssues:()=>issues,getFeedHealth:()=>diagnostics};
- document.title='Südtirol Radar 6.0 · Project Nova';
+ document.title='Südtirol Radar · Project Horizon';
  const monitorVersion=document.querySelector('.sr57-version');if(monitorVersion)monitorVersion.textContent='6.0';
  const version=document.querySelector('.brand-title em');if(version)version.textContent='6.0';
 }

@@ -127,17 +127,26 @@ function render(){
  if(!bridge?.state?.details){board.append(el('p','sr57-empty','Fahrplandaten werden geladen …'));return}
  const group=nearbyStationGroup(stations,chosen);
  const res=buildDepartureRows(group,bridge.state.indexes,bridge.state.details,bridge.state.updates,bridge.state.statuses,{kind:filter});
- const rows=mergeStationDepartures(res.rows).filter(x=>filter==='all'||x.kind===filter);
+ const candidates=mergeStationDepartures(res.rows).filter(x=>filter==='all'||x.kind===filter);
+  // Some GTFS sources repeat one trip at equivalent nearby stop IDs.
+  // Dedupe only the exact same trip at the same scheduled departure time.
+  const seen=new Set(),rows=candidates.filter(row=>{
+    const signature=[row.source,row.tripId,row.serviceDay,row.sec].join(':');
+    if(seen.has(signature))return false;seen.add(signature);return true;
+  });
  if(seq!==request)return;
- const currentDate=new Intl.DateTimeFormat('de-DE',{timeZone:'Europe/Rome',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date());
-  const info=el('div','sr57-boardinfo');info.append(el('span','','ABFAHRTEN · '+currentDate+' · NÄCHSTE 4 STUNDEN'),el('span','',rows.length+' EINZELNE FAHRTEN'));board.append(info);
+ const serviceDate=new Intl.DateTimeFormat('de-DE',{timeZone:'Europe/Rome',weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date());
+  const info=el('div','sr57-boardinfo');info.append(el('span','','ABFAHRTEN · '+serviceDate+' · NÄCHSTE 4 STD.'),el('span','',rows.length+' FAHRTEN'));board.append(info);
+  board.append(el('p','sr57-data-note','Zeiten laut GTFS-Fahrplan. Echtzeit nur bei aktueller GTFS-RT-Meldung. Verschiedene Abfahrtszeiten sind eigene Fahrten.'));
  if(!rows.length){board.append(el('p','sr57-empty',res.reasons.length?'Keine gültigen Fahrplandaten für diesen Bahnhof.':'Keine Abfahrten im aktuellen Zeitraum gefunden.'));return}
  for(const row of rows){
   const item=button('',()=>showDetails(row),'sr57-row');
   const time=el('div','sr57-time');time.append(el('strong','',clock(row.sec)),el('small','',row.kind==='train'?'🚆 ZUG':'🚌 BUS'));
-  const route=el('div','sr57-route');const feedName={trains:'Trenitalia',sta:'STA',trentino:'Trentino'}[row.source]||row.source;
-   const trainNumMissing=row.kind==='train'&&!/^\\d{2,6}$/.test(String(row.number));
-   route.append(el('strong','sr57-route-number',row.number),el('span','sr57-route-destination',row.headsign+(row.platform?.current?' · '+(row.kind==='train'?'Gleis ':'Steig ')+row.platform.current:'')+' · '+feedName+(trainNumMissing?' · Zugnummer im Feed nicht verfügbar':'')));
+  const route=el('div','sr57-route');
+   const genericTrain=row.kind==='train'&&/^(reg|zug|train|regional|regionalzug)$/i.test(String(row.number||'').trim());
+   route.append(el('strong','sr57-route-number',genericTrain?String(row.number)+' · Nummer unbekannt':row.number));
+   route.append(el('span','sr57-route-destination',row.headsign+(row.platform?.current?' · '+(row.kind==='train'?'Gleis ':'Steig ')+row.platform.current:'')));
+   route.append(el('small','sr57-service-meta',row.source.toUpperCase()+' · '+(row.forecast===null?'nur Fahrplan':'Live-Meldung vorhanden')));
   const delay=el('div','sr57-delay');
   delay.append(el('strong',row.cancelled?'sr57-bad':row.delaySec>0?'sr57-late':'',row.cancelled?'Ausfall':row.delaySec===null?'–':labelDelay(row.delaySec)));
   const gain=evidence(row);delay.append(el('small','',gain?'↘ '+gain.gained+' min GTFS-RT':row.delaySec===null?'Nur Fahrplan':'GTFS-RT'));

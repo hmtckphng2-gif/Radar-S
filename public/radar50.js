@@ -233,10 +233,17 @@ async function renderInlineBoard(){
  const state=bridge?.state;const group=nearbyStationGroup(stationCache||[stationSelected],stationSelected);
  const chosen=group.filter(x=>x?.source && x?.stopId);
  const result=buildDepartureRows(chosen,state?.indexes,state?.details,state?.updates,state?.statuses,{allDay:boardAllDay,kind:boardKind});
- const visibleRows=mergeStationDepartures(result.rows).filter(r=>boardKind==='all'||r.kind===boardKind);
+ const seenDepartures=new Set();
+  const visibleRows=mergeStationDepartures(result.rows).filter(r=>{
+    if(boardKind!=='all'&&r.kind!==boardKind)return false;
+    const id=[r.source,r.tripId,r.serviceDay,r.sec].join(':');
+    if(seenDepartures.has(id))return false;
+    seenDepartures.add(id);return true;
+  });
  if(seq!==boardRequest)return;
  container.replaceChildren(head);
- const note=el('p','sr50-tip','GTFS-Fahrplan für heute · Zeitangaben Europe/Rome · Echtzeit nur bei frischen, passenden TripUpdates.');
+ const serviceDate=new Intl.DateTimeFormat('de-IT',{timeZone:'Europe/Rome',weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date());
+  const note=el('p','sr50-tip','Fahrplan für '+serviceDate+' · Zeitzone Europe/Rome · Livezeiten nur bei frischen, passenden GTFS-RT-Meldungen.');
  container.append(note);
  const controls=el('div','sr51-board-controls');
  controls.append(button('sr51-toggle',boardAllDay?'Nächste 4 Stunden':'Ganzer Fahrplantag',()=>{boardAllDay=!boardAllDay;renderInlineBoard()}));
@@ -258,7 +265,8 @@ async function renderInlineBoard(){
  for(const d of visibleRows){
   const row=el('div','sr51-departure-row');
   const main=el('div','sr51-departure-main');
-  main.append(el('strong','',d.number+' · '+d.headsign),el('small','',d.source.toUpperCase()+' · '+(d.cancelled?'Ausfall laut GTFS-RT':d.delaySec===null?'Nur Fahrplan':'GTFS-RT: '+(d.delaySec>0?'+':'')+Math.round(d.delaySec/60)+' Min.')));
+  const hasTrainNum=d.kind!=='train'||/^\d{2,6}$/.test(String(d.number||''));
+   main.append(el('strong','',(hasTrainNum?d.number:'REG · Zugnummer unbekannt')+' · '+d.headsign),el('small','',d.source.toUpperCase()+' · '+(d.cancelled?'Ausfall laut GTFS-RT':d.delaySec===null?'Nur Fahrplan · keine Livezeit':'GTFS-RT: '+(d.delaySec>0?'+':'')+Math.round(d.delaySec/60)+' Min.')));
   const platform=d.platform;
   const track=el('small','sr54-platform',(d.kind==='train'?'Gleis ':'Steig ')+(platform?.current||'unbekannt')+(platform?.changed?' · geändert':platform?.live?' · gemeldet':platform?.current?' · Plan':''));main.append(track);
   if(platform?.changed)track.classList.add('sr54-platform-changed');

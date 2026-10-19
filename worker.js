@@ -56,7 +56,7 @@ export default {
     }
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
 
-    if(url.pathname==='/api/ai/journey'&&request.method==='POST'){
+    if((url.pathname==='/api/ai/journey'||url.pathname==='/api/ai/journey-chat')&&request.method==='POST'){
       const noCache={'cache-control':'no-store'};
       if(request.headers.get('origin')!==url.origin)return respond({error:'Same-origin only'},403,noCache);
       if(!env.OPENROUTER_API_KEY||!env.OPENROUTER_MODEL||!env.AI_JOURNEY_LIMITER)return respond({error:'AI model not configured'},503,noCache);
@@ -65,19 +65,21 @@ export default {
       let input;
       try{const raw=await request.text();if(raw.length>8000)return respond({error:'Request too large'},413,noCache);input=JSON.parse(raw)}
       catch{return respond({error:'Invalid JSON'},400,noCache)}
-      if(typeof input?.question!=='string'||input.question.trim().length<3||input.question.length>240||!Array.isArray(input.options)||!input.options.length||input.options.length>8)return respond({error:'Invalid request'},400,noCache);
-      const options=input.options.map(v=>({
+      if(typeof input?.question!=='string'||input.question.trim().length<3||input.question.length>240||!Array.isArray(input.options||input.journeys)||!(input.options||input.journeys).length||(input.options||input.journeys).length>8)return respond({error:'Invalid request'},400,noCache);
+      const options=(input.options||input.journeys).map(v=>({
         departure:Number.isFinite(+v.departure)?+v.departure:null,
         arrival:Number.isFinite(+v.arrival)?+v.arrival:null,
         durationMinutes:Number.isFinite(+v.durationMinutes)?+v.durationMinutes:null,
         transfers:Number.isFinite(+v.transfers)?Math.max(0,Math.min(5,+v.transfers)):null,
         riskyTransfers:Number.isFinite(+v.riskyTransfers)?Math.max(0,Math.min(5,+v.riskyTransfers)):0,
+        missedTransfers:Number.isFinite(+v.missedTransfers)?Math.max(0,Math.min(5,+v.missedTransfers)):0,
         walkMeters:Number.isFinite(+v.walkMeters)?Math.max(0,Math.min(3000,+v.walkMeters)):null,
         legs:(Array.isArray(v.legs)?v.legs:[]).slice(0,4).map(l=>({
           type:l?.type==='train'?'train':'bus',
           name:String(l?.name||'').slice(0,48),from:String(l?.from||'').slice(0,60),to:String(l?.to||'').slice(0,60)
         }))
       }));
+      const history=(Array.isArray(input.history)?input.history:[]).slice(-6).filter(v=>v&&['user','assistant'].includes(v.role)&&typeof v.content==='string').map(v=>({role:v.role,content:v.content.slice(0,350)}));
       try{
         const id=String(request.headers.get('CF-Connecting-IP')||'anonymous').slice(0,100);
         const permission=await env.AI_JOURNEY_LIMITER.limit({key:id});
@@ -92,14 +94,14 @@ export default {
           body:JSON.stringify({model:String(env.OPENROUTER_MODEL).trim().slice(0,120),
             temperature:0.15,max_tokens:240,messages:[
               {role:'system',content:instructions},
-              {role:'user',content:'Frage: '+input.question.trim()+'; Fahrplanauswahl: '+JSON.stringify(options)}
+              {role:'user',content:'Frage: '+input.question.trim()+'; Fahrplanauswahl: '+JSON.stringify(options)+'; vorherige Chat-Nachrichten: '+JSON.stringify(history)}
             ]}),
           signal:AbortSignal.timeout(12000)
         });
         if(!upstream.ok)return respond({error:'AI provider unavailable'},502,noCache);
         const data=await upstream.json(),answer=data?.choices?.[0]?.message?.content;
         if(typeof answer!=='string'||!answer.trim())return respond({error:'Empty model answer'},502,noCache);
-        return respond({answer:answer.trim().slice(0,1300),basis:'GTFS timetable, AI interpretation'},200,noCache);
+        return respond({ai:true,answer:answer.trim().slice(0,1300),basis:'GTFS timetable, AI interpretation'},200,noCache);
       }catch{return respond({error:'AI request failed'},502,noCache)}
     }
     if (request.method !== 'GET' && request.method !== 'HEAD') return respond({ error: 'Method not allowed' }, 405);
