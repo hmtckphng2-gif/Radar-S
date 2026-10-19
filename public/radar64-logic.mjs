@@ -6,12 +6,22 @@ export function distanceMeters(a,b){const lat1=Number(a?.lat),lat2=Number(b?.lat
 export function samePhysicalTrip(a,b){if(!a||!b||a.key===b.key||a.source===b.source||a.kind!==b.kind||!a.tripStartDate||a.tripStartDate!==b.tripStartDate||!validTs(a)||!validTs(b)||Math.abs(a.timestamp-b.timestamp)>120)return false;
  const meters=distanceMeters(a,b);if(a.kind==='train')return !!number(a)&&number(a)===number(b)&&meters<=1500;
  // Bus IDs are NOT globally unique: only merge matching full trip/route identity.
- return !!a.tripId&&a.tripId===b.tripId&&!!a.routeId&&a.routeId===b.routeId&&meters<=120;
+ const sameTrip=!!a.tripId&&a.tripId===b.tripId&&!!a.routeId&&a.routeId===b.routeId&&meters<=120;
+ if(sameTrip)return true;
+ // STA direct vs BusOne may publish different trip IDs for the SAME bus.
+ // Fleet identity is scoped to these two STA feeds; require nearly identical
+ // observation time and location. Never use a fleet ID as a route name.
+ const pair=new Set([a.source,b.source]);
+ const sameSta=pair.size===2&&pair.has('sta')&&pair.has('sta_direct');
+ const id=String(a.vehicleId||'');
+ return sameSta&&/^\d{2,6}$/.test(id)&&id===String(b.vehicleId||'')&&
+   Math.abs(a.timestamp-b.timestamp)<=20&&meters<=60;
 }
 export function selectRepresentatives(vehicles,selectedKey){const all=[...vehicles].filter(Boolean),removed=new Set(),groups=new Map();
  const sorted=[...all].sort((a,b)=>{const delta=Number(b.timestamp||0)-Number(a.timestamp||0);if(Math.abs(delta)>10)return delta;return Number(b.source==='sta_direct')-Number(a.source==='sta_direct')||delta});
  for(let i=0;i<sorted.length;i++){const a=sorted[i];if(removed.has(a.key))continue;const group=[a];for(let j=i+1;j<sorted.length;j++){const b=sorted[j];if(removed.has(b.key))continue;if(samePhysicalTrip(a,b)){removed.add(b.key);group.push(b)}}
- const chosen=group.find(x=>x.key===selectedKey)||group[0];groups.set(chosen.key,group.map(x=>x.source));for(const item of group)if(item.key!==chosen.key)removed.add(item.key);removed.delete(chosen.key);
+ const direct=group.find(x=>x.source==='sta_direct'&&x.lineVerified);
+ const chosen=direct||group.find(x=>x.key===selectedKey)||group[0];groups.set(chosen.key,group.map(x=>x.source));for(const item of group)if(item.key!==chosen.key)removed.add(item.key);removed.delete(chosen.key);
  }
  return {keys:new Set(all.filter(x=>!removed.has(x.key)).map(x=>x.key)),sources:groups,duplicates:removed.size};
 }

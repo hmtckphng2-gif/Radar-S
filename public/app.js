@@ -495,7 +495,8 @@ function refreshMarkers(){
   }
 }
 function displayStats(){
-  const all=[...state.vehicles.values()];
+  const fusion=selectRepresentatives(state.vehicles.values(),state.selectedKey);
+  const all=[...state.vehicles.values()].filter(v=>fusion.keys.has(v.key));
   $('countAll').textContent=all.length;$('countTrains').textContent=all.filter(v=>v.kind==='train').length;
   $('countBuses').textContent=all.filter(v=>v.kind==='bus').length;
   const staleCount=all.filter(v=>v.stale || (v.timestamp && Date.now()/1000-v.timestamp>300)).length;
