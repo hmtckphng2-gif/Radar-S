@@ -1,5 +1,6 @@
 import {resolveTrain,normalizeTrain,romeTime} from './public/train-platforms-logic.mjs';
 import {rfiStation,parseMonitor} from './public/rfi-platforms-logic.mjs';
+import {buildSnapshot} from './public/radar66-api.mjs';
 /** Read-only transit proxies, with fixed upstream hosts and bounded caching. */
 const FEEDS = Object.freeze({
   sta: 'https://proxy.busone.app/sta/gtfs-rt/vehicle-positions.json',
@@ -56,6 +57,26 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
     if (request.method !== 'GET' && request.method !== 'HEAD') return respond({ error: 'Method not allowed' }, 405);
     const name = url.pathname.substring(5);
+    if(name==='v1/vehicles'||name==='v1/diagnostics'){
+      const client=String(env.BUSONE_CLIENT||'Suedtirol Radar read-only transit viewer').slice(0,180);
+      const snapshot=await buildSnapshot(async source=>{
+        const upstream=await fetch(FEEDS[source],{
+          headers:source==='sta_direct'?{'accept':'application/json'}:{'accept':'application/json','X-BusOne-Client':client,'X-BusOne-Use':'personal'},
+          signal:AbortSignal.timeout(9000),cf:{cacheEverything:true,cacheTtl:15}});
+        if(!upstream.ok||!(upstream.headers.get('content-type')||'').includes('json'))throw Error('unavailable');
+        return {data:await upstream.json()};
+      });
+      if(!Object.values(snapshot.sources).includes('ok'))return respond({error:'No current vehicle feeds available',sources:snapshot.sources},503,{'cache-control':'no-store'});
+      const payload=name==='v1/vehicles'?snapshot:{schema:snapshot.schema,version:snapshot.version,generatedAt:snapshot.generatedAt,disclaimer:snapshot.positionDisclaimer,diagnostics:snapshot.diagnostics};
+      return new Response(request.method==='HEAD'?null:JSON.stringify(payload),{status:200,headers:{...JSON_HEADERS,'cache-control':'public, max-age=15, stale-while-revalidate=15'}});
+    }
+    if(name==='v1/models'){
+      if(!env.ASSETS?.fetch)return respond({error:'Models database unavailable'},503,{'cache-control':'no-store'});
+      const modelUrl=new URL('/vehicle-models.json',url.origin),stored=await env.ASSETS.fetch(new Request(modelUrl));
+      if(!stored.ok)return respond({error:'Models database unavailable'},503,{'cache-control':'no-store'});
+      const data=await stored.json();const catalogAsset=await env.ASSETS.fetch(new Request(new URL('/train-model-catalog.json',url.origin)));const catalog=catalogAsset.ok?await catalogAsset.json():{types:[]};const entries=Object.entries(data?.by_train||{}).filter(([key,v])=>key&&v&&['confirmed','planned'].includes(v.confidence)&&typeof v.source==='string'&&v.source.trim()&&typeof v.name==='string'&&v.name.trim());
+      return respond({schema:'radar.models.v1',version:'6.6',byTrain:Object.fromEntries(entries),types:Array.isArray(catalog.types)?catalog.types:[],count:entries.length,note:'Nur explizit belegte Zuordnungen; leere Liste bedeutet, dass keine bestätigt sind.'},200,{'cache-control':'public, max-age=300'});
+    }
     if(name.startsWith('station-platforms/')){
       const id=name.slice('station-platforms/'.length),arrivals=url.searchParams.get('arrivals')||'0';
       if(!rfiStation(id)||!['0','1'].includes(arrivals))return respond({error:'Invalid RFI station or board'},400,{'cache-control':'no-store'});

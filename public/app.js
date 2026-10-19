@@ -1,4 +1,5 @@
 import {motionDuration,platformInfo} from './radar54-logic.mjs';
+import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs';
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=6.4.3';
 import {enrichTrainPlatform} from './train-platforms.js?v=5.4.4';
 import {
@@ -415,7 +416,7 @@ function animateTo(key,entry,target){
     (!previousVerified || Math.abs(target.along-oldAlong)<3000));
   const shapeJustLoaded=followShape && !previousVerified;
   state.jobs.set(key,{start:performance.now(),
-    duration,
+    duration:Math.min(5500,Math.max(800,boundedMotionDuration(dist,state.vehicles.get(key)?.kind))),
     from:current,to:{lat:target.lat,lon:target.lon},
     path:followShape?target.path:null,fromAlong:followShape?fromSnap.along:null,
     toAlong:followShape?target.along:null,latReference:current.lat});
@@ -574,7 +575,7 @@ async function refreshFeeds(){
     // Existing updates age out if no feed responds.
     for(const [key,upd] of state.updates)if(now-upd.fetchedAt>DETAIL_MAX_AGE)state.updates.delete(key);
     state.failCount=ENDPOINTS.filter(s=>state.statuses[s]!=='ok').length;
-    statusLabel();refreshMarkers();displayStats();refreshScheduleMatches();
+    statusLabel();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);displayStats();refreshScheduleMatches();
     // Bus-shape fetching happens after the live updates; do not delay feed painting.
     loadBusShapesForVehicles().catch(e=>console.info('Bus shape preload:',e));
     if(!initiallyLocated && state.vehicles.size && state.map){
@@ -884,7 +885,7 @@ function currentVehicleDelay(v){
 window.SuedtirolRadar37={state,showStations,showStationBoard,getStationList,openStationFromMap,setFilter,refreshMarkers,refreshScheduleMatches,
   verifiedRouteCount:()=>[...state.vehicles.values()].filter(v=>v.kind==='bus' && v.tripId && v.shapeId && mapTarget(v).path).length,
   routeOnlyCount:()=>[...state.vehicles.values()].filter(v=>v.kind==='bus' && !v.shapeId && v.routeShapeId && mapTarget(v).path).length,
-  routeMatchFor:v=>mapTarget(v),vehicleDelay:currentVehicleDelay,qualityFor:v=>observationQuality(v),fusionInfo:()=>state.fusion};
+  routeMatchFor:v=>mapTarget(v),vehicleDelay:currentVehicleDelay,qualityFor:v=>observationQuality(v),fusionInfo:()=>state.fusion,diagnostics:()=>state.diagnostics||feedDiagnostics(state.vehicles.values(),state.statuses)};
 async function init(){
   try{changeTheme(localStorage.getItem('sr-theme')==='light'?'light':'dark')}catch{changeTheme('dark')}
   setupControls();if(!initMap())return;

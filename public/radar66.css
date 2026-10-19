@@ -1,0 +1,10 @@
+/* Südtirol Radar 6.6: compact iPhone UI, safe areas, and data-quality warnings. */
+body.sr60 .sr64-card{padding:10px 12px;margin:8px 0;border-radius:13px}
+body.sr60 .sr64-grid{font-size:11px}
+body.sr60 .sr66-warning{font-size:11px;font-weight:650;color:#ffe1a0;line-height:1.45;margin:7px 0}
+body.sr60 .sr66-catalog-link{display:inline-block;margin-top:7px;color:#6ae8ce;font-size:12px;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+body.sr60 .sr62-train{margin:8px 0;padding:11px;border-radius:14px}
+body.sr60 .sr62-metric{padding:8px;min-width:0}
+body.sr60 .sr62-metric strong{font-size:clamp(13px,3.5vw,17px)}
+body.sr60 .sr62-stops{margin-top:8px}
+@media(max-width:430px){body.sr60 .sr62-stop{padding:7px 0 7px 12px}body.sr60 .sr62-head strong{font-size:12px}body.sr60 .sr62-disclaimer{font-size:10px}body.sr60 .sr60-pane{max-width:calc(100vw - 22px)}}

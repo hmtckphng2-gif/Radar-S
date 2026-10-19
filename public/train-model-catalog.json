@@ -1,0 +1,29 @@
+{
+  "schema": "radar.train.catalog.v1",
+  "version": "6.6",
+  "note": "Typenkatalog, keine Zuordnung dieser Fahrzeuge zu konkreten Zugfahrten. Bilder erst nach bestätigten Nutzungsrechten.",
+  "types": [
+    {
+      "id": "alstom-coradia-stream-sta",
+      "name": "Alstom Coradia Stream (STA)",
+      "manufacturer": "Alstom",
+      "region": "Südtirol / Tirol",
+      "description": "21 neue Regionalzüge für Südtirol und Tirol, präsentiert 2025; für 2026 vorgesehen.",
+      "capacity": 381,
+      "image": null,
+      "source": "https://www.alstom.com/press-releases-news/2025/5/alstom-and-sta-unveil-first-21-coradia-stream-trains-new-regional-fleet-connecting-south-tyrol-italy-and-tyrol-austria",
+      "association": "fleet-type-only"
+    },
+    {
+      "id": "alstom-coradia-stream-pop",
+      "name": "Alstom Coradia Stream (Pop)",
+      "manufacturer": "Alstom",
+      "region": "Italien, Trenitalia Regionale",
+      "description": "Italienischer Regionalzug der Coradia-Stream-Familie; Einsatz in mehreren Regionen offiziell bestätigt.",
+      "image": null,
+      "source": "https://www.alstom.com/press-releases-news/2019/11/alstom-begins-delivery-new-regional-trains-veneto-and-liguria-italy",
+      "association": "fleet-type-only"
+    }
+  ],
+  "byTrain": {}
+}
