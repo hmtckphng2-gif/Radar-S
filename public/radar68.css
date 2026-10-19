@@ -1,0 +1,28 @@
+/* Radar 6.8: map-first compact sheet with progressive detail layer */
+@media(max-width:749px){
+#sheet.open{max-height:min(68dvh,550px)!important;}
+#sheet .sheet-scroll{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));}
+#sheet #sr52DelayCard,#sheet #sr52LineCard,#sheet #sr52RouteCard,#sheet #sr64Quality,#sheet #sr55DataExplainer{display:none!important}
+#sheet #sr51TrainCompare,#sheet #sr56Compare,#sheet #sr62Train,#sheet #scheduleSection{display:block}
+#sheet #sr51TrainCompare[hidden],#sheet #sr56Compare[hidden],#sheet #sr62Train[hidden],#sheet #scheduleSection[hidden]{display:none!important}
+#sheet #scheduleSection{max-height:185px;overflow-y:auto;overscroll-behavior:contain}
+}
+#sr68Open{display:block;width:calc(100% - 20px);margin:10px;padding:11px 15px;min-height:44px;border-radius:11px;background:#183458;border:1px solid #3674b8;color:#eaf4ff;text-align:center;font:700 12px system-ui;cursor:pointer}
+.sr68-detail[hidden]{display:none!important}
+.sr68-detail{position:fixed;inset:0;z-index:25000;background:#0b1019;color:#eff6ff;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);box-sizing:border-box}
+.sr68-detail-head{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #27374b;min-height:56px;box-sizing:border-box;background:#111a27}
+.sr68-back{min-height:44px;padding:0 12px;background:#1b314a;color:#dceeff;border:1px solid #355477;border-radius:9px;font-size:14px}
+.sr68-detail-head strong{font-size:15px;letter-spacing:-.01em}
+.sr68-detail-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:16px 14px calc(24px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+.sr68-detail-summary{padding:4px 4px 14px;border-bottom:1px solid #27374b;margin-bottom:14px}
+.sr68-kicker{font-size:10px;font-weight:750;letter-spacing:.11em;color:#7faee0}
+.sr68-detail-summary h3{font-size:20px;margin:5px 0}
+.sr68-detail-summary p{font-size:12px;color:#a9b9cb;margin:0}
+.sr68-info{background:#132034;border:1px solid #29415e;border-radius:12px;padding:12px;margin-bottom:14px}
+.sr68-info h3{margin:0 0 6px;font-size:13px}
+.sr68-info p{margin:0;color:#b0c1d2;font-size:12px;line-height:1.5}
+.sr68-detail-scroll :is(#sr52DelayCard,#sr52LineCard,#sr52RouteCard,#sr64Quality,#sr55DataExplainer){display:block!important;margin:10px 0!important;max-width:none!important}
+.sr68-detail-scroll [hidden]{display:none!important}
+.sr68-empty{font-size:13px;color:#afbed0}
+body.sr68-detail-open{overflow:hidden}
+@media(prefers-reduced-motion:reduce){.sr68-detail *,#sr68Open{transition:none!important;animation:none!important}}
