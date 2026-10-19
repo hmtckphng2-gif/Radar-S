@@ -2,6 +2,7 @@
  * Additive only: original GTFS feeds, MapLibre/Leaflet synchronization and marker movement stay untouched.
  */
 import {busDelayLabel,trainScheduledPosition} from './radar51-logic.mjs';
+import {timetablePositionTiming,timeDifferenceLabel} from './radar74-time.mjs';
 (function(){
 'use strict';
 let bridge=null,started=false,comparisonLayer=null,card=null,tools=null,moreBtn=null,noticeExpanded=false,refreshPending=false;
@@ -86,10 +87,15 @@ function renderComparison(){
  card.append(node('div','sr51-cmp-line','● Grün: gemeldete Feedposition · ● Gold: fahrplanmäßige Soll-Position (Modell)'));
  const gap=calc.differenceKm;
  card.append(node('strong','sr51-gap',gap===0?'Positionen nahezu gleich':`Rund ${gap.toLocaleString('de-DE')} km ${calc.relative}`));
+ const timing=timetablePositionTiming(calc,v);
+ const estimate=node('div','sr74-time-summary');
+ estimate.append(node('strong','sr74-time-label',timeDifferenceLabel(timing)));
+ estimate.append(node('small','sr74-time-caution',timing?.reason||'Ohne einen zugeordneten Abschnitt ist keine Modellrechnung möglich.'));
+ card.append(estimate);
  card.append(node('small','sr51-quiet',`Zwischen ${calc.from} und ${calc.to}. Sollpunkt linear aus Haltezeiten berechnet; Fahrgeschwindigkeit unterwegs ist nicht exakt bekannt.`));
  const estimated=/simuliert|geschätzt|interpoliert/i.test(v.positionType||'');
  card.append(node('small','sr51-caution',estimated?'Die gemeldete Position ist laut Datenquelle simuliert oder geschätzt – kein bestätigtes GPS.':'Eine Feedposition ist nicht automatisch nachweislich echtes GPS.'));
- card.append(node('p','sr51-quiet','Die Entfernung ist keine zuverlässige Zeitverspätung. Dafür ausschließlich passende GTFS-RT-Meldungen verwenden.'));
+ card.append(node('p','sr51-quiet','Die modellierte Zeitabweichung ersetzt niemals die gemeldete GTFS-RT-Verspätung. Sie setzt vereinfachte gleichmäßige Fahrt zwischen zwei Haltestellen voraus.')); 
  if(!comparisonLayer || !window.L)return;
  const mk=(pos,color,text)=>L.circleMarker([pos.lat,pos.lon],{radius:7,color:'#f0f7ff',weight:2,fillColor:color,fillOpacity:1,interactive:false}).bindTooltip(text,{permanent:true,direction:'top',className:'sr51-map-tooltip'}).addTo(comparisonLayer);
  mk(calc.scheduled,'#e8b668','Soll laut Fahrplan');mk(calc.observed,'#50e6c6','Feedposition');
