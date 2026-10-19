@@ -28,7 +28,7 @@ test('same train number on different days stays separate',()=>{
 const logic=await import('../public/radar54-logic.mjs').catch(()=>({}));
 test('stale positions never animate',()=>{assert.equal(logic.motionDuration?.({stale:true,timestamp:now/1000},null,now),0)});
 test('same observation timestamp never animates',()=>{assert.equal(logic.motionDuration?.({timestamp:now/1000},now/1000,now),0)});
-test('new fresh observation uses a brief transition',()=>{assert.equal(logic.motionDuration?.({timestamp:now/1000},now/1000-20,now),650)});
+test('new fresh observation uses a brief transition',()=>{assert.equal(logic.motionDuration?.({timestamp:now/1000},now/1000-20,now),900)});
 test('platforms come from explicit metadata, never a stop ID suffix',()=>{
  assert.deepEqual(logic.platformInfo?.(['Bozen',46.5,11.3,'2'],null),{planned:'2',current:'2',changed:false,live:false});
  assert.equal(logic.platformInfo?.(['Bozen',46.5,11.3],null)?.current,null);

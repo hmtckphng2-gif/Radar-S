@@ -14,7 +14,8 @@ const DIRECT_POSITION_SOURCES=['sta_direct'];
 const POSITION_SOURCES=[...SOURCES,...DIRECT_POSITION_SOURCES];
 const DIRECT_UPDATE_SOURCES=['sta_direct_updates'];
 const ALL_UPDATE_SOURCES=[...UPDATE_SOURCES,...DIRECT_UPDATE_SOURCES];
-const ENDPOINTS=[...POSITION_SOURCES,...ALL_UPDATE_SOURCES];
+const ALERT_SOURCES=['sta_alerts'];
+const ENDPOINTS=[...POSITION_SOURCES,...ALL_UPDATE_SOURCES,...ALERT_SOURCES];
 const state = {
   map: null, layer: null, selectedLayer: null, activeSheet: null, selectedKey: null,
   filter: 'all', query: '', busy: false, statuses: {},
@@ -26,6 +27,7 @@ const state = {
   busTracks: new Map(), fusion:{sources:new Map(),duplicates:0}, performance:{lastMarkerRefresh:0}
 };
 let frameId = 0;
+let lastMotionFrame = 0;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const DETAIL_MAX_AGE = 120000;
 const VEHICLE_KEEP_MS = 30 * 60 * 1000; // Keep a clearly labelled last-known marker during an outage.
@@ -339,6 +341,10 @@ function stopJob(key){state.jobs.delete(key);}
 function requestMotionFrame(){if(!frameId)frameId=requestAnimationFrame(animationLoop);}
 function animationLoop(now){
   frameId=0;
+  // 30 fps cap on mobile: retain final confirmed point and reduce DOM work.
+  const frameGap=window.innerWidth<=600?32:16;
+  if(now-lastMotionFrame<frameGap){if(state.jobs.size||state.busTracks.size)requestMotionFrame();return;}
+  lastMotionFrame=now;
   // The existing proven rail animation remains unchanged.
   for(const [key,job] of state.jobs){
     const marker=state.markers.get(key)?.marker;
@@ -347,13 +353,14 @@ function animationLoop(now){
     if(!motionDuration(v,null,Date.now(),reducedMotion.matches)){
       if(v)marker.setLatLng([v.lat,v.lon]);state.jobs.delete(key);continue;
     }
-    const f=Math.min(1,(now-job.start)/job.duration);
+    const raw=Math.min(1,(now-job.start)/job.duration);
+    const f=raw*raw*(3-2*raw);
     let pos;
     if(job.path && job.fromAlong!==null && job.toAlong!==null){
       pos=pointAtDistance(job.path,job.fromAlong+(job.toAlong-job.fromAlong)*f,job.latReference);
     }else pos={lat:job.from.lat+(job.to.lat-job.from.lat)*f,lon:job.from.lng+(job.to.lon-job.from.lng)*f};
-    if(pos)marker.setLatLng([pos.lat,pos.lon]);
-    if(f>=1)state.jobs.delete(key);
+    if(pos&&marker.getLatLng().distanceTo([pos.lat,pos.lon])>0.7)marker.setLatLng([pos.lat,pos.lon]);
+    if(raw>=1){marker.setLatLng([job.to.lat,job.to.lon]);state.jobs.delete(key);}
   }
   // Road animation follows a real GTFS shape between TWO received fixes.
   // It intentionally never extrapolates, so sparse feeds may still pause.
@@ -381,7 +388,7 @@ function animationLoop(now){
     const showAt=now-playbackLag(track.samples);
     const along=bufferedAlong(track.samples,showAt);
     const pos=along===null?null:pointAtDistance(track.path,along,track.latReference);
-    if(pos)marker.setLatLng([pos.lat,pos.lon]);
+    if(pos&&marker.getLatLng().distanceTo([pos.lat,pos.lon])>0.7)marker.setLatLng([pos.lat,pos.lon]);
     if(showAt<newest.time)roadPending=true;
   }
   if(state.jobs.size || roadPending)requestMotionFrame();
@@ -450,7 +457,7 @@ function updateBusMotion(key,entry,target,v){
 }
 function refreshMarkers(){
   if(!state.map)return;
-  const fusion=selectRepresentatives(state.vehicles.values(),state.selectedKey);state.fusion={sources:fusion.sources,duplicates:fusion.duplicates};
+  const fusion=selectRepresentatives(state.vehicles.values(),state.selectedKey);state.fusion={sources:fusion.sources,keys:fusion.keys,duplicates:fusion.duplicates};
   const active=new Set();
   for(const [key,v] of state.vehicles){
     if(!visible(v)||!fusion.keys.has(key))continue;
@@ -495,8 +502,8 @@ function refreshMarkers(){
   }
 }
 function displayStats(){
-  const fusion=selectRepresentatives(state.vehicles.values(),state.selectedKey);
-  const all=[...state.vehicles.values()].filter(v=>fusion.keys.has(v.key));
+  const keys=state.fusion?.keys||selectRepresentatives(state.vehicles.values(),state.selectedKey).keys;
+  const all=[...state.vehicles.values()].filter(v=>keys.has(v.key));
   $('countAll').textContent=all.length;$('countTrains').textContent=all.filter(v=>v.kind==='train').length;
   $('countBuses').textContent=all.filter(v=>v.kind==='bus').length;
   const staleCount=all.filter(v=>v.stale || (v.timestamp && Date.now()/1000-v.timestamp>300)).length;

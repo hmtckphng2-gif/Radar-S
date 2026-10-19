@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {samePhysicalTrip,selectRepresentatives,observationQuality} from '../public/radar64-logic.mjs';
+import {motionDuration} from '../public/radar54-logic.mjs';
+const now=Date.now(),stamp=now/1000;
+const a={key:'sta:81',source:'sta',vehicleId:'81',kind:'bus',lat:46.5,lon:11.35,timestamp:stamp,tripStartDate:'',tripId:'old',routeId:'old',name:'Linie unbekannt',lineVerified:false};
+const b={...a,key:'sta_direct:81',source:'sta_direct',tripStartDate:'20261019',tripId:'new',routeId:'new',name:'201',lineVerified:true};
+test('STA fleet match handles missing service date with same actual observation',()=>assert.equal(samePhysicalTrip(a,b),true));
+test('same line but different bus IDs never merge',()=>assert.equal(samePhysicalTrip(a,{...b,vehicleId:'82'}),false));
+test('STA fleet match rejects different coordinates',()=>assert.equal(samePhysicalTrip(a,{...b,lat:46.51}),false));
+test('STA fleet match rejects different timestamps',()=>assert.equal(samePhysicalTrip(a,{...b,timestamp:stamp-50}),false));
+test('source identity does not merge Trentino with STA fleet numbers',()=>assert.equal(samePhysicalTrip(a,{...b,source:'trentino'}),false));
+test('official verified bus label wins within genuinely duplicate source observations',()=>{const v=selectRepresentatives([a,b]);assert.deepEqual([...v.keys],[b.key]);assert.equal(v.duplicates,1)});
+test('fresh rail position gets bounded smooth animation',()=>assert.equal(motionDuration({kind:'train',timestamp:stamp},null,now),2400));
+test('stale rail position stays still',()=>assert.equal(motionDuration({kind:'train',timestamp:stamp,stale:true},null,now),0));
+test('road observation gets smooth transition only if fresh',()=>{assert.equal(motionDuration({kind:'bus',timestamp:stamp},null,now),900);assert.equal(motionDuration({kind:'bus',timestamp:stamp-400},null,now),0)});
+test('feed-position quality never labels GPS independently verified',()=>{assert.equal(observationQuality(b,now).gpsVerified,false)});

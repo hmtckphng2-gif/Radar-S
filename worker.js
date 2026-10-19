@@ -5,6 +5,7 @@ const FEEDS = Object.freeze({
   sta: 'https://proxy.busone.app/sta/gtfs-rt/vehicle-positions.json',
   sta_direct: 'https://gtfs.api.opendatahub.com/v1/realtime/sta-time-tables/vehicle-positions',
   sta_direct_updates: 'https://gtfs.api.opendatahub.com/v1/realtime/sta-time-tables/trip-updates',
+  sta_alerts: 'https://gtfs.api.opendatahub.com/v1/realtime/sta-time-tables/service-alerts',
   trentino: 'https://proxy.busone.app/trentino/gtfs-rt/vehicle-positions.json',
   trains: 'https://proxy.busone.app/trenitalia/gtfs-rt/vehicle-positions.json',
   sta_updates: 'https://proxy.busone.app/sta/gtfs-rt/trip-updates.json',

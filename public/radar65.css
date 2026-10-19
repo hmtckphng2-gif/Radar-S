@@ -1,0 +1,7 @@
+/* Radar 6.5 compact map labels and official station messages */
+body.sr60 .marker-label.sr65-label-collision{visibility:hidden!important;pointer-events:none!important}
+body.sr60 .sr65-station-alerts{padding:12px;border:1px solid rgba(83,225,193,.2);border-radius:14px;background:#1b3445;margin:12px 0}
+body.sr60 .sr65-section-title{display:block;color:#53e1c1;font-size:12px;letter-spacing:.02em}
+body.sr60 .sr65-alert-item{font-size:12px;color:#e8eff4;line-height:1.5;border-top:1px solid #395062;padding-top:9px;margin-top:9px}
+body.sr60 .sr62-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:390px){body.sr60 .sr62-metric strong{font-size:14px}}

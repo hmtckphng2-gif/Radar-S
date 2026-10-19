@@ -18,13 +18,26 @@ import {groupNearby} from './radar44-logic.mjs';
   if(!map||!clusters)return;
   clusters.clearLayers();
   // Reset previously hidden marker DOM on every zoom, filter and source update.
-  for(const entry of bridge.state.markers.values())entry.marker.getElement()?.classList.remove('sr43-in-cluster');
+  for(const entry of bridge.state.markers.values()){const element=entry.marker.getElement();element?.classList.remove('sr43-in-cluster');element?.querySelector('.marker-label')?.classList.remove('sr65-label-collision');}
   const zoom=map.getZoom();
   // Labels thin out before clusters appear, without hiding the followed vehicle.
   document.documentElement.classList.toggle('sr431-midwide',zoom<=13);
   document.documentElement.classList.toggle('sr43-wide',zoom<=11);
   document.documentElement.classList.toggle('sr43-very-wide',zoom<=10);
-  if(zoom>10 || document.documentElement.classList.contains('sr43-no-clusters'))return;
+  if(document.documentElement.classList.contains('sr43-no-clusters'))return;
+  if(zoom>10){
+   // At neighborhood zoom keep every bus pin; hide only colliding route labels.
+   const boxes=[];const activeKey=bridge.state.selectedKey;
+   for(const [key,entry] of bridge.state.markers){
+    const dom=entry.marker.getElement(),label=dom?.querySelector('.marker-label');if(!label)continue;
+    label.classList.remove('sr65-label-collision');
+    if(key===activeKey)continue;
+    const box=label.getBoundingClientRect();if(!box.width||!box.height||box.right<0||box.left>window.innerWidth||box.bottom<0||box.top>window.innerHeight)continue;
+    if(boxes.some(b=>box.left<b.right+5&&box.right>b.left-5&&box.top<b.bottom+4&&box.bottom>b.top-4))label.classList.add('sr65-label-collision');
+    else boxes.push(box);
+   }
+   return;
+  }
   const bounds=map.getBounds();
   const points=[];
   const active=bridge.followAPI?.getKey?.() || bridge.state.selectedKey;
