@@ -132,17 +132,25 @@ body.sr60 .sr60-dock.sr61-ready .sr61-indicator{opacity:1}
 body.sr60 .sr60-dock .sr60-navitem{position:relative;z-index:1;transition:color .22s,transform .22s}
 body.sr60 .sr60-dock .sr60-navitem[aria-current="page"]{background:transparent!important;color:#53e1c1}
 body.sr60 .sr60-navitem:active{transform:scale(.94)}
-/* Standalone iOS has a different usable viewport than Safari: adjust only installed app. */
-@media (display-mode:standalone){
- body.sr60 #sr50MapTab:not(.sr50-map-inactive){bottom:calc(-1 * env(safe-area-inset-bottom,0px))!important;height:auto!important}
- body.sr60 #sr50MapTab .topbar{top:40px!important}
- body.sr60 .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 47px)!important}
- body.sr60 #sr50MapTab .sr60-launch{top:calc(env(safe-area-inset-top,0px) + 205px)!important}
- body.sr60 .sr60-launch{top:calc(env(safe-area-inset-top,0px) + 205px)!important}
- body.sr60 .sr60-dock{bottom:8px!important}
- body.sr60 #sr50MapTab .stats{bottom:102px!important}
- body.sr60 #sr50MapTab .map-actions{bottom:177px!important}
- body.sr60 #sr50MapTab .leaflet-bottom{bottom:91px!important}
- body.sr60{--sr60-dock-clearance:94px}
-}
 @media(prefers-reduced-motion:reduce){body.sr60 .sr61-indicator,body.sr60 .sr60-navitem{transition:none!important}}
+
+/* 6.1.1 — single responsive map layout. Runtime measures actual header/dock, not guessed device pixels. */
+body.sr60{--sr611-header-bottom:160px;--sr611-dock-top:calc(100dvh - 92px);--sr611-dock-space:96px;--sr611-view-height:100dvh}
+body.sr60.sr611-layout #sr50MapTab:not(.sr50-map-inactive){position:fixed!important;inset:0!important;height:var(--sr611-view-height)!important;overflow:hidden!important}
+body.sr60.sr611-layout #sr50MapTab .topbar{position:absolute!important;top:0!important;left:0!important;right:0!important;height:auto!important;box-sizing:border-box!important;padding-top:calc(var(--sr611-safe-top) + 11px)!important;z-index:1000!important}
+body.sr60.sr611-layout .sr58-language-toggle{position:fixed!important;top:calc(var(--sr611-safe-top) + 14px)!important;right:12px!important;z-index:10015!important}
+body.sr60.sr611-layout .sr60-launch{position:fixed!important;top:calc(var(--sr611-header-bottom) + 92px)!important;right:12px!important;z-index:10005!important}
+body.sr60.sr611-layout:has(#sr50MapTab:not(.sr50-map-inactive)) #sr58Banner:not([hidden]){
+ top:calc(var(--sr611-header-bottom) + 10px)!important;left:12px!important;right:12px!important;z-index:10010!important;
+}
+body.sr60.sr611-layout .sr60-dock{position:fixed!important;bottom:calc(var(--sr611-safe-bottom) + 8px)!important;z-index:10030!important}
+body.sr60.sr611-layout #sr50MapTab .stats{bottom:calc(var(--sr611-dock-space) + 14px)!important;z-index:870!important}
+body.sr60.sr611-layout #sr50MapTab .map-actions{bottom:calc(var(--sr611-dock-space) + 92px)!important}
+body.sr60.sr611-layout #sr50MapTab .leaflet-bottom{bottom:calc(var(--sr611-dock-space) + 2px)!important}
+body.sr60.sr611-layout #sr50DeparturesView,
+body.sr60.sr611-layout #sr50StatsView,
+body.sr60.sr611-layout #sr50FavoritesView{bottom:0!important;padding-bottom:calc(var(--sr611-dock-space) + 16px)!important}
+body.sr60.sr611-layout:has(#sr58Banner:not([hidden])) #sr50DeparturesView .sr57-view{padding-top:calc(var(--sr611-safe-top) + 118px)!important}
+body.sr60.sr611-layout:has(#sr58Banner:not([hidden])) #sr50StatsView .sr50-header,
+body.sr60.sr611-layout:has(#sr58Banner:not([hidden])) #sr50FavoritesView .sr50-header{padding-top:calc(var(--sr611-safe-top) + 118px)!important}
+@media (display-mode:standalone){body.sr60.sr611-layout #sr50MapTab .topbar{top:0!important}}

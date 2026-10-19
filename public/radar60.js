@@ -7,6 +7,30 @@
  const tabs=[['map','Karte'],['departures','Abfahrten'],['stats','Statistik'],['favorites','Favoriten']];
  function icon(id){const n=document.createElementNS('http://www.w3.org/2000/svg','svg');n.setAttribute('viewBox','0 0 24 24');n.setAttribute('aria-hidden','true');n.innerHTML=svgPaths[id];return n}
  let dock,pop,pane,initialized=false;
+ const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+ let layoutFrame=0;
+ function measureLayout(){
+  layoutFrame=0;
+  const root=document.body;if(!root.classList.contains('sr60'))return;
+  root.classList.add('sr611-layout');
+  root.classList.toggle('sr611-standalone',standalone());
+  // CSS env() values are resolved using an element in the current viewport.
+  const probe=document.getElementById('sr611SafeProbe')||(()=>{const n=document.createElement('div');n.id='sr611SafeProbe';n.setAttribute('aria-hidden','true');n.style.cssText='position:fixed;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);height:0;width:0;';root.append(n);return n})();
+  const cp=getComputedStyle(probe);
+  const safeTop=Math.max(0,parseFloat(cp.paddingTop)||0);
+  const safeBottom=Math.max(0,parseFloat(cp.paddingBottom)||0);
+  root.style.setProperty('--sr611-safe-top',safeTop+'px');root.style.setProperty('--sr611-safe-bottom',safeBottom+'px');
+  const header=document.querySelector('#sr50MapTab .topbar');const hr=header?.getBoundingClientRect();
+  if(hr?.height)root.style.setProperty('--sr611-header-bottom',Math.ceil(hr.bottom)+'px');
+  const dr=dock?.getBoundingClientRect();const viewport=window.visualViewport?.height||window.innerHeight;
+  const viewHeight=Math.max(window.innerHeight,document.documentElement.clientHeight,viewport);
+  root.style.setProperty('--sr611-view-height',viewHeight+'px');
+  if(dr?.height)root.style.setProperty('--sr611-dock-space',Math.ceil(dr.height+safeBottom+16)+'px');
+  requestAnimationFrame(positionPill);
+ }
+ function scheduleLayout(){if(!layoutFrame)layoutFrame=requestAnimationFrame(measureLayout)}
+ function setupLayout(){scheduleLayout();window.addEventListener('resize',scheduleLayout,{passive:true});window.addEventListener('orientationchange',scheduleLayout,{passive:true});document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleLayout()});window.visualViewport?.addEventListener('resize',scheduleLayout,{passive:true});if(window.ResizeObserver){const ro=new ResizeObserver(scheduleLayout);const header=document.querySelector('#sr50MapTab .topbar');if(header)ro.observe(header);if(dock)ro.observe(dock)}setTimeout(scheduleLayout,350);setTimeout(scheduleLayout,1500)}
+
  function switchTab(id){const engine=window.SuedtirolRadar50;if(engine?.switchTab)engine.switchTab(id);else{const b=document.querySelector('#sr50BottomNav .sr50-nav-btn[data-tab="'+id+'"]');b?.click()};syncTabs(id);if(pop)pop.hidden=true}
  function syncTabs(fallback){if(!dock)return;const active=document.querySelector('#sr50BottomNav .sr50-nav-btn.active')?.dataset.tab||fallback||'map';for(const b of dock.querySelectorAll('[data-nova-tab]'))b.setAttribute('aria-current',b.dataset.novaTab===active?'page':'false');requestAnimationFrame(positionPill)}
  function positionPill(){if(!dock)return;const active=dock.querySelector('.sr60-navitem[aria-current="page"]');const pill=dock.querySelector('.sr61-indicator');if(!active||!pill)return;const dr=dock.getBoundingClientRect(),ar=active.getBoundingClientRect();if(!ar.width)return;pill.style.width=ar.width+'px';pill.style.height=ar.height+'px';pill.style.transform='translate3d('+(ar.left-dr.left)+'px,'+(ar.top-dr.top)+'px,0)';dock.classList.add('sr61-ready')}
@@ -21,7 +45,7 @@
  addOption('☆ Favoriten & Alerts','Favoriten und bestehende Alert-Einstellungen',()=>{close();window.SuedtirolRadar58?.open?.('alerts')});
  const launch=make('button','sr60-launch','✦ Intelligence',()=>{pop.hidden=false});launch.type='button';launch.id='sr60Launch';launch.setAttribute('aria-label','Intelligence Menü öffnen');document.body.append(launch);
  }
- function start(){if(initialized)return;initialized=true;document.body.classList.add('sr60');createDock();createMenu();const version=document.querySelector('.brand-title em');if(version)version.textContent='6.1';document.title='Südtirol Radar 6.1 · Liquid Navigation';window.SuedtirolRadar60={version:'6.1',switchTab,openMenu:()=>{pop.hidden=false}};
+ function start(){if(initialized)return;initialized=true;document.body.classList.add('sr60');createDock();createMenu();setupLayout();const version=document.querySelector('.brand-title em');if(version)version.textContent='6.1.1';document.title='Südtirol Radar 6.1.1 · Safe Area Fix';window.SuedtirolRadar60={version:'6.1.1',switchTab,openMenu:()=>{pop.hidden=false}};
  let tries=0;const monitor=()=>{const old=$('sr50BottomNav');if(old){old.classList.add('sr60-native-nav');syncTabs()}else if(tries++<150)setTimeout(monitor,150)};monitor();}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
