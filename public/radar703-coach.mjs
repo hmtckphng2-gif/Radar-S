@@ -17,8 +17,8 @@ export function mountJourneyAdvisor(stage,journeys,sortMode,onSort){
  for(const [value,title] of [['recommended','Empfohlen'],['departure','Früheste Abfahrt'],['fastest','Schnellste'],['fewest','Wenigste Umstiege']]){
   const option=el('option','',title);option.value=value;select.append(option)}
  select.value=sortMode;select.onchange=()=>onSort(select.value);sort.append(label,select);box.append(sort);
- const chat=el('details','sr703-chat'),summary=el('summary','','Reiseberater fragen · KI optional');
- chat.append(summary,el('p','sr703-hint','Radar vergleicht ausschließlich die angezeigten Fahrplandaten. Ein echtes KI-Modell antwortet nur, wenn es serverseitig eingerichtet wurde.'));
+ const chat=el('details','sr703-chat'),summary=el('summary','','Reiseberater fragen · KI · Cloudflare');
+ chat.append(summary,el('p','sr703-hint','Radar vergleicht ausschließlich die angezeigten Fahrplandaten. KI-Antworten stammen von Cloudflare Workers AI, falls die Binding auf dem Worker aktiv ist. Bei Nichtverfügbarkeit hilft die fahrplanbasierte Logik.'));
  const input=el('textarea','sr703-question');input.rows=2;input.maxLength=240;input.placeholder='Welche Verbindung empfiehlst du und warum?';
  input.setAttribute('aria-label','Frage zu den angezeigten Verbindungen');
  const answer=el('p','sr703-answer');answer.setAttribute('aria-live','polite');answer.hidden=true;
@@ -29,9 +29,9 @@ export function mountJourneyAdvisor(stage,journeys,sortMode,onSort){
    const response=await fetch('/api/ai/journey',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({question:q,options:summarizeJourneyOptions(journeys)}),signal:AbortSignal.timeout(14000)});
    const obj=await response.json();
    if(response.ok&&typeof obj.answer==='string'&&obj.answer.trim()){answer.textContent='KI-Antwort (kein offizieller Fahrplan): '+obj.answer.slice(0,1100);return;}
-   answer.textContent='KI-Modell derzeit nicht verbunden. '+answerLocally(q,journeys);
+   answer.textContent='Cloudflare AI gerade nicht verfügbar. '+answerLocally(q,journeys);
   }catch{
-   answer.textContent='KI derzeit nicht verfügbar. '+answerLocally(q,journeys);
+   answer.textContent='Cloudflare AI gerade nicht verfügbar. '+answerLocally(q,journeys);
   }finally{send.disabled=false}
  });
  input.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();send.click()}});
