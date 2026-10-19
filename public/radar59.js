@@ -1,55 +1,50 @@
-/* Radar 5.9 – additive Rail Network Lab. Never assert camera detection without verified observations. */
+/* Südtirol Radar 5.9 — RailCam Network and train observation hub.
+   Only authorized, verified railway-facing cameras may be activated.
+   Vehicle feed observations are NOT webcam or GPS evidence. */
 (()=>{'use strict';
-const VERSION='5.9.0', HISTORY_KEY='sr59_observations_v1', PREF_KEY='sr59_prefs_v1';
-const CORRIDOR=[['Bozen / Bolzano',46.4967,11.3580],['Auer / Ora',46.3476,11.2975],['Neumarkt / Egna',46.3136,11.2724],['Salurn / Salorno',46.2397,11.2081],['Mezzocorona',46.2156,11.1200],['Lavis',46.1405,11.1101],['Trient / Trento',46.0731,11.1195]];
-const CAMERAS=CORRIDOR.map(([name,lat,lng],i)=>({id:'corridor-'+i,name,lat,lng,status:'unverified',url:null,railView:false,permission:false}));
-const $=(s)=>document.querySelector(s), el=(tag,cls,txt)=>{const a=document.createElement(tag);if(cls)a.className=cls;if(txt!==undefined)a.textContent=String(txt);return a};
-const load=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')??fallback}catch{return fallback}};
-const save=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch{}};
-let prefs={trace:true,station:'Salurn / Salorno',delayThreshold:15,...load(PREF_KEY,{})}, history=load(HISTORY_KEY,[]), seen=new Map(), traces=new Map(), lineGroup=null, modal=null, content=null, current='overview';
-const state=()=>window.SuedtirolRadar37?.state;
-const vehicles=()=>{const v=state()?.vehicles;return v instanceof Map?[...v.values()]:Array.isArray(v)?v:[]};
-function isTrain(v){return v?.kind==='train'&&!v.stale}
-function num(v,...names){for(const n of names){const z=Number(v?.[n]);if(Number.isFinite(z)&&Math.abs(z)>0)return z}return null}
-function coordinates(v){const lat=num(v,'lat','latitude'),lng=num(v,'lng','lon','longitude');return lat!==null&&lng!==null&&lat>=45.7&&lat<=47.5&&lng>=10.2&&lng<=12.6?[lat,lng]:null}
-function name(v){return String(v.name||v.tripId||v.vehicleId||v.key||'Unbekannter Zug')}
-function record(){const t=Date.now(),vs=vehicles().filter(isTrain);for(const v of vs){const point=coordinates(v),key=String(v.key||v.tripId||v.vehicleId||'');if(!key||!point)continue;let arr=traces.get(key)||[];const last=arr[arr.length-1];if(!last||Math.hypot(last[0]-point[0],last[1]-point[1])>0.0002){arr.push(point);if(arr.length>70)arr.shift();traces.set(key,arr)}if(!seen.has(key))seen.set(key,t)}
- const issues=window.SuedtirolRadar58?.getIssues?.()||[];for(const x of issues){if(!x||!x.id)continue;const id=String(x.id),prior=history.find(z=>z.id===id);if(prior)continue;history.push({id,time:t,line:String(x.line||''),title:String(x.title||''),minutes:Number.isFinite(Number(x.minutes))?Number(x.minutes):null,severity:String(x.severity||''),source:String(x.source||'')})}
- history=history.filter(x=>t-x.time<7*86400000).slice(-350);save(HISTORY_KEY,history);drawTraces();if(modal?.open&&current==='overview')render()}
-function drawTraces(){const map=state()?.map;if(!map||!window.L)return;if(!lineGroup){lineGroup=window.L.layerGroup().addTo(map)}lineGroup.clearLayers();if(!prefs.trace)return;let count=0;for(const [key,pts] of traces){if(pts.length<2||count++>=60)continue;window.L.polyline(pts,{color:'#5bbcfb',weight:2,opacity:.55,interactive:false,dashArray:'4 5'}).addTo(lineGroup)}}
-function button(label,fn,cls='sr59-button'){const b=el('button',cls,label);b.type='button';b.addEventListener('click',fn);return b}
-function text(message,cls='sr59-muted'){content.append(el('p',cls,message))}
-function panel(title,description){const card=el('section','sr59-card');card.append(el('strong','',title));if(description)card.append(el('p','',description));content.append(card);return card}
-function open(tab='overview'){current=tab;if(!modal){modal=el('dialog','sr59-modal');modal.setAttribute('aria-label','Radar 5.9 Rail Network');const header=el('header','sr59-header');header.append(el('strong','','RADAR 5.9 · RAIL NETWORK'),button('✕',()=>modal.close(),'sr59-close'));content=el('div','sr59-content');modal.append(header,content);document.body.append(modal)}render();if(!modal.open)modal.showModal()}
-function render(){content.replaceChildren();const nav=el('nav','sr59-tabs');for(const [key,label] of [['overview','Übersicht'],['cameras','RailCam'],['history','Verlauf'],['stations','Bahnhöfe'],['settings','Einstellungen']]){const b=button(label,()=>{current=key;render()},'sr59-tab');b.setAttribute('aria-pressed',String(key===current));nav.append(b)}content.append(nav);
- if(current==='overview'){
- const trains=vehicles().filter(isTrain),positioned=trains.filter(v=>coordinates(v));panel('🚆 Zugübersicht',`${trains.length} aktive Zugdatensätze · ${positioned.length} mit gültiger Position. Datensätze sind nicht automatisch GPS-live.`);
- const nearby=positioned.filter(v=>{const c=coordinates(v);return Math.hypot((c[0]-46.2397)*111,(c[1]-11.2081)*77)<18}).slice(0,15);
- const box=panel('Salurn · Umgebung','Züge mit gemeldeter Position in ca. 18 km Luftlinie. Keine Ankunftsprognose aus der Position ableiten.');if(!nearby.length)box.append(el('p','','Aktuell keine passenden Positionsmeldungen.'));for(const v of nearby){const row=button('🚆 '+name(v)+' · '+(v.headsign||v.source||'Position vorhanden'),()=>{modal.close();window.SuedtirolRadar50?.openVehicle?.(v.key);if(!window.SuedtirolRadar50?.openVehicle){state()?.map?.setView(coordinates(v),12)}},'sr59-train');box.append(row)}
- const trace=panel('Streckenverlauf aus Beobachtungen','Gestrichelte Linien zeigen ausschließlich Positionen, die dieses Gerät während der geöffneten App empfangen hat. Keine prognostizierte Strecke.');const toggle=button(prefs.trace?'✓ Spuren auf Karte aktiviert':'Spuren auf Karte aktivieren',()=>{prefs.trace=!prefs.trace;save(PREF_KEY,prefs);drawTraces();render()});trace.append(toggle);
- const quality=window.SuedtirolRadar58?.getFeedHealth?.()||[];panel('Daten-Plausibilität',`${quality.filter(x=>x.ok).length}/${quality.length} überprüfte Feed-Statusmeldungen OK. Feed-Status allein beweist weder GPS noch Pünktlichkeit.`);
- }
- if(current==='cameras'){
- panel('📷 RailCam AI · Quellenprüfung','7 Suchgebiete, 0 bestätigte Kameras. Es wird kein Bild abgerufen und keine automatische Zugerkennung behauptet. Nur genehmigte Kameras mit direkter Gleissicht und ausreichender Bildrate dürfen später aktiviert werden.');
- for(const cam of CAMERAS){const c=panel('○ '+cam.name,'Kameraquelle nicht verifiziert · Gleissicht unbekannt · KI-Erkennung inaktiv');c.append(el('small','sr59-detail','Status: nicht angeschlossen'))}
- panel('Erkennungslogik (vorbereitet)','Kamerabild → Zug sichtbar? → Fahrzeugtyp → Zeit und Richtung mit Fahrplandaten abgleichen → Zugnummer nur bei ausreichender Evidenz zuordnen. Noch kein trainiertes Modell oder Live-Bild angeschlossen.');
- }
- if(current==='history'){
- panel('Lokaler Beobachtungsverlauf','Erfasst Störungsmeldungen ausschließlich während dieses Gerät Radar nutzt. Keine historische amtliche Verspätungsstatistik. Speicherung max. 7 Tage, lokal im Browser.');
- if(!history.length)text('Noch keine Störungsmeldungen lokal beobachtet.');for(const x of history.slice().reverse().slice(0,75)){const c=panel(x.title||x.line,new Date(x.time).toLocaleString('de-DE')+' · '+(x.minutes!==null?'gemeldet +'+x.minutes+' min · ':'')+(x.source||'Quelle unbekannt'));c.classList.add('sr59-history')}
- content.append(button('Lokalen Verlauf löschen',()=>{history=[];save(HISTORY_KEY,history);render()},'sr59-button sr59-danger'));
- }
- if(current==='stations'){
- panel('Bahnhofs-Schnellzugriff','Öffnet vorhandene Bahnhofs- und Abfahrtsfunktionen, sofern eine passende Haltestelle im geladenen GTFS-Verzeichnis gefunden wird.');const grid=el('div','sr59-stations');content.append(grid);
- for(const [nm] of CORRIDOR){grid.append(button('⌖ '+nm,async()=>{const api=window.SuedtirolRadar37;let list=[];try{list=await api?.getStationList?.()||[]}catch{}const terms=nm.toLowerCase().split(' / ');const match=list.find(x=>terms.some(t=>String(x.name||'').toLowerCase().includes(t)));if(match&&window.SuedtirolRadar57?.openStation){modal.close();window.SuedtirolRadar50?.switchTab?.('departures');window.SuedtirolRadar57.openStation(match)}else{panel('Nicht verfügbar',nm+': derzeit kein eindeutiger Bahnhofseintrag aus den geladenen Daten verfügbar.')}},'sr59-station'))}
- }
- if(current==='settings'){
- panel('Daten & Datenschutz','RailCam-Anschlüsse sind deaktiviert, bis Kameraansicht, Aktualisierungsrate und Bildnutzungsrechte geprüft sind. Keine biometrische Erkennung.');
- const c=panel('Kartenspuren','Die Linien sind lokale Verlaufsbeobachtungen, keine Soll-Positionen.');c.append(button(prefs.trace?'Spuren ausschalten':'Spuren einschalten',()=>{prefs.trace=!prefs.trace;save(PREF_KEY,prefs);drawTraces();render()}));
- const a=panel('Benachrichtigungen','Nutze die bereits vorhandenen Alarme in Traffic Intelligence. Bei geschlossener App werden keine Hintergrund-Pushs versendet.');a.append(button('Alarme öffnen',()=>{modal.close();window.SuedtirolRadar58?.open?.('alerts')}));
- content.append(button('Lokale Spuren löschen',()=>{traces.clear();seen.clear();drawTraces();render()},'sr59-button sr59-danger'));
- }
+const POINTS=[
+ {id:'bolzano',name:'Bozen / Bolzano',q:['bozen','bolzano']},
+ {id:'ora',name:'Auer / Ora',q:['auer','ora']},
+ {id:'egnal',name:'Neumarkt / Egna',q:['neumarkt','egna']},
+ {id:'salorno',name:'Salurn / Salorno',q:['salurn','salorno']},
+ {id:'mezzocorona',name:'Mezzocorona',q:['mezzocorona']},
+ {id:'lavis',name:'Lavis',q:['lavis']},
+ {id:'trento',name:'Trient / Trento',q:['trient','trento']}
+];
+const KEY='sr59_hub_station',OBS_KEY='sr59_observations_v1';
+const el=(tag,cls='',value)=>{const n=document.createElement(tag);n.className=cls;if(value!==undefined)n.textContent=String(value);return n};
+const button=(label,handler,cls='sr59-button')=>{const n=el('button',cls,label);n.type='button';n.addEventListener('click',handler);return n};
+let chosen='salorno',panel,content,bridge,stations=[],view='cameras',feedStamp=0,observations=[];
+try{const id=localStorage.getItem(KEY);if(POINTS.some(p=>p.id===id))chosen=id; const a=JSON.parse(localStorage.getItem(OBS_KEY)||'[]');if(Array.isArray(a))observations=a.filter(x=>x&&typeof x==='object'&&Number.isFinite(x.t)).slice(-120)}catch{}
+function station(){return POINTS.find(p=>p.id===chosen)||POINTS[3]}
+function age(t){if(!Number.isFinite(t)||!t)return 'Zeit unbekannt';const ms=Date.now()-t;return ms<0?'Zeit unklar':ms<60000?'gerade eben':Math.floor(ms/60000)+' Min. zuvor'}
+function txt(parent,tag,klass,value){const n=el(tag,klass,value);parent.append(n);return n}
+function save(){try{localStorage.setItem(KEY,chosen)}catch{}}
+function feedVehicles(){const vs=bridge?.state?.vehicles;return vs?.values?[...vs.values()].filter(v=>v.kind==='train'):[]}
+function snapshot(){if(!bridge)return;const t=Number(bridge.state?.fetchedAt)||0;if(!t||t===feedStamp)return;feedStamp=t;const available=feedVehicles().filter(v=>!v.stale).slice(0,160);let count=0;for(const v of available){const id=String(v.key||v.tripId||'');if(!id)continue;const previous=observations[observations.length-1];if(previous?.key===id&&t-previous.t<180000)continue;if(count++>=25)break;observations.push({t,key:id,line:String(v.name||v.tripId||'Zug').slice(0,65),source:String(v.source||'Feed').slice(0,35)});} observations=observations.slice(-120);try{localStorage.setItem(OBS_KEY,JSON.stringify(observations))}catch{}
 }
-function init(){if($('#sr59Launcher'))return;const b=button('🚆 Rail 5.9',()=>open(),'sr59-launcher');b.id='sr59Launcher';b.setAttribute('aria-label','Rail Network 5.9 öffnen');document.body.append(b);let prev=0;function update(){if(Date.now()-prev>12000){prev=Date.now();record()}}document.addEventListener('sr37:feeds',update);document.addEventListener('visibilitychange',()=>{if(!document.hidden)update()});setInterval(()=>{if(!document.hidden)update()},30000);update();const ver=$('.brand-title em');if(ver)ver.textContent=VERSION;document.title='Südtirol Radar '+VERSION+' · Rail Network';window.SuedtirolRadar59={version:VERSION,open,cameras:CAMERAS.map(({id,name,status})=>({id,name,status})),getHistory:()=>history.slice()}}
-let attempts=0;function boot(){if($('#sr59Launcher'))return;if(window.SuedtirolRadar37?.state?.map){init();return}if(attempts++<120)setTimeout(boot,250)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();document.addEventListener('sr37:ready',boot);
+function fresh(){const t=Number(bridge?.state?.fetchedAt)||0;return t>0&&Date.now()-t<180000}
+function openStation(){const s=station();const matches=stations.filter(x=>s.q.some(q=>String(x.name||'').toLocaleLowerCase('de').includes(q)));const exact=matches.find(x=>s.q.includes(String(x.name||'').toLocaleLowerCase('de').trim()))||matches[0];if(exact&&window.SuedtirolRadar57?.openStation){panel.close();window.SuedtirolRadar57.openStation(exact)}else{const info=el('p','sr59-note','Für diesen Ort ist aktuell keine passende Haltestelle aus den geladenen Fahrplandaten verfügbar.');content.prepend(info)}}
+function render(){if(!panel||!panel.open)return;snapshot();content.replaceChildren();
+ const head=el('div','sr59-head');txt(head,'span','sr59-kicker','RAILCAM NETWORK · 5.9');txt(head,'h2','','Zugbeobachtung');txt(head,'p','sr59-note','Öffentliche Kameraquellen nur nach Sicht- und Nutzungsprüfung. Keine simulierte KI-Erkennung.');content.append(head);
+ const options=el('div','sr59-stations');for(const p of POINTS){const b=button(p.name,()=>{chosen=p.id;save();render()},'sr59-station');b.setAttribute('aria-pressed',String(chosen===p.id));options.append(b)}content.append(options);
+ const tabs=el('nav','sr59-tabs');for(const [id,label] of [['cameras','Kameras'],['trains','Zugdaten'],['history','Beobachtungen']]){const b=button(label,()=>{view=id;render()},'sr59-tab');b.setAttribute('aria-pressed',String(view===id));tabs.append(b)}content.append(tabs);
+ if(view==='cameras')renderCameras();if(view==='trains')renderTrains();if(view==='history')renderHistory();
+}
+function renderCameras(){const s=station();const status=el('div','sr59-card');txt(status,'span','sr59-status','● Keine verifizierte Gleiskamera');txt(status,'h3','',s.name);txt(status,'p','sr59-note','Kameraplatz vorbereitet. Noch kein rechtmäßig nutzbarer Bild-Feed mit bestätigter Gleissicht und ausreichender Bildfrequenz.');status.append(button('Bahnhofsabfahrten ansehen ↗',openStation));content.append(status);
+ const quality=el('div','sr59-card');txt(quality,'strong','','Prüfschritte vor Aktivierung');for(const line of ['Gleise und Züge sichtbar','Aktualisierungsrate ausreichend','Automatische Analyse vom Betreiber erlaubt','Kennzeichen: Kamerabeobachtung ≠ Zugnummer','Bildquelle und Aufnahmezeit dokumentiert'])txt(quality,'div','sr59-check','○ '+line);content.append(quality);
+ txt(content,'p','sr59-note','Unterstützte Ausbauorte: Bozen, Auer, Neumarkt, Salurn, Mezzocorona, Lavis und Trient. Die Anzahl aktiver Kameras ist derzeit 0.');
+}
+function renderTrains(){const ok=fresh();const box=el('div','sr59-card');txt(box,'span','sr59-status '+(ok?'good':''),ok?'● Fahrzeug-Feeds kürzlich aktualisiert':'● Fahrzeug-Feeds nicht aktuell bestätigt');txt(box,'h3','',station().name);txt(box,'p','sr59-note','Die Liste zeigt Zugmeldungen des gesamten verbundenen Netzes – keine auf den gewählten Bahnhof eingeschränkten Ankünfte. Für Bahnhofsdaten die Abfahrtstafel öffnen.');box.append(button('Bahnhofstafel öffnen ↗',openStation));content.append(box);
+ const trains=feedVehicles().filter(v=>!v.stale).slice(0,45);if(!trains.length){txt(content,'p','sr59-note','Derzeit keine aktiven Züge mit verwertbaren Feed-Daten.');return}
+ for(const v of trains){const item=el('div','sr59-train');txt(item,'strong','',v.name||v.tripId||'Zug');txt(item,'small','',[(v.headsign||'Ziel unbekannt'),(v.source||'Quelle unbekannt')].join(' · '));item.append(button('Auf Karte ↗',()=>{panel.close();window.SuedtirolRadar50?.openVehicle?.(v.key)},'sr59-mini'));content.append(item)}
+}
+function renderHistory(){const card=el('div','sr59-card');txt(card,'h3','','Beobachtungsprotokoll');txt(card,'p','sr59-note','Nur auf diesem Gerät gespeicherte Sichtungen aus Fahrzeug-Feeds seit Version 5.9. Keine Webcam-Erkennungen, kein historisches Archiv und keine gemessenen Bahnhofspassagen.');card.append(button('Lokale Einträge löschen',()=>{observations=[];try{localStorage.removeItem(OBS_KEY)}catch{}render()},'sr59-mini'));content.append(card);
+ if(!observations.length){txt(content,'p','sr59-note','Noch keine Beobachtungen gespeichert.');return}
+ for(const item of observations.slice(-30).reverse()){const row=el('div','sr59-train');txt(row,'strong','',item.line);txt(row,'small','',item.source+' · '+new Date(item.t).toLocaleString('de-DE')+' · '+age(item.t));content.append(row)}
+}
+function open(){if(!panel){panel=el('dialog','sr59-modal');const shell=el('div','sr59-shell');const close=button('✕',()=>panel.close(),'sr59-close');close.setAttribute('aria-label','RailCam schließen');shell.append(close);content=el('div','sr59-content');shell.append(content);panel.append(shell);panel.addEventListener('click',ev=>{if(ev.target===panel)panel.close()});document.body.append(panel)}panel.showModal();render()}
+let waits=0;function init(){if(document.getElementById('sr59Launch'))return;bridge=window.SuedtirolRadar37;if(!bridge?.state?.vehicles){if(waits++<80)setTimeout(init,250);return}const launch=button('◎ RailCam',open,'sr59-launch');launch.id='sr59Launch';launch.setAttribute('aria-label','RailCam Netzwerk und Zugbeobachtung öffnen');document.body.append(launch);bridge.getStationList?.().then(items=>{stations=Array.isArray(items)?items:[]}).catch(()=>{});document.addEventListener('sr37:feeds',()=>{snapshot();if(panel?.open&&view==='trains')render()});snapshot();window.SuedtirolRadar59={version:'5.9',open,getCameraCount:()=>0,getSelectedStation:station};document.title='Südtirol Radar 5.9 · RailCam Network';document.querySelectorAll('.brand-title em,.sr57-version').forEach(n=>n.textContent='5.9')}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
+                                                                                                                                                                                                                                               
