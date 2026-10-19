@@ -291,8 +291,6 @@ function init(){
  document.title='Südtirol Radar 5.8.6 · Traffic Intelligence';
  const monitorVersion=document.querySelector('.sr57-version');if(monitorVersion)monitorVersion.textContent='5.8.6';
  const version=document.querySelector('.brand-title em');if(version)version.textContent='5.8.6';
- const v57=document.querySelector('.sr57-version');if(v57)v57.textContent='5.8.6';
- const monitorVersion=document.querySelector('.sr57-version');if(monitorVersion)monitorVersion.textContent='5.8';
 }
 let attempts=0;
 function boot(){if(window.SuedtirolRadar58)return;if(window.SuedtirolRadar37?.state?.map&&window.SuedtirolRadar57){init();return}if(attempts++<90)setTimeout(boot,200)}
