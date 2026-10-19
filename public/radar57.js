@@ -129,12 +129,15 @@ function render(){
  const res=buildDepartureRows(group,bridge.state.indexes,bridge.state.details,bridge.state.updates,bridge.state.statuses,{kind:filter});
  const rows=mergeStationDepartures(res.rows).filter(x=>filter==='all'||x.kind===filter);
  if(seq!==request)return;
- const info=el('div','sr57-boardinfo');info.append(el('span','','ABFAHRTEN · NÄCHSTE 4 STUNDEN'),el('span','',rows.length+' FAHRTEN'));board.append(info);
+ const currentDate=new Intl.DateTimeFormat('de-DE',{timeZone:'Europe/Rome',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date());
+  const info=el('div','sr57-boardinfo');info.append(el('span','','ABFAHRTEN · '+currentDate+' · NÄCHSTE 4 STUNDEN'),el('span','',rows.length+' EINZELNE FAHRTEN'));board.append(info);
  if(!rows.length){board.append(el('p','sr57-empty',res.reasons.length?'Keine gültigen Fahrplandaten für diesen Bahnhof.':'Keine Abfahrten im aktuellen Zeitraum gefunden.'));return}
  for(const row of rows){
   const item=button('',()=>showDetails(row),'sr57-row');
   const time=el('div','sr57-time');time.append(el('strong','',clock(row.sec)),el('small','',row.kind==='train'?'🚆 ZUG':'🚌 BUS'));
-  const route=el('div','sr57-route');route.append(el('strong','sr57-route-number',row.number),el('span','sr57-route-destination',row.headsign+(row.platform?.current?' · '+(row.kind==='train'?'Gleis ':'Steig ')+row.platform.current:'')));
+  const route=el('div','sr57-route');const feedName={trains:'Trenitalia',sta:'STA',trentino:'Trentino'}[row.source]||row.source;
+   const trainNumMissing=row.kind==='train'&&!/^\\d{2,6}$/.test(String(row.number));
+   route.append(el('strong','sr57-route-number',row.number),el('span','sr57-route-destination',row.headsign+(row.platform?.current?' · '+(row.kind==='train'?'Gleis ':'Steig ')+row.platform.current:'')+' · '+feedName+(trainNumMissing?' · Zugnummer im Feed nicht verfügbar':'')));
   const delay=el('div','sr57-delay');
   delay.append(el('strong',row.cancelled?'sr57-bad':row.delaySec>0?'sr57-late':'',row.cancelled?'Ausfall':row.delaySec===null?'–':labelDelay(row.delaySec)));
   const gain=evidence(row);delay.append(el('small','',gain?'↘ '+gain.gained+' min GTFS-RT':row.delaySec===null?'Nur Fahrplan':'GTFS-RT'));

@@ -53,7 +53,7 @@ function open(tab){
  current=tab;
  if(!dialog){
   dialog=e('dialog','sr58-dialog');dialog.setAttribute('aria-label','Radar Verkehrsintelligenz');
-  const head=e('header','sr58-dialog-head');head.append(e('strong','','RADAR 6.0 · INTELLIGENCE'),btn('✕',()=>dialog.close(),'sr58-close'));
+  const head=e('header','sr58-dialog-head');head.append(e('strong','','RADAR 7.0 · LIVE CENTER'),btn('✕',()=>dialog.close(),'sr58-close'));
   body=e('div','sr58-body');dialog.append(head,body);document.body.append(dialog);
  }
  renderCurrent();if(!dialog.open)dialog.showModal();

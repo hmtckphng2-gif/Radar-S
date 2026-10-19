@@ -1,0 +1,16 @@
+/* Radar 7.0.3 – Journey Advisor, Graphite UI */
+.sr703-coach{background:linear-gradient(135deg,#162b42,#121c2c);border:1px solid #3b5872;border-radius:16px;padding:15px;margin:15px 0 20px;color:#edf6ff;box-sizing:border-box}
+.sr703-kicker{color:#8abafa;font-size:10px;font-weight:800;letter-spacing:.07em;margin-bottom:10px}
+.sr703-choice{background:#20354c;border:1px solid #3e6588;padding:12px;border-radius:12px}
+.sr703-choice strong{font-size:15px}.sr703-choice p{color:#bbcee0;line-height:1.5;font-size:12px;margin:7px 0 0}
+.sr703-sort{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:13px 0}
+.sr703-sort label{font-size:12px;color:#b5cbdd}.sr703-sort select{min-height:42px;max-width:65%;background:#14273d;color:#eff7ff;border:1px solid #426584;border-radius:10px;padding:7px;font-size:12px}
+.sr703-chat{border-top:1px solid #39546e;padding-top:12px}.sr703-chat summary{cursor:pointer;font-weight:700;font-size:13px;color:#bad9ff;min-height:32px}
+.sr703-chat .sr703-hint{font-size:11px;color:#a8bcd0;line-height:1.5}
+.sr703-question{box-sizing:border-box;display:block;width:100%;min-height:72px;padding:11px;margin:12px 0;background:#0e1a2a;color:#fff;border:1px solid #44627c;border-radius:11px;font:13px system-ui;resize:vertical}
+.sr703-action{background:#245e9b;color:#fff;border:1px solid #5789b9;min-height:43px;border-radius:10px;padding:8px 13px;font-weight:700;font-size:13px}
+.sr703-action:disabled{opacity:.55}.sr703-answer{padding:12px;font-size:12px;line-height:1.6;color:#d6e6f5;background:#17283a;border:1px solid #34516c;border-radius:11px;white-space:pre-wrap}
+.sr703-answer[hidden]{display:none!important}.sr70-result.sr703-recommended{border-color:#4d8bc7!important;box-shadow:inset 3px 0 0 #62b0ff}
+.sr57-boardinfo{flex-wrap:wrap;gap:4px;line-height:1.45}
+.sr57-route-destination{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.35}
+.sr58-dialog-head strong{font-size:13px;letter-spacing:.015em}
