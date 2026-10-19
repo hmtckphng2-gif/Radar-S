@@ -19,3 +19,22 @@ body.sr71-focusing #sheet.open,body.sr71-focusing #sheet.sr42-sheet.open{transfo
 body.sr71-focusing #scrim.show{opacity:0!important;pointer-events:none!important}
 body.sr71-focused #sheet.sr42-sheet[data-sr42-snap="peek"].open{transition:transform .7s cubic-bezier(.19,.8,.18,1),height .3s ease!important}
 @media(prefers-reduced-motion:reduce){.sr71-cinematic,.sr71-focus-ring,.sr71-focus-caption,.sr71-heading-arrow,body.sr71-focusing .marker-wrap,body.sr71-focusing #sheet.open{transition:none!important;animation:none!important}}
+
+/* Radar 7.1.1 visual regressions – keep the original Leaflet route layers,
+   but never let zoom-scaled SVG circles/paths inflate across the iPhone screen. */
+body.sr71-focusing #map .leaflet-overlay-pane,
+body.sr71-focusing #map .leaflet-shadow-pane{
+  opacity:0!important;
+  visibility:hidden!important;
+}
+/* The legacy standalone 'Mehr' launch floats over the vehicle panel. Keep it
+   available on the normal map, not while focusing or reading vehicle details. */
+body.sr71-focusing #sr60Launch,
+body.sr71-focused #sr60Launch,
+body:has(#sheet.open) #sr60Launch{
+  display:none!important;
+}
+/* The selected marker and its delay label remain sharp throughout the flight. */
+body.sr71-focusing #map .leaflet-marker-pane .marker-wrap.selected{
+  opacity:1!important;
+}
