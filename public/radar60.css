@@ -38,3 +38,52 @@ body.sr60 .sr60-version{color:#53e1c1;font-size:11px;letter-spacing:.1em;font-we
 body.sr60 #sr50BottomNav.sr60-native-nav{display:none!important}body.sr60 .sr60-dock{z-index:1150}body.sr60 .sr60-launch{z-index:1150}body.sr60:has(.sr58-dialog[open]) .sr60-dock,body.sr60:has(.sr58-dialog[open]) .sr60-launch{visibility:hidden}body.sr60 .sr60-pop{z-index:3100}
 
 body.sr60 .sr60-pane .sr60-input{display:block;width:100%;padding:14px 12px;border-radius:12px;border:1px solid #4b6d7c;background:#1c3448;color:#f2f6fb;font:inherit;margin:12px 0}body.sr60 .sr60-pane h3{font-size:15px;margin:18px 0 10px}body.sr60 .sr60-info{color:#abc1ce;line-height:1.5}body.sr60 .sr60-pane .sr60-option:focus-visible,body.sr60 .sr60-navitem:focus-visible{outline:2px solid #53e1c1;outline-offset:2px}
+
+/* Radar 6.0.1 — iOS Safari + standalone layout repair. Overrides legacy 5.7/5.8 spacing. */
+body.sr60{--sr60-dock-clearance:calc(86px + env(safe-area-inset-bottom,0px));background:#101c2b!important}
+body.sr60 #sr50DeparturesView,body.sr60 #sr50StatsView,body.sr60 #sr50FavoritesView{
+ background:#101c2b!important;bottom:0!important;padding:0 0 var(--sr60-dock-clearance)!important;
+ box-sizing:border-box!important;overflow-x:hidden!important;overflow-y:auto!important;
+}
+body.sr60 #sr50DeparturesView .sr57-view{min-height:0!important;height:auto!important;overflow:visible!important;padding:calc(env(safe-area-inset-top,0px) + 20px) 12px 14px!important;background:#101c2b!important;box-sizing:border-box!important}
+body.sr60:has(#sr58Banner:not([hidden])) #sr50DeparturesView .sr57-view,
+body.sr60.sr58-has-banner #sr50DeparturesView .sr57-view{
+ padding-top:calc(env(safe-area-inset-top,0px) + 113px)!important;
+}
+body.sr60 #sr50StatsView .sr50-header,body.sr60 #sr50FavoritesView .sr50-header{
+ padding-top:calc(env(safe-area-inset-top,0px) + 16px)!important;
+}
+body.sr60:has(#sr58Banner:not([hidden])) #sr50StatsView .sr50-header,
+body.sr60:has(#sr58Banner:not([hidden])) #sr50FavoritesView .sr50-header{
+ padding-top:calc(env(safe-area-inset-top,0px) + 110px)!important;
+}
+body.sr60 .sr60-dock{
+ position:fixed!important;bottom:max(8px,env(safe-area-inset-bottom,0px))!important;
+ width:calc(100vw - 24px)!important;max-width:520px!important;z-index:10030!important;
+ box-sizing:border-box!important;transform:translateX(-50%)!important;
+}
+body.sr60 .sr58-banner{
+ top:calc(env(safe-area-inset-top,0px) + 41px)!important;
+ left:12px!important;right:12px!important;max-width:540px!important;
+ padding:9px 12px!important;border-radius:14px!important;
+}
+body.sr60 .sr58-banner-heading{margin-bottom:2px!important;letter-spacing:.025em!important}
+body.sr60 .sr58-banner strong{font-size:12px!important;line-height:1.4!important}
+body.sr60 .sr58-banner small{font-size:10px!important;line-height:1.25!important;max-height:26px;overflow:hidden}
+body.sr60 .sr58-banner-close{width:25px!important;height:25px!important}
+body.sr60 .sr57-header{margin-bottom:12px!important}
+body.sr60 .sr57-stationbox{padding:11px 13px!important;margin-bottom:9px!important}
+body.sr60 .sr57-filters{margin:8px 0 11px!important;gap:7px!important}
+body.sr60 .sr57-filter{padding:8px 4px!important}
+body.sr60 .sr57-row{min-height:0!important;padding-top:11px!important;padding-bottom:11px!important;margin-bottom:7px!important}
+/* Keep the map out of view in other tabs, including at the lower safe area. */
+body.sr60:has(#sr50DeparturesView.active) #sr50MapTab,
+body.sr60:has(#sr50StatsView.active) #sr50MapTab,
+body.sr60:has(#sr50FavoritesView.active) #sr50MapTab{
+ visibility:hidden!important;pointer-events:none!important;
+}
+body.sr60 #sr50DeparturesView.active,body.sr60 #sr50StatsView.active,body.sr60 #sr50FavoritesView.active{
+ visibility:visible!important;isolation:isolate;
+}
+body.sr60 #sr50BottomNav.sr60-native-nav{display:none!important}
+@media(max-width:600px){body.sr60 .sr60-dock{bottom:max(7px,env(safe-area-inset-bottom,0px))!important}}
