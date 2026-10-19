@@ -9,7 +9,7 @@ export function samePhysicalTrip(a,b){if(!a||!b||a.key===b.key||a.source===b.sou
  return !!a.tripId&&a.tripId===b.tripId&&!!a.routeId&&a.routeId===b.routeId&&meters<=120;
 }
 export function selectRepresentatives(vehicles,selectedKey){const all=[...vehicles].filter(Boolean),removed=new Set(),groups=new Map();
- const sorted=[...all].sort((a,b)=>Number(b.timestamp||0)-Number(a.timestamp||0));
+ const sorted=[...all].sort((a,b)=>{const delta=Number(b.timestamp||0)-Number(a.timestamp||0);if(Math.abs(delta)>10)return delta;return Number(b.source==='sta_direct')-Number(a.source==='sta_direct')||delta});
  for(let i=0;i<sorted.length;i++){const a=sorted[i];if(removed.has(a.key))continue;const group=[a];for(let j=i+1;j<sorted.length;j++){const b=sorted[j];if(removed.has(b.key))continue;if(samePhysicalTrip(a,b)){removed.add(b.key);group.push(b)}}
  const chosen=group.find(x=>x.key===selectedKey)||group[0];groups.set(chosen.key,group.map(x=>x.source));for(const item of group)if(item.key!==chosen.key)removed.add(item.key);removed.delete(chosen.key);
  }
