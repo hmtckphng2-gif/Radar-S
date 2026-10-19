@@ -1,5 +1,5 @@
 import {motionDuration,platformInfo} from './radar54-logic.mjs';
-import {selectRepresentatives,observationQuality} from './radar64-logic.mjs';
+import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=6.4.3';
 import {enrichTrainPlatform} from './train-platforms.js?v=5.4.4';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,

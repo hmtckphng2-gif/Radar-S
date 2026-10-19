@@ -3,19 +3,23 @@ const number=v=>{if(!v||v.kind!=='train'||!v.nameVerified)return '';const m=Stri
 const validTs=v=>Number.isFinite(Number(v?.timestamp))&&Number(v.timestamp)>1e9;
 const radians=n=>n*Math.PI/180;
 export function distanceMeters(a,b){const lat1=Number(a?.lat),lat2=Number(b?.lat),lon1=Number(a?.lon),lon2=Number(b?.lon);if(![lat1,lat2,lon1,lon2].every(Number.isFinite))return Infinity;const x=radians(lat2-lat1),y=radians(lon2-lon1),q=Math.sin(x/2)**2+Math.cos(radians(lat1))*Math.cos(radians(lat2))*Math.sin(y/2)**2;return 12742000*Math.asin(Math.min(1,Math.sqrt(q)))}
-export function samePhysicalTrip(a,b){if(!a||!b||a.key===b.key||a.source===b.source||a.kind!==b.kind||!a.tripStartDate||a.tripStartDate!==b.tripStartDate||!validTs(a)||!validTs(b)||Math.abs(a.timestamp-b.timestamp)>120)return false;
- const meters=distanceMeters(a,b);if(a.kind==='train')return !!number(a)&&number(a)===number(b)&&meters<=1500;
- // Bus IDs are NOT globally unique: only merge matching full trip/route identity.
- const sameTrip=!!a.tripId&&a.tripId===b.tripId&&!!a.routeId&&a.routeId===b.routeId&&meters<=120;
- if(sameTrip)return true;
- // STA direct vs BusOne may publish different trip IDs for the SAME bus.
- // Fleet identity is scoped to these two STA feeds; require nearly identical
- // observation time and location. Never use a fleet ID as a route name.
- const pair=new Set([a.source,b.source]);
- const sameSta=pair.size===2&&pair.has('sta')&&pair.has('sta_direct');
- const id=String(a.vehicleId||'');
- return sameSta&&/^\d{2,6}$/.test(id)&&id===String(b.vehicleId||'')&&
-   Math.abs(a.timestamp-b.timestamp)<=20&&meters<=60;
+export function samePhysicalTrip(a,b){
+ if(!a||!b||a.key===b.key||a.source===b.source||a.kind!==b.kind||!validTs(a)||!validTs(b))return false;
+ const meters=distanceMeters(a,b),age=Math.abs(a.timestamp-b.timestamp);
+ // STA and STA Direct can report the EXACT SAME bus with different trip IDs
+ // and a missing start_date in one feed. Match only across this known pair
+ // using the operator fleet ID AND independently matching observations.
+ if(a.kind==='bus'){
+   const pair=new Set([a.source,b.source]);
+   const sameSta=pair.size===2&&pair.has('sta')&&pair.has('sta_direct');
+   const fleet=String(a.vehicleId||'');
+   if(sameSta&&/^\d{2,6}$/.test(fleet)&&fleet===String(b.vehicleId||'')&&age<=20&&meters<=60)return true;
+ }
+ // All other matches must have the same service day, and cannot rely
+ // on a shared fleet number or route number alone.
+ if(!a.tripStartDate||a.tripStartDate!==b.tripStartDate||age>120)return false;
+ if(a.kind==='train')return !!number(a)&&number(a)===number(b)&&meters<=1500;
+ return !!a.tripId&&a.tripId===b.tripId&&!!a.routeId&&a.routeId===b.routeId&&meters<=120;
 }
 export function selectRepresentatives(vehicles,selectedKey){const all=[...vehicles].filter(Boolean),removed=new Set(),groups=new Map();
  const sorted=[...all].sort((a,b)=>{const delta=Number(b.timestamp||0)-Number(a.timestamp||0);if(Math.abs(delta)>10)return delta;return Number(b.source==='sta_direct')-Number(a.source==='sta_direct')||delta});
