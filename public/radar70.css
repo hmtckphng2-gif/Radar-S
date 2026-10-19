@@ -59,3 +59,11 @@ body.sr70-ready #sr58Banner{display:none!important}
 body.sr70-ready :is(.sr70-home,.sr70-more,.sr70-dock) :is(button,input,select):focus-visible{outline:2px solid #8bbfff!important;outline-offset:2px}
 @media(max-width:375px){.sr70-home,.sr70-more{padding-left:12px;padding-right:12px}.sr70-grid{gap:8px}.sr70-tile{padding:12px 10px;min-height:112px}}
 @media(prefers-reduced-motion:reduce){.sr70-home *, .sr70-more *, .sr70-dock *{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* Keep native vehicle/station bottom sheets above the map, without dock overlap. */
+body.sr70-ready:not(.sr70-home-active):not(.sr70-more-active):has(#sheet.open) #sr70Dock,
+body.sr70-ready:not(.sr70-home-active):not(.sr70-more-active):has(#stationSheet.open) #sr70Dock,
+body.sr70-ready:has(.sr58-dialog[open]) #sr70Dock,
+body.sr70-ready:has(.sr60-pop:not([hidden])) #sr70Dock{display:none!important}
+/* Keyboard has priority over navigation on narrow screens. */
+body.sr70-ready:has(.sr70-home input:focus) #sr70Dock{display:none!important}
