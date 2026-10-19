@@ -53,9 +53,7 @@ const replacements=[
 const itToDe=new Map(Object.entries(IT).map(([de,it])=>[it,de]));
 const pairs=[
  ['STAZIONE SELEZIONATA','AUSGEWÄHLTER BAHNHOF'],
- ['PROSSIME 4 ORE','NÄCHSTE 4 STUNDEN'],
- ['STAZIONE SELEZIONATA','AUSGEWÄHLTER BAHNHOF'],
- ['PARTENZE','ABFAHRTEN'],
+ ['PROSSIME 4 ORE','NÄCHSTE 4 STUNDEN'],['PARTENZE','ABFAHRTEN'],
  ['Treni','Züge'],['Autobus','Busse'],['Tutti','Alle'],
  ['Mappa','Karte'],['Partenze','Abfahrten'],['Statistiche','Statistik'],['Preferiti','Favoriten'],
  ['Solo orario','Nur Fahrplan'],['Treno','Zug'],['Ritardo','Verspätung'],
@@ -66,9 +64,37 @@ const pairs=[
  ['fonte dati','Datenquelle'],['Dettagli','Details'],['Cerca','Suche'],
  ['Cancellato','Ausfall'],['Sconosciuto','Unbekannt'],
  ['Live Journey 3.0','Fahrtverlauf 3.0'],['NETWORK INTELLIGENCE','NETZWERKANALYSE'],
- ['STAZIONE SELEZIONATA','AUSGEWÄHLTER BAHNHOF'],['FEEDS OK','DATEN OK'],
- ['REG','REG'],['Position vs. Fahrplan','Position und Fahrplan'],
- ['Solo orario','Nur Fahrplan'],['Treni','Züge'],['Statistiche','Statistik']
+ ['FEEDS OK','DATEN OK'],['Position vs. Fahrplan','Position und Fahrplan']
+];
+const phrases=[
+ ['TRANSPARENTE ECHTZEITDATEN STATT GESCHÄTZTER PÜNKTLICHKEIT','DATI IN TEMPO REALE VERIFICABILI, NON STIME DI PUNTUALITÀ'],
+ ['Transparente Echtzeitdaten statt geschätzter Pünktlichkeit.','Dati in tempo reale verificabili, non stime di puntualità.'],
+ ['AUSGEWÄHLTER BAHNHOF','STAZIONE SELEZIONATA'],
+ ['NÄCHSTE 4 STUNDEN','PROSSIME 4 ORE'],
+ ['VERKEHRSSTÖRUNGEN','DISAGI ALLA CIRCOLAZIONE'],
+ ['AKTUELL IM NETZ','ATTUALMENTE IN RETE'],
+ ['SCHNELLZUGRIFF','ACCESSO RAPIDO'],
+ ['NETZWERK JETZT','RETE ORA'],
+ ['Fahrzeuge im Feed','Veicoli nei dati'],
+ ['Frische Positionen','Posizioni recenti'],
+ ['Züge / Busse','Treni / autobus'],
+ ['Alt / ungeklärt','Dati vecchi / incerti'],
+ ['Buslinien','Linee autobus'],
+ ['Nur Fahrplan','Solo orario'],
+ ['Aktueller Feed','Dati attuali'],
+ ['Simulierte Position','Posizione simulata'],
+ ['Position geschätzt','Posizione stimata'],
+ ['Gesamte Strecke zeigen','Mostra percorso completo'],
+ ['Fahrplanfortschritt','Avanzamento orario'],
+ ['Nächster gemeldeter Halt','Prossima fermata segnalata'],
+ ['Fahrtverlauf 3.0','Percorso 3.0'],
+ ['Position und Fahrplan','Posizione e orario'],
+ ['Streckenverfolgung 2.0','Monitoraggio percorso 2.0'],
+ ['DATEN OK','DATI OK'],
+ ['Abfahrten','Partenze'],['Züge','Treni'],['Busse','Autobus'],['Alle','Tutti'],
+ ['Karte','Mappa'],['Statistik','Statistiche'],['Favoriten','Preferiti'],
+ ['Zug','Treno'],['Verspätung','Ritardo'],['Ausfall','Cancellato'],
+ ['Meldungen','segnalazioni'],['Fahrten','corse'],['betroffene Linien','linee interessate']
 ];
 let lang='de',busy=false,observer;
 try{lang=localStorage.getItem(KEY)==='it'?'it':'de'}catch{}
@@ -79,43 +105,35 @@ function replaceExact(text,from,to){
 }
 function canonical(text){
  let out=text;
- for(const [it,de] of pairs)out=replaceExact(out,it,de);
- const canonicalPhrases=[
-  ['STAZIONE SELEZIONATA','AUSGEWÄHLTER BAHNHOF'],
-  ['Solo orario','Nur Fahrplan'],['Treno','Zug'],['Autobus','Bus'],
-  ['linee interessate','betroffene Linien'],['segnalazioni','Meldungen'],
-  ['corse','Fahrten'],['Treni','Züge'],['Tutti','Alle'],
-  ['Mappa','Karte'],['Partenze','Abfahrten'],['Statistiche','Statistik'],
-  ['Preferiti','Favoriten']
- ];
- // Strings can contain train numbers and delay values; don't rely on exact whole-node matching.
- for(const [from,to] of canonicalPhrases){
-  const regex=new RegExp('(^|[^\\p{L}])'+from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^\\p{L}])','giu');
-  out=out.replace(regex,(_,prefix)=>prefix+to);
+ // Canonical German source regardless of previous locale.
+ for(const [de,it] of [...phrases].sort((a,b)=>b[1].length-a[1].length)){
+  if(out.trim()===it)out=out.replace(it,de);
+ }
+ for(const [it,de] of pairs){
+  if(out.trim()===it)out=out.replace(it,de);
+ }
+ for(const [it,de] of [['Treno','Zug'],['Solo orario','Nur Fahrplan'],
+  ['linee interessate','betroffene Linien'],['segnalazioni','Meldungen'],['corse','Fahrten']]){
+  out=out.split(it).join(de);
  }
  return out;
 }
 function translate(text,target){
  const source=canonical(text);
  if(target==='de')return source;
- const trimmed=source.trim();
- if(IT[trimmed])return source.replace(trimmed,IT[trimmed]);
  let out=source;
- for(const [regex,value] of replacements)out=out.replace(regex,value);
- for(const [it,de] of pairs)out=replaceExact(out,de,it);
- const phrases=[
-  ['AUSGEWÄHLTER BAHNHOF','STAZIONE SELEZIONATA'],
-  ['NÄCHSTE 4 STUNDEN','PROSSIME 4 ORE'],
-  ['betroffene Linien','linee interessate'],['Meldungen','segnalazioni'],
-  ['Fahrten','corse'],['Züge','Treni'],['Busse','Autobus'],
-  ['Nur Fahrplan','Solo orario'],['Zug','Treno']
- ];
- for(const [from,to] of phrases){
-  out=out.replace(new RegExp('(^|[^\\p{L}])'+from+'(?=$|[^\\p{L}])','giu'),(_,prefix)=>prefix+to);
+ for(const [de,it] of [...phrases].sort((a,b)=>b[0].length-a[0].length)){
+  if(out.trim()===de)out=out.replace(de,it);
+ }
+ for(const [key,val] of Object.entries(IT).sort((a,b)=>b[0].length-a[0].length)){
+  if(out.trim()===key)out=out.replace(key,val);
+ }
+ for(const [de,it] of [['betroffene Linien','linee interessate'],['Meldungen','segnalazioni'],
+  ['Fahrten','corse'],['Nur Fahrplan','Solo orario'],['Zug','Treno']]){
+  out=out.split(de).join(it);
  }
  return out;
 }
-
 function translateNode(node){
  if(node.nodeType!==Node.TEXT_NODE||!node.parentElement)return;
  const parent=node.parentElement;
@@ -150,7 +168,7 @@ function apply(){
  busy=true;
  try{scan(document.body)}finally{busy=false}
  const b=document.getElementById('sr58LanguageToggle');
- if(b){b.textContent=lang==='de'?'IT':'DE';b.title=lang==='de'?'Passa all’italiano':'Auf Deutsch wechseln';b.setAttribute('aria-label',b.title)}
+ if(b){b.textContent=lang==='de'?'🇩🇪 DE':'🇮🇹 IT';b.title=lang==='de'?'Aktuell Deutsch – auf Italienisch wechseln':'Attualmente italiano – passa al tedesco';b.setAttribute('aria-label',b.title)}
 }
 function init(){
  if(document.getElementById('sr58LanguageToggle'))return;
