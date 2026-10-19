@@ -2,6 +2,8 @@
  * Existing Leaflet, GTFS, Ist/Soll, favorites and analysis modules are not replaced. */
 import {findStations,romeDay,romeSeconds} from './radar51-logic.mjs';
 import {buildTimetable,searchJourneys,walkEstimate,transferAssessment} from './radar70-route.mjs';
+import {orderJourneys} from './radar703-advisor.mjs';
+import {mountJourneyAdvisor} from './radar703-coach.mjs';
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const E=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e};
@@ -9,7 +11,7 @@ const B=(cls,txt,fn)=>{const b=E('button',cls,txt);b.type='button';if(fn)b.addEv
 const paths={home:'<path d="m3 10 9-7 9 7v10H3zM9 21v-7h6v7"/>',map:'<path d="m3 5 6-2 6 3 6-3v16l-6 3-6-3-6 2zM9 3v17m6-14v16"/>',route:'<circle cx="5" cy="5" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 5h9a3 3 0 0 1 3 3v9M17 19H8a3 3 0 0 1-3-3V8"/>',grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',train:'<rect x="5" y="2" width="14" height="18" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 20l-2 2m10-2 2 2"/>',star:'<path d="m12 3 2.8 5.8 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.7l6.2-.9z"/>',brain:'<path d="M12 4a4 4 0 0 0-7 3 4 4 0 0 0-1 7 4 4 0 0 0 4 6 4 4 0 0 0 4-3V4Zm0 0a4 4 0 0 1 7 3 4 4 0 0 1 1 7 4 4 0 0 1-4 6 4 4 0 0 1-4-3"/>',alert:'<path d="m12 3 10 18H2L12 3ZM12 9v5m0 3v.5"/>',network:'<circle cx="12" cy="4" r="2"/><circle cx="4" cy="20" r="2"/><circle cx="20" cy="20" r="2"/><path d="M12 6 4 18m8-12 8 12M6 20h12"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',swap:'<path d="M7 3v17m-4-4 4 4 4-4M17 21V4m-4 4 4-4 4 4"/>',back:'<path d="m15 18-6-6 6-6"/>',chev:'<path d="m9 18 6-6-6-6"/>'};
 function I(name){const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 24 24');s.setAttribute('fill','none');s.setAttribute('stroke','currentColor');s.setAttribute('stroke-width','1.8');s.setAttribute('stroke-linecap','round');s.setAttribute('stroke-linejoin','round');s.setAttribute('aria-hidden','true');s.innerHTML=paths[name]||paths.grid;return s}
 const clock=n=>Number.isFinite(n)?String(Math.floor(n/3600)%24).padStart(2,'0')+':'+String(Math.floor(n%3600/60)).padStart(2,'0'):'–';
-let bridge,home,more,dock,stage,page='home',pane='search',mode='journey',stationPromise=null,stations=[],net=null,netDay='',journeys=[],selected={from:null,to:null},fields={},departure='now',vehicleMode='all';
+let bridge,home,more,dock,stage,page='home',pane='search',mode='journey',stationPromise=null,stations=[],net=null,netDay='',journeys=[],selected={from:null,to:null},fields={},departure='now',vehicleMode='all',recommendationSort='recommended';
 function nativeTab(id){window.SuedtirolRadar50?.switchTab?.(id)}
 function navigate(to,hashChange=false){
  if(!['home','map','journey','more'].includes(to))to='home';
@@ -93,7 +95,8 @@ async function search(){
 function back(title,fn){const h=E('div','sr70-backrow');const b=B('sr70-back','Zurück',fn);b.prepend(I('back'));h.append(b,E('strong','',title));return h}
 function drawResults(from,to,reason){pane='results';stage.replaceChildren(back('Verbindungen',drawSearch));const head=E('div','sr70-resulthead');head.append(E('h2','',from.name+' → '+to.name),E('p','','GTFS-Fahrplan · Umstiege nicht live garantiert'));stage.append(head);
  if(!journeys.length)stage.append(E('p','sr70-msg',reason||'Keine passende Verbindung gefunden'));
- for(let i=0;i<journeys.length;i++){const trip=journeys[i],card=B('sr70-result',undefined,()=>drawDetail(i));const top=E('div','sr70-resulttop');top.append(E('strong','',clock(trip.departure)+' → '+clock(trip.arrival)),E('small','',Math.round((trip.arrival-trip.departure)/60)+' Min.'));card.append(top);
+ const bestIndex=mountJourneyAdvisor(stage,journeys,recommendationSort,next=>{recommendationSort=next;drawResults(from,to,reason)});
+ for(const ranked of orderJourneys(journeys,recommendationSort)){const i=ranked.index,trip=ranked.trip,card=B('sr70-result',undefined,()=>drawDetail(i));if(i===bestIndex)card.classList.add('sr703-recommended');const top=E('div','sr70-resulttop');top.append(E('strong','',clock(trip.departure)+' → '+clock(trip.arrival)),E('small','',Math.round((trip.arrival-trip.departure)/60)+' Min.'));card.append(top);
  const legs=E('div','sr70-legs');trip.legs.forEach((l,j)=>{legs.append(E('span',l.type==='train'?'sr70-train':'sr70-bus',l.name));if(j<trip.legs.length-1)legs.append(I('chev'))});card.append(legs);
  card.append(E('small','',trip.legs.length===1?'Direkt · fahrplanmäßig':(trip.legs.length-1)+' Umstieg(e) · '+(trip.transfers.some(x=>x.status==='risk')?'knapp':'laut Fahrplan möglich')));stage.append(card)}
  home.scrollTo?.({top:0})}
