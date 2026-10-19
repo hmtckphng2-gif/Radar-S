@@ -53,7 +53,7 @@ function open(tab){
  current=tab;
  if(!dialog){
   dialog=e('dialog','sr58-dialog');dialog.setAttribute('aria-label','Radar Verkehrsintelligenz');
-  const head=e('header','sr58-dialog-head');head.append(e('strong','','RADAR 5.8 · INTELLIGENCE'),btn('✕',()=>dialog.close(),'sr58-close'));
+  const head=e('header','sr58-dialog-head');head.append(e('strong','','RADAR 6.0 · INTELLIGENCE'),btn('✕',()=>dialog.close(),'sr58-close'));
   body=e('div','sr58-body');dialog.append(head,body);document.body.append(dialog);
  }
  renderCurrent();if(!dialog.open)dialog.showModal();
@@ -64,11 +64,10 @@ function textRow(title,detail,level=''){
 function renderCurrent(){
  body.replaceChildren();
  const tabs=e('nav','sr58-tabs');
- for(const [key,name] of [['issues','Störungen'],['network','Netzwerk'],['connections','Anschlüsse'],['health','Daten'],['search','Suche'],['vehicles','Fahrzeuge'],['alerts','Alarme'],['railcam','RailCam 5.9']]){
+ for(const [key,name] of [['issues','Störungen'],['network','Netzwerk'],['connections','Anschlüsse'],['health','Daten'],['search','Suche'],['vehicles','Fahrzeuge'],['alerts','Alarme']]){
   const b=btn(name,()=>open(key),'sr58-tab');b.setAttribute('aria-pressed',String(current===key));tabs.append(b)
  }
  body.append(tabs);
- if(current==='railcam'){const mount=e('div','sr59-mount');body.append(mount);if(window.SuedtirolRadar59)window.SuedtirolRadar59.render(mount);else mount.append(e('p','sr58-muted','RailCam lädt …'));return}
  if(current==='issues'){
   body.append(e('h2','','Aktuelle Störungen'));
   if(!issues.length)body.append(e('p','sr58-muted','Keine bestätigten größeren Fahrtstörungen in den aktuell empfangenen Updates. Das bedeutet nicht, dass keine Probleme bestehen.'));
@@ -274,15 +273,15 @@ function init(){
  installLiquidNav();
  enhanceMapGestures();
  // Dedicated switchboard button outside the map. Existing navigation untouched.
- const quick=btn('◉ Radar 5.9',()=>open('issues'),'sr58-quick');quick.setAttribute('aria-label','Radar 5.8 Störungen, Suche und Datenqualität');document.body.append(quick);
+ const quick=btn('◉ Radar 6.0',()=>open('issues'),'sr58-quick');quick.setAttribute('aria-label','Radar 6.0 Störungen, Suche und Datenqualität');document.body.append(quick);
  document.addEventListener('sr37:feeds',refresh);
  bridge.getStationList?.().then(list=>{stations=Array.isArray(list)?list:[]}).catch(()=>{});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
  refresh();
- window.SuedtirolRadar58={version:'5.9',open,refresh,getIssues:()=>issues,getFeedHealth:()=>diagnostics};
- document.title='Südtirol Radar 5.9 · Rail Corridor Intelligence';
- const monitorVersion=document.querySelector('.sr57-version');if(monitorVersion)monitorVersion.textContent='5.9';
- const version=document.querySelector('.brand-title em');if(version)version.textContent='5.9';
+ window.SuedtirolRadar58={version:'6.0',open,refresh,getIssues:()=>issues,getFeedHealth:()=>diagnostics};
+ document.title='Südtirol Radar 6.0 · Project Nova';
+ const monitorVersion=document.querySelector('.sr57-version');if(monitorVersion)monitorVersion.textContent='6.0';
+ const version=document.querySelector('.brand-title em');if(version)version.textContent='6.0';
 }
 let attempts=0;
 function boot(){if(window.SuedtirolRadar58)return;if(window.SuedtirolRadar37?.state?.map&&window.SuedtirolRadar57){init();return}if(attempts++<90)setTimeout(boot,200)}
