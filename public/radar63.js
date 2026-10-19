@@ -1,6 +1,6 @@
 /* Radar 6.3 — device-local onboarding and version synchronization */
 (()=>{'use strict';
- const VERSION='6.6',KEY='sr63_tutorial_complete_v1';
+ const VERSION='6.6.1',KEY='sr63_tutorial_complete_v1';
  const steps=[
  {title:'Willkommen bei Südtirol Radar',body:'Dein Radar für Züge und Busse in Südtirol und Trentino. Die Karte zeigt verfügbare Positionen und ihre Datenqualität. Willkommen!',tab:'map'},
  {title:'Live-Karte & Fahrzeugdetails',body:'Tippe auf einen Zug oder Bus, um die Fahrt zu öffnen. Nicht jeder Marker ist eine bestätigte Live-GPS-Position; veraltete Meldungen werden gekennzeichnet.',tab:'map'},
