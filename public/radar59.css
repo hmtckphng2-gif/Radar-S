@@ -11,3 +11,5 @@ body.sr58-has-banner .sr59-launch{top:calc(env(safe-area-inset-top,0px) + 175px)
 .sr59-card,.sr59-train{border:1px solid #ffffff16;border-radius:17px;background:#ffffff0a;padding:15px;margin:10px 0}.sr59-card h3{font-size:17px;margin:8px 0}.sr59-card strong,.sr59-train strong{font-size:14px;display:block}.sr59-train small{display:block;color:#9eb0c6;line-height:1.5;margin:5px 0}.sr59-status{color:#f8bf75;font-size:12px;font-weight:700}.sr59-status.good{color:#89dbac}.sr59-check{font-size:12px;color:#adbdcb;margin:11px 0}.sr59-button,.sr59-mini{background:#2585dd;color:#fff;border:0;border-radius:10px;padding:11px 13px;font:700 12px Inter,system-ui;cursor:pointer}.sr59-mini{background:#ffffff18;border:1px solid #ffffff25;padding:8px 11px;margin-top:5px}
 @media(min-width:730px){.sr59-shell{inset:6vh 0;height:88vh}.sr59-launch{top:155px}}
 @media(prefers-reduced-motion:reduce){.sr59-modal *{scroll-behavior:auto!important}}
+
+.sr59-source{display:block;padding:10px 2px;color:#8cc7ff;text-decoration:none;border-bottom:1px solid #2b3d52}.sr59-source:focus-visible{outline:2px solid #81c7ff}
