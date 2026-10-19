@@ -1,0 +1,26 @@
+/* Radar 7.3 Horizon Clean: one progress summary, one scroll owner. */
+@media(max-width:749px){
+ #sheet.open .sheet-scroll{overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+ #sheet.open #sr47ProgressCard{display:none!important}
+ #sheet.open #sr47JourneyProgress{display:none!important}
+ #sheet.open .sr47-progress-card{display:none!important}
+ #sheet.open .sr47-progress{display:none!important}
+ #sheet.open #sr62Train{display:none!important}
+ #sheet.open #sr52RouteCard{display:none!important}
+ #sheet.open #sr64Quality{display:none!important}
+ #sheet.open #sr55DataExplainer{display:none!important}
+ #sheet.open #sr51TrainCompare{margin:8px 0!important;padding:12px!important}
+ #sheet.open #sr51TrainCompare .sr51-quiet,#sheet.open #sr51TrainCompare .sr51-caution{font-size:11px;line-height:1.4}
+ #sheet.open #sr51TrainCompare svg{max-height:72px}
+ #sheet.open #scheduleSection{max-height:none!important;overflow:visible!important}
+ #stationSheet.open .station-results,#stationSheet.open #stationDepartures{overflow:visible!important;max-height:none!important}
+}
+/* Clean cinematic focus: no giant halo or paint-bloated route overlays. */
+#map .sr71-focus-ring{width:50px!important;height:50px!important;box-shadow:0 0 0 3px rgba(90,171,255,.05)!important;filter:none!important}
+#map .sr71-focus-reticle{inset:6px}
+body.sr71-focusing #map .leaflet-overlay-pane,body.sr72-map-zooming #map .leaflet-overlay-pane{visibility:hidden!important;opacity:0!important}
+body:has(#sheet.open) #sr60Launch,body:has(#stationSheet.open) #sr60Launch{display:none!important}
+#sheet .sr73-data-note{margin:8px 12px 10px;color:#a9c5dc;font-size:11px;line-height:1.5}
+#sheet .sr73-data-note[hidden]{display:none!important}
+
+@media(max-width:749px){#sheet.open .sr73-duplicate-progress{display:none!important}}
