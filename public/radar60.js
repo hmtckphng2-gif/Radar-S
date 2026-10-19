@@ -23,9 +23,10 @@
   const header=document.querySelector('#sr50MapTab .topbar');const hr=header?.getBoundingClientRect();
   if(hr?.height)root.style.setProperty('--sr611-header-bottom',Math.ceil(hr.bottom)+'px');
   const dr=dock?.getBoundingClientRect();const viewport=window.visualViewport?.height||window.innerHeight;
-  const viewHeight=Math.max(window.innerHeight,document.documentElement.clientHeight,viewport);
+  const viewHeight=Math.max(1,document.documentElement.clientHeight||window.innerHeight);
   root.style.setProperty('--sr611-view-height',viewHeight+'px');
-  if(dr?.height)root.style.setProperty('--sr611-dock-space',Math.ceil(dr.height+safeBottom+16)+'px');
+  root.style.setProperty('--sr611-visible-height',Math.max(1,viewport)+'px');
+  if(dr?.height)root.style.setProperty('--sr611-dock-space',Math.max(0,Math.ceil(viewHeight-dr.top))+'px');
   requestAnimationFrame(positionPill);
  }
  function scheduleLayout(){if(!layoutFrame)layoutFrame=requestAnimationFrame(measureLayout)}
