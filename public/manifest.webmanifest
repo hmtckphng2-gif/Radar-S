@@ -1,12 +1,12 @@
 {
-  "name": "Südtirol Radar 6.0",
-  "short_name": "RADAR.",
+  "name": "Südtirol Radar 7.0 – Project Horizon",
+  "short_name": "Radar 7",
   "description": "Live-Züge, Busse und Stationsintelligenz in Südtirol und Trentino",
-  "start_url": "/",
+  "start_url": "/#home",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#101c2b",
-  "theme_color": "#101c2b",
+  "background_color": "#090d14",
+  "theme_color": "#090d14",
   "icons": [
     {
       "src": "/radar60-icon-192.png",
