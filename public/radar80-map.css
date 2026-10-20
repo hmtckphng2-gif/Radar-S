@@ -1,0 +1,16 @@
+/* Radar 8.0 map overhaul: genuine cluster tiles instead of a turquoise bubble. */
+#map .sr43-cluster-icon{background:transparent!important;border:0!important;overflow:visible!important}
+#map .sr43-cluster-circle.sr80-group-chip{box-sizing:border-box!important;position:relative!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:3px!important;width:58px!important;min-width:58px!important;height:32px!important;padding:2px 5px!important;border-radius:10px!important;background:rgba(16,25,38,.93)!important;border:1px solid rgba(147,170,192,.55)!important;box-shadow:0 3px 11px rgba(0,0,0,.30)!important;color:#edf4fb!important;transform:none!important;filter:none!important}
+#map .sr43-cluster-circle.sr80-group-chip strong{font-size:14px!important;font-weight:750!important;line-height:16px!important}
+#map .sr43-cluster-circle.sr80-group-chip small{font-size:7px!important;line-height:8px!important;max-width:30px;overflow:hidden;text-overflow:ellipsis;white-space:normal;opacity:.84}
+#map .sr43-cluster-circle.sr80-group-chip.bus{border-left:3px solid #f2b85d!important}
+#map .sr43-cluster-circle.sr80-group-chip.train{border-left:3px solid #82a8ff!important}
+#map .sr43-cluster-circle.sr80-group-chip.mixed{border-left:3px solid #bba6ee!important}
+#map .sr43-cluster-circle.sr80-group-chip .sr431-cluster-stale{position:absolute;right:-4px;top:-6px;border-radius:6px;background:#323d4a;color:#d5dce5;font-size:8px;line-height:12px;padding:0 3px}
+/* Keep buses recognizable even at deep zoom: no oversized neon/turquoise ball. */
+#map .marker-wrap.bus .marker-circle{width:23px!important;height:23px!important;border-radius:8px!important;box-shadow:0 1px 5px rgba(0,0,0,.27)!important;filter:none}
+#map .marker-wrap.bus .marker-circle svg{width:15px!important;height:15px!important}
+#map .marker-wrap.train .marker-circle{width:27px!important;height:27px!important;border-radius:9px!important;box-shadow:0 1px 5px rgba(0,0,0,.28)!important}
+#map .marker-wrap.sr43-stale .marker-circle{filter:grayscale(.8)!important;opacity:.72!important}
+#map .marker-wrap.selected .marker-circle{outline:2px solid rgba(246,244,237,.8)!important;outline-offset:2px}
+@media(max-width:750px){#map .leaflet-control-zoom{opacity:.45}#map .leaflet-control-zoom:focus-within{opacity:1}}
