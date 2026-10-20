@@ -32,4 +32,27 @@ jobs:
           command: deploy worker.js --name radar-s --config wrangler.jsonc
       - name: Verify live Worker and UI assets
         run: |
-          node --input-type=module -e "const root='https://radar-s.j9fr2vg4vm.workers.dev';for(const [path,match] of [['/api/version','8.0.1'],['/radar43.js','sr80-group-chip']]){const r=await fetch(root+path+'?release='+Date.now(),{cache:'no-store'});const body=await r.text();if(!r.ok||!body.includes(match))throw Error(path+' not deployed: '+r.status);console.log('Verified',path)}"
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          const root = 'https://radar-s.j9fr2vg4vm.workers.dev';
+          const expected = JSON.parse(readFileSync('package.json','utf8')).version;
+          const request = async path => {
+            const response = await fetch(root+path+'?release='+Date.now(),{cache:'no-store'});
+            const text = await response.text();
+            if(!response.ok)throw Error(path+' HTTP '+response.status);
+            return text;
+          };
+          const response = JSON.parse(await request('/api/version'));
+          if(response.version!==expected)throw Error('Expected live '+expected+', got '+response.version);
+          if(response.collectorScheduled!==false)throw Error('History collector unexpectedly scheduled');
+          for(const [path,marker] of [
+            ['/radar43.js','sr80-group-chip'],
+            ['/radar83-map.mjs','Radar 8.3'],
+            ['/radar83-model.mjs','FLIRT-inspired']
+          ]){
+            const body=await request(path);
+            if(!body.includes(marker))throw Error(path+' missing expected content');
+            console.log('Verified',path);
+          }
+          console.log('Live Radar '+expected+' confirmed');
+          NODE
