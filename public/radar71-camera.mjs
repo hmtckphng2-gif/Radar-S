@@ -3,7 +3,7 @@
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate
  * map panes with CSS and corrupt touch coordinates or marker hit testing.
  */
-import {focusDuration,focusZoom,focusHeading,validFocusPoint,shortestRotation} from './radar71-camera-logic.mjs';
+import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from './radar71-camera-logic.mjs';
 (()=>{'use strict';
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -70,11 +70,11 @@ import {focusDuration,focusZoom,focusHeading,validFocusPoint,shortestRotation} f
   const heading=focusHeading(vehicle),arrow=$('sr71HeadingArrow');
   if(arrow){arrow.hidden=heading===null;arrow.style.setProperty('--sr71-direction',((heading??0)-45)+'deg')}
   const toZoom=focusZoom(map.getZoom(),map.getMaxZoom(),vehicle.kind);
-  const duration=focusDuration(motion.matches,map.getZoom(),toZoom);
+  const duration=focusDuration(motion.matches,map.getZoom(),toZoom,focusDistanceKm(map.getCenter(),pos));
   try{
    map.stop();
    if(motion.matches)map.setView([pos.lat,pos.lng],toZoom,{animate:false});
-   else map.flyTo([pos.lat,pos.lng],toZoom,{animate:true,duration:Math.min(duration,1150)/1000,easeLinearity:.26});
+   else map.flyTo([pos.lat,pos.lng],toZoom,{animate:true,duration:duration/1000,easeLinearity:.22});
    if(heading!==null)turnTo(heading,duration,seq);
   }catch(error){console.warn('Cinematic focus fallback',error);try{map.setView([pos.lat,pos.lng],toZoom,{animate:false})}catch{}}
   // Leaflet's flyTo finishes at the target; ensure the latest visible marker
@@ -107,6 +107,8 @@ import {focusDuration,focusZoom,focusHeading,validFocusPoint,shortestRotation} f
   map.on('dragstart',manualInterrupt);
   map.getContainer().addEventListener('wheel',manualInterrupt,{passive:true});
   map.getContainer().addEventListener('touchstart',()=>{if(active)manualInterrupt()},{passive:true});
+  // Direct manipulation: no artificial gesture delay. Keep Leaflet's native inertia.
+  map.options.inertia=true;map.options.inertiaDeceleration=3400;map.options.inertiaMaxSpeed=2200;
   document.addEventListener('visibilitychange',()=>{if(document.hidden)cancel({restore:true})});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')cancel({restore:true})});
   window.addEventListener('hashchange',()=>{if(!mapVisible())cancel({restore:true})});

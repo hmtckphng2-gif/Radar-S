@@ -1,18 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {focusDuration,focusZoom,focusHeading,validFocusPoint,shortestRotation} from '../public/radar71-camera-logic.mjs';
+import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from '../public/radar71-camera-logic.mjs';
 const NOW=1760900000000;
-test('cinematic focus runs slowly and respects reduced-motion',()=>{
- assert.ok(focusDuration(false,9,15)>=1600);
- assert.ok(focusDuration(false,14,15)>=1300);
- assert.equal(focusDuration(true,9,15),0);
- assert.ok(focusDuration(false,3,17)<=1950);
+test('near focus is brief, long-distance focus is cinematic, reduced motion is instant',()=>{
+ const near=focusDuration(false,16,17,0.1),far=focusDuration(false,9,17,90);
+ assert.ok(near<650);
+ assert.ok(far>near);
+ assert.ok(far<=1800);
+ assert.equal(focusDuration(true,9,17,90),0);
+ assert.ok(focusDistanceKm({lat:46.5,lng:11.35},{lat:46.5,lng:11.35})===0);
+ assert.ok(focusDistanceKm({lat:46.5,lng:11.35},{lat:46.7,lng:11.4})>20);
 });
-test('focus zoom does not zoom OUT or exceed Leaflet maximum',()=>{
- assert.equal(focusZoom(13,18,'train'),14.5);
- assert.equal(focusZoom(16,18,'train'),16);
+test('focus zoom goes close without zooming out or exceeding maximum',()=>{
+ assert.equal(focusZoom(13,18,'train'),17);
+ assert.equal(focusZoom(17.5,18,'train'),17.5);
  assert.equal(focusZoom(10,13,'bus'),13);
- assert.equal(focusZoom(11,18,'bus'),15);
+ assert.equal(focusZoom(11,18,'bus'),17.5);
 });
 test('camera direction only uses fresh, verified heading',()=>{
  const v={bearing:0,stale:false,timestamp:NOW/1000-5};
