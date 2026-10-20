@@ -1,0 +1,17 @@
+/* Südtirol Radar 7.6 — Graphite design and touch-safe compact details. */
+:root{--sr76-graphite:#111923;--sr76-accent:#84bce7}
+@media(max-width:749px){
+ #sheet.open .sheet-scroll{scrollbar-width:none;overscroll-behavior:contain;touch-action:pan-y}
+ #sheet.open .sheet-scroll::-webkit-scrollbar{display:none}
+ #sheet.open .sheet-heading-main{font-size:16px!important;letter-spacing:-.025em}
+ #sheet.open #sr51TrainCompare{border-radius:13px!important;box-shadow:none!important}
+ #sheet.open #sr51TrainCompare .sr74-time-summary{background:rgba(19,31,44,.75)!important;border-color:rgba(124,160,192,.22)!important}
+ #stationSheet.open .sheet-scroll{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+ #stationBoard{padding-bottom:max(12px,env(safe-area-inset-bottom))}
+ #sr68Open{min-height:40px;touch-action:manipulation}
+}
+.sr71-focus-ring{box-shadow:none!important;filter:none!important;animation:none!important}
+.sr71-focus-reticle{box-shadow:none!important}
+.sr76-trend{font-size:11px;line-height:1.5;color:#b6d2e5;overflow-wrap:anywhere}
+#sr76LiveVersion{font-size:10px;opacity:.76;white-space:nowrap}
+@media(prefers-reduced-motion:reduce){.sr71-focus-ring,.sr75-tutorial-pointer{animation:none!important}}

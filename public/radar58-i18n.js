@@ -211,7 +211,8 @@ function scan(root){
   for(const attr of ['placeholder','title','aria-label','alt']){
    if(!el.hasAttribute(attr))continue;
    const key='sr58Original'+attr.replace(/(^|-)([a-z])/g,(_,a,b)=>b.toUpperCase());
-   const current=el.getAttribute(attr),source=el.dataset[key]||canonical(current);
+   const current=el.getAttribute(attr),cached=el.dataset[key];
+   const source=cached&&(current===translate(cached,'de')||current===translate(cached,'it'))?cached:canonical(current);
    el.dataset[key]=source;
    const value=translate(source,lang);
    if(current!==value)el.setAttribute(attr,value);
@@ -237,10 +238,11 @@ function init(){
   busy=true;
   try{for(const change of changes){
    if(change.type==='characterData')translateNode(change.target);
+   if(change.type==='attributes')scan(change.target);
    for(const node of change.addedNodes)scan(node);
   }}finally{busy=false}
  });
- observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+ observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label','alt']});
  window.SuedtirolRadarLanguage={get:()=>lang,set:value=>{lang=value==='it'?'it':'de';try{localStorage.setItem(KEY,lang)}catch{}apply()}};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();

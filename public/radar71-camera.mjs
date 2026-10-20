@@ -74,7 +74,7 @@ import {focusDuration,focusZoom,focusHeading,validFocusPoint,shortestRotation} f
   try{
    map.stop();
    if(motion.matches)map.setView([pos.lat,pos.lng],toZoom,{animate:false});
-   else map.flyTo([pos.lat,pos.lng],toZoom,{animate:true,duration:duration/1000,easeLinearity:.19});
+   else map.flyTo([pos.lat,pos.lng],toZoom,{animate:true,duration:Math.min(duration,1150)/1000,easeLinearity:.26});
    if(heading!==null)turnTo(heading,duration,seq);
   }catch(error){console.warn('Cinematic focus fallback',error);try{map.setView([pos.lat,pos.lng],toZoom,{animate:false})}catch{}}
   // Leaflet's flyTo finishes at the target; ensure the latest visible marker

@@ -25,7 +25,7 @@ function open(){
  const query=trip?('trip='+encodeURIComponent(trip)):stop?('stop='+encodeURIComponent(stop)):null;
  if(query)fetch('/api/history/analytics?'+query+'&hours=48',{headers:{accept:'application/json'}})
   .then(async r=>{if(!r.ok)throw Error('unavailable');return r.json()})
-  .then(data=>{if(!history.isConnected)return;summary.textContent=data.sampleCount>0?`${data.sampleCount} Feed-Prognosen · Ø ${data.averageMinutes} Min. · Median ${data.medianMinutes} Min. · ${data.latePercent}% mit über +1 Min. (keine bestätigten Ankünfte)`:'Noch keine historischen Feed-Prognosen für diese Fahrt vorhanden.'})
+  .then(data=>{if(!history.isConnected)return;summary.textContent=data.sampleCount>0?`${data.sampleCount} Feed-Prognosen · Ø ${data.averageMinutes} Min. · Median ${data.medianMinutes} Min. · ${data.latePercent}% mit über +1 Min. (keine bestätigten Ankünfte)`:'Noch keine historischen Feed-Prognosen für diese Fahrt vorhanden.';if(data.trend?.length)history.append(el('p','sr76-trend',data.trend.map(x=>`${x.date.slice(5)}: Ø ${x.averageMinutes} Min. (${x.count})`).join(' · ')))})
   .catch(()=>{if(history.isConnected)summary.textContent='Historische Auswertung derzeit nicht verfügbar.'});
  else summary.textContent='Keine eindeutige Fahrt- oder Haltestellenkennung für die Historie vorhanden.';
 
