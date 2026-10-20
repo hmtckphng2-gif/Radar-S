@@ -1,0 +1,19 @@
+/* Radar 7.7 graphite refinement, iPhone safe area and quiet cinematic tracking. */
+:root{--sr77-ink:#101822;--sr77-stroke:rgba(177,197,218,.14);--sr77-muted:#aebccc}
+@media(max-width:750px){
+ #sheet.open{border-radius:22px 22px 0 0!important;box-shadow:0 -12px 45px rgba(0,0,0,.18)!important}
+ #sheet.open .sheet-scroll{overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;padding-bottom:max(20px,env(safe-area-inset-bottom))}
+ #sheet.open #sr51TrainCompare{margin:8px 0!important;box-shadow:none!important}
+ #stationBoard .section-sub{font-size:11px!important;line-height:1.35;color:var(--sr77-muted)!important}
+ #stationDepartures{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+ #stationBoard{padding-bottom:max(20px,env(safe-area-inset-bottom))}
+ .sr77-station-bar{position:sticky;top:0;z-index:2;background:rgba(14,23,34,.96);backdrop-filter:blur(12px)}
+}
+.sr77-station-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--sr77-stroke);border-radius:12px;padding:7px 10px;margin:9px 0;color:var(--sr77-muted);font-size:12px}
+.sr77-favorite{font:inherit;border:1px solid var(--sr77-stroke);border-radius:9px;background:transparent;color:inherit;padding:7px 11px;min-height:36px}
+.sr77-favorite[aria-pressed=true]{color:#f4c76e;border-color:rgba(244,199,110,.3)}
+.sr71-focus-ring,.sr71-focus-reticle{box-shadow:none!important;filter:none!important}
+.sr71-focus-ring{width:65px!important;height:65px!important;border-color:rgba(115,187,255,.32)!important}
+.sr71-focus-reticle{border-color:rgba(115,187,255,.2)!important}
+#sr76LiveVersion{font-size:10px!important;letter-spacing:-.015em}
+@media(prefers-reduced-motion:reduce){.sr71-cinematic,.sr71-focus-ring{animation:none!important;transition:none!important}}
