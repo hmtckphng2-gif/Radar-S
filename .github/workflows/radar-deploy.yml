@@ -21,6 +21,7 @@ jobs:
       - name: Validate app and History Cron safety
         run: |
           npm run check
+          node tools/mobile-config-check.mjs
           npm test
           node -e "const fs=require('node:fs');const c=JSON.parse(fs.readFileSync('wrangler.jsonc','utf8'));if(c.triggers?.crons?.length)process.exit(1)"
       - name: Deploy Worker and assets
@@ -31,4 +32,4 @@ jobs:
           command: deploy worker.js --name radar-s --config wrangler.jsonc
       - name: Verify live Worker and UI assets
         run: |
-          node --input-type=module -e "const root='https://radar-s.j9fr2vg4vm.workers.dev';for(const [path,match] of [['/api/version','7.9.0'],['/radar79.mjs','Radar 7.9']]){const r=await fetch(root+path+'?release='+Date.now(),{cache:'no-store'});const body=await r.text();if(!r.ok||!body.includes(match))throw Error(path+' not deployed: '+r.status);console.log('Verified',path)}"
+          node --input-type=module -e "const root='https://radar-s.j9fr2vg4vm.workers.dev';for(const [path,match] of [['/api/version','8.0.0'],['/radar80.js','Radar 8.0']]){const r=await fetch(root+path+'?release='+Date.now(),{cache:'no-store'});const body=await r.text();if(!r.ok||!body.includes(match))throw Error(path+' not deployed: '+r.status);console.log('Verified',path)}"

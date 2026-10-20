@@ -1,0 +1,12 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const read=name=>JSON.parse(fs.readFileSync(new URL('../mobile/'+name,import.meta.url),'utf8'));
+const app=read('app.json').expo,eas=read('eas.json'),pkg=read('package.json');
+assert.equal(app.version,'8.0.0');assert.equal(pkg.version,app.version);
+assert.match(app.ios.bundleIdentifier,/^[a-zA-Z][a-zA-Z0-9.-]+$/);
+assert.ok(app.ios.bundleIdentifier===app.android.package);
+assert.ok(app.extra.radarUrl.startsWith('https://'));
+assert.ok(eas.build.production&&eas.build.production.ios);
+assert.ok(eas.submit.production);
+assert.ok(pkg.dependencies.expo&&pkg.dependencies['react-native-webview']);
+assert.ok(!JSON.stringify(app).includes('apiToken'));
+console.log('Radar 8.0 Expo config verified (Apple/EAS credentials not configured).');

@@ -1,0 +1,21 @@
+{
+  "name": "suedtirol-radar-mobile",
+  "version": "8.0.0",
+  "private": true,
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "doctor": "expo-doctor",
+    "validate": "node ../tools/mobile-config-check.mjs"
+  },
+  "dependencies": {
+    "expo": "~55.0.0",
+    "react": "19.2.0",
+    "react-native": "0.83.0",
+    "react-native-webview": "14.0.1",
+    "react-native-safe-area-context": "~5.6.0",
+    "expo-status-bar": "~55.0.0"
+  }
+}

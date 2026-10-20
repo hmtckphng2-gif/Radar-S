@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Südtirol Radar",
+    "slug": "suedtirol-radar",
+    "scheme": "suedtirolradar",
+    "version": "8.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "it.suedtirolradar.mobile",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false
+        }
+      }
+    },
+    "android": {
+      "package": "it.suedtirolradar.mobile",
+      "versionCode": 1
+    },
+    "extra": {
+      "radarUrl": "https://radar-s.j9fr2vg4vm.workers.dev/"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    }
+  }
+}
