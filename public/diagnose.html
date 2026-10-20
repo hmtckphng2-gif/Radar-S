@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#0b1421"><title>Radar · Startdiagnose</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:26px 18px 90px;background:#0b1421;color:#e8f0fa;font:14px/1.5 -apple-system,BlinkMacSystemFont,system-ui,sans-serif}main{max-width:580px;margin:auto}h1{font-size:23px;margin:10px 0 8px}p{color:#a8b9ce;font-size:13px}a{color:#89c6ff}article{background:#142338;border:1px solid #334660;border-radius:14px;padding:12px 14px;margin:10px 0}article strong{display:block;font-size:14px}article small{display:block;color:#b0c2d8;margin-top:5px;overflow-wrap:anywhere}article.good{border-color:#258e77}article.bad{border-color:#bb6670}button{margin-top:12px;padding:12px 16px;border:0;border-radius:12px;background:#3778d4;color:white;font-weight:650;font-size:14px;min-height:44px}#log{white-space:pre-wrap;overflow-wrap:anywhere;color:#b6c9dd;background:#0f1d2d;padding:13px;border-radius:12px;font-size:11px}#frame{position:absolute;left:-2000px;top:0;width:390px;height:820px;border:0;opacity:0;pointer-events:none}#preview{height:145px;width:100%;margin:12px 0;overflow:hidden;border-radius:12px;background:#080d15}
+</style>
+<script>window.diagErrors=[];addEventListener("error",e=>diagErrors.push(e.message||"resource "+(e.target?.src||e.target?.href||"unknown")),true);addEventListener("unhandledrejection",e=>diagErrors.push(String(e.reason)));</script>
+</head><body><main><a href="/?radar3d=off#map">← Zurück zu Radar</a><h1>Radar · Diagnose</h1><p>Bitte hier kurz warten. Die Ergebnisse bleiben sichtbar und verschwinden nicht. Die App wird nicht verändert.</p>
+<article id="js"><strong>JavaScript startet …</strong></article><article id="api"><strong>Server wird geprüft …</strong></article><article id="feed"><strong>Fahrzeugdaten werden geprüft …</strong></article><article id="module"><strong>ES-Module werden geprüft …</strong></article><article id="leaflet"><strong>Kartenbibliothek wird geprüft …</strong></article><article id="tiles"><strong>Kartenkacheln werden geprüft …</strong></article><article id="app"><strong>Radar-Start wird geprüft …</strong></article><div id="preview"></div>
+<button id="copy" type="button">Ergebnisse kopieren</button><pre id="log">Diagnose läuft …</pre></main>
+<iframe id="frame" title="Unsichtbarer Radar-Test"></iframe>
+<script>
+(function(){
+var all=[],appDone=false;
+function result(id,ok,label,details){
+ var el=document.getElementById(id);if(!el)return;
+ el.className=ok?"good":"bad";el.replaceChildren();
+ var title=document.createElement("strong");title.textContent=(ok?"✓ ":"✕ ")+label;el.append(title);
+ var small=document.createElement("small");small.textContent=details||"";el.append(small);
+ all.push((ok?"OK ":"FEHLER ")+label+" – "+(details||""));render();
+}
+function render(){document.getElementById("log").textContent="Radar-Diagnose\n"+new Date().toLocaleString("de-DE")+"\nBrowser: "+navigator.userAgent+"\n\n"+all.join("\n")+(diagErrors.length?"\n\nJavaScriptfehler: "+diagErrors.slice(0,5).join(" | "):"")}
+function timeoutFetch(url,ms){
+ var ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),ms);
+ return fetch(url,{cache:"no-store",signal:ctrl.signal}).then(r=>{if(!r.ok)throw Error("HTTP "+r.status);return r.json()}).finally(()=>clearTimeout(timer));
+}
+result("js",true,"JavaScript läuft","Diese Seite kann JavaScript ausführen.");
+timeoutFetch("/api/version?test="+Date.now(),10000).then(d=>result("api",true,"API erreichbar","Server "+d.version+", History-Cron "+(d.collectorScheduled?"AN":"aus"))).catch(e=>result("api",false,"API nicht erreichbar",String(e)));
+timeoutFetch("/api/sta?test="+Date.now(),13000).then(d=>result("feed",Array.isArray(d.entity)&&d.entity.length>0,"STA-Feed",Array.isArray(d.entity)?d.entity.length+" Einträge":"Ungültiges Format")).catch(e=>result("feed",false,"STA-Feed nicht erreichbar",String(e)));
+import("/radar71-camera-logic.mjs?v=diag").then(m=>result("module",typeof m.focusDuration==="function","ES-Module","Kamera-Modul konnte importiert werden")).catch(e=>result("module",false,"ES-Modul fehlgeschlagen",String(e)));
+var sc=document.createElement("script"),sTime=setTimeout(()=>result("leaflet",false,"Leaflet-Zeitüberschreitung","Kartenbibliothek zu langsam"),12000);
+sc.src="/vendor/leaflet-1.9.4.js?v=diag";sc.onload=()=>{clearTimeout(sTime);result("leaflet",!!window.L,"Leaflet geladen",window.L?"Version "+L.version:"Keine Leaflet-API");if(!window.L)return;
+var css=document.createElement("link");css.rel="stylesheet";css.href="/vendor/leaflet-1.9.4.css?v=diag";document.head.append(css);
+try{
+ var map=L.map("preview",{zoomControl:false,attributionControl:false}).setView([46.5,11.35],11),loaded=false;
+ var layer=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+ layer.once("tileload",()=>{loaded=true;result("tiles",true,"Kartentiles werden geladen","OpenStreetMap erreichbar")});
+ setTimeout(()=>{if(!loaded)result("tiles",false,"Kartenkacheln fehlen","OpenStreetMap wurde nicht innerhalb von 9 Sekunden geladen")},9000)
+}catch(e){result("tiles",false,"Kartenfehler",String(e))}
+};sc.onerror=()=>{clearTimeout(sTime);result("leaflet",false,"Leaflet-Datei blockiert","Bitte Safari direkt testen")};document.head.append(sc);
+var frame=document.getElementById("frame");
+frame.src="/?radar3d=off&diag="+Date.now()+"#map";
+var started=Date.now();var checker=setInterval(()=>{
+ try{
+  var w=frame.contentWindow;if(!w||!w.document)return;
+  var state=w.SuedtirolRadar37?.state;
+  var phase=w.document.documentElement.dataset.radarBoot||"kein Boot-Signal";
+  var markers=state?.markers?.size||0;
+  var vehicles=state?.vehicles?.size||0;
+  var loaded=!!state?.map;
+  if(loaded&&state?.fetchedAt){result("app",true,"Radar-App startet","Phase "+phase+" · "+vehicles+" Fahrzeuge · "+markers+" Marker");clearInterval(checker);appDone=true;return}
+  var sec=Math.round((Date.now()-started)/1000);
+  if(sec>=18&&!appDone){result("app",false,"Radar-Start hängt","Phase "+phase+" · Leaflet "+!!w.L+" · Karte "+loaded+" · Fahrzeuge "+vehicles+" · Marker "+markers+" · Hinweis "+(w.document.getElementById("sr831BootError")?.innerText||"keiner").slice(0,180));clearInterval(checker);appDone=true}
+ }catch(e){if(Date.now()-started>18000){result("app",false,"App-Testfehler",String(e));clearInterval(checker)}}
+},1000);
+document.getElementById("copy").addEventListener("click",()=>{var s=document.getElementById("log").textContent;navigator.clipboard?.writeText(s).then(()=>alert("Diagnose kopiert")).catch(()=>alert(s))});
+setInterval(render,2000);
+})();
+</script></body></html>
