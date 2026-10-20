@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoARCSXQ1bpn64=" crossorigin="anonymous">
+<link rel="stylesheet" href="/vendor/leaflet-1.9.4.css?v=8.3.1">
 <link rel="stylesheet" href="/styles.css?v=3.4">
 <link rel="stylesheet" href="/radar35.css?v=3.5.1">
 <link rel="stylesheet" href="/radar37.css?v=3.7">
@@ -52,7 +52,7 @@
   <header class="topbar">
     <div class="toprow">
       <div class="brand-badge" aria-hidden="true"><svg viewBox="0 0 48 48" width="30" height="30"><path d="M12 35L35 12M13 13h22v22" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="24" r="5" fill="currentColor"/></svg></div>
-      <div class="brand"><div class="brand-title">RADAR <em>6.7</em></div><div class="brand-sub">SÜDTIROL · TRENTINO</div></div>
+      <div class="brand"><div class="brand-title">RADAR <em>8.3.1</em></div><div class="brand-sub">SÜDTIROL · TRENTINO</div></div>
       <button id="statusBtn" class="status" aria-label="Status und Datenquellen" title="Datenquellen ansehen"><span class="status-dot"></span><span id="statusText">VERBINDE</span></button>
       <button id="themeToggle" class="iconbtn" aria-label="Hell-/Dunkelmodus wechseln" title="Theme wechseln">☀</button>
     </div>
@@ -105,7 +105,8 @@
   </section>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+<script src="/vendor/leaflet-1.9.4.js?v=8.3.1" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script>
+<script src="/radar831-boot.js?v=8.3.1"></script>
 <script src="/radar431-stop.js?v=4.3.1"></script>
 <script src="/radar37.js?v=7.0.3"></script>
 <script src="/radar40.js?v=4.2"></script>
@@ -150,7 +151,7 @@
 <script type="module" src="/radar70.js?v=7.0.5"></script>
 <link rel="stylesheet" href="/radar705.css?v=7.0.5">
 <link rel="stylesheet" href="/radar71.css?v=7.1.1">
-<script type="module" src="/radar71-camera.mjs?v=8.3.0"></script>
+<script type="module" src="/radar71-camera.mjs?v=8.3.1"></script>
 <link rel="stylesheet" href="/radar72.css?v=7.2.0">
 <script src="/radar72.js?v=7.2.0" defer></script>
 <link rel="stylesheet" href="/radar73.css?v=7.3.0">
@@ -166,9 +167,8 @@
 <script type="module" src="/radar78.mjs?v=7.8.0"></script>
 <link rel="stylesheet" href="/radar79.css?v=7.9.0">
 <script type="module" src="/radar79.mjs?v=7.9.0"></script>
-<script src="/radar80.js?v=8.3.0" defer></script>
+<script src="/radar80.js?v=8.3.1" defer></script>
 <link rel="stylesheet" href="/radar80-map.css?v=8.0.1">
 <link rel="stylesheet" href="/radar82.css?v=8.2.0">
-<link rel="stylesheet" href="/radar83.css?v=8.3.0">
 </body>
 </html>
