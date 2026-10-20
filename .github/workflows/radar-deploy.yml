@@ -22,7 +22,7 @@ jobs:
         run: |
           npm run check
           npm test
-          node -e "const c=require('./wrangler.jsonc');if(c.triggers?.crons?.length)process.exit(1)"
+          node -e "const fs=require('node:fs');const c=JSON.parse(fs.readFileSync('wrangler.jsonc','utf8'));if(c.triggers?.crons?.length)process.exit(1)"
       - name: Deploy Worker and assets
         uses: cloudflare/wrangler-action@v3
         with:
