@@ -1,6 +1,6 @@
 import {motionDuration,platformInfo} from './radar54-logic.mjs';
 import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs';
-import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=6.4.3';
+import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=7.7.2';
 import {enrichTrainPlatform} from './train-platforms.js?v=5.4.4';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
@@ -298,8 +298,6 @@ function initMap(){
   return true;
 }
 function visible(v){
-  // Radar 7.7 map declutter: hide last-known-only positions by default. Keep data in state, preserve selection and intentional searches.
-  if(!window.sr77ShowNonLive && !state.query && state.selectedKey!==v.key && (v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300)))return false;
   if(state.filter==='trains'&&v.kind!=='train'||state.filter==='buses'&&v.kind!=='bus')return false;
   if(state.query&&!`${v.name} ${v.headsign} ${v.vehicleId} ${v.tripId} ${v.routeLongName}`.toLocaleLowerCase('de').includes(state.query))return false;
   return true;

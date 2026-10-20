@@ -150,7 +150,7 @@ export default {
       const upstream = await fetch(FEEDS[name], {
         headers: name.startsWith('sta_direct') ? { 'accept': 'application/json' } : { 'accept': 'application/json', 'X-BusOne-Client': client, 'X-BusOne-Use': 'personal' },
         signal: AbortSignal.timeout(9000),
-        cf: { cacheEverything: true, cacheTtl: 15 }
+        cf: { cacheEverything: true, cacheTtl: 5 }
       });
       if (!upstream.ok) return respond({ error: 'Feed temporarily unavailable', feed: name, upstreamStatus: upstream.status }, 502, { 'cache-control': 'no-store' });
       const type = upstream.headers.get('content-type') || '';

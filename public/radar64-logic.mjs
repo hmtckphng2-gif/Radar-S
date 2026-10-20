@@ -24,8 +24,9 @@ export function samePhysicalTrip(a,b){
 export function selectRepresentatives(vehicles,selectedKey){const all=[...vehicles].filter(Boolean),removed=new Set(),groups=new Map();
  const sorted=[...all].sort((a,b)=>{const delta=Number(b.timestamp||0)-Number(a.timestamp||0);if(Math.abs(delta)>10)return delta;return Number(b.source==='sta_direct')-Number(a.source==='sta_direct')||delta});
  for(let i=0;i<sorted.length;i++){const a=sorted[i];if(removed.has(a.key))continue;const group=[a];for(let j=i+1;j<sorted.length;j++){const b=sorted[j];if(removed.has(b.key))continue;if(samePhysicalTrip(a,b)){removed.add(b.key);group.push(b)}}
- const direct=group.find(x=>x.source==='sta_direct'&&x.lineVerified);
- const chosen=direct||group.find(x=>x.key===selectedKey)||group[0];groups.set(chosen.key,group.map(x=>x.source));for(const item of group)if(item.key!==chosen.key)removed.add(item.key);removed.delete(chosen.key);
+ const freshest=group.reduce((best,item)=>Number(item.timestamp||0)>Number(best.timestamp||0)?item:best,group[0]);
+ const direct=group.find(x=>x.source==='sta_direct'&&x.lineVerified&&Number(freshest.timestamp||0)-Number(x.timestamp||0)<=5&&!x.stale);
+ const chosen=direct||group.find(x=>x.key===selectedKey&&!x.stale&&Number(freshest.timestamp||0)-Number(x.timestamp||0)<=5)||freshest;groups.set(chosen.key,group.map(x=>x.source));for(const item of group)if(item.key!==chosen.key)removed.add(item.key);removed.delete(chosen.key);
  }
  return {keys:new Set(all.filter(x=>!removed.has(x.key)).map(x=>x.key)),sources:groups,duplicates:removed.size};
 }
