@@ -1,3 +1,4 @@
+import {Radar83Cinematic,preload3DLibraries} from './radar83-map.mjs';
 import {Vehicle3DOverlay} from './radar82-3d.mjs';
 /* Radar 7.1 – Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
@@ -9,7 +10,7 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
  let bridge=null,map=null,initialized=false,token=0,timer=0,rotationFrame=0,active=false;
- let hud=null,previousBearing=null,visibleKey=null,animatingTurn=false,model3d=null;
+ let hud=null,previousBearing=null,visibleKey=null,animatingTurn=false,model3d=null,cinema3d=null,emergencyFallback=null;
  const mapVisible=()=>!$('sr50MapTab')?.classList.contains('sr50-map-inactive') && !document.hidden && location.hash!=='#home' && location.hash!=='#journey' && location.hash!=='#more';
  function setupHud(){
   if(hud)return;
@@ -52,6 +53,7 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
    try{map.setBearing(previousBearing)}catch{}
   }
   if(restore){previousBearing=null;visibleKey=null}
+  cinema3d?.close();
   model3d?.hide();document.body.classList.remove('sr82-3d-active');
  }
  function onSelection(){
@@ -70,31 +72,41 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
   if(title)title.textContent=String(vehicle.name||'Fahrzeug').slice(0,28);
   if(quality)quality.textContent=vehicle.stale?'LETZTE BEKANNTE POSITION':('FEEDPOSITION · '+String(vehicle.positionType||'KEIN GPS-NACHWEIS').slice(0,28).toUpperCase());
   const heading=focusHeading(vehicle),arrow=$('sr71HeadingArrow');
-  const orbitStartedAt=performance.now();
-  if(model3d)model3d.show(vehicle,pos,heading).then(()=>{
-   if(seq===token && model3d?.visible)model3d.animateOrbit(Math.max(0,duration-(performance.now()-orbitStartedAt)));
-  })
   if(arrow){arrow.hidden=heading===null;arrow.style.setProperty('--sr71-direction',((heading??0)-45)+'deg')}
   const toZoom=focusZoom(map.getZoom(),map.getMaxZoom(),vehicle.kind);
   const duration=focusDuration(motion.matches,map.getZoom(),toZoom,focusDistanceKm(map.getCenter(),pos));
-  try{
-   map.stop();
-   if(motion.matches)map.setView([pos.lat,pos.lng],toZoom,{animate:false});
-   else map.flyTo([pos.lat,pos.lng],toZoom,{animate:true,duration:duration/1000,easeLinearity:.22});
-   if(heading!==null)turnTo(heading,duration,seq);
-  }catch(error){console.warn('Cinematic focus fallback',error);try{map.setView([pos.lat,pos.lng],toZoom,{animate:false})}catch{}}
-  // Leaflet's flyTo finishes at the target; ensure the latest visible marker
-  // is centered at the end without synthesizing a new train position.
-  timer=setTimeout(()=>{
+  const classic=()=>{
    if(seq!==token)return;
-   const newVehicle=bridge.state.vehicles.get(key);
-   const newPos=validFocusPoint(newVehicle,bridge.state.markers.get(key)?.marker?.getLatLng?.());
-   if(newPos)model3d?.updatePoint(newPos,focusHeading(newVehicle));
-   if(newPos && bridge.state.selectedKey===key){
-    try{map.panTo([newPos.lat,newPos.lng],{animate:false})}catch{}
-   }
-   reveal(seq);
-  },duration+95);
+   const orbitStartedAt=performance.now();
+   if(model3d)model3d.show(vehicle,pos,heading).then(()=>{
+    if(seq===token&&model3d?.visible)model3d.animateOrbit(Math.max(0,duration-(performance.now()-orbitStartedAt)));
+   });
+   try{
+    map.stop();
+    if(motion.matches)map.setView([pos.lat,pos.lng],toZoom,{animate:false});
+    else map.flyTo([pos.lat,pos.lng],toZoom,{animate:true,duration:duration/1000,easeLinearity:.22});
+    if(heading!==null)turnTo(heading,duration,seq);
+   }catch(error){console.info('Radar 8.2 camera fallback',error);try{map.setView([pos.lat,pos.lng],toZoom,{animate:false})}catch{}}
+   timer=setTimeout(()=>{
+    if(seq!==token)return;
+    const nextVehicle=bridge.state.vehicles.get(key);
+    const nextPos=validFocusPoint(nextVehicle,bridge.state.markers.get(key)?.marker?.getLatLng?.());
+    if(nextPos)model3d?.updatePoint(nextPos,focusHeading(nextVehicle));
+    if(nextPos && bridge.state.selectedKey===key)try{map.panTo([nextPos.lat,nextPos.lng],{animate:false})}catch{}
+    reveal(seq);
+   },duration+95);
+  };
+  emergencyFallback=classic;
+  if(cinema3d?.enabled){
+   cinema3d.open(vehicle,pos,heading,duration,toZoom).then(ok=>{
+    if(seq!==token){if(ok)cinema3d?.close({sync:false});return}
+    if(!ok){classic();return}
+    model3d?.hide();document.body.classList.remove('sr82-3d-active');
+    hud?.classList.remove('sr71-is-running');
+    // The 3D camera runs in MapLibre; do NOT also fly or rotate the 2D Leaflet map.
+    timer=setTimeout(()=>{if(seq===token)reveal(seq)},duration+95);
+   }).catch(error=>{console.info('Radar 8.3 initialization fallback',error);classic()});
+  }else classic();
  }
  function manualInterrupt(){
   if(!active)return;
@@ -106,16 +118,36 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
   if(initialized)return;
   bridge=window.SuedtirolRadar37;map=bridge?.state?.map;
   if(!map||!$('map')||!$('sheet'))return;
-  initialized=true;model3d=new Vehicle3DOverlay(map);window.SuedtirolRadar71={enabled:true,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
+  initialized=true;model3d=new Vehicle3DOverlay(map);
+  cinema3d=new Radar83Cinematic(map,{
+   onExit:()=>{
+    token++;clearTimeout(timer);active=false;
+    document.body.classList.remove('sr71-focusing','sr71-focused');
+    hud?.classList.remove('sr71-is-running','sr71-is-done');
+    window.SuedtirolRadar42?.setVehicleSnap?.('peek');
+   },
+   onManual:()=>{if(active)reveal(token)},
+   onFailure:()=>{if(active&&emergencyFallback){clearTimeout(timer);emergencyFallback()}}
+  });
+  window.SuedtirolRadar71={enabled:true,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
   const badge=document.querySelector('.brand-title em');if(badge)badge.textContent='7.1';
   document.title='Südtirol Radar 7.1 · Cinematic Vehicle Focus';
   setupHud();
+  setTimeout(preload3DLibraries,1900);
   document.addEventListener('sr37:selection',onSelection);
-  document.addEventListener('sr37:feeds',()=>{if(!visibleKey||!model3d?.visible)return;const v=bridge?.state?.vehicles?.get(visibleKey);const m=bridge?.state?.markers?.get(visibleKey)?.marker;const p=validFocusPoint(v,m?.getLatLng?.());if(p)model3d.updatePoint(p,focusHeading(v))});
+  document.addEventListener('sr37:feeds',()=>{
+   if(!visibleKey)return;
+   const v=bridge?.state?.vehicles?.get(visibleKey);
+   const m=bridge?.state?.markers?.get(visibleKey)?.marker;
+   const p=validFocusPoint(v,m?.getLatLng?.());
+   if(!p)return;
+   if(model3d?.visible)model3d.updatePoint(p,focusHeading(v));
+   if(cinema3d?.ready)cinema3d.update(v,p,focusHeading(v));
+  });
   document.addEventListener('sr37:sheet-closed',()=>cancel({restore:true}));
   map.on('dragstart',manualInterrupt);
-  map.getContainer().addEventListener('wheel',manualInterrupt,{passive:true});
-  map.getContainer().addEventListener('touchstart',()=>{if(active)manualInterrupt()},{passive:true});
+  map.getContainer().addEventListener('wheel',()=>{if(!cinema3d?.ready)manualInterrupt()},{passive:true});
+  map.getContainer().addEventListener('touchstart',()=>{if(active&&!cinema3d?.ready)manualInterrupt()},{passive:true});
   // Direct manipulation: no artificial gesture delay. Keep Leaflet's native inertia.
   map.options.inertia=true;map.options.inertiaDeceleration=3400;map.options.inertiaMaxSpeed=2200;
   document.addEventListener('visibilitychange',()=>{if(document.hidden)cancel({restore:true})});

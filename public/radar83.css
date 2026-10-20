@@ -1,0 +1,59 @@
+/* Radar 8.3 — real 3D map only during selected vehicle cinematic view.
+ * Does not rotate/transform Leaflet panes or change normal map interactions.
+ */
+#map .sr83-viewport{
+ position:absolute;inset:0;z-index:835;overflow:hidden;background:#0a1018;
+ opacity:0;pointer-events:none;
+ transition:opacity .28s ease;
+}
+#map .sr83-viewport.sr83-ready{opacity:1;pointer-events:auto}
+#map .sr83-map,#map .sr83-map .maplibregl-map{position:absolute;inset:0;width:100%;height:100%}
+#map .sr83-map .maplibregl-canvas-container,#map .sr83-map .maplibregl-canvas{touch-action:none}
+#map .sr83-toolbar{
+ position:absolute;z-index:10;left:15px;right:15px;
+ top:max(136px,env(safe-area-inset-top,0px));
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ pointer-events:none;
+}
+#map .sr83-label{
+ color:#e3ecf6;letter-spacing:.14em;font-size:10px;font-weight:750;
+ padding:10px 12px;border-radius:11px;
+ background:#101c29e8;border:1px solid #395066bb;box-shadow:0 6px 20px #0008;
+ white-space:nowrap;
+}
+#map .sr83-back{
+ pointer-events:auto;touch-action:manipulation;appearance:none;
+ min-height:41px;padding:10px 14px;
+ border-radius:12px;border:1px solid #6c8aa6a9;
+ background:#112234f2;color:#f4f8fc;box-shadow:0 5px 20px #0008;
+ font:650 13px/1.1 Inter,-apple-system,BlinkMacSystemFont,sans-serif;
+ -webkit-tap-highlight-color:transparent;
+}
+#map .sr83-back:active{background:#25435c}
+#map .sr83-back:focus-visible{outline:2px solid #8bcdff;outline-offset:2px}
+#map .sr83-credit{
+ position:absolute;z-index:10;left:50%;
+ bottom:calc(32dvh + 18px);
+ max-width:calc(100% - 30px);
+ transform:translateX(-50%);
+ text-align:center;
+ border-radius:10px;padding:7px 10px;
+ background:#0b1722d9;border:1px solid #31465a9c;
+ color:#c4d2dd;font-size:10px;font-weight:500;
+ pointer-events:none;
+}
+#map .sr83-viewport .maplibregl-ctrl-bottom-right{bottom:min(32dvh,250px)}
+#map .sr83-viewport .maplibregl-ctrl-attrib{font-size:9px;max-width:45vw}
+body.sr83-cinematic #map .sr71-cinematic{opacity:0!important}
+body.sr83-cinematic #map .sr82-model-canvas{display:none!important}
+body.sr83-cinematic .map-actions,
+body.sr83-cinematic #sr60Launch{opacity:0!important;pointer-events:none!important}
+body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32dvh}
+@media(max-width:390px){
+ #map .sr83-toolbar{top:max(130px,env(safe-area-inset-top,0px))}
+ #map .sr83-label{font-size:9px}
+ #map .sr83-credit{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+ #map .sr83-viewport{transition:none!important}
+}
