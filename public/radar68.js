@@ -15,6 +15,20 @@ function open(){
  const description=el('section','sr68-info');
  description.append(el('h3','','Radar Intelligence'),el('p','', 'Hier erscheinen vorhandene Auswertungen aus Feedmeldungen. Es werden keine zusätzlichen KI-Prognosen oder Verspätungswerte erfunden.'));
  content.append(description);
+ const history=el('section','sr75-history-summary');history.id='sr75HistorySummary';
+ history.append(el('h3','','Verspätungshistorie / Storico ritardi'));
+ const summary=el('p','','Historische Prognosen werden geladen …');history.append(summary);content.append(history);
+ const selected=window.SuedtirolRadar37?.state;
+ const vehicle=selected?.vehicles?.get?.(selected.selectedKey);
+ const trip=vehicle?.tripId||vehicle?.trip_id||null;
+ const stop=vehicle?.nextStopId||vehicle?.stopId||null;
+ const query=trip?('trip='+encodeURIComponent(trip)):stop?('stop='+encodeURIComponent(stop)):null;
+ if(query)fetch('/api/history/analytics?'+query+'&hours=48',{headers:{accept:'application/json'}})
+  .then(async r=>{if(!r.ok)throw Error('unavailable');return r.json()})
+  .then(data=>{if(!history.isConnected)return;summary.textContent=data.sampleCount>0?`${data.sampleCount} Feed-Prognosen · Ø ${data.averageMinutes} Min. · Median ${data.medianMinutes} Min. · ${data.latePercent}% mit über +1 Min. (keine bestätigten Ankünfte)`:'Noch keine historischen Feed-Prognosen für diese Fahrt vorhanden.'})
+  .catch(()=>{if(history.isConnected)summary.textContent='Historische Auswertung derzeit nicht verfügbar.'});
+ else summary.textContent='Keine eindeutige Fahrt- oder Haltestellenkennung für die Historie vorhanden.';
+
  const shared=$('sheet')?.querySelector('.sheet-scroll');
  for(const id of advanced){
   const node=$(id);

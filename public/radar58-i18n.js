@@ -88,7 +88,8 @@ const vocabulary={
 'heute':'oggi','morgen':'domani','jetzt':'ora','aktuell':'attuale','unbekannt':'sconosciuto',
 'keine':'nessuna','kein':'nessun','nicht verfügbar':'non disponibile','verfügbar':'disponibile',
 'vorherige':'precedenti','nächste':'prossime','insgesamt':'in totale','ungefähr':'circa',
-'Nur Fahrplan':'Solo orario','Daten fehlen':'Dati mancanti','Noch keine Daten':'Ancora nessun dato'
+'Nur Fahrplan':'Solo orario','Daten fehlen':'Dati mancanti','Noch keine Daten':'Ancora nessun dato',
+'Verspätungshistorie':'Storico dei ritardi','Historische Auswertung':'Analisi storica','Historische Prognosen':'Previsioni storiche','Feed-Prognosen':'Previsioni della fonte','Noch keine historischen Feed-Prognosen':'Nessuna previsione storica disponibile','keine bestätigten Ankünfte':'non sono arrivi confermati','Derzeit nicht verfügbar':'Attualmente non disponibile','Schritt':'Passo','SCHRITT':'PASSO','Intelligence':'Analisi','Analysen & weitere Details':'Analisi e altri dettagli','FAHRTANALYSE':'ANALISI DELLA CORSA','Erweiterte Fahrzeugdetails':'Dettagli avanzati del veicolo','Zur Karte':'Torna alla mappa','Datenbank':'Banca dati','Historie':'Cronologia'
 };
 const vocabularyPairs=Object.entries(vocabulary).sort((a,b)=>b[0].length-a[0].length);
 function translateVocabulary(text,reverse=false){

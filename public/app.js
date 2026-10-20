@@ -762,6 +762,7 @@ function italySeconds(){
 }
 function showStationBoard(st){
   state.stationChoice=st;$('stationResults').hidden=true;$('stationBoard').hidden=false;
+  document.dispatchEvent(new CustomEvent('sr75:station-selected',{detail:{stopId:st.stopId,name:st.name}}));
   const scroller=$('stationSheet').querySelector('.sheet-scroll');if(scroller)scroller.scrollTop=0;
   $('stationName').textContent='Abfahrten · '+st.name;
   const list=$('stationDepartures');list.replaceChildren();
