@@ -2,13 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from '../public/radar71-camera-logic.mjs';
 const NOW=1760900000000;
-test('near focus is brief, long-distance focus is cinematic, reduced motion is instant',()=>{
- const near=focusDuration(false,16,17,0.1),far=focusDuration(false,9,17,90);
- assert.ok(near<650);
- assert.ok(far>near);
- assert.ok(far<=1800);
+test('cinematic focus lasts 3-4s nearby and up to 5s for distant trips',()=>{
+ const near=focusDuration(false,16,17,0.1),medium=focusDuration(false,13,17,4),far=focusDuration(false,9,17,90);
+ assert.ok(near>=3200 && near<=4000);
+ assert.ok(medium>=near && medium<=4500);
+ assert.ok(far>medium && far<=5000);
  assert.equal(focusDuration(true,9,17,90),0);
- assert.ok(focusDistanceKm({lat:46.5,lng:11.35},{lat:46.5,lng:11.35})===0);
+ assert.equal(focusDistanceKm({lat:46.5,lng:11.35},{lat:46.5,lng:11.35}),0);
  assert.ok(focusDistanceKm({lat:46.5,lng:11.35},{lat:46.7,lng:11.4})>20);
 });
 test('focus zoom goes close without zooming out or exceeding maximum',()=>{

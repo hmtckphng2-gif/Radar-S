@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {modelKind,headingRadians,createVehicleMesh} from '../public/radar82-3d.mjs';
+import {modelKind,headingRadians,createVehicleMesh,cinematicPose} from '../public/radar82-3d.mjs';
 test('vehicle types are generic when type is not confirmed',()=>{
  assert.equal(modelKind({kind:'bus'}),'bus');
  assert.equal(modelKind({kind:'train'}),'train');
@@ -20,4 +20,12 @@ test('3D geometry creates actual meshes rather than flat marker CSS',()=>{
   assert.ok(m.children.length>12);
   assert.ok(m.children.every(x=>x instanceof Mesh));
  }
+});
+
+test('cinematic orbit descends and rotates progressively',()=>{
+ const start=cinematicPose(0),mid=cinematicPose(.5),end=cinematicPose(1);
+ assert.ok(start.elevation>mid.elevation && mid.elevation>end.elevation);
+ assert.ok(start.yaw<mid.yaw && mid.yaw<end.yaw);
+ assert.ok(end.radius<start.radius);
+ assert.deepEqual(cinematicPose(9),end);
 });

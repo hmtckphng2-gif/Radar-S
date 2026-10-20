@@ -1,10 +1,11 @@
 /* Radar 7.1 cinematic camera decisions: no imaginary location or direction. */
 // Short trips should feel immediate; long trips deserve a longer cinematic flight.
+// User-tested pacing: ~3.2s locally, smoothly up to 5s for a distant selection.
 export function focusDuration(reduced=false,fromZoom=10,toZoom=17,distanceKm=0){
  if(reduced)return 0;
- const zoomGap=Math.abs(Number(toZoom)-Number(fromZoom))||0;
+ const zoomGap=Math.max(0,Math.abs(Number(toZoom)-Number(fromZoom))||0);
  const distance=Math.max(0,Number(distanceKm)||0);
- return Math.round(Math.max(280,Math.min(1800,340+zoomGap*85+Math.sqrt(distance)*115)));
+ return Math.round(Math.max(3200,Math.min(5000,3200+zoomGap*130+Math.sqrt(distance)*125)));
 }
 export function focusZoom(current,maxZoom=18,kind='train'){
  const actual=Number.isFinite(Number(current))?Number(current):10;

@@ -30,8 +30,20 @@ export function createVehicleMesh(T,kind){
  if(!bus){box(1.86,.18,length-.3,0,.48,0,dark);box(.85,.14,2.2,0,2.31,.1,dark)}
  return root;
 }
+// A virtual Three.js orbit provides pitch and yaw without rotating Leaflet's 2D
+// map panes (which would break marker hit testing and touch coordinates).
+export function cinematicPose(progress){
+ const t=Math.max(0,Math.min(1,Number(progress)||0));
+ const eased=t*t*(3-2*t);
+ return {
+  yaw:-.65+eased*2.0,
+  elevation:1.15-eased*.91,
+  radius:17.5-eased*6.5,
+  targetHeight:1
+ };
+}
 export class Vehicle3DOverlay{
- constructor(map){this.map=map;this.current=null;this.visible=false;this.disposed=false;this.sequence=0;this.update=()=>this.draw();map.on('move zoom resize',this.update)}
+ constructor(map){this.map=map;this.current=null;this.visible=false;this.disposed=false;this.sequence=0;this.orbitFrame=0;this.orbitProgress=1;this.update=()=>this.draw();map.on('move zoom resize',this.update)}
  async show(vehicle,point,heading){
   const id=++this.sequence;this.visible=true;this.current={vehicle,point,heading};
   try{
@@ -65,7 +77,22 @@ export class Vehicle3DOverlay{
   this.mesh.rotation.y=headingRadians(this.current.heading);
   this.renderer.render(this.scene,this.camera);
  }
+ animateOrbit(duration){
+  cancelAnimationFrame(this.orbitFrame);
+  if(!this.visible||!this.renderer)return;
+  const ms=Math.max(0,Number(duration)||0),start=performance.now();
+  const frame=now=>{
+   if(!this.visible||this.disposed)return;
+   const t=ms===0?1:Math.min(1,(now-start)/ms);
+   const pose=cinematicPose(t);
+   this.camera.position.set(Math.sin(pose.yaw)*pose.radius,Math.sin(pose.elevation)*pose.radius,Math.cos(pose.yaw)*pose.radius);
+   this.camera.lookAt(0,pose.targetHeight,0);
+   this.draw();
+   if(t<1)this.orbitFrame=requestAnimationFrame(frame);
+  };
+  this.orbitFrame=requestAnimationFrame(frame);
+ }
  updatePoint(point,heading){if(!this.current)return;this.current.point=point;this.current.heading=heading;this.draw()}
- hide(){this.visible=false;this.sequence++;if(this.canvas)this.canvas.hidden=true}
+ hide(){cancelAnimationFrame(this.orbitFrame);this.visible=false;this.sequence++;if(this.canvas)this.canvas.hidden=true}
  destroy(){this.disposed=true;this.hide();this.map.off('move zoom resize',this.update);this.renderer?.dispose();this.canvas?.remove()}
 }

@@ -70,7 +70,10 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
   if(title)title.textContent=String(vehicle.name||'Fahrzeug').slice(0,28);
   if(quality)quality.textContent=vehicle.stale?'LETZTE BEKANNTE POSITION':('FEEDPOSITION · '+String(vehicle.positionType||'KEIN GPS-NACHWEIS').slice(0,28).toUpperCase());
   const heading=focusHeading(vehicle),arrow=$('sr71HeadingArrow');
-  if(model3d)model3d.show(vehicle,pos,heading)
+  const orbitStartedAt=performance.now();
+  if(model3d)model3d.show(vehicle,pos,heading).then(()=>{
+   if(seq===token && model3d?.visible)model3d.animateOrbit(Math.max(0,duration-(performance.now()-orbitStartedAt)));
+  })
   if(arrow){arrow.hidden=heading===null;arrow.style.setProperty('--sr71-direction',((heading??0)-45)+'deg')}
   const toZoom=focusZoom(map.getZoom(),map.getMaxZoom(),vehicle.kind);
   const duration=focusDuration(motion.matches,map.getZoom(),toZoom,focusDistanceKm(map.getCenter(),pos));
