@@ -1,5 +1,7 @@
-/* 7.9 source transparency, compact graphite */
-.sr79-health-button{align-self:center;border:1px solid rgba(158,186,215,.2);background:rgba(46,69,92,.53);border-radius:11px;color:inherit;padding:7px 9px;font:inherit;font-size:11px;cursor:pointer}
-.sr79-health{position:fixed;inset:auto 10px max(90px,env(safe-area-inset-bottom)) 10px;z-index:9999;max-width:490px;max-height:65dvh;overflow-y:auto;margin:auto;padding:17px;border:1px solid rgba(150,179,210,.28);border-radius:22px;background:#131d2b;color:#d9e8f7;box-shadow:0 20px 70px rgba(0,0,0,.45);font-size:12px}
-.sr79-health[hidden]{display:none}.sr79-health-header{display:flex;justify-content:space-between;align-items:center;gap:10px}.sr79-close{border:0;background:transparent;color:inherit;font-size:22px;cursor:pointer}.sr79-legend{color:#aebfce;line-height:1.5}.sr79-feed-row{padding:10px 4px;border-top:1px solid rgba(172,197,217,.13);display:grid;gap:3px}.sr79-feed-status{color:#bdd0e0;font-size:11px}.sr79-feed-row small{color:#a5bacb;line-height:1.5}.sr79-evidence{font-size:11px;color:#a7b9cb;line-height:1.45;padding:5px 0}
-@media(max-width:640px){.sr79-health{left:8px;right:8px}.sr79-health-button{padding:6px 8px;font-size:10px}}
+/* Radar 7.9 — small accessible feed quality disclosure, keeping the map uncluttered */
+.sr79-health-toggle{display:inline-block;padding:4px 8px;margin:5px 0;border:1px solid rgba(149,178,203,.24);border-radius:9px;background:rgba(105,143,178,.09);color:inherit;font-size:11px;cursor:pointer}
+.sr79-health-panel{margin:5px 0 8px;padding:10px;border:1px solid rgba(149,178,203,.18);background:rgba(41,58,77,.22);border-radius:13px;max-width:380px;font-size:11px}
+.sr79-health-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid rgba(145,169,193,.12);padding:7px 0}
+.sr79-health-row span{color:#b4c5d9;text-align:right;line-height:1.4}
+.sr79-health-panel small{display:block;margin-top:8px;color:#b3c5d8;line-height:1.45}
+@media(max-width:750px){.sr79-health-panel{max-width:100%}.sr79-health-row{font-size:10px}}

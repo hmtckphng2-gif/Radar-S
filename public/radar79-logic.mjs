@@ -1,11 +1,5 @@
-/* Radar 7.9 — pure, non-predictive transport source diagnostics. */
-import {vehicleLiveQuality} from './radar78-logic.mjs';
-const SOURCES=['sta','sta_direct','trentino','trains'];
-export function feedHealthRows(vehicles,statuses={},now=Date.now()){
- const map=new Map(SOURCES.map(source=>[source,{source,status:statuses[source]||'unbekannt',total:0,current:0,delayed:0,estimated:0,last:0,newestAge:null}]));
- for(const v of vehicles||[]){const source=String(v?.source||'');if(!map.has(source))continue;const row=map.get(source),q=vehicleLiveQuality(v,now);row.total++;row[q.kind]++;if(Number.isFinite(q.age)&&q.age>=0&&(row.newestAge===null||q.age<row.newestAge))row.newestAge=q.age}
- return [...map.values()];
-}
-export function formatAge(age){return age===null||!Number.isFinite(age)?'Alter unbekannt':age<60?`${age} Sek.`:`${Math.floor(age/60)} Min.`}
-export function stationKey(st){return st&&typeof st.source==='string'&&typeof st.stopId==='string'?st.source+':'+st.stopId:null}
-export function safeFavoriteRecords(records,stops){const wanted=new Set((Array.isArray(records)?records:[]).filter(x=>typeof x==='string').slice(0,40));return (stops||[]).filter(st=>wanted.has(stationKey(st))||wanted.has(st.stopId)).slice(0,12)}
+/* Radar 7.9 — stable favorite identities and transparent feed age. */
+export function qualityAgeText(age){if(!Number.isFinite(age)||age<0)return 'Zeit unbekannt';return age<60?`${age} Sek.`:`${Math.floor(age/60)} Min.`}
+export function stationKey(st){return `${String(st?.source||'').trim()}:${String(st?.stopId||'').trim()}`}
+export function findFavoriteStations(stations,ids,limit=12){const used=new Set(),out=[];for(const id of ids||[]){const matches=(stations||[]).filter(st=>st.stopId===id||stationKey(st)===id);for(const st of matches){const key=stationKey(st);if(!key||used.has(key))continue;used.add(key);out.push(st);if(out.length>=limit)return out}}return out}
+export function feedHealthRows(statuses,vehicles,now=Date.now()){const map=new Map();for(const [source,status] of Object.entries(statuses||{})){if(source.endsWith('_updates')||source.endsWith('_alerts'))continue;map.set(source,{source,status,count:0,latest:null,old:0})}for(const v of vehicles||[]){const source=String(v?.source||'');if(!map.has(source))map.set(source,{source,status:'unknown',count:0,latest:null,old:0});const r=map.get(source);r.count++;const t=Number(v.timestamp);if(Number.isFinite(t)&&t>1e9&&t<=now/1000+30)r.latest=r.latest===null?t:Math.max(r.latest,t);if(v.stale||!Number.isFinite(t)||t<=1e9||now/1000-t>300)r.old++}return [...map.values()].map(r=>({...r,ageSeconds:r.latest===null?null:Math.max(0,Math.floor(now/1000-r.latest))})).sort((a,b)=>a.source.localeCompare(b.source))}
