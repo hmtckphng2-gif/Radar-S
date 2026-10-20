@@ -50,6 +50,57 @@ const replacements=[
 [/\bBahnhof\b/g,'stazione'],[/\bHaltestelle\b/g,'fermata'],
 [/\bDatenquelle\b/g,'fonte dati'],[/\bNur Fahrplan\b/g,'Solo orario']
 ];
+// 7.4: extended interface vocabulary, including status, actions and analysis labels.
+const vocabulary={
+'Verbindung':'Connessione','Verbinde':'Connessione in corso','Verbunden':'Connesso','Offline':'Non in linea','Online':'In linea',
+'Keine Daten':'Nessun dato','Keine Ergebnisse':'Nessun risultato','Keine Fahrzeuge':'Nessun veicolo','Keine Abfahrten':'Nessuna partenza',
+'Laden':'Caricamento','Lädt':'Caricamento','Aktualisieren':'Aggiorna','Aktualisiert':'Aggiornato','Letzte Aktualisierung':'Ultimo aggiornamento',
+'Schließen':'Chiudi','Öffnen':'Apri','Mehr':'Altro','Weniger':'Meno','Zurück':'Indietro','Weiter':'Avanti','Fertig':'Fine','Überspringen':'Salta',
+'Einführung':'Introduzione','Hilfe':'Aiuto','Einstellungen':'Impostazioni','Sprache':'Lingua','Design':'Aspetto',
+'Hell':'Chiaro','Dunkel':'Scuro','Automatisch':'Automatico','Auswählen':'Seleziona','Ausgewählt':'Selezionato',
+'Ankunft':'Arrivo','Abfahrt':'Partenza','Ankünfte':'Arrivi','Anschluss':'Coincidenza','Umstieg':'Cambio','Umsteigen':'Cambiare',
+'Pünktlich':'Puntuale','Planmäßig':'Da orario','Fahrplan':'Orario','Fahrplanposition':'Posizione prevista da orario',
+'Ist':'Effettivo','Soll':'Previsto','Ist/Soll':'Effettivo/Previsto','Position vs. Fahrplan':'Posizione rispetto all’orario',
+'Position und Fahrplan':'Posizione e orario','Zeitabweichung':'Scostamento temporale','Zeitlicher Sollvergleich':'Confronto temporale previsto',
+'Räumliche Abweichung':'Scostamento spaziale','Rückstand':'Ritardo spaziale','Vorsprung':'Anticipo spaziale',
+'gemeldet':'segnalato','geschätzt':'stimato','berechnet':'calcolato','modelliert':'modellato','Modelliert':'Modellato',
+'hinter dem Soll':'dietro la posizione prevista','vor dem Soll':'davanti alla posizione prevista',
+'Fahrtverlauf':'Andamento della corsa','Fahrt-Fortschritt':'Avanzamento della corsa','Fahrplanfortschritt':'Avanzamento da orario',
+'Nächster Halt':'Prossima fermata','Nächster gemeldeter Halt':'Prossima fermata segnalata',
+'Letzter Halt':'Ultima fermata','Halte':'Fermate','Haltestellen':'Fermate','Bahnhöfe':'Stazioni','Bahnhof':'Stazione',
+'Gleis':'Binario','Gleis unbekannt':'Binario sconosciuto','Linie':'Linea','Linien':'Linee','Richtung':'Direzione',
+'Ziel':'Destinazione','Start':'Partenza','Strecke':'Percorso','Route':'Percorso','Verlauf':'Andamento',
+'Fahrzeug':'Veicolo','Fahrzeugdetails':'Dettagli veicolo','Fahrzeugposition':'Posizione del veicolo',
+'Zugnummer':'Numero del treno','Regionalzug':'Treno regionale','Buslinie':'Linea autobus',
+'Entfernung':'Distanza','Kilometer':'Chilometri','Minuten':'Minuti','Sekunden':'Secondi','Stunden':'Ore',
+'Verspätungen':'Ritardi','Verspätung':'Ritardo','Ausfälle':'Cancellazioni','Ausfall':'Cancellazione',
+'Störung':'Disservizio','Störungen':'Disservizi','Warnung':'Avviso','Hinweis':'Nota','Wichtig':'Importante',
+'Historie':'Cronologia','Verlauf anzeigen':'Mostra andamento','Verlauf öffnen':'Apri andamento',
+'Datenqualität':'Qualità dei dati','Datenquellen':'Fonti dati','Quelle':'Fonte','Aktueller Feed':'Dati attuali',
+'Echtzeit':'Tempo reale','Echtzeitdaten':'Dati in tempo reale','Live-Daten':'Dati in tempo reale',
+'GPS-Position':'Posizione GPS','Simulierte Position':'Posizione simulata','Position geschätzt':'Posizione stimata',
+'Karte':'Mappa','Abfahrten':'Partenze','Statistik':'Statistiche','Favoriten':'Preferiti',
+'Suchen':'Cerca','Suche':'Ricerca','Filter':'Filtro','Alle':'Tutti','Züge':'Treni','Busse':'Autobus',
+'Netzwerk':'Rete','Netzwerkstatus':'Stato della rete','Übersicht':'Panoramica','Details':'Dettagli',
+'Benachrichtigungen':'Notifiche','Aktivieren':'Attiva','Deaktivieren':'Disattiva','Speichern':'Salva',
+'Gespeichert':'Salvato','Hinzufügen':'Aggiungi','Entfernen':'Rimuovi','Abbrechen':'Annulla',
+'Fahrt auswählen':'Seleziona corsa','Fahrt':'Corsa','Fahrten':'Corse',
+'heute':'oggi','morgen':'domani','jetzt':'ora','aktuell':'attuale','unbekannt':'sconosciuto',
+'keine':'nessuna','kein':'nessun','nicht verfügbar':'non disponibile','verfügbar':'disponibile',
+'vorherige':'precedenti','nächste':'prossime','insgesamt':'in totale','ungefähr':'circa',
+'Nur Fahrplan':'Solo orario','Daten fehlen':'Dati mancanti','Noch keine Daten':'Ancora nessun dato'
+};
+const vocabularyPairs=Object.entries(vocabulary).sort((a,b)=>b[0].length-a[0].length);
+function translateVocabulary(text,reverse=false){
+ let out=text;
+ const list=[...vocabularyPairs].sort((a,b)=>reverse?b[1].length-a[1].length:b[0].length-a[0].length);
+ for(const [de,it] of list){
+  const from=reverse?it:de,to=reverse?de:it;
+  const escaped=from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  out=out.replace(new RegExp('(?<![\\p{L}])'+escaped+'(?![\\p{L}])','gu'),to);
+ }
+ return out;
+}
 const itToDe=new Map(Object.entries(IT).map(([de,it])=>[it,de]));
 const pairs=[
  ['STAZIONE SELEZIONATA','AUSGEWÄHLTER BAHNHOF'],
@@ -116,7 +167,7 @@ function canonical(text){
   ['linee interessate','betroffene Linien'],['segnalazioni','Meldungen'],['corse','Fahrten']]){
   out=out.split(it).join(de);
  }
- return out;
+ return translateVocabulary(out,true);
 }
 function translate(text,target){
  const source=canonical(text);
@@ -132,14 +183,14 @@ function translate(text,target){
   ['Fahrten','corse'],['Nur Fahrplan','Solo orario'],['Zug','Treno']]){
   out=out.split(de).join(it);
  }
- return out;
+ return translateVocabulary(out);
 }
 function translateNode(node){
  if(node.nodeType!==Node.TEXT_NODE||!node.parentElement)return;
  const parent=node.parentElement;
  if(parent.closest('script,style,textarea,code,[contenteditable],.sr58-language-toggle'))return;
  const now=node.nodeValue;
- if(!now?.trim()||now.length>450)return;
+ if(!now?.trim()||now.length>1200)return;
  let source=original.get(node);
  if(!source||now!==translate(source,'de')&&now!==translate(source,'it')){
   source=canonical(now);original.set(node,source);
@@ -153,15 +204,19 @@ function scan(root){
  if(root.nodeType!==Node.ELEMENT_NODE&&root.nodeType!==Node.DOCUMENT_NODE)return;
  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
  let node;while(node=walker.nextNode())translateNode(node);
- if(root.nodeType===Node.ELEMENT_NODE&&root.matches('input[placeholder]')){
-  const src=root.dataset.sr58OriginalPlaceholder||root.getAttribute('placeholder');
-  root.dataset.sr58OriginalPlaceholder=src;
-  root.setAttribute('placeholder',translate(src,lang));
+ const elements=root.nodeType===Node.ELEMENT_NODE?[root,...root.querySelectorAll('*')]:[...root.querySelectorAll('*')];
+ for(const el of elements){
+  if(el.closest('script,style,textarea,code,[contenteditable],.sr58-language-toggle'))continue;
+  for(const attr of ['placeholder','title','aria-label','alt']){
+   if(!el.hasAttribute(attr))continue;
+   const key='sr58Original'+attr.replace(/(^|-)([a-z])/g,(_,a,b)=>b.toUpperCase());
+   const current=el.getAttribute(attr),source=el.dataset[key]||canonical(current);
+   el.dataset[key]=source;
+   const value=translate(source,lang);
+   if(current!==value)el.setAttribute(attr,value);
+  }
  }
- for(const input of root.querySelectorAll?.('input[placeholder]')||[]){
-  const src=input.dataset.sr58OriginalPlaceholder||input.getAttribute('placeholder');
-  input.dataset.sr58OriginalPlaceholder=src;input.setAttribute('placeholder',translate(src,lang));
- }
+
 }
 function apply(){
  document.documentElement.lang=lang;
