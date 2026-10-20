@@ -1,0 +1,34 @@
+name: Deploy Radar to Cloudflare
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+concurrency:
+  group: radar-cloudflare-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: ${{ vars.CLOUDFLARE_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate app and History Cron safety
+        run: |
+          npm run check
+          npm test
+          node -e "const c=require('./wrangler.jsonc');if(c.triggers?.crons?.length)process.exit(1)"
+      - name: Deploy Worker and assets
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --name radar-s
+      - name: Verify live Worker and UI assets
+        run: |
+          node --input-type=module -e "const root='https://radar-s.j9fr2vg4vm.workers.dev';for(const [path,match] of [['/api/version','7.6.0'],['/radar76.js','Radar 7.6']]){const r=await fetch(root+path+'?release='+Date.now(),{cache:'no-store'});const body=await r.text();if(!r.ok||!body.includes(match))throw Error(path+' not deployed: '+r.status);console.log('Verified',path)}"
