@@ -17,3 +17,8 @@
 .sr71-focus-reticle{border-color:rgba(115,187,255,.2)!important}
 #sr76LiveVersion{font-size:10px!important;letter-spacing:-.015em}
 @media(prefers-reduced-motion:reduce){.sr71-cinematic,.sr71-focus-ring{animation:none!important;transition:none!important}}
+
+/* Opt-in for retained/stale last-known positions; never obscure active map filters. */
+.segments .sr77-nonlive-toggle{font-size:11px!important;white-space:nowrap;opacity:.8;min-height:34px;border:1px solid rgba(172,192,212,.15)}
+.segments .sr77-nonlive-toggle[aria-pressed=true]{opacity:1;border-color:rgba(238,193,106,.5)}
+@media(max-width:750px){.segments{flex-wrap:wrap!important}.segments .sr77-nonlive-toggle{flex:0 0 auto;padding:5px 9px!important}}

@@ -298,6 +298,8 @@ function initMap(){
   return true;
 }
 function visible(v){
+  // Radar 7.7 map declutter: hide last-known-only positions by default. Keep data in state, preserve selection and intentional searches.
+  if(!window.sr77ShowNonLive && !state.query && state.selectedKey!==v.key && (v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300)))return false;
   if(state.filter==='trains'&&v.kind!=='train'||state.filter==='buses'&&v.kind!=='bus')return false;
   if(state.query&&!`${v.name} ${v.headsign} ${v.vehicleId} ${v.tripId} ${v.routeLongName}`.toLocaleLowerCase('de').includes(state.query))return false;
   return true;
