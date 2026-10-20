@@ -52,7 +52,8 @@ export class Vehicle3DOverlay{
     this.mesh=createVehicleMesh(T,kind);this.scene.add(this.mesh);this.kind=kind;
    }
    this.draw();
-  }catch(e){console.info('Radar 8.2 3D unavailable; standard marker retained',e);this.hide()}
+   document.body.classList.add('sr82-3d-active');
+  }catch(e){console.info('Radar 8.2 3D unavailable; standard marker retained',e);this.hide();document.body.classList.remove('sr82-3d-active')}
  }
  draw(){
   if(!this.visible||!this.renderer||!this.current)return;
