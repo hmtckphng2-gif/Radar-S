@@ -106,7 +106,7 @@ import {focusDuration,focusZoom,focusHeading,validFocusPoint,shortestRotation} f
   document.addEventListener('sr37:sheet-closed',()=>cancel({restore:true}));
   map.on('dragstart',manualInterrupt);
   map.getContainer().addEventListener('wheel',manualInterrupt,{passive:true});
-  map.getContainer().addEventListener('touchstart',e=>{if(e.touches.length>1)manualInterrupt()},{passive:true});
+  map.getContainer().addEventListener('touchstart',()=>{if(active)manualInterrupt()},{passive:true});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)cancel({restore:true})});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')cancel({restore:true})});
   window.addEventListener('hashchange',()=>{if(!mapVisible())cancel({restore:true})});

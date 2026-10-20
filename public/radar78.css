@@ -1,0 +1,10 @@
+/* Radar 7.8: compact Apple-inspired graphite, never hide the last-known position markers. */
+.sr78-board-summary{padding:8px 10px;border-radius:10px;background:rgba(100,147,191,.10);border:1px solid rgba(144,173,205,.17);font-size:11px;line-height:1.45;color:#b7c9db;margin:8px 0}
+.sr78-favorites{margin:8px 0;padding:9px 10px;border-radius:14px;background:rgba(99,138,174,.07);border:1px solid rgba(132,173,211,.15);display:flex;gap:7px;flex-wrap:wrap}
+.sr78-favorites strong{width:100%;font-size:12px}.sr78-favorite-item{border:1px solid rgba(150,173,198,.22);background:rgba(120,155,190,.09);border-radius:10px;padding:8px 10px;color:inherit;font-size:12px;cursor:pointer}
+.sr78-quality{margin:6px 0 8px;padding:9px 11px;border-radius:11px;border:1px solid rgba(138,177,213,.16);background:rgba(91,123,156,.08);font-size:11px;line-height:1.5;color:#bacbdc}
+.sr78-quality[data-quality=current]{border-color:rgba(86,203,167,.23)}.sr78-quality[data-quality=last]{border-color:rgba(234,185,126,.22)}
+.sr78-delay-note{display:block;margin:6px 0;color:#e7c18e;line-height:1.5}
+.sr78-feed-health{display:block;margin:3px 0 0;font-size:10px;letter-spacing:0;color:rgba(177,198,221,.85)}
+@media(max-width:750px){#sheet .sheet-scroll{touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}#sheet .sr51-train-compare{margin-block:7px}#stationDepartures .station-result{min-height:47px;padding:9px 10px;border-radius:11px}#stationBoard .section-title{letter-spacing:-.02em}body.sr78-gesturing .sr71-focus-ring{opacity:0!important}}
+@media(prefers-reduced-motion:reduce){#map .sr71-cinematic,#map .sr71-focus-ring{animation:none!important;transition:none!important}}
