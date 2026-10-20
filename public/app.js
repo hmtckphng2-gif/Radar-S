@@ -892,12 +892,41 @@ window.SuedtirolRadar37={state,showStations,showStationBoard,getStationList,open
   verifiedRouteCount:()=>[...state.vehicles.values()].filter(v=>v.kind==='bus' && v.tripId && v.shapeId && mapTarget(v).path).length,
   routeOnlyCount:()=>[...state.vehicles.values()].filter(v=>v.kind==='bus' && !v.shapeId && v.routeShapeId && mapTarget(v).path).length,
   routeMatchFor:v=>mapTarget(v),vehicleDelay:currentVehicleDelay,qualityFor:v=>observationQuality(v),fusionInfo:()=>state.fusion,diagnostics:()=>state.diagnostics||feedDiagnostics(state.vehicles.values(),state.statuses)};
+// Start feed positions independently from large timetable and route files.
+// On mobile, a slow GTFS download must NEVER leave the map stuck at VERBINDE.
+function bootPhase(phase){
+  state.bootPhase=phase;
+  document.documentElement.dataset.radarBoot=phase;
+}
 async function init(){
+  bootPhase('start');
   try{changeTheme(localStorage.getItem('sr-theme')==='light'?'light':'dark')}catch{changeTheme('dark')}
-  setupControls();if(!initMap())return;
-  await loadIndexes();await Promise.allSettled([loadRailShapes(),loadBusShapeManifests(),refreshFeeds()]);
-  loadBusShapesForVehicles().catch(e=>console.info('Bus shape import pending',e));
+  setupControls();
+  if(!initMap()){bootPhase('map-error');return}
+  bootPhase('map-ready');
+  // These asynchronous jobs are deliberately independent. No fabricated
+  // realtime positions: refreshFeeds still uses only actual source payloads.
+  const feeds=refreshFeeds().catch(error=>console.error('Initial realtime fetch failed',error));
+  const indexes=loadIndexes().catch(error=>console.warn('Timetable loading failed',error));
+  const rail=loadRailShapes().catch(error=>console.info('Rail geometry unavailable',error));
+  const buses=loadBusShapeManifests().catch(error=>console.info('Bus shapes unavailable',error));
+  bootPhase('loading-data');
+  await feeds;
+  bootPhase('feeds-checked');
+  // Other map modules can attach as soon as initial live data is processed.
   document.dispatchEvent(new Event('sr37:ready'));
   setInterval(()=>{if(!document.hidden)refreshFeeds()},AVERAGE_POLL_MS);
+  await Promise.allSettled([indexes,rail,buses]);
+  bootPhase('ready');
+  refreshMarkers();updateViewportBadge();
+  // Refresh labels/route associations after GTFS indexes become available.
+  // Any valid reported position remains derived only from official feeds.
+  if(!document.hidden)refreshFeeds().catch(error=>console.info('Post-index refresh unavailable',error));
+  loadBusShapesForVehicles().catch(e=>console.info('Bus shape import pending',e));
 }
-init().catch(e=>{console.error('Startup error',e);setNotice('<strong>Fehler beim Start.</strong> Details in der Browser-Konsole.');});
+init().catch(e=>{
+  bootPhase('startup-error');
+  console.error('Startup error',e);
+  const status=$('statusText');if(status)status.textContent='STARTFEHLER';
+  setNotice('<strong>Fehler beim Start.</strong> Bitte Diagnose im Hinweisfeld prüfen.');
+});
