@@ -22,10 +22,14 @@
       "versionCode": 1
     },
     "extra": {
-      "radarUrl": "https://radar-s.j9fr2vg4vm.workers.dev/"
+      "radarUrl": "https://radar-s.j9fr2vg4vm.workers.dev/",
+      "eas": {
+        "projectId": "7f2ea5bd-9a55-41a6-9e8a-ff3273e7626b"
+      }
     },
     "updates": {
       "fallbackToCacheTimeout": 0
-    }
+    },
+    "owner": "seebabuss-team"
   }
 }
