@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {feedHealthRows,formatAge,safeFavoriteRecords} from '../public/radar79-logic.mjs';
+const now=1800000000000,stamp=now/1000;
+test('feed quality counts source-specific fresh and last-known records separately',()=>{const rows=feedHealthRows([{source:'sta',timestamp:stamp-15},{source:'sta',timestamp:stamp-420,stale:true},{source:'trains',timestamp:stamp-10,positionType:'geschätzt'}],{sta:'ok',trains:'old'},now);const a=rows.find(x=>x.source==='sta'),b=rows.find(x=>x.source==='trains');assert.equal(a.current,1);assert.equal(a.last,1);assert.equal(b.estimated,1);assert.equal(b.status,'old')});
+test('station favorites respect source-qualified keys and legacy ids',()=>{const stops=[{source:'sta',stopId:'123',name:'A'},{source:'trains',stopId:'123',name:'B'}];assert.deepEqual(safeFavoriteRecords(['trains:123'],stops).map(x=>x.name),['B']);assert.equal(safeFavoriteRecords(['123'],stops).length,2)});
+test('missing age is not called current',()=>{assert.equal(formatAge(null),'Alter unbekannt');assert.equal(formatAge(125),'2 Min.')});
