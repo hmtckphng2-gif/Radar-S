@@ -1,3 +1,4 @@
+import {Vehicle3DOverlay} from './radar82-3d.mjs';
 /* Radar 7.1 – Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate
@@ -8,7 +9,7 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
  let bridge=null,map=null,initialized=false,token=0,timer=0,rotationFrame=0,active=false;
- let hud=null,previousBearing=null,visibleKey=null,animatingTurn=false;
+ let hud=null,previousBearing=null,visibleKey=null,animatingTurn=false,model3d=null;
  const mapVisible=()=>!$('sr50MapTab')?.classList.contains('sr50-map-inactive') && !document.hidden && location.hash!=='#home' && location.hash!=='#journey' && location.hash!=='#more';
  function setupHud(){
   if(hud)return;
@@ -51,6 +52,7 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
    try{map.setBearing(previousBearing)}catch{}
   }
   if(restore){previousBearing=null;visibleKey=null}
+  model3d?.hide();document.body.classList.remove('sr82-3d-active');
  }
  function onSelection(){
   const key=bridge?.state?.selectedKey,vehicle=bridge?.state?.vehicles?.get(key);
@@ -68,6 +70,7 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
   if(title)title.textContent=String(vehicle.name||'Fahrzeug').slice(0,28);
   if(quality)quality.textContent=vehicle.stale?'LETZTE BEKANNTE POSITION':('FEEDPOSITION · '+String(vehicle.positionType||'KEIN GPS-NACHWEIS').slice(0,28).toUpperCase());
   const heading=focusHeading(vehicle),arrow=$('sr71HeadingArrow');
+  if(model3d){model3d.show(vehicle,pos,heading);document.body.classList.add('sr82-3d-active')}
   if(arrow){arrow.hidden=heading===null;arrow.style.setProperty('--sr71-direction',((heading??0)-45)+'deg')}
   const toZoom=focusZoom(map.getZoom(),map.getMaxZoom(),vehicle.kind);
   const duration=focusDuration(motion.matches,map.getZoom(),toZoom,focusDistanceKm(map.getCenter(),pos));
@@ -81,7 +84,9 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
   // is centered at the end without synthesizing a new train position.
   timer=setTimeout(()=>{
    if(seq!==token)return;
-   const newPos=validFocusPoint(bridge.state.vehicles.get(key),bridge.state.markers.get(key)?.marker?.getLatLng?.());
+   const newVehicle=bridge.state.vehicles.get(key);
+   const newPos=validFocusPoint(newVehicle,bridge.state.markers.get(key)?.marker?.getLatLng?.());
+   if(newPos)model3d?.updatePoint(newPos,focusHeading(newVehicle));
    if(newPos && bridge.state.selectedKey===key){
     try{map.panTo([newPos.lat,newPos.lng],{animate:false})}catch{}
    }
@@ -98,11 +103,12 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
   if(initialized)return;
   bridge=window.SuedtirolRadar37;map=bridge?.state?.map;
   if(!map||!$('map')||!$('sheet'))return;
-  initialized=true;window.SuedtirolRadar71={enabled:true,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
+  initialized=true;model3d=new Vehicle3DOverlay(map);window.SuedtirolRadar71={enabled:true,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
   const badge=document.querySelector('.brand-title em');if(badge)badge.textContent='7.1';
   document.title='Südtirol Radar 7.1 · Cinematic Vehicle Focus';
   setupHud();
   document.addEventListener('sr37:selection',onSelection);
+  document.addEventListener('sr37:feeds',()=>{if(!visibleKey||!model3d?.visible)return;const v=bridge?.state?.vehicles?.get(visibleKey);const m=bridge?.state?.markers?.get(visibleKey)?.marker;const p=validFocusPoint(v,m?.getLatLng?.());if(p)model3d.updatePoint(p,focusHeading(v))});
   document.addEventListener('sr37:sheet-closed',()=>cancel({restore:true}));
   map.on('dragstart',manualInterrupt);
   map.getContainer().addEventListener('wheel',manualInterrupt,{passive:true});

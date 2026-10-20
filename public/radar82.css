@@ -1,0 +1,7 @@
+/* One lightweight WebGL canvas; all gestures continue to Leaflet. */
+#map .sr82-model-canvas{position:absolute;left:0;top:0;width:190px;height:190px;z-index:790;pointer-events:none!important;touch-action:none;filter:drop-shadow(0 9px 8px rgba(0,0,0,.42));will-change:transform}
+#map .sr82-model-canvas[hidden]{display:none!important}
+body.sr82-3d-active #map .marker-wrap.selected{opacity:.12!important}
+body.sr82-3d-active .sr71-focus-ring{opacity:.15!important}
+body.sr82-3d-active #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32dvh}
+@media(prefers-reduced-motion:reduce){#map .sr82-model-canvas{filter:none}}
