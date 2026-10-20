@@ -19,7 +19,9 @@ const JSON_HEADERS = {
   'cache-control': 'public, max-age=15, stale-while-revalidate=15',
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET,HEAD,OPTIONS',
-  'x-content-type-options': 'nosniff'
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'no-referrer',
+  'x-frame-options': 'DENY'
 };
 const respond = (data, status = 200, extra = {}) => new Response(JSON.stringify(data), {
   status, headers: { ...JSON_HEADERS, ...extra }
