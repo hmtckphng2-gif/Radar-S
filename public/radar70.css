@@ -100,3 +100,7 @@ body.sr70-ready:has(.sr70-home input:focus) #sr70Dock{display:none!important}
 
 .sr57-data-note{font-size:11px;line-height:1.5;color:#9fb8d2;margin:0 3px 12px}
 .sr57-service-meta{display:block;margin-top:5px;color:#9eb2ca;font-size:10px}
+
+/* 8.3.3: a single dock, even while the station monitor is displayed. */
+body.sr70-ready #sr60Dock,body.sr70-ready #sr50BottomNav{display:none!important}
+body.sr70-ready:has(#sr50DeparturesView.active):not(:has(#sheet.open)) #sr70Dock{display:grid;z-index:15900}

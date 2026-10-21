@@ -1,4 +1,3 @@
-import {Vehicle3DOverlay} from './radar82-3d.mjs';
 /* Radar 7.1 – Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate
@@ -106,7 +105,7 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
   if(initialized)return;
   bridge=window.SuedtirolRadar37;map=bridge?.state?.map;
   if(!map||!$('map')||!$('sheet'))return;
-  initialized=true;model3d=new URLSearchParams(location.search).get('preview3d')==='1'?new Vehicle3DOverlay(map):null;window.SuedtirolRadar71={enabled:true,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
+  initialized=true;model3d=null;document.querySelectorAll('#map .sr82-model-canvas').forEach(node=>node.remove());document.body.classList.remove('sr82-3d-active');window.SuedtirolRadar71={enabled:true,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
   const badge=document.querySelector('.brand-title em');if(badge)badge.textContent='7.1';
   document.title='Südtirol Radar 7.1 · Cinematic Vehicle Focus';
   setupHud();

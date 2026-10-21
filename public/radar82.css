@@ -5,3 +5,6 @@ body.sr82-3d-active #map .marker-wrap.selected{opacity:.12!important}
 body.sr82-3d-active .sr71-focus-ring{opacity:.15!important}
 body.sr82-3d-active #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32dvh}
 @media(prefers-reduced-motion:reduce){#map .sr82-model-canvas{filter:none}}
+
+/* 8.3.3: retired floating WebGL preview; retain real camera flyTo and Leaflet touch. */
+#map .sr82-model-canvas{display:none!important}

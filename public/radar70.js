@@ -32,6 +32,7 @@ function navigate(to,hashChange=false){
 }
 function legacy(id,action){
  navigate('map');if(id)nativeTab(id);
+ if(id==='departures')for(const b of dock?.querySelectorAll('[data-page]')||[])b.setAttribute('aria-current',b.dataset.page==='departures'?'page':'false');
  if(action)requestAnimationFrame(()=>{try{const task=action();task?.catch?.(console.warn)}catch(e){console.warn('Radar-Menü',e)}});
 }
 function feature(id){
@@ -185,7 +186,7 @@ function drawDetail(i){const trip=journeys[i];if(!trip)return;pane='detail';stag
  stage.append(timeline);home.scrollTo?.({top:0});
 }
 function init(){
- bridge=window.SuedtirolRadar37;if(!bridge?.state?.map||!window.SuedtirolRadar50?.switchTab||!document.body.classList.contains('sr60'))return false;
+ bridge=window.SuedtirolRadar37;if(!bridge?.state?.map||!window.SuedtirolRadar50?.switchTab)return false;
  if($('sr70Home'))return true;
  document.body.classList.add('sr70-ready');initHome();makeDock();drawSearch();
  const first=location.hash.slice(1);
@@ -193,7 +194,7 @@ function init(){
  // Radar 5.0 may open one of these before Horizon finishes initializing.
  const legacyStartup=['departures','stats','favorites'].includes(first);
  navigate(legacyStartup?'map':(['home','map','journey','more'].includes(first)?first:'home'),true);
- if(legacyStartup)nativeTab(first);
+ if(legacyStartup){nativeTab(first);if(first==='departures')for(const b of dock?.querySelectorAll('[data-page]')||[])b.setAttribute('aria-current',b.dataset.page==='departures'?'page':'false');}
  window.addEventListener('hashchange',()=>{const p=location.hash.slice(1);if(['home','map','journey','more'].includes(p)&&p!==page)navigate(p,true)});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!home.hidden){if(pane==='detail')drawResults(selected.from,selected.to,'');else if(pane==='results')drawSearch()}});
  const version=document.querySelector('#sr50MapTab .brand-title em');if(version)version.textContent='7.0';document.title='Südtirol Radar 7.0 · Project Horizon';

@@ -168,7 +168,7 @@ function start(){
  picker=el('section','sr57-picker');picker.hidden=true;search=el('input','sr57-search');search.type='search';search.placeholder='Bahnhof oder Haltestelle suchen';search.setAttribute('aria-label','Bahnhof suchen');search.addEventListener('input',()=>renderPicker(search.value));picker.append(search,el('div','sr57-options'));picker.lastChild.id='sr57Options';
  board=el('div','sr57-board');view.append(head,stationbox,picker,filters,board);
  const dep=$('sr50DeparturesView');dep?.append(view);
- function active(){const is=location.hash==='#departures'||!['#map','#stats','#favorites'].includes(location.hash);view.classList.toggle('sr57-hidden',!is);if(is){dep?.classList.add('active');render()}}
+ function active(){const is=location.hash==='#departures';view.classList.toggle('sr57-hidden',!is);if(is){dep?.classList.add('active');render()}}
  const original=window.SuedtirolRadar50.switchTab;
  window.SuedtirolRadar50.switchTab=function(name){original(name);active()};
  document.querySelectorAll('.sr50-nav-btn').forEach(b=>b.addEventListener('click',()=>setTimeout(active,0)));
@@ -176,8 +176,7 @@ function start(){
  const prior=stored();
  bridge.getStationList().then(list=>{stations=Array.isArray(list)?list:[];if(prior){const st=stations.find(x=>x.source===prior.source&&String(x.stopId)===String(prior.stopId));if(st)choose(st)}if(!chosen){picker.hidden=false;renderPicker()}render()}).catch(()=>board.append(el('p','sr57-empty','Bahnhöfe konnten nicht geladen werden. Bitte Verbindung prüfen.')));
  document.addEventListener('sr37:feeds',()=>{clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(!view.classList.contains('sr57-hidden'))render()},900)});
- // The monitor is the new home. Keep all existing tabs, map and Map-Sync intact.
- original('departures');
+ // Respect the selected tab. Never force departures on startup.
  active();
  document.title='Südtirol Radar 5.7.1 · Graphite Intelligence';
  const version=document.querySelector('.brand-title em');if(version)version.textContent='5.7.1';

@@ -280,7 +280,7 @@ function init(){
  refresh();
  window.SuedtirolRadar58={version:'6.0',open,refresh,getIssues:()=>issues,getFeedHealth:()=>diagnostics};
  document.title='Südtirol Radar · Project Horizon';
- const monitorVersion=document.querySelector('.sr57-version');if(monitorVersion)monitorVersion.textContent='6.0';
+ const monitorVersion=document.querySelector('.sr57-version');if(monitorVersion)monitorVersion.textContent='8.3.2';
  const version=document.querySelector('.brand-title em');if(version)version.textContent='6.0';
 }
 let attempts=0;
