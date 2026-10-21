@@ -59,6 +59,36 @@ test('only radar80.js writes the brand badge among the 7.x/8.x modules', () => {
   assert.deepEqual(offenders, [], 'these modules still overwrite the version badge: ' + offenders.join(', '));
 });
 
+test('no module at all writes the brand badge or the document title', () => {
+  // radar80.js is the only owner of the version display. Every legacy module
+  // used to write its own number into the badge and the title, which is how
+  // the app ended up showing "7.6" while the worker said "8.4.0".
+  const all = readdirSync(publicDir)
+    .filter(name => /\.(js|mjs)$/.test(name) && name !== 'radar80.js');
+  const badgeWriters = all.filter(name => read('public/' + name).includes('brand-title em'));
+  const titleWriters = all.filter(name => /document\.title\s*=/.test(read('public/' + name)));
+  assert.deepEqual(badgeWriters, [], 'these modules still write the brand badge: ' + badgeWriters.join(', '));
+  assert.deepEqual(titleWriters, [], 'these modules still write the document title: ' + titleWriters.join(', '));
+});
+
+test('the legacy modules do not carry a hardcoded release number in real code', () => {
+  // A version like "5.6" inside a legacy module is a second source of truth.
+  // Comments are allowed to keep their historical release name, but no line
+  // of code may show a version to the user.
+  const suspicious = [];
+  for (const name of readdirSync(publicDir)) {
+    if (!/\.(js|mjs)$/.test(name) || name === 'radar80.js') continue;
+    const lines = read('public/' + name).split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) continue;
+      const hits = trimmed.match(/Südtirol Radar \d+\.\d+(\.\d+)?/g);
+      if (hits) suspicious.push(name + ': ' + hits.join(', '));
+    }
+  }
+  assert.deepEqual(suspicious, [], 'hardcoded release names in code: ' + suspicious.join(' | '));
+});
+
 test('the legacy version module is gone and index.html does not load it', () => {
   assert.equal(readdirSync(publicDir).includes('radar76.js'), false);
   assert.equal(index.includes('radar76.js'), false);
