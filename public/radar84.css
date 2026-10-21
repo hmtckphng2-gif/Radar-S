@@ -160,3 +160,13 @@
    and shows the reported delay. The plan stays unmarked. */
 .sr50-deps .station-result small.sr-dep-live{color:#7fd6a8}
 .sr50-deps .station-result small.sr-dep-live::before{content:'● ';font-size:9px}
+/* 9.4 - Wenn keine Verbindung da ist, wird das klar gesagt, statt still
+   alte Positionen zu zeigen. */
+.offline-banner{
+  position:absolute;z-index:1001;left:10px;right:10px;
+  top:calc(126px + env(safe-area-inset-top,0px));
+  padding:10px 13px;border-radius:14px;
+  border:1px solid #7a5a2a;background:#2a2013f2;color:#f0d9ae;
+  font-size:12px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,.28);
+}
+@media (max-width:420px){.offline-banner{left:8px;right:8px;top:calc(120px + env(safe-area-inset-top,0px));font-size:11px}}

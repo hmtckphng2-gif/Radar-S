@@ -865,10 +865,40 @@ function setupSheetTouchGuards(){
     scroller.addEventListener('touchcancel',()=>{touchY=null},{passive:true});
   }
 }
+function offlineState(online=navigator.onLine!==false){
+  const banner=$('offlineBanner');
+  if(banner)banner.hidden=online;
+  document.body.classList.toggle('sr-offline',!online);
+  return !online;
+}
+function firstSearchHit(){
+  const q=state.query.trim().toLocaleLowerCase('de');
+  if(!q)return null;
+  for(const v of state.vehicles.values()){
+    if(!visible(v))continue;
+    const hay=`${v.name} ${v.headsign} ${v.vehicleId} ${v.tripId} ${v.routeLongName}`.toLocaleLowerCase('de');
+    if(hay.includes(q))return v;
+  }
+  return null;
+}
+function jumpToFirstHit(){
+  const v=firstSearchHit();
+  if(!v)return false;
+  selectVehicle(v.key);
+  const marker=state.markers.get(v.key)?.marker;
+  const p=marker?.getLatLng();
+  if(p&&state.map)state.map.setView([p.lat,p.lng],Math.max(state.map.getZoom(),14),{animate:true});
+  return true;
+}
 function setupControls(){
   setupSheetTouchGuards();
+  offlineState();
+  window.addEventListener('offline',()=>offlineState(false));
+  window.addEventListener('online',()=>offlineState(true));
   for(const b of document.querySelectorAll('[data-filter]'))b.addEventListener('click',()=>setFilter(b.dataset.filter));
-  let debounce=0;$('search').oninput=e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.query=e.target.value.toLocaleLowerCase('de').trim();refreshMarkers();refreshScheduleMatches();updateViewportBadge()},130)};
+  let debounce=0;
+  $('search').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();jumpToFirstHit()}});
+  $('search').oninput=e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.query=e.target.value.toLocaleLowerCase('de').trim();refreshMarkers();refreshScheduleMatches();updateViewportBadge()},130)};
   $('statusBtn').onclick=showSourceStatus;
   $('tileBtn').onclick=()=>switchTileProvider(1-tileProviderIndex,'Benutzerwahl');
   $('refreshBtn').onclick=()=>{
