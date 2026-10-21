@@ -20,6 +20,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/vendor/leaflet-1.9.4.css?v=8.5.0">
+<!-- The GLTFLoader imports "three" as a bare specifier. This map points it to
+     exactly the same three build that radar83-model.mjs loads, so both share
+     one instance. Without it the loader would run against a second copy of
+     three and every instanceof check would fail. The loader is optional: if a
+     browser ignores import maps, the 3D view falls back to the schematic
+     model. tests/radar83-model.test.js keeps both URLs identical. -->
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}</script>
 <link rel="stylesheet" href="/styles.css?v=8.5.0">
 <link rel="stylesheet" href="/radar35.css?v=8.5.0">
 <link rel="stylesheet" href="/radar37.css?v=8.5.0">

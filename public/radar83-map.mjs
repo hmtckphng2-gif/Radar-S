@@ -3,7 +3,7 @@
  * vehicles initialize MapLibre; errors or ?radar3d=off fall back to Radar 8.2.
  */
 
-import {loadThree,makeVehicleMesh,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=8.5.0';
+import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=8.5.0';
 import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision} from './radar83-logic.mjs?v=8.5.0';
 
 let libraryPromise=null;
@@ -99,7 +99,16 @@ export function enable3DTerrain(map){
   return true;
  }catch(error){console.info('Radar 8.3: terrain fallback to buildings-only',error);return false}
 }
-export function make3DVehicleLayer(T,lib,map,vehicle,point,heading){
+function disposeObject(object){
+ if(!object)return;
+ const used=new Set();
+ object.traverse(node=>{
+  node.geometry?.dispose?.();
+  const materials=Array.isArray(node.material)?node.material:[node.material];
+  for(const material of materials)if(material&&!used.has(material)){used.add(material);material.dispose?.()}
+ });
+}
+export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{}){
  const origin={lat:point.lat,lng:point.lng},kind=vehicleKind(vehicle);
  return {
   id:'sr83-selected-vehicle',
@@ -110,8 +119,20 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading){
    const keyLight=new T.DirectionalLight(0xffffff,2.25);keyLight.position.set(-30,60,-35);this.scene.add(keyLight);
    const fill=new T.DirectionalLight(0xb4d9ff,.8);fill.position.set(25,25,30);this.scene.add(fill);
    this.object=makeVehicleMesh(T,kind);this.scene.add(this.object);
+   this.modelKind='schematic';this.disposed=false;
    this.renderer=new T.WebGLRenderer({canvas:m.getCanvas(),context:gl,antialias:true,powerPreference:'low-power'});
    this.renderer.autoClear=false;
+   // A real downloaded model replaces the schematic one as soon as it has
+   // arrived. The 3D view never waits for it and never depends on it.
+   loadVehicleModel(kind,T).then(loaded=>{
+    if(!loaded||this.disposed||!this.scene||!this.renderer)return;
+    const previous=this.object;
+    this.object=loaded.object;this.scene.add(this.object);
+    this.modelKind='real';
+    this.map?.triggerRepaint();
+    disposeObject(previous);
+    onModel({kind:'real',credit:loaded.credit||null});
+   }).catch(()=>{});
   },
   update(p,h){
    origin.lat=p.lat;origin.lng=p.lng;heading=h;this.map?.triggerRepaint();
@@ -135,20 +156,17 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading){
    }catch(error){if(!this.renderError){console.warn('Radar 8.3 render failed',error);this.renderError=true}}
   },
   onRemove(){
-   const used=new Set();
-   this.object?.traverse(node=>{
-    node.geometry?.dispose?.();
-    const materials=Array.isArray(node.material)?node.material:[node.material];
-    for(const material of materials)if(material&&!used.has(material)){used.add(material);material.dispose?.()}
-   });
+   this.disposed=true;
+   disposeObject(this.object);
+   this.object=null;
    this.renderer?.dispose();
    this.renderer=null;
   }
  };
 }
 export class Radar83Cinematic {
- constructor(leaflet,{onExit=()=>{},onManual=()=>{},onFailure=()=>{}}={}){
-  this.leaflet=leaflet;this.onExit=onExit;this.onManual=onManual;this.onFailure=onFailure;
+  constructor(leaflet,{onExit=()=>{},onManual=()=>{},onFailure=()=>{},onModel=()=>{}}={}){
+   this.leaflet=leaflet;this.onExit=onExit;this.onManual=onManual;this.onFailure=onFailure;this.onModel=onModel;
   this.sequence=0;this.map=null;this.overlay=null;this.layer=null;
   this.ready=false;this.touched=false;this.active=false;this.flight=null;
  }
@@ -169,6 +187,7 @@ export class Radar83Cinematic {
   const credit=document.createElement('div');credit.className='sr83-credit';
   credit.textContent='3D-Modell schematisch · Position aus dem Datenfeed · Ziehen zum Schwenken';
   overlay.append(credit);
+   this.credit=credit;
   document.getElementById('map')?.append(overlay);
   this.overlay=overlay;this.surface=surface;this.info=info;
  }
@@ -208,7 +227,11 @@ export class Radar83Cinematic {
    // iPhone/iPad default: pitched vector buildings, no heavy remote DEM tiles.
    // Terrain is optional via ?terrain=on after successful device testing.
    if(use3DTerrain(location.search))enable3DTerrain(map);
-   this.layer=make3DVehicleLayer(T,lib,map,vehicle,point,heading);
+   this.layer=make3DVehicleLayer(T,lib,map,vehicle,point,heading,info=>{
+    this.onModel(info);
+    if(this.credit)this.credit.textContent=modelCreditText(info.credit,info.kind==='real');
+    if(this.info&&info.kind==='real')this.info.textContent='3D · '+(info.credit?.title||'Fahrzeug');
+   });
    map.addLayer(this.layer);
    await waitFor3DModel(map,this.layer);
    if(seq!==this.sequence)return false;
