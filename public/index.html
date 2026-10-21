@@ -106,6 +106,27 @@
 </div>
 
 <script src="/vendor/leaflet-1.9.4.js?v=8.3.1" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script>
+<script>
+(function(){
+ var failures=[];
+ window.addEventListener('error',function(e){failures.push((e.message||e.target&&e.target.src||'resource error').slice(0,150));},true);
+ window.addEventListener('unhandledrejection',function(e){failures.push(String(e.reason&&e.reason.message||e.reason).slice(0,150));});
+ setTimeout(function(){
+  var map=document.getElementById('map');
+  var state=window.SuedtirolRadar37&&window.SuedtirolRadar37.state;
+  var tiles=map?map.querySelectorAll('.leaflet-tile-loaded').length:0;
+  if(tiles>0&&state&&state.fetchedAt)return;
+  var pane=document.createElement('div');pane.id='radar-emergency-diagnostic';
+  pane.style.cssText='position:fixed!important;left:12px!important;right:12px!important;top:35%!important;z-index:2147483647!important;background:#15243b!important;color:white!important;border:2px solid #e2ad55!important;border-radius:14px!important;padding:18px!important;font:14px/1.5 system-ui!important;box-shadow:0 8px 40px #000c!important;pointer-events:auto!important';
+  var title=document.createElement('b');title.textContent='Radar Startdiagnose';pane.append(title);
+  var info=document.createElement('div');info.style.cssText='margin-top:9px;overflow-wrap:anywhere';
+  info.textContent='Phase: '+(document.documentElement.dataset.radarBoot||'Modul nicht gestartet')+' | Leaflet: '+(window.L?'ja':'nein')+' | Karte: '+(state&&state.map?'ja':'nein')+' | Kacheln: '+tiles+' | Feeds: '+(state&&state.fetchedAt?'geprüft':'nicht geprüft')+' | Fehler: '+(failures.join(' / ')||'keine erfasst');
+  pane.append(info);
+  var close=document.createElement('button');close.textContent='Schließen';close.style.cssText='display:block;margin-top:12px;padding:8px;background:#355375;color:white;border:0;border-radius:8px';close.onclick=function(){pane.remove()};pane.append(close);
+  document.body.append(pane);
+ },12000);
+})();
+</script>
 <script src="/radar831-boot.js?v=8.3.3"></script>
 <script src="/radar431-stop.js?v=4.3.1"></script>
 <script src="/radar37.js?v=7.0.3"></script>
