@@ -52,12 +52,15 @@
   if(!map||box)return;
   box=document.createElement('aside');
   box.id='sr831BootError';box.setAttribute('role','status');
-  box.style.cssText='position:absolute;z-index:1250;left:14px;right:14px;top:33%;padding:16px;border:1px solid #6b88a1;border-radius:16px;background:#121d2aef;color:#eef4fc;font:500 13px/1.5 system-ui;text-align:center;box-shadow:0 12px 36px #000b';
+  box.style.cssText='position:fixed;z-index:2147483640;left:14px;right:14px;top:37%;padding:16px;border:1px solid #6b88a1;border-radius:16px;background:#121d2aef;color:#eef4fc;font:500 13px/1.5 system-ui;text-align:center;box-shadow:0 12px 36px #000b';
   var title=document.createElement('strong');
   title.textContent='Radar wartet beim Start';title.style.fontSize='15px';box.append(title);
   var info=document.createElement('p');info.id='sr831BootInfo';info.style.cssText='color:#bdcddd;overflow-wrap:anywhere';info.textContent=detail;box.append(info);
   var note=document.createElement('p');note.style.fontSize='11px';note.id='sr831BootCauses';
   note.textContent=errors.join(' · ')||'Noch keine Browser-Fehlermeldung erfasst';box.append(note);
+  var debug=document.createElement('div');debug.style.cssText='font-size:11px;color:#9db6d0;overflow-wrap:anywhere';
+  debug.textContent='Diagnose: '+(document.documentElement.dataset.radarBoot||'kein Modulstart')+' · Leaflet '+(window.L?'geladen':'fehlt')+' · '+location.pathname;
+  box.append(debug);
   var btn=document.createElement('button');btn.type='button';btn.textContent='Erneut versuchen';
   btn.style.cssText='border:1px solid #638db3;border-radius:10px;background:#234666;color:white;padding:9px 16px;font:600 13px system-ui';
   btn.addEventListener('click',function(){location.reload()});box.append(btn);
@@ -66,7 +69,7 @@
  function tick(){
   var d=diagnostic();
   if(d.ok){remove();return true}
-  if(d.waited>=11){
+  if(d.waited>=8){
    var node=document.getElementById('sr831BootInfo');
    if(node)node.textContent=d.detail;
    var causes=document.getElementById('sr831BootCauses');
