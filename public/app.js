@@ -612,10 +612,14 @@ function openSheet(which){
   if(scroller)scroller.scrollTop=0;
   sheet.classList.add('open');
   sheet.setAttribute('aria-hidden','false');
+  // 9.5: Der Fokus wandert in das Panel und kommt beim Schliessen zurueck.
+  try{sheet.focus({preventScroll:true})}catch{}
   $('scrim').classList.add('show');
 }
 function closeSheets(resetSelection=true){
   for(const id of ['sheet','stationSheet']){$(id).classList.remove('open');$(id).setAttribute('aria-hidden','true');}
+  // 9.5: Der Fokus geht zurueck auf die Karte.
+  try{$('map')?.focus({preventScroll:true})}catch{}
   $('scrim').classList.remove('show');state.activeSheet=null;
   if(resetSelection){state.selectedKey=null;refreshMarkers();}
   document.dispatchEvent(new Event('sr37:sheet-closed'));

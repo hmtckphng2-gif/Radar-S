@@ -38,3 +38,13 @@ test('the 3D layer only redraws when something changed', () => {
   assert.match(src, /if\(key===this\.renderKey\)return;/);
   assert.match(src, /this\.renderKey=key;/);
 });
+test('the detail panel can take and give back the focus', () => {
+  // 9.5
+  const html = get('index.html');
+  assert.match(html, /id="sheet" class="sheet" tabindex="-1"/);
+  assert.match(html, /aria-labelledby="sheetTitle"/);
+  assert.match(html, /id="map" role="application" tabindex="0"/);
+  const src = get('app.js');
+  assert.match(src, /sheet\.focus\(\{preventScroll:true\}\)/);
+  assert.match(src, /\$\('map'\)\?\.focus\(\{preventScroll:true\}\)/);
+});
