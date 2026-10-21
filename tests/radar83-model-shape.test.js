@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {makeVehicleMesh,VEHICLE_SPECS} from '../public/radar83-model.mjs';
 
@@ -118,6 +118,29 @@ test('the real dimensions are documented in the model specification', () => {
   assert.equal(VEHICLE_SPECS.train.length, 44.5);
   assert.equal(VEHICLE_SPECS.train.width, 2.8);
   assert.equal(VEHICLE_SPECS.bus.length, 12);
+});
+
+test('every configured model file exists and is a valid GLB', () => {
+  const config = JSON.parse(read('public/models/models.json'));
+  for (const [kind, entry] of Object.entries(config.models)) {
+    if (!entry.file) continue;
+    const path = root + 'public/models/' + entry.file;
+    assert.ok(existsSync(path), kind + ': ' + entry.file + ' fehlt');
+    const head = readFileSync(path).subarray(0, 4).toString('ascii');
+    assert.equal(head, 'glTF', kind + ': ' + entry.file + ' ist kein gueltiges GLB');
+  }
+});
+
+test('a real model carries the credit that CC BY requires', () => {
+  const config = JSON.parse(read('public/models/models.json'));
+  for (const [kind, entry] of Object.entries(config.models)) {
+    if (!existsSync(root + 'public/models/' + entry.file)) continue;
+    assert.ok(entry.credit, kind + ' braucht einen Credit');
+    assert.ok(entry.credit.author, kind + ' braucht einen Autor');
+    assert.ok(entry.credit.license, kind + ' braucht eine Lizenzangabe');
+    assert.match(entry.credit.license, /CC|Creative Commons/i, kind + ': die Lizenz muss eine Namensnennung erlauben');
+    assert.ok(entry.credit.source, kind + ' braucht die Quelle');
+  }
 });
 
 test('the model still says that it is schematic', () => {
