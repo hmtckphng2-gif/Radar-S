@@ -7,8 +7,8 @@ import {waitFor3DScene,waitFor3DModel} from '../public/radar83-map.mjs';
 test('cinematic camera begins wide, then moves toward real train coordinates',()=>{
  const p={lat:46.497,lng:11.34};
  const end=target3DCamera(p,17,60,3800),start=start3DCamera(p,60,end.zoom);
- assert.ok(start.zoom<end.zoom);
- assert.ok(start.pitch<end.pitch);
+ assert.ok(start.zoom<end.zoom,'the camera comes closer');
+ assert.ok(start.pitch>end.pitch,'the camera descends to the height of the train');
  assert.notDeepEqual(start.center,end.center);
  assert.ok(end.duration>=3200 && end.duration<=5000);
  assert.deepEqual(end.center,[p.lng,p.lat]);

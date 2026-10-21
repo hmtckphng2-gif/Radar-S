@@ -8,11 +8,12 @@ import {makeVehicleMesh,VEHICLE_SPECS} from '../public/radar83-model.mjs';
  *
  * Two real bugs came out of looking at the live 3D view:
  *
- * 1. The model lay flat on the map like a painted stripe. The cause was in
- *    the transform: X and Y are mercator units and need the meter factor, but
- *    Z is the height in meters - MapLibre scales it with pixelsPerMeter on
- *    its own. Scaling Z with the mercator factor as well divided the height
- *    by about 28 million.
+ * 1. The model must have the right scale on all three axes. X, Y and Z are
+ *    mercator units, so all three need the meter factor. MercatorCoordinate.z
+ *    is already in mercator units (mercator_coordinate.ts:
+ *    mercatorZfromAltitude), and the custom layer matrix rescales it with
+ *    worldSize/pixelsPerMeter. Scaling Z with 1 instead makes the model
+ *    disappear completely.
  *
  * 2. The schematic train was a rough box. It now follows the proportions of
  *    a modern regional EMU: 44.5 m long, 2.80 m wide, about 3.5 m high.
@@ -81,12 +82,12 @@ function measure(object) {
   };
 }
 
-test('the height is not scaled with the mercator factor', () => {
+test('all three axes use the mercator meter factor', () => {
   const src = read('public/radar83-map.mjs');
-  assert.match(src, /\.scale\(new T\.Vector3\(scale,-scale,1\)\)/,
-    'Z must stay in meters, only X and Y need the mercator factor');
-  assert.doesNotMatch(src, /\.scale\(new T\.Vector3\(scale,-scale,scale\)\)/,
-    'scaling Z with the mercator factor flattens the model');
+  assert.match(src, /\.scale\(new T\.Vector3\(scale,-scale,scale\)\)/,
+    'X, Y and Z are mercator units and all three need the meter factor');
+  assert.doesNotMatch(src, /\.scale\(new T\.Vector3\(scale,-scale,1\)\)/,
+    'a Z of 1 hides the model completely');
 });
 
 test('the schematic train has the proportions of a modern regional EMU', () => {

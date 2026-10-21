@@ -59,11 +59,11 @@ test('the camera move is short enough to feel immediate', () => {
 
 test('the flight still ends on the vehicle', () => {
   const p = {lat: 46.498, lng: 11.353};
-  const end = target3DCamera(p, 17.4, 90, 3800);
+  const end = target3DCamera(p, 19, 90, 3800);
   const start = start3DCamera(p, 90, end.zoom);
   assert.deepEqual(end.center, [p.lng, p.lat]);
-  assert.equal(end.zoom, 17.8);
-  assert.equal(end.pitch, 62);
+  assert.equal(end.zoom, 19);
+  assert.equal(end.pitch, 38);
   assert.ok(start.zoom < end.zoom);
-  assert.ok(start.pitch < end.pitch);
+  assert.ok(start.pitch > end.pitch, 'the camera descends to the train');
 });

@@ -10,9 +10,9 @@ export function target3DCamera(point,zoom,heading=null,duration=3700){
  if(!Number.isFinite(lng)||!Number.isFinite(lat)||lat< -85||lat>85||lng< -180||lng>180)return null;
  return {
   center:[lng,lat],
-  zoom:Math.max(17.8,Math.min(18,Number(zoom)||17.8)),
-  pitch:62,
-  bearing:Number.isFinite(heading)?(heading+36)%360:36,
+  zoom:Math.max(18.6,Math.min(20.4,Number(zoom)||19.0)),
+  pitch:38,
+  bearing:Number.isFinite(heading)?(heading+58)%360:58,
   duration:Math.max(0,Math.min(5000,Number(duration)||0))
  };
 }
@@ -32,9 +32,9 @@ export function start3DCamera(point, heading=null, finalZoom=17){
  const lngOffset=latOffset/Math.max(.2,Math.cos(lat*Math.PI/180));
  return {
   center:[lng-Math.sin(direction)*lngOffset,lat-Math.cos(direction)*latOffset],
-  zoom:Math.max(12,Math.min(15,Number(finalZoom)-2.6)),
-  pitch:38,
-  bearing:(finalBearing+325)%360
+  zoom:Math.max(12,Math.min(16,Number(finalZoom)-3.2)),
+  pitch:60,
+  bearing:(finalBearing+232)%360
  };
 }
 // DEM tiles consume substantial GPU memory on mobile Safari. The real pitched

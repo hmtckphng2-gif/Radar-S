@@ -15,11 +15,11 @@ test('explicit switch can return users to intact Leaflet 2D map',()=>{
 test('camera rotates the MAP and tilts terrain, no arbitrary model spin',()=>{
  const camera=target3DCamera({lat:46.498,lng:11.353},17.4,90,4500);
  assert.deepEqual(camera.center,[11.353,46.498]);
- assert.equal(camera.pitch,62);
- assert.equal(camera.bearing,126);
+ assert.equal(camera.pitch,38);
+ assert.equal(camera.bearing,148);
  assert.equal(camera.duration,4500);
  assert.equal(target3DCamera({lat:92,lng:11},17,90,3000),null);
- assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,18);
+ assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,20.4);
 });
 test('model is only rotated based on credible fresh heading',()=>{
  assert.equal(validHeading({bearing:89,timestamp:NOW/1000-30},120,NOW),89);

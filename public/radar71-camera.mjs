@@ -74,6 +74,9 @@ import {cinematicDuration} from './radar83-logic.mjs';
   const heading=focusHeading(vehicle),arrow=$('sr71HeadingArrow');
   if(arrow){arrow.hidden=heading===null;arrow.style.setProperty('--sr71-direction',((heading??0)-45)+'deg')}
   const toZoom=focusZoom(map.getZoom(),map.getMaxZoom(),vehicle.kind);
+  // The 3D camera frames the vehicle, not the map: a 44,5 m train and a 12 m bus
+  // need a different distance to fill the frame.
+  const cinematicZoom=vehicle.kind==='bus'?Math.max(toZoom,20.2):Math.max(toZoom,19);
   const distanceKm=focusDistanceKm(map.getCenter(),pos);
   // The camera move is short and starts on the tap. A long flight felt sluggish.
   const duration=cinematicDuration(distanceKm,focusDuration(motion.matches,map.getZoom(),toZoom,distanceKm)*0.62);
@@ -96,7 +99,7 @@ import {cinematicDuration} from './radar83-logic.mjs';
   };
   emergencyFallback=classic;
   if(cinema3d?.enabled){
-   cinema3d.open(vehicle,pos,heading,duration,toZoom).then(ok=>{
+   cinema3d.open(vehicle,pos,heading,duration,cinematicZoom).then(ok=>{
     if(seq!==token){if(ok)cinema3d?.close({sync:false});return}
     if(!ok){classic();return}
     model3d?.hide();document.body.classList.remove('sr82-3d-active');

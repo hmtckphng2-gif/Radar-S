@@ -146,7 +146,7 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
     const scale=geo.meterInMercatorCoordinateUnits();
     const transform=new T.Matrix4()
      .makeTranslation(geo.x,geo.y,geo.z)
-     .scale(new T.Vector3(scale,-scale,1))
+     .scale(new T.Vector3(scale,-scale,scale))
      .multiply(new T.Matrix4().makeRotationX(Math.PI/2))
      .multiply(new T.Matrix4().makeRotationY(modelYawRadians(heading)));
     this.camera.projectionMatrix=new T.Matrix4().fromArray(matrix).multiply(transform);
