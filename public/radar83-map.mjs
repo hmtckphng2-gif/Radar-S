@@ -4,7 +4,7 @@
  */
 import {loadThree} from './radar82-3d.mjs';
 import {makeVehicleMesh,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix} from './radar83-logic.mjs?v=8.3.11';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision} from './radar83-logic.mjs?v=8.4.0';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -250,7 +250,12 @@ export class Radar83Cinematic {
  update(vehicle,point,heading){
   if(!this.ready||!this.layer||!point)return;
   this.layer.update(point,heading);
-  // Never override a user's map swipe to follow a newer feed location.
+  // The camera follows the vehicle while the user has not taken over. A
+  // deliberate gesture always wins; the model keeps its real feed position.
+  if(this.touched||!this.map)return;
+  const decision=followDecision({touched:this.touched,center:this.map.getCenter?.(),point});
+  if(!decision)return;
+  this.map.easeTo({center:decision.center,duration:900,essential:false});
  }
  close({sync=true}={}){
   const oldMap=this.map;
