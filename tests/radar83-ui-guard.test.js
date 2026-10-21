@@ -18,3 +18,9 @@ test('camera retains focus without rendering a fake floating vehicle model', () 
   assert.match(src, /map\.flyTo\(/);
   assert.match(get('radar82.css'), /#map \.sr82-model-canvas\{display:none!important\}/);
 });
+test('the 3D toolbar is not covered by the fixed launch button', () => {
+  // .sr40-launch sits at z-index 1060 and would cover the "2D" button of the
+  // 3D view, which lives inside #sr83Viewport at z-index 835.
+  const css = get('radar83.css');
+  assert.match(css, /body\.sr83-cinematic \.sr40-launch\{[^}]*opacity:0/);
+});

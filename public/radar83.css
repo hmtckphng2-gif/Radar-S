@@ -48,7 +48,8 @@
 body.sr83-cinematic #map .sr71-cinematic{opacity:0!important}
 body.sr83-cinematic #map .sr82-model-canvas{display:none!important}
 body.sr83-cinematic .map-actions,
-body.sr83-cinematic #sr60Launch{opacity:0!important;pointer-events:none!important}
+body.sr83-cinematic #sr60Launch,
+body.sr83-cinematic .sr40-launch{opacity:0!important;pointer-events:none!important}
 body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32dvh}
 @media(max-width:390px){
  #map .sr83-toolbar{top:max(130px,env(safe-area-inset-top,0px))}
