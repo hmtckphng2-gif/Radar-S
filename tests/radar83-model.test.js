@@ -39,6 +39,16 @@ function fakeThree() {
     length() { return Math.hypot(this.x, this.y, this.z); }
   }
   class Quaternion { setFromUnitVectors() {} }
+  class Box3 {
+    setFromObject(o) {
+      const s = o.userData.size, m = o.userData.min;
+      this.min = new Vector3(m.x, m.y, m.z);
+      this.max = new Vector3(m.x + s.x, m.y + s.y, m.z + s.z);
+      return this;
+    }
+    getSize(t) { t.set(this.max.x - this.min.x, this.max.y - this.min.y, this.max.z - this.min.z); return t; }
+    getCenter(t) { t.set((this.min.x + this.max.x) / 2, (this.min.y + this.max.y) / 2, (this.min.z + this.max.z) / 2); return t; }
+  }
   class BoxGeometry { constructor(w, h, d) { this.w = w; this.h = h; this.d = d; this.isBox = true; } }
   class CylinderGeometry { constructor(r1, r2, h) { this.w = r1 * 2; this.h = h; this.d = r1 * 2; this.radius = r1; this.isCylinder = true; } }
   class Material { constructor(opts) { this.opts = opts; } }
@@ -50,11 +60,16 @@ function fakeThree() {
     }
   }
   class Group {
-    constructor() { this.children = []; this.position = new Vector3(); this.rotation = {x: 0, y: 0, z: 0}; this.userData = {}; }
+    constructor() {
+      this.children = []; this.position = new Vector3();
+      this.rotation = {x: 0, y: 0, z: 0};
+      this.scale = {setScalar(v) { this.v = v; return this; }};
+      this.userData = {};
+    }
     add(c) { this.children.push(c); return c; }
     traverse(fn) { for (const c of this.children) { fn(c); c.traverse?.(fn); } }
   }
-  return {Vector3, Quaternion, BoxGeometry, CylinderGeometry, MeshStandardMaterial: Material, Mesh, Group};
+  return {Vector3, Quaternion, Box3, BoxGeometry, CylinderGeometry, MeshStandardMaterial: Material, Mesh, Group};
 }
 
 // The body is measured from the boxes. Cylinders (wheels, pantograph rods) are
