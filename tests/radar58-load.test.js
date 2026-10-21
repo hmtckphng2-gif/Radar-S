@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
-const root = new URL('../', import.meta.url).pathname;
+import {fileURLToPath} from 'node:url';
+// fileURLToPath instead of URL.pathname: on Windows the pathname starts with
+// a slash ("/C:/...") and is not a valid working directory, which made the
+// child process fail to spawn (status null instead of an exit code).
+const root = fileURLToPath(new URL('../', import.meta.url));
 for (const path of ['public/radar57.js', 'public/radar58.js']){
  test(path+' has valid JS syntax', ()=>{
   const result=spawnSync(process.execPath,['--check',path],{cwd:root,encoding:'utf8'});
