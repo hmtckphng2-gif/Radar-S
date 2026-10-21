@@ -188,7 +188,12 @@ function init(){
  bridge=window.SuedtirolRadar37;if(!bridge?.state?.map||!window.SuedtirolRadar50?.switchTab||!document.body.classList.contains('sr60'))return false;
  if($('sr70Home'))return true;
  document.body.classList.add('sr70-ready');initHome();makeDock();drawSearch();
- const first=location.hash.slice(1);navigate(['home','map','journey','more'].includes(first)?first:'home',true);
+ const first=location.hash.slice(1);
+ // Preserve direct links to the legacy departures/stats/favorites tabs.
+ // Radar 5.0 may open one of these before Horizon finishes initializing.
+ const legacyStartup=['departures','stats','favorites'].includes(first);
+ navigate(legacyStartup?'map':(['home','map','journey','more'].includes(first)?first:'home'),true);
+ if(legacyStartup)nativeTab(first);
  window.addEventListener('hashchange',()=>{const p=location.hash.slice(1);if(['home','map','journey','more'].includes(p)&&p!==page)navigate(p,true)});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!home.hidden){if(pane==='detail')drawResults(selected.from,selected.to,'');else if(pane==='results')drawSearch()}});
  const version=document.querySelector('#sr50MapTab .brand-title em');if(version)version.textContent='7.0';document.title='Südtirol Radar 7.0 · Project Horizon';
