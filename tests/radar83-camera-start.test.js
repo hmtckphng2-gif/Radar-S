@@ -70,7 +70,7 @@ test('the flight still ends on the vehicle', () => {
 
 test('the 3D camera respects prefers-reduced-motion', () => {
   const src = read('radar83-map.mjs');
-  assert.match(src, /prefersReducedMotion\(\)\?this\.map\.jumpTo\(target\)/,
+  assert.match(src, /if\(prefersReducedMotion\(\)\)this\.map\.jumpTo\(target\)/,
     'ohne Bewegung wird direkt auf das Fahrzeug gesprungen');
   assert.match(src, /if\(prefersReducedMotion\(\)\)/);
   // Die Funktion selbst darf nie werfen.
