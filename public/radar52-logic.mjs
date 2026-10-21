@@ -40,3 +40,19 @@ export function localTime(sec){
  if(!Number.isFinite(sec))return '–';
  return `${String(Math.floor(sec/3600)%24).padStart(2,'0')}:${String(Math.floor((sec%3600)/60)).padStart(2,'0')}${sec>=86400?' +1':''}`;
 }
+// Delay severity for the colour scale and the alert filters.
+// A strong red is reserved for 15 minutes and more. Cancellations and
+// outages are their own states and are never expressed through minutes.
+// The rule lives here only, so it can be tested and reused.
+export const DELAY_SEVERITY=Object.freeze({none:0,minor:1,moderate:2,severe:3});
+export const SEVERE_DELAY_MINUTES=15;
+export function delaySeverity(minutes){
+  if(minutes===null||minutes===undefined||minutes==='')return DELAY_SEVERITY.none;
+  const value=Math.abs(Number(minutes));
+  if(!Number.isFinite(value))return DELAY_SEVERITY.none;
+  if(value>=SEVERE_DELAY_MINUTES)return DELAY_SEVERITY.severe;
+  if(value>=5)return DELAY_SEVERITY.moderate;
+  if(value>0)return DELAY_SEVERITY.minor;
+  return DELAY_SEVERITY.none;
+}
+export function isSevereDelay(minutes){return delaySeverity(minutes)===DELAY_SEVERITY.severe}

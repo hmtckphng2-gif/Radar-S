@@ -2,7 +2,7 @@
 
 > **Zuerst lesen, bevor du Code änderst.** Diese Datei ist der Einstieg für neue Coding-Assistenten (ChatGPT, Claude, AshnaAI, Gemini usw.). Sie beschreibt das gewünschte Verhalten und den technisch überprüften Stand. **GitHub `main` ist die Wahrheit**, nicht alte ZIP-Dateien, Chats, Versionspläne oder diese Datei, falls sich der Code später verändert hat.
 >
-> Stand dieser Übergabe: **2026-10-20**. Die Web-App nutzt laut `package.json` Version **8.0.1**; die separate Expo-Hülle hat in `mobile/app.json` weiterhin Version **8.0.0**. Versionen dürfen unterschiedlich sein und sollten nicht ungeprüft gleichgesetzt werden.
+> Stand dieser Übergabe: **2026-10-21**. Die Web-App nutzt laut `package.json` Version **8.5.0**; die separate Expo-Hülle hat in `mobile/app.json` weiterhin Version **8.0.0**. Versionen dürfen unterschiedlich sein und sollten nicht ungeprüft gleichgesetzt werden.
 
 ## 1. Auftrag und wichtigste Links
 
@@ -38,6 +38,10 @@
 - **`public/core.js`**, **`public/app.js`**: Datenparser/grundlegende Leaflet-Karte, Marker und Refresh.
 - **`public/radar*.js/.mjs/.css`**: generationsweise ergänzte UI/Intelligenz/Animation. Je nach Feature konkrete Imports/Events/DOM-IDs suchen und gezielt testen.
 - **`public/radar70-route.mjs`**, **`public/radar703-advisor.mjs`**, **`public/radar705-groups.mjs`**, **`public/radar705-motion.mjs`**: Fahrplan-Suche/Deterministik, Advisor, Gruppierung, konservative Bewegungsdarstellung. Siehe Architektur-Doku.
+- `public/radar80.js`: **einzige Quelle** fuer die angezeigte Version. Der Brand-Badge zeigt die Version des ausgelieferten Workers (`/api/version`); der Build-Marker `BUILD` dient nur der Erkennung eines veralteten Cache-Standes. Andere Module schreiben keine Version mehr.
+- `public/radar83-map.mjs`: 3D-Kinematik. Die Kamera folgt dem Fahrzeug, solange der Nutzer die Karte nicht selbst bewegt hat (`followDecision` in `radar83-logic.mjs`).
+- `dev/legacy/`: frueher geladene Module, die nicht mehr gebraucht werden. Sie bleiben zum Nachschauen im Repository, werden aber nicht ausgeliefert und nicht getestet.
+- `public/.assetsignore`: verhindert, dass lokale Vorschau-Seiten (`test-*.html`, `isolate-*.html`) hochgeladen werden. Die Diagnose-Seiten bleiben oeffentlich.
 - **`public/radar66-api.mjs`**: normalisierte Fahrzeuge/Datenqualität für API v1.
 - **`public/radar-history-worker.mjs`** und **`db/history-schema.sql`**: Historienspeicher (der Collector ist bewusst deaktiviert).
 - **`mobile/`**: separater Expo/React-Native-Client, aktuell mit WebView der Radar-Website und nativer Bedien-/Statushülle. **Nicht** mit der Web-PWA verwechseln.
@@ -71,6 +75,7 @@
 - Zug-/Bus-Klassifikation und Linienzuordnung nur mit belegten GTFS-Mappings; keine frei erfundenen Liniennummern.
 - Duplikate in Stationsabfahrten reduzieren; unklare Daten nicht durch fiktive Präzision ersetzen.
 - Zeitplan- und räumliche Abweichung separat darstellen. Rot erst ab +15 Minuten (außer eigenständige Ausfall-/Störungszustände).
+  Die Regel liegt einmalig in `radar52-logic.mjs` (`delaySeverity`, `isSevereDelay`) und wird in `radar58.js` verwendet. Sie ist durch `tests/radar52-delay.test.js` abgesichert.
 - Anbieter-Feeds maßvoll abfragen, Cache/Request-Limits respektieren; BusOne-Nutzung ggf. nur nichtkommerziell und mit Quellenangaben.
 
 ## 6. Mobile / Apple App Store: aktueller Stand
