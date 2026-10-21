@@ -1,7 +1,6 @@
 /* Radar 7.5 – live UI stabilization, no changes to vehicle coordinates. */
 (()=>{'use strict';
  function init(){
-  document.title='Südtirol Radar 7.6';const badge=document.querySelector('.brand-title em');if(badge)badge.textContent='7.6';
   const sheet=document.getElementById('sheet');
   if(sheet){const content=sheet.querySelector('.sheet-scroll');if(content){for(const ev of ['touchstart','touchmove','wheel'])content.addEventListener(ev,e=>e.stopPropagation(),{passive:true});}}
   // Ground station trends in stored forecast history, never claim observed arrivals.

@@ -20,8 +20,6 @@
    scroll.addEventListener('touchstart',e=>{e.stopPropagation()},{passive:true});
    scroll.addEventListener('pointerdown',e=>{e.stopPropagation()},{passive:true});
   }
-  const badge=document.querySelector('.brand-title em');if(badge)badge.textContent='7.2';
-  document.title='Südtirol Radar 7.2';
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

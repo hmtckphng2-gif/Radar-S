@@ -1,6 +1,6 @@
 /* Radar 7.9 — source quality inspector and reliable favorite station shortcuts. */
 import {findFavoriteStations,feedHealthRows,qualityAgeText} from './radar79-logic.mjs';
-(()=>{'use strict';const VERSION='7.9.0';const $=id=>document.getElementById(id);let timer=0;let lastSelected='';
+(()=>{'use strict';const $=id=>document.getElementById(id);let timer=0;let lastSelected='';
  const bridge=()=>window.SuedtirolRadar37;
  const make=(tag,cls,text)=>{const e=document.createElement(tag);e.className=cls;if(text!==undefined)e.textContent=text;return e};
  function favorites(){try{const data=JSON.parse(localStorage.getItem('sr77-favorite-stations')||'[]');return Array.isArray(data)?data:[]}catch{return []}}
@@ -11,6 +11,6 @@ import {findFavoriteStations,feedHealthRows,qualityAgeText} from './radar79-logi
  function selectedQuality(){const state=bridge()?.state,host=$('sr78Quality');if(!host||!state)return;const v=state.vehicles?.get(state.selectedKey);if(!v)return;const now=Date.now()/1000;const ts=Number(v.timestamp);const age=ts>1e9?Math.floor(now-ts):null;host.title=`${v.source||'Quelle unbekannt'} · Positionsalter: ${qualityAgeText(age)} · keine GPS-Garantie`;lastSelected=state.selectedKey||''}
  function render(){timer=0;installSourceHealth();renderHealth();renderFavorites();selectedQuality()}
  function schedule(){if(timer)return;timer=requestAnimationFrame(render)}
- function init(){const title=document.querySelector('.brand-title em');if(title)title.textContent='7.9';document.title='Südtirol Radar 7.9';document.addEventListener('sr37:feeds',schedule);document.addEventListener('sr37:selection',schedule);document.addEventListener('sr75:station-selected',schedule);document.addEventListener('sr37:ready',schedule);$('stationBtn')?.addEventListener('click',()=>setTimeout(schedule,500));$('backStations')?.addEventListener('click',()=>setTimeout(schedule,50));schedule();const badge=$('sr76LiveVersion');if(badge){badge.textContent='7.9 · prüfe Live-Version';fetch('/api/version?v=7.9',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('unavailable');return r.json()}).then(v=>badge.textContent=v.version===VERSION?'7.9 · Live bestätigt':`7.9 · Server ${v.version||'unbekannt'}`).catch(()=>badge.textContent='7.9 · Live nicht verifiziert')}}
+ function init(){document.addEventListener('sr37:feeds',schedule);document.addEventListener('sr37:selection',schedule);document.addEventListener('sr75:station-selected',schedule);document.addEventListener('sr37:ready',schedule);$('stationBtn')?.addEventListener('click',()=>setTimeout(schedule,500));$('backStations')?.addEventListener('click',()=>setTimeout(schedule,50));schedule()}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
