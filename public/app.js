@@ -5,7 +5,7 @@ import {enrichTrainPlatform} from './train-platforms.js?v=8.5.0';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
-  vehicleDelayInfo, bufferedAlong
+  vehicleDelayInfo, bufferedAlong, departureDelay, isLiveUpdate
 } from './core.js';
 import {playbackLag} from './radar45-logic.mjs';
 import {trainReplayDuration} from './radar705-motion.mjs';
@@ -784,7 +784,13 @@ function showStationBoard(st){
   for(const d of departures.slice(0,28)){
     const btn=document.createElement('button');btn.className='station-result';
     const body=document.createElement('div'),title=document.createElement('strong'),sub=document.createElement('small'),clock=document.createElement('span');
-    title.textContent=d.name+' · '+d.headsign;sub.textContent='Geplant · '+st.source.toUpperCase();clock.textContent=formatClock(d.sec);
+    const upd=state.updates.get(st.source+':'+d.tripId);
+    const live=isLiveUpdate(upd)&&state.statuses[st.source+'_updates']==='ok';
+    const delay=live?departureDelay(upd,st.stopId):null;
+    title.textContent=d.name+' · '+d.headsign;
+    sub.textContent=delay===null?(live?'Live, keine Verspätung':'Geplant'):(delay>0?'Live · +'+Math.round(delay/60)+' Min.':'Live · '+Math.round(delay/60)+' Min. früher')+' · '+st.source.toUpperCase();
+    sub.classList.toggle('sr-dep-live',live);
+    clock.textContent=formatClock(d.sec);
     body.append(title,sub);btn.append(body,clock);list.append(btn);
   }
   if(!departures.length)list.textContent='Keine kommenden GTFS-Abfahrten für den heutigen Tag gefunden. Das ist keine Aussage über aktuelle Zugausfälle.';

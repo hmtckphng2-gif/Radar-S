@@ -237,3 +237,23 @@ export function routeOnlySnap(path, lat, lon, bearing) {
   if(difference>65) return null;
   return {...snapped,path};
 }
+
+// The delay of one departure, in seconds. Positive means late.
+// The stop specific value wins; the trip wide value is only a fallback.
+export function departureDelay(update,stopId){
+  if(!update||!Array.isArray(update.stops))return null;
+  const id=normalizeStopId(stopId);
+  const row=update.stops.find(s=>normalizeStopId(s.stopId??s.stop_id)===id);
+  const specific=numericDelay(row?.departure?.delay);
+  if(specific!==null)return specific;
+  const arrival=numericDelay(row?.arrival?.delay);
+  if(arrival!==null)return arrival;
+  return numericDelay(update.delay);
+}
+
+// True when the update is fresh enough to be shown as live.
+export function isLiveUpdate(update,now=Date.now(),maxAgeMs=120000){
+  if(!update||!Number.isFinite(Number(update.fetchedAt)))return false;
+  const age=now-Number(update.fetchedAt);
+  return age>=-30000&&age<=maxAgeMs;
+}

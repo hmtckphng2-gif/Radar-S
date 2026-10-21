@@ -155,3 +155,8 @@
   #sr50MapTab .iconbtn, #sr50MapTab .round-action, #sr50MapTab .chip,
   #sr50MapTab .sheet, #sr50MapTab .scrim, #sr50MapTab .station-result { transition-duration: 0.01ms !important; }
 }
+
+/* 8.8 - a departure that comes from a fresh GTFS-RT update is marked as live
+   and shows the reported delay. The plan stays unmarked. */
+.sr50-deps .station-result small.sr-dep-live{color:#7fd6a8}
+.sr50-deps .station-result small.sr-dep-live::before{content:'● ';font-size:9px}
