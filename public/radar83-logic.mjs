@@ -42,3 +42,19 @@ export function start3DCamera(point, heading=null, finalZoom=17){
 export function use3DTerrain(search=''){
  try{return new URLSearchParams(search).get('terrain')==='on'}catch{return false}
 }
+// Follow the cinematic camera with the vehicle, but only while the user has
+// not taken over the camera. A deliberate gesture always wins: the model
+// keeps its real feed position, the camera simply stops chasing it.
+// Returns the new map center plus the distance that has to be covered, or
+// null when the camera must stay where it is.
+export function followDecision({touched=false,center=null,point=null,thresholdMeters=12}={}){
+  if(touched||!center||!point)return null;
+  const lat=Number(point.lat),lng=Number(point.lng??point.lon);
+  const cLat=Number(center.lat),cLng=Number(center.lng??center.lon);
+  if(!Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(cLat)||!Number.isFinite(cLng))return null;
+  if(lat< -85||lat>85||cLat< -85||cLat>85)return null;
+  const cos=Math.max(.2,Math.cos(lat*Math.PI/180));
+  const meters=Math.hypot((cLng-lng)*cos,(cLat-lat))*111195;
+  if(!Number.isFinite(meters)||meters<thresholdMeters)return null;
+  return {center:[lng,lat],meters:Math.round(meters)};
+}
