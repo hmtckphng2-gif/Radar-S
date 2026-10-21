@@ -33,13 +33,13 @@
   var mapVisible=!!tab&&!tab.classList.contains('sr50-map-inactive');
   // Distinguish broken tiles from missing realtime feeds. Both can make the
   // screenshot look empty. Never claim missing buses merely due to no service.
-  if(realFetch>0 && waited>=11 && mapVisible && leaflets===0){
+  if(waited>=8 && leaflets===0){
    return {ok:false,detail:'Keine Kartenkacheln geladen · '+markers+' Marker · '+good+' Datenquellen erreichbar',waited:waited};
   }
   if(realFetch>0 && waited>=11 && !good && !vehicles){
    return {ok:false,detail:'Alle Echtzeitfeeds unerreichbar · '+stage,waited:waited};
   }
-  if(realFetch>0){
+  if(realFetch>0 && leaflets>0){
    return {ok:true,detail:'Daten geprüft · '+vehicles+' Fahrzeuge · '+markers+' Kartenmarker · '+leaflets+' Kartenkacheln'};
   }
   return {ok:false,detail:'Phase '+stage+' · '+waited+'s · '+markers+' Marker · '+leaflets+' Kacheln',waited:waited};
@@ -49,7 +49,7 @@
  }
  function show(detail){
   var map=document.getElementById('map');
-  if(!map||box)return;
+  if(box)return;
   box=document.createElement('aside');
   box.id='sr831BootError';box.setAttribute('role','status');
   box.style.cssText='position:fixed;z-index:2147483640;left:14px;right:14px;top:37%;padding:16px;border:1px solid #6b88a1;border-radius:16px;background:#121d2aef;color:#eef4fc;font:500 13px/1.5 system-ui;text-align:center;box-shadow:0 12px 36px #000b';
@@ -64,7 +64,7 @@
   var btn=document.createElement('button');btn.type='button';btn.textContent='Erneut versuchen';
   btn.style.cssText='border:1px solid #638db3;border-radius:10px;background:#234666;color:white;padding:9px 16px;font:600 13px system-ui';
   btn.addEventListener('click',function(){location.reload()});box.append(btn);
-  map.append(box);
+  document.body.append(box);
  }
  function tick(){
   var d=diagnostic();
