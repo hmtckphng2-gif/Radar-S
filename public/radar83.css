@@ -71,3 +71,13 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
 /* Compact, readable attribution; preserve OpenStreetMap/OpenFreeMap credits. */
 #map .sr83-viewport .maplibregl-ctrl-attrib{background:#0c1b2bf0!important;color:#b5c9db!important;border:1px solid #30465c!important;border-radius:10px!important;padding:5px 8px!important}
 #map .sr83-viewport .maplibregl-ctrl-attrib a{color:#a8d6ff!important}
+
+/* 9.1 - Auf schmalen Telefonen war die 3D-Werkzeugleiste breiter als der
+   Bildschirm, der "2D"-Knopf lag hinter dem Werkzeugknopf. Die Leiste
+   wird hier kompakt und die Knöpfe bekommen die volle Hoehe. */
+@media (max-width: 430px){
+  #map .sr83-toolbar{left:8px;right:8px;top:max(118px,env(safe-area-inset-top,0px));gap:6px}
+  #map .sr83-label{font-size:9px;padding:8px 9px;letter-spacing:.1em}
+  #map .sr83-replay,#map .sr83-back{min-height:44px;padding:10px 12px;font-size:12px}
+  #map .sr83-credit{bottom:calc(30dvh + 14px);font-size:9px;padding:6px 9px}
+}

@@ -151,6 +151,11 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
      .multiply(new T.Matrix4().makeRotationX(Math.PI/2))
      .multiply(new T.Matrix4().makeRotationY(modelYawRadians(heading)));
     this.camera.projectionMatrix=new T.Matrix4().fromArray(matrix).multiply(transform);
+     // 9.2: MapLibre ruft den Layer in jedem Frame auf. Wenn sich weder die
+     // Kamera noch das Modell bewegt haben, wird nicht neu gezeichnet.
+     const key=matrix.join(',')+'|'+origin.lat+','+origin.lng+','+heading;
+     if(key===this.renderKey)return;
+     this.renderKey=key;
     this.renderer.resetState();
     this.renderer.render(this.scene,this.camera);
     this.didRender=true;

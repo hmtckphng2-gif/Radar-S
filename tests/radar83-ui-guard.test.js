@@ -24,3 +24,17 @@ test('the 3D toolbar is not covered by the fixed launch button', () => {
   const css = get('radar83.css');
   assert.match(css, /body\.sr83-cinematic \.sr40-launch\{[^}]*opacity:0/);
 });
+
+test('the 3D toolbar fits on a narrow phone', () => {
+  // 9.1: Auf 390 px Breite lag der "2D"-Knopf hinter dem Werkzeugknopf.
+  const css = get('radar83.css');
+  assert.match(css, /@media \(max-width: 430px\)/);
+  assert.match(css, /#map \.sr83-replay,#map \.sr83-back\{min-height:44px/);
+});
+
+test('the 3D layer only redraws when something changed', () => {
+  // 9.2: MapLibre ruft den Layer in jedem Frame auf.
+  const src = get('radar83-map.mjs');
+  assert.match(src, /if\(key===this\.renderKey\)return;/);
+  assert.match(src, /this\.renderKey=key;/);
+});
