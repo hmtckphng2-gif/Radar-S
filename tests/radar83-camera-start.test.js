@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {start3DCamera,target3DCamera,use3DTerrain,cinematicDuration} from '../public/radar83-logic.mjs';
+import {start3DCamera,target3DCamera,use3DTerrain,cinematicDuration,prefersReducedMotion} from '../public/radar83-logic.mjs';
 
 /* Radar 8.5 - the 3D camera must move on the tap, not after a wait.
  *
@@ -66,4 +66,13 @@ test('the flight still ends on the vehicle', () => {
   assert.equal(end.pitch, 38);
   assert.ok(start.zoom < end.zoom);
   assert.ok(start.pitch > end.pitch, 'the camera descends to the train');
+});
+
+test('the 3D camera respects prefers-reduced-motion', () => {
+  const src = read('radar83-map.mjs');
+  assert.match(src, /prefersReducedMotion\(\)\?this\.map\.jumpTo\(target\)/,
+    'ohne Bewegung wird direkt auf das Fahrzeug gesprungen');
+  assert.match(src, /if\(prefersReducedMotion\(\)\)/);
+  // Die Funktion selbst darf nie werfen.
+  assert.equal(typeof prefersReducedMotion(), 'boolean');
 });

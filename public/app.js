@@ -10,6 +10,7 @@ import {
 import {playbackLag} from './radar45-logic.mjs';
 import {trainReplayDuration} from './radar705-motion.mjs';
 import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs';
+import {trainScheduledPosition} from './radar51-logic.mjs';
 
 const $ = id => document.getElementById(id);
 const DIRECT_POSITION_SOURCES=['sta_direct'];
@@ -656,6 +657,10 @@ function drawVehicleDetails(key,fetchSchedule){
   detail('Fahrtziel',v.headsign);
   detail('Fahrzeug-ID',v.vehicleId);
   detail('Fahrt-ID',v.tripId||'Nicht verfügbar');
+  // Zwei getrennte Werte: die gemeldete Verspaetung und die Abweichung vom Fahrplan.
+  // Die eine ist eine Zeitangabe, die andere eine Ortsangabe.
+  const schedule=trainScheduledPosition(v,state.indexes,state.details,state.shapes);
+  if(schedule)detail('Abweichung Fahrplan','~'+schedule.differenceKm.toFixed(1)+' km '+schedule.relative+' ('+schedule.from+' - '+schedule.to+')');
   detail('Positionsalter',feedAgeSeconds(v)===null?'Unbekannt':duration(feedAgeSeconds(v)*1000)+' Sek.');
   detail('Geschwindigkeit',v.speed===null?'Nicht verfügbar':v.speed+' km/h (Feed)');
   detail('Quelle',v.source.toUpperCase()+' / GTFS-RT');

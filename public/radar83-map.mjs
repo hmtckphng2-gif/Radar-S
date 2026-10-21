@@ -3,7 +3,7 @@
  * vehicles initialize MapLibre; errors or ?radar3d=off fall back to Radar 8.2.
  */
 import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=8.5.0';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision} from './radar83-logic.mjs?v=8.5.0';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion} from './radar83-logic.mjs?v=8.5.0';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -265,10 +265,10 @@ export class Radar83Cinematic {
   if(!this.map||!this.flight)return;
   const {start,target}=this.flight;
   this.map.stop();
-  this.map.jumpTo(start);
   this.flying=true;
   clearTimeout(this.flightTimer);
-  this.map.easeTo({...target,easing:t=>t*t*(3-2*t),essential:true});
+  if(prefersReducedMotion())this.map.jumpTo(target);
+  else{this.map.jumpTo(start);this.map.easeTo({...target,easing:t=>t*t*(3-2*t),essential:true});}
   this.flightTimer=setTimeout(()=>{this.flying=false},(Number(target.duration)||0)+150);
  }
  interrupt(){
