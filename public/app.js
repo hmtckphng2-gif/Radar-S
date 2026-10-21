@@ -269,6 +269,7 @@ function changeTheme(theme){
   // No URL change/re-download required when switching modes.
 }
 function initMap(){
+  if(window.__radarRecoveryMap){try{window.__radarRecoveryMap.remove()}catch(e){console.warn(e)}window.__radarRecoveryMap=null}
   if(!window.L){setNotice('<strong>Kartenbibliothek nicht erreichbar.</strong> Prüfe die Internetverbindung oder den Leaflet-CDN.');return false;}
   const map=L.map('map',{zoomControl:false,attributionControl:true,preferCanvas:true}).setView([46.64,11.35],9);
   state.map=map;
