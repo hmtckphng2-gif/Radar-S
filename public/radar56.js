@@ -286,13 +286,6 @@ function setupBoard(){
  boardObserver=new MutationObserver(schedule);boardObserver.observe(board,{childList:true,subtree:false,attributes:true,attributeFilter:['hidden']});
  schedule();return true;
 }
-function setVersion(){
- const title='Südtirol Radar 5.6 · Züge & Busse';
- const brand=document.querySelector('.brand-title em');if(brand&&brand.textContent!=='5.6')brand.textContent='5.6';
- if(document.title!==title)document.title=title;
- const info=document.querySelector('meta[name=description]');
- if(info)info.setAttribute('content','Südtirol Radar 5.6: Live-Tracking, Ist-/Soll 2.0, Stations Pro und Anschluss-Radar.');
-}
 function init(){
  if(started)return;
  bridge=window.SuedtirolRadar37;
@@ -300,7 +293,7 @@ function init(){
  started=true;
  safeHistory();
  lastObservationAt=Math.max(0,...analyticsRows.map(x=>Number(x.lastAt)||0));
- document.body.classList.add('sr56-ready');setVersion();
+ document.body.classList.add('sr56-ready');
  // Do not register a second map controller or touch the MapLibre/Leaflet sync.
  ensureUI();attachActions();setupBoard();
  document.addEventListener('sr37:selection',()=>{closePanel();queueUI()});

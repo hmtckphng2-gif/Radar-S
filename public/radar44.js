@@ -90,8 +90,6 @@ import {normalizeMode,networkLabel} from './radar44-logic.mjs';
   started=true;
   installMode();installConnection();enhanceSheet();
   map.on('zoomend',applyZoom);applyZoom();applyMode();
-  const brand=document.querySelector('.brand-title em');if(brand)brand.textContent='4.5';
-  document.title='Südtirol Radar 4.5 · Züge & Busse';
   window.SuedtirolRadar44={version:'4.5',setMode,getMode:()=>mode,updateConnection:()=>document.dispatchEvent(new Event('sr37:feeds'))};
  }
  document.addEventListener('sr37:ready',start);

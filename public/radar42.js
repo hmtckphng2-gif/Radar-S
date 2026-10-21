@@ -124,8 +124,7 @@
     window.addEventListener('resize',()=>{
       for(const id of ['sheet','stationSheet']){const sheet=$(id);if(sheet?.classList.contains('open'))setSnap(sheet,sheet.dataset.sr42Snap||'half');}
     },{passive:true});
-    document.querySelector('.brand-title em')?.replaceChildren(document.createTextNode('4.2'));
-    document.title='Südtirol Radar 4.2 · Züge & Busse';
+    
   }
   document.addEventListener('sr37:ready',start);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});

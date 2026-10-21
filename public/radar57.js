@@ -159,7 +159,7 @@ function start(){
  if($('sr57View'))return;
  view=el('section','sr57-view');view.id='sr57View';
  const head=el('header','sr57-header');
- const brand=el('div','sr57-brand');brand.append(el('span','','RADAR'),el('span','sr57-version','5.7.1'));
+ const brand=el('div','sr57-brand');brand.append(el('span','','RADAR'),el('span','sr57-version',window.SuedtirolRadar80?.version?.()||''));
  const live=el('span','sr57-live','● GTFS / LIVE WENN VERFÜGBAR');head.append(brand,live);
  const station=button('Bahnhof auswählen ⌄',()=>{picker.hidden=!picker.hidden;if(!picker.hidden){renderPicker();search.focus()}},'sr57-station');station.id='sr57Station';
  const caption=el('div','sr57-caption','AUSGEWÄHLTER BAHNHOF');const stationbox=el('div','sr57-stationbox');stationbox.append(caption,station);
@@ -178,8 +178,6 @@ function start(){
  document.addEventListener('sr37:feeds',()=>{clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(!view.classList.contains('sr57-hidden'))render()},900)});
  // Respect the selected tab. Never force departures on startup.
  active();
- document.title='Südtirol Radar 5.7.1 · Graphite Intelligence';
- const version=document.querySelector('.brand-title em');if(version)version.textContent='5.7.1';
  window.SuedtirolRadar57={version:'5.7.1',openStation:choose,refresh:render};
  window.SuedtirolRadar50.openStation=choose;
 }

@@ -28,7 +28,7 @@ function queue(){if(frame)return;frame=requestAnimationFrame(()=>{frame=0;render
 function init(){if(started)return;bridge=window.SuedtirolRadar37;const sheet=$('sheet'),scroll=sheet?.querySelector('.sheet-scroll');if(!bridge?.state?.map||!scroll)return;started=true;
  const card=node('section','sr62-train');card.id='sr62Train';card.hidden=true;card.setAttribute('aria-label','Zugfahrt und Positionsvergleich');const quality=$('sr56Quality');if(quality)quality.insertAdjacentElement('afterend',card);else scroll.prepend(card);
  document.addEventListener('sr37:selection',queue);document.addEventListener('sr37:sheet-closed',queue);document.addEventListener('sr37:feeds',queue);document.addEventListener('visibilitychange',()=>{if(!document.hidden)queue()});
- const brand=document.querySelector('.brand-title em');if(brand)brand.textContent='6.5';document.title='Südtirol Radar 6.5 · Train Tracking Pro';queue();window.SuedtirolRadar62={version:'6.5',refresh:queue};
+ queue();window.SuedtirolRadar62={version:'6.5',refresh:queue};
 }
 document.addEventListener('sr37:ready',init);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();let n=0;const t=setInterval(()=>{if(started||++n>50){clearInterval(t);return}init()},200);
 })();

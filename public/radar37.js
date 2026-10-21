@@ -449,8 +449,7 @@
     bridge.confirmedDelayFor=rtDelay;
     setInterval(followTick,1200);
     setInterval(scheduleUpdate,15000);
-    document.querySelector('.brand-title em')?.replaceChildren(document.createTextNode('4.2'));
-    document.title='Südtirol Radar 4.3 · Züge & Busse';
+    
     scheduleUpdate();
   }
   // Patch the tile constructor BEFORE the app creates its tile layer.

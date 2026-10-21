@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node tools/architecture-check.mjs",
+    "check": "node tools/sync-version.mjs --check && node tools/architecture-check.mjs",
+    "sync": "node tools/sync-version.mjs",
     "test": "node --test tests/*.test.js",
     "verify": "npm run check && npm test"
   },

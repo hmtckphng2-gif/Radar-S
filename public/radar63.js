@@ -38,7 +38,6 @@
  }
  function openTutorial(){if(overlay){index=0;show();return}document.getElementById('sr60Pop')?.setAttribute('hidden','');previousFocus=document.activeElement;overlay=make('div','sr63-tutorial-overlay');overlay.id='sr63Tutorial';overlay.addEventListener('click',e=>{if(e.target===overlay)done()});document.body.append(overlay);document.body.classList.add('sr63-tutorial-open');index=0;show()}
  document.addEventListener('keydown',e=>{if(!overlay)return;if(e.key==='Escape'){e.preventDefault();done()}if(e.key==='Tab'){const b=[...overlay.querySelectorAll('button:not([disabled])')];if(!b.length)return;const first=b[0],last=b[b.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
- function syncVersion(){const mark=document.querySelector('.brand-title em');if(mark)mark.textContent=VERSION;document.title='Südtirol Radar '+VERSION+''}
- function start(){if(initialized)return;initialized=true;syncVersion();window.addEventListener('load',syncVersion,{once:true});setTimeout(syncVersion,2200);const meta=document.querySelector('meta[name=description]');if(meta)meta.content='Südtirol Radar 6.6: Zug- und Buskarte, Station Intelligence Pro, Abfahrten, Favoriten und Einführung.';window.SuedtirolRadar63={version:VERSION,openTutorial};if(!stored())setTimeout(()=>{if(!stored())openTutorial()},1000)}
+ function start(){if(initialized)return;initialized=true;window.SuedtirolRadar63={version:VERSION,openTutorial};if(!stored())setTimeout(()=>{if(!stored())openTutorial()},1000)}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
