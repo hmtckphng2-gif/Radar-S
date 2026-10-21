@@ -197,7 +197,6 @@ function init(){
  if(legacyStartup){nativeTab(first);if(first==='departures')for(const b of dock?.querySelectorAll('[data-page]')||[])b.setAttribute('aria-current',b.dataset.page==='departures'?'page':'false');}
  window.addEventListener('hashchange',()=>{const p=location.hash.slice(1);if(['home','map','journey','more'].includes(p)&&p!==page)navigate(p,true)});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!home.hidden){if(pane==='detail')drawResults(selected.from,selected.to,'');else if(pane==='results')drawSearch()}});
- const version=document.querySelector('#sr50MapTab .brand-title em');if(version)version.textContent='7.0';document.title='Südtirol Radar 7.0 · Project Horizon';
  window.SuedtirolRadar70={openHome:()=>navigate('home'),openJourney:()=>navigate('journey'),navigate,search:searchJourneys};
  return true;
 }

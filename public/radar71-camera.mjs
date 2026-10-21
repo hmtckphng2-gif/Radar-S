@@ -125,8 +125,6 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
    onFailure:()=>{if(active&&emergencyFallback){clearTimeout(timer);emergencyFallback()}}
   });
   window.SuedtirolRadar71={enabled:true,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
-  const badge=document.querySelector('.brand-title em');if(badge)badge.textContent='7.1';
-  document.title='Südtirol Radar 7.1 · Cinematic Vehicle Focus';
   setupHud();
   // Load MapLibre and Three.js only when a vehicle is selected; don't slow down the main live map.
   document.addEventListener('sr37:selection',onSelection);

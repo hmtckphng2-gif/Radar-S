@@ -23,7 +23,7 @@
  function init(){const sheet=$('sheet');if(!sheet)return;
   observer=new MutationObserver(queue);observer.observe(sheet,{childList:true,subtree:true});
   document.addEventListener('sr37:selection',queue);document.addEventListener('sr37:feeds',queue);
-  const badge=document.querySelector('.brand-title em');if(badge)badge.textContent='7.3';document.title='Südtirol Radar 7.3';queue();
+  queue();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
