@@ -38,12 +38,23 @@ export function loadThree(){return threePromise??=(import(THREE_URL).catch(e=>{t
 // resolves to exactly the same file as THREE_URL. Both must stay identical,
 // otherwise the loader would work with a second copy of three and every
 // instanceof check would fail. tests/radar83-model.test.js guards that.
+//
+// The models are compressed with Meshopt. Its decoder is a separate module
+// that carries the WebAssembly binary inline, so nothing else has to be
+// loaded and the decoder works offline once it is cached.
 const GLTF_URL='https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/loaders/GLTFLoader.js';
+const MESHOPT_URL='https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/libs/meshopt_decoder.module.js';
 let loaderPromise;
 export function loadGLTFLoader(){
-  return loaderPromise??=(import(GLTF_URL)
-    .then(m=>m.GLTFLoader||m.default?.GLTFLoader)
-    .then(c=>{if(!c)throw Error('GLTFLoader nicht verfuegbar');return c})
+  return loaderPromise??=(Promise.all([import(GLTF_URL),import(MESHOPT_URL)])
+    .then(([mod,decoder])=>{
+     const Loader=mod.GLTFLoader||mod.default?.GLTFLoader;
+     if(!Loader)throw Error('GLTFLoader nicht verfuegbar');
+     const loader=new Loader();
+     const Meshopt=decoder.MeshoptDecoder||decoder.default?.MeshoptDecoder;
+     if(Meshopt&&typeof loader.setMeshoptDecoder==='function')loader.setMeshoptDecoder(Meshopt);
+     return loader;
+    })
     .catch(e=>{loaderPromise=null;throw e}));
 }
 
@@ -68,6 +79,11 @@ export function measureModel(object3D,THREE){
 
 // Scale a downloaded model to the real dimensions, put it on the ground and
 // centre it. Returns null when the model cannot be measured.
+//
+// scaleBy decides which real dimension is the reference:
+// "length" scales the long axis to lengthMeters, "height" scales the
+// vertical axis to heightMeters. A train reads better from its height, a bus
+// from its length. Either way the model is measured, never assumed.
 export function normalizeModel(object3D,spec,THREE){
   if(!object3D||!spec)return null;
   const length=Number(spec.lengthMeters),height=Number(spec.heightMeters);
@@ -76,7 +92,10 @@ export function normalizeModel(object3D,spec,THREE){
   const longIsX=size.x>size.z;
   const longest=longIsX?size.x:size.z;
   if(!Number.isFinite(longest)||longest<=0)return null;
-  const scale=length/longest;
+  const byHeight=spec.scaleBy==='height'&&Number.isFinite(height)&&height>0&&size.y>0;
+  const basis=byHeight?size.y:longest;
+  const reference=byHeight?height:length;
+  const scale=reference/basis;
   // Centre the model in X and Z and lift its lowest point onto the ground.
   const centre=box.getCenter(new THREE.Vector3());
   object3D.position.x-=centre.x;
@@ -92,7 +111,7 @@ export function normalizeModel(object3D,spec,THREE){
   holder.scale.setScalar(scale);
   const yaw=Number(spec.yawOffset);
   if(Number.isFinite(yaw)&&yaw)holder.rotation.y=yaw*Math.PI/180;
-  return {object:holder,scale,rotated:longIsX,sourceSize:{x:size.x,y:size.y,z:size.z},realHeight:Number.isFinite(height)?height*scale:null};
+  return {object:holder,scale,rotated:longIsX,scaledBy:byHeight?'height':'length',sourceSize:{x:size.x,y:size.y,z:size.z},realHeight:byHeight?height:size.y*scale};
 }
 
 // The visible credit line under the map. CC BY requires the author to be

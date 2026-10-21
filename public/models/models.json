@@ -1,20 +1,34 @@
 {
   "schema": "radar.models.3d.v1",
-  "note": "Optionale echte Fahrzeugmodelle. Fehlt die Datei oder schlaegt der Download fehl, wird das schematische Modell aus radar83-model.mjs verwendet - die 3D-Ansicht geht nie kaputt. lengthMeters und heightMeters sind die echten Masse; der Loader skaliert das geladene Modell darauf. yawOffset dreht das Modell um seine Hochachse in Grad, 0 behaelt die Autorenausrichtung.",
+  "note": "Optionale echte Fahrzeugmodelle. Fehlt die Datei oder schlaegt der Download fehl, wird das schematische Modell aus radar83-model.mjs verwendet - die 3D-Ansicht geht nie kaputt. lengthMeters und heightMeters sind die echten Masse, scaleBy legt fest, welche davon die Referenz ist, yawOffset dreht das Modell um seine Hochachse in Grad.",
   "models": {
     "train": {
       "file": "train.glb",
       "lengthMeters": 44.5,
-      "heightMeters": 4.1,
+      "heightMeters": 3.85,
+      "scaleBy": "height",
       "yawOffset": 0,
-      "credit": null
+      "credit": {
+        "title": "RABe 523",
+        "author": "hotdoghans",
+        "license": "CC BY 4.0",
+        "licenseUrl": "http://creativecommons.org/licenses/by/4.0/",
+        "source": "https://sketchfab.com/3d-models/3f45e0d560614aab98cee987cb7347e9"
+      }
     },
     "bus": {
       "file": "bus.glb",
-      "lengthMeters": 12,
-      "heightMeters": 3.25,
+      "lengthMeters": 12.0,
+      "heightMeters": 3.0,
+      "scaleBy": "length",
       "yawOffset": 0,
-      "credit": null
+      "credit": {
+        "title": "Mercedes-Benz Citaro",
+        "author": "Villanueva-Jonatan-32621",
+        "license": "CC BY 4.0",
+        "licenseUrl": "http://creativecommons.org/licenses/by/4.0/",
+        "source": "https://sketchfab.com/3d-models/6a5c6c970ab34a869c2be6b34c678aea"
+      }
     }
   }
 }
