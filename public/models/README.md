@@ -16,6 +16,21 @@ benutzt die App **automatisch das schematische Modell** aus
 | `models.json` | Konfiguration: Dateiname, reale Masse, Drehung, Namensnennung |
 | `CREDITS.md` | Pflichtangaben nach der Lizenz der verwendeten Modelle |
 
+## Schnell: ein echtes Modell von Sketchfab holen
+
+Ein kostenloses Sketchfab-Token holen (https://sketchfab.com/settings/password), dann:
+
+```sh
+# Windows PowerShell
+$env:SKETCHFAB_TOKEN="sk-..."
+node tools/fetch-sketchfab-model.mjs --uid 3f45e0d560614aab98cee987cb7347e9 --kind train
+node tools/fetch-sketchfab-model.mjs --uid 6a5c6c970ab34a869c2be6b34c678aea --kind bus
+```
+
+Das Skript laedt die GLB, legt sie unter ``public/models/`` ab und schreibt Titel,
+Autor und Lizenz automatisch nach ``models.json`` und ``CREDITS.md``. Es bricht ab,
+wenn die Lizenz keine Namensnennung erlaubt, oder wenn die Datei kein echtes GLB ist.
+
 ## Eigenes Modell einbauen
 
 1. `.glb` nach `public/models/` legen (`train.glb` oder `bus.glb`)

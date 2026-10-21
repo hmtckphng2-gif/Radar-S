@@ -73,6 +73,19 @@ npm run sync          # alle "?v="-Stellen nachziehen
 Browser-Cache liegen lassen, die dann mit der neuen Datei kämpft - genau das
 hat im August 2026 zu einer falschen Versionsanzeige gefuehrt.
 
+**Ein echtes 3D-Modell einbauen.** Die 3D-Karte kann statt des schematischen Modells
+eine heruntergeladene `.glb` benutzen. Mit einem kostenlosen Sketchfab-Token geht das
+in einem Schritt:
+
+```sh
+$env:SKETCHFAB_TOKEN="sk-..."
+node tools/fetch-sketchfab-model.mjs --uid 3f45e0d560614aab98cee987cb7347e9 --kind train
+```
+
+Das Skript laedt die Datei nach `public/models/` und schreibt die Namensnennung
+automatisch in `models.json` und `CREDITS.md`. Fehlt die Datei oder schlaegt der
+Download fehl, bleibt das schematische Modell stehen - die 3D-Ansicht geht nie kaputt.
+
 `public/.assetsignore` verhindert, dass die lokalen Vorschau-Seiten (`test-*.html`,
 `isolate-*.html`) hochgeladen werden. Die Diagnose-Seiten bleiben absichtlich öffentlich.
 
