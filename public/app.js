@@ -368,6 +368,8 @@ function animationLoop(now){
   // Road animation follows a real GTFS shape between TWO received fixes.
   // It intentionally never extrapolates, so sparse feeds may still pause.
   let roadPending=false;
+  // Compute viewport bounds once per frame rather than once for each bus.
+  const busViewportBounds=state.map?.getBounds?.();
   for(const [key,track] of state.busTracks){
     const entry=state.markers.get(key), marker=entry?.marker;
     if(!marker || now-track.lastSeen>BUS_TRACK_MAX_GAP_MS){state.busTracks.delete(key);continue;}
@@ -380,9 +382,8 @@ function animationLoop(now){
     const newestPos=pointAtDistance(track.path,newest.along,track.latReference);
     // Offscreen vehicles stay on their last confirmed point; don't animate
     // hundreds of hidden Leaflet DOM nodes on a battery-powered phone.
-    const bounds=state.map?.getBounds?.();
-    const inView=!bounds || key===state.selectedKey ||
-      bounds.contains(marker.getLatLng()) || (newestPos && bounds.contains([newestPos.lat,newestPos.lon]));
+    const inView=!busViewportBounds || key===state.selectedKey ||
+      busViewportBounds.contains(marker.getLatLng()) || (newestPos && busViewportBounds.contains([newestPos.lat,newestPos.lon]));
     if(!inView){
       if(newestPos && marker.getLatLng().distanceTo([newestPos.lat,newestPos.lon])>1)
         marker.setLatLng([newestPos.lat,newestPos.lon]);
