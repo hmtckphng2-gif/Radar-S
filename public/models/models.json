@@ -1,0 +1,20 @@
+{
+  "schema": "radar.models.3d.v1",
+  "note": "Optionale echte Fahrzeugmodelle. Fehlt die Datei oder schlaegt der Download fehl, wird das schematische Modell aus radar83-model.mjs verwendet - die 3D-Ansicht geht nie kaputt. lengthMeters und heightMeters sind die echten Masse; der Loader skaliert das geladene Modell darauf. yawOffset dreht das Modell um seine Hochachse in Grad, 0 behaelt die Autorenausrichtung.",
+  "models": {
+    "train": {
+      "file": "train.glb",
+      "lengthMeters": 44.5,
+      "heightMeters": 4.1,
+      "yawOffset": 0,
+      "credit": null
+    },
+    "bus": {
+      "file": "bus.glb",
+      "lengthMeters": 12,
+      "heightMeters": 3.25,
+      "yawOffset": 0,
+      "credit": null
+    }
+  }
+}
