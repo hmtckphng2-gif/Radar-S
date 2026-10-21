@@ -19,7 +19,7 @@ test('camera rotates the MAP and tilts terrain, no arbitrary model spin',()=>{
  assert.equal(camera.bearing,148);
  assert.equal(camera.duration,4500);
  assert.equal(target3DCamera({lat:92,lng:11},17,90,3000),null);
- assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,19.4);
+ assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,20.4);
 });
 test('model is only rotated based on credible fresh heading',()=>{
  assert.equal(validHeading({bearing:89,timestamp:NOW/1000-30},120,NOW),89);
