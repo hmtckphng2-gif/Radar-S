@@ -57,3 +57,15 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
 @media(prefers-reduced-motion:reduce){
  #map .sr83-viewport{transition:none!important}
 }
+
+/* 8.3.11: ensure 3D controls never collide with the map header on iPhone. */
+#map .sr83-toolbar{gap:6px;right:12px;left:12px;top:max(125px,env(safe-area-inset-top,0px))}
+#map .sr83-label{white-space:nowrap;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:10px;padding:9px 8px}
+#map .sr83-replay{pointer-events:auto;touch-action:manipulation;appearance:none;min-height:40px;white-space:nowrap;padding:9px 10px;border-radius:10px;border:1px solid #516c86;background:#162c41ee;color:#e6f1ff;font:650 12px Inter,system-ui,sans-serif}
+#map .sr83-back{min-height:40px;white-space:nowrap;padding:9px 10px;font-size:12px}
+#map .sr83-viewport .maplibregl-ctrl-attrib{font-size:9px;max-width:44vw;line-height:1.2}
+#map .sr83-viewport .maplibregl-ctrl-bottom-right{right:8px}
+
+/* Compact, readable attribution; preserve OpenStreetMap/OpenFreeMap credits. */
+#map .sr83-viewport .maplibregl-ctrl-attrib{background:#0c1b2bf0!important;color:#b5c9db!important;border:1px solid #30465c!important;border-radius:10px!important;padding:5px 8px!important}
+#map .sr83-viewport .maplibregl-ctrl-attrib a{color:#a8d6ff!important}

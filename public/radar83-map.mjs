@@ -4,7 +4,7 @@
  */
 import {loadThree} from './radar82-3d.mjs';
 import {makeVehicleMesh,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,readProjectionMatrix} from './radar83-logic.mjs';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix} from './radar83-logic.mjs?v=8.3.11';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -34,13 +34,51 @@ export function preload3DLibraries(){
  // Resource fetch only; do not allocate a WebGL context until user selects a vehicle.
  loadMapLibre().catch(()=>{});
 }
+// Wait for real vector tiles and the model render before revealing the new map.
+// Otherwise iOS Safari can display a black WebGL surface while the CSS toolbar
+// falsely claims that the cinematic has already started.
+export function waitFor3DScene(map,timeoutMs=7200){
+ return new Promise((resolve,reject)=>{
+  let ended=false;
+  const finish=error=>{
+   if(ended)return;ended=true;clearTimeout(timeout);
+   map.off('render',check);map.off('idle',check);
+   if(error)reject(error);else resolve();
+  };
+  const check=()=>{
+   try{
+    if(map.isStyleLoaded?.() && map.getSource('openmaptiles') &&
+       map.isSourceLoaded?.('openmaptiles') && map.areTilesLoaded?.())finish();
+   }catch(e){finish(e)}
+  };
+  const timeout=setTimeout(()=>finish(new Error('3D vector tiles not ready')),timeoutMs);
+  map.on('render',check);map.on('idle',check);
+  check();
+ });
+}
+export function waitFor3DModel(map,layer,timeoutMs=2200){
+ return new Promise((resolve,reject)=>{
+  let ended=false;
+  const finish=error=>{
+   if(ended)return;ended=true;clearTimeout(timeout);
+   map.off('render',check);if(error)reject(error);else resolve();
+  };
+  const check=()=>{
+   if(layer.renderError)finish(new Error('3D model render failed'));
+   else if(layer.didRender)finish();
+  };
+  const timeout=setTimeout(()=>finish(new Error('3D model not rendered')),timeoutMs);
+  map.on('render',check);map.triggerRepaint();check();
+ });
+}
 export function build3DBuildings(map){
  if(!map.getSource('openmaptiles')||map.getLayer('sr83-buildings'))return false;
  const firstLabel=map.getStyle()?.layers?.find(layer=>layer.type==='symbol')?.id;
  map.addLayer({
   id:'sr83-buildings',type:'fill-extrusion',source:'openmaptiles', 'source-layer':'building',
   minzoom:14,
-  filter:['has','render_height'],
+  // Most OSM buildings lack measured heights; a modest illustration is better
+  // than a missing 3D city. Unknown heights remain schematic, not claimed real.
   paint:{
    'fill-extrusion-color':'#263848',
    'fill-extrusion-opacity':.88,
@@ -112,18 +150,22 @@ export class Radar83Cinematic {
  constructor(leaflet,{onExit=()=>{},onManual=()=>{},onFailure=()=>{}}={}){
   this.leaflet=leaflet;this.onExit=onExit;this.onManual=onManual;this.onFailure=onFailure;
   this.sequence=0;this.map=null;this.overlay=null;this.layer=null;
-  this.ready=false;this.touched=false;this.active=false;
+  this.ready=false;this.touched=false;this.active=false;this.flight=null;
  }
  get enabled(){return enabled3D(location.search)}
  makeOverlay(){
   const overlay=document.createElement('div');overlay.className='sr83-viewport';overlay.id='sr83Viewport';
   const surface=document.createElement('div');surface.className='sr83-map';overlay.append(surface);
   const toolbar=document.createElement('div');toolbar.className='sr83-toolbar';
-  const info=document.createElement('span');info.className='sr83-label';info.textContent='3D CINEMATIC';
-  const back=document.createElement('button');back.className='sr83-back';back.type='button';back.textContent='↩ 2D-Karte';
+  const info=document.createElement('span');info.className='sr83-label';info.textContent='3D · FLIRT';
+  const replay=document.createElement('button');replay.className='sr83-replay';
+  replay.type='button';replay.textContent='↻ Flug';
+  replay.setAttribute('aria-label','3D-Kameraflug wiederholen');
+  replay.addEventListener('click',e=>{e.stopPropagation();this.replay()});
+  const back=document.createElement('button');back.className='sr83-back';back.type='button';back.textContent='↩ 2D';
   back.setAttribute('aria-label','Zur normalen 2D-Karte zurückkehren');
   back.addEventListener('click',e=>{e.stopPropagation();this.close();this.onExit()});
-  toolbar.append(info,back);overlay.append(toolbar);
+  toolbar.append(info,replay,back);overlay.append(toolbar);
   const credit=document.createElement('div');credit.className='sr83-credit';
   credit.textContent='3D-Modell schematisch · Position aus dem Datenfeed · Ziehen zum Schwenken';
   overlay.append(credit);
@@ -134,16 +176,18 @@ export class Radar83Cinematic {
   if(!this.enabled)return false;
   this.close({sync:false});
   const seq=++this.sequence;this.active=true;
+  const target=target3DCamera(point,zoom,heading,duration);
+  const start=start3DCamera(point,heading,target?.zoom);
+  if(!target||!start){this.close({sync:false});return false}
   this.makeOverlay();
   try{
    const [lib,T]=await Promise.all([loadMapLibre(),loadThree()]);
    if(seq!==this.sequence)return false;
    if(typeof lib.supported==='function'&&!lib.supported())throw Error('WebGL not supported by this browser');
-   const old=this.leaflet.getCenter(),oldZoom=this.leaflet.getZoom();
    const map=new lib.Map({
-    container:this.surface,style:VECTOR_STYLE,center:[old.lng,old.lat],zoom:oldZoom,
-    bearing:0,pitch:0,maxZoom:19,maxPitch:80,minZoom:3,
-    antialias:true,fadeDuration:0,renderWorldCopies:false,
+    container:this.surface,style:VECTOR_STYLE,center:start.center,zoom:start.zoom,
+    bearing:start.bearing,pitch:start.pitch,maxZoom:19,maxPitch:80,minZoom:3,
+    antialias:false,fadeDuration:0,renderWorldCopies:false,
     attributionControl:true,interactive:true
    });
    this.map=map;
@@ -152,48 +196,51 @@ export class Radar83Cinematic {
     const end=e=>{if(done)return;done=true;clearTimeout(timeout);map.off('load',loaded);map.off('error',failed);e?reject(e):resolve()};
     const loaded=()=>end();
     const failed=e=>{if(!map.isStyleLoaded?.())end(e?.error||Error('Map style failed'))};
-    const timeout=setTimeout(()=>end(Error('3D map tiles timed out')),12000);
+    const timeout=setTimeout(()=>end(Error('3D map style timed out')),11000);
     map.on('load',loaded);map.on('error',failed);
     if(map.loaded?.())end();
    });
    if(seq!==this.sequence)return false;
+   // Real 3D map data is mandatory. Never show a black empty canvas over 2D.
+   await waitFor3DScene(map);
+   if(seq!==this.sequence)return false;
    try{build3DBuildings(map)}catch(error){console.info('3D building fallback',error)}
-   // Conserve GPU memory on low-memory devices; buildings and pitch remain 3D.
-   const lowMemory=Number(navigator.deviceMemory||0)>0&&Number(navigator.deviceMemory)<4;
-   if(!lowMemory)enable3DTerrain(map);
+   // iPhone/iPad default: pitched vector buildings, no heavy remote DEM tiles.
+   // Terrain is optional via ?terrain=on after successful device testing.
+   if(use3DTerrain(location.search))enable3DTerrain(map);
    this.layer=make3DVehicleLayer(T,lib,map,vehicle,point,heading);
    map.addLayer(this.layer);
-   const target=target3DCamera(point,zoom,heading,duration);
-   if(!target)throw Error('Vehicle has no valid coordinates');
+   await waitFor3DModel(map,this.layer);
+   if(seq!==this.sequence)return false;
    const kind=vehicleKind(vehicle);
-   this.info.textContent='3D CINEMATIC · '+(kind==='train'?'FLIRT-Stil':'Linienbus');
+   this.info.textContent=kind==='train'?'3D · FLIRT-Stil':'3D · Linienbus';
    this.overlay.classList.add('sr83-ready');
    document.body.classList.add('sr83-cinematic');
    this.ready=true;
+   this.flight={start,target};
    map.resize();map.triggerRepaint();
    map.on('dragstart',()=>this.interrupt());
    map.getCanvas().addEventListener('touchstart',()=>this.interrupt(),{passive:true});
    map.getCanvas().addEventListener('wheel',()=>this.interrupt(),{passive:true});
-   // MapLibre animates camera center, height (zoom), tilt and bearing together.
-   // The model remains geographically anchored and rotates ONLY with vehicle heading.
-   if(duration===0)map.jumpTo(target);
-   else map.easeTo({...target,easing:t=>t*t*(3-2*t),essential:true});
-   // A MapLibre map without its shared Three.js model is not a successful 3D mode.
-   // If iOS WebGL refuses to render it, restore Leaflet rather than showing an empty scene.
-   setTimeout(()=>{
-    if(seq!==this.sequence||!this.ready||this.layer?.didRender)return;
-    console.info('Radar 8.3 WebGL model did not render, restoring 2D camera');
-    this.close({sync:false});this.onFailure();
-   },2200);
+   // The map (not the vehicle model) performs the cinematic tilt and orbit.
+   this.replay();
    return true;
   }catch(error){
    if(seq===this.sequence){
-    console.info('Radar 8.3: 3D failed; retaining established Leaflet camera',error);
+    console.info('Radar 8.3: pitched 3D view unavailable, restoring reliable 2D map',error);
     this.close({sync:false});
    }
    return false;
   }
  }
+ replay(){
+  if(!this.ready||!this.map||!this.flight)return;
+  const {start,target}=this.flight;
+  this.map.stop();
+  this.map.jumpTo(start);
+  this.map.easeTo({...target,easing:t=>t*t*(3-2*t),essential:true});
+ }
+
  interrupt(){
   if(!this.active||this.touched)return;
   this.touched=true;
@@ -213,7 +260,7 @@ export class Radar83Cinematic {
     this.leaflet.setView([center.lat,center.lng],Math.min(18,Math.max(3,zoom)),{animate:false});
    }catch{}
   }
-  this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;
+  this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.flight=null;
   if(oldMap)try{oldMap.stop();oldMap.remove()}catch(error){console.info('3D map cleanup',error)}
   this.overlay?.remove();this.overlay=null;this.surface=null;
   document.body.classList.remove('sr83-cinematic');

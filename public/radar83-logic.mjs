@@ -10,8 +10,8 @@ export function target3DCamera(point,zoom,heading=null,duration=3700){
  if(!Number.isFinite(lng)||!Number.isFinite(lat)||lat< -85||lat>85||lng< -180||lng>180)return null;
  return {
   center:[lng,lat],
-  zoom:Math.max(12,Math.min(18,Number(zoom)||17)),
-  pitch:72,
+  zoom:Math.max(17.8,Math.min(18,Number(zoom)||17.8)),
+  pitch:62,
   bearing:Number.isFinite(heading)?(heading+36)%360:36,
   duration:Math.max(0,Math.min(5000,Number(duration)||0))
  };
@@ -19,4 +19,26 @@ export function target3DCamera(point,zoom,heading=null,duration=3700){
 export function readProjectionMatrix(input){
  const matrix=input?.defaultProjectionData?.mainMatrix??input?.modelViewProjectionMatrix??input;
  return matrix && matrix.length===16 && [...matrix].every(Number.isFinite)?matrix:null;
+}
+
+// Start the cinematic noticeably farther away, then descend toward the real
+// vehicle position. Camera position only; never change feed coordinates.
+export function start3DCamera(point, heading=null, finalZoom=17){
+ const lat=Number(point?.lat),lng=Number(point?.lng??point?.lon);
+ if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -85||lat > 85)return null;
+ const finalBearing=Number.isFinite(heading)?(heading+36)%360:36;
+ const direction=finalBearing*Math.PI/180;
+ const meters=680,latOffset=meters/111320;
+ const lngOffset=latOffset/Math.max(.2,Math.cos(lat*Math.PI/180));
+ return {
+  center:[lng-Math.sin(direction)*lngOffset,lat-Math.cos(direction)*latOffset],
+  zoom:Math.max(12,Math.min(15,Number(finalZoom)-2.6)),
+  pitch:38,
+  bearing:(finalBearing+325)%360
+ };
+}
+// DEM tiles consume substantial GPU memory on mobile Safari. The real pitched
+// vector map and Three.js train work without DEM; terrain is opt-in.
+export function use3DTerrain(search=''){
+ try{return new URLSearchParams(search).get('terrain')==='on'}catch{return false}
 }
