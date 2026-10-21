@@ -1,5 +1,9 @@
 /* Radar 8.3/8.5 - the 3D vehicle model.
  *
+ * The schematic geometry below is a FLIRT-inspired regional EMU silhouette.
+ * It is illustrative, NOT proof of the actual vehicle model. Coordinates are
+ * physical metres: +y up, -z is front, +x is right.
+ *
  * Two sources, in this order:
  * 1. A real downloaded model (public/models/<kind>.glb), if one is configured.
  *    Those models are CC BY and need the author credited - see models/CREDITS.md.
