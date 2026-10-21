@@ -106,7 +106,7 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
   if(initialized)return;
   bridge=window.SuedtirolRadar37;map=bridge?.state?.map;
   if(!map||!$('map')||!$('sheet'))return;
-  initialized=true;model3d=new Vehicle3DOverlay(map);window.SuedtirolRadar71={enabled:true,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
+  initialized=true;model3d=new URLSearchParams(location.search).get('preview3d')==='1'?new Vehicle3DOverlay(map):null;window.SuedtirolRadar71={enabled:true,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
   const badge=document.querySelector('.brand-title em');if(badge)badge.textContent='7.1';
   document.title='Südtirol Radar 7.1 · Cinematic Vehicle Focus';
   setupHud();
