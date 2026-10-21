@@ -1,4 +1,4 @@
-# Südtirol Radar 8.5
+# Südtirol Radar 9.6
 
 Mobil optimierte Live-Karte für Züge, Busse, Abfahrten und Haltestellen in Südtirol
 und Trentino. Cloudflare Worker, kein Build-Schritt, keine Abhängigkeiten.

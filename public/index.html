@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#090e15">
-<meta name="description" content="Südtirol Radar 8.5.0: Live-Karte, Abfahrten und transparente Verspätungsinformationen für Züge und Busse in Südtirol und Trentino.">
+<meta name="description" content="Südtirol Radar 9.6.0: Live-Karte, Abfahrten und transparente Verspätungsinformationen für Züge und Busse in Südtirol und Trentino.">
 <title>Südtirol Radar – Züge und Busse live verfolgen</title>
 <link rel="canonical" href="https://radar-s.j9fr2vg4vm.workers.dev/">
 <meta property="og:type" content="website">
@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/vendor/leaflet-1.9.4.css?v=8.5.0">
+<link rel="stylesheet" href="/vendor/leaflet-1.9.4.css?v=9.6.0">
 <!-- The GLTFLoader imports "three" as a bare specifier. This map points it to
      exactly the same three build that radar83-model.mjs loads, so both share
      one instance. Without it the loader would run against a second copy of
@@ -27,31 +27,31 @@
      browser ignores import maps, the 3D view falls back to the schematic
      model. tests/radar83-model.test.js keeps both URLs identical. -->
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}</script>
-<link rel="stylesheet" href="/styles.css?v=8.5.0">
-<link rel="stylesheet" href="/radar35.css?v=8.5.0">
-<link rel="stylesheet" href="/radar37.css?v=8.5.0">
-<link rel="stylesheet" href="/radar40.css?v=8.5.0">
-<link rel="stylesheet" href="/radar42.css?v=8.5.0">
-<link rel="stylesheet" href="/radar43.css?v=8.5.0">
-<link rel="stylesheet" href="/radar44.css?v=8.5.0">
-<link rel="stylesheet" href="/radar45.css?v=8.5.0">
-<link rel="stylesheet" href="/radar46.css?v=8.5.0">
-<link rel="stylesheet" href="/radar47.css?v=8.5.0">
-<link rel="stylesheet" href="/radar50.css?v=8.5.0">
-<link rel="stylesheet" href="/radar51.css?v=8.5.0">
-<link rel="stylesheet" href="/radar52.css?v=8.5.0">
-<link rel="stylesheet" href="/radar53.css?v=8.5.0">
-<link rel="stylesheet" href="/radar54.css?v=8.5.0">
-<link rel="stylesheet" href="/radar55.css?v=8.5.0">
-<link rel="stylesheet" href="/radar56.css?v=8.5.0">
+<link rel="stylesheet" href="/styles.css?v=9.6.0">
+<link rel="stylesheet" href="/radar35.css?v=9.6.0">
+<link rel="stylesheet" href="/radar37.css?v=9.6.0">
+<link rel="stylesheet" href="/radar40.css?v=9.6.0">
+<link rel="stylesheet" href="/radar42.css?v=9.6.0">
+<link rel="stylesheet" href="/radar43.css?v=9.6.0">
+<link rel="stylesheet" href="/radar44.css?v=9.6.0">
+<link rel="stylesheet" href="/radar45.css?v=9.6.0">
+<link rel="stylesheet" href="/radar46.css?v=9.6.0">
+<link rel="stylesheet" href="/radar47.css?v=9.6.0">
+<link rel="stylesheet" href="/radar50.css?v=9.6.0">
+<link rel="stylesheet" href="/radar51.css?v=9.6.0">
+<link rel="stylesheet" href="/radar52.css?v=9.6.0">
+<link rel="stylesheet" href="/radar53.css?v=9.6.0">
+<link rel="stylesheet" href="/radar54.css?v=9.6.0">
+<link rel="stylesheet" href="/radar55.css?v=9.6.0">
+<link rel="stylesheet" href="/radar56.css?v=9.6.0">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/radar60-icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/radar57.css?v=8.5.0">
-<link rel="stylesheet" href="/radar58.css?v=8.5.0">
-<link rel="stylesheet" href="/radar60.css?v=8.5.0">
-<link rel="stylesheet" href="/radar601.css?v=8.5.0">
+<link rel="stylesheet" href="/radar57.css?v=9.6.0">
+<link rel="stylesheet" href="/radar58.css?v=9.6.0">
+<link rel="stylesheet" href="/radar60.css?v=9.6.0">
+<link rel="stylesheet" href="/radar601.css?v=9.6.0">
 </head>
 <body>
 <div id="sr50MapTab" class="sr50-map-tab">
@@ -59,7 +59,7 @@
   <header class="topbar">
     <div class="toprow">
       <div class="brand-badge" aria-hidden="true"><svg viewBox="0 0 48 48" width="30" height="30"><path d="M12 35L35 12M13 13h22v22" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="24" r="5" fill="currentColor"/></svg></div>
-      <div class="brand"><div class="brand-title">RADAR <em>8.5.0</em></div><div class="brand-sub">SÜDTIROL · TRENTINO</div></div>
+      <div class="brand"><div class="brand-title">RADAR <em>9.6.0</em></div><div class="brand-sub">SÜDTIROL · TRENTINO</div></div>
       <button id="statusBtn" class="status" aria-label="Status und Datenquellen" title="Datenquellen ansehen"><span class="status-dot"></span><span id="statusText">VERBINDE</span></button>
       <button id="themeToggle" class="iconbtn" aria-label="Hell-/Dunkelmodus wechseln" title="Theme wechseln">☀</button>
     </div>
@@ -113,71 +113,71 @@
   </section>
 </div>
 
-<script src="/vendor/leaflet-1.9.4.js?v=8.5.0" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script>
-<script src="/radar-recovery.js?v=8.5.0" defer></script>
-<script src="/radar831-boot.js?v=8.5.0"></script>
-<script src="/radar431-stop.js?v=8.5.0"></script>
-<script src="/radar37.js?v=8.5.0"></script>
-<script src="/radar40.js?v=8.5.0"></script>
-<script src="/radar42.js?v=8.5.0"></script>
-<script type="module" src="/radar43.js?v=8.5.0"></script>
-<script type="module" src="/radar44.js?v=8.5.0"></script>
-<script type="module" src="/radar45.js?v=8.5.0"></script>
-<script type="module" src="/app.js?v=8.5.0"></script>
-<script src="/radar46.js?v=8.5.0" defer></script>
-<script src="/radar47.js?v=8.5.0" defer></script>
-<script type="module" src="/radar50.js?v=8.5.0"></script>
-<script type="module" src="/radar51.js?v=8.5.0"></script>
-<script type="module" src="/radar52.js?v=8.5.0"></script>
-<script type="module" src="/radar53.js?v=8.5.0"></script>
-<script type="module" src="/radar54.js?v=8.5.0"></script>
-<script type="module" src="/radar55.js?v=8.5.0"></script>
-<script type="module" src="/radar56.js?v=8.5.0"></script>
-<script type="module" src="/radar57.js?v=8.5.0"></script>
-<script type="module" src="/radar58.js?v=8.5.0"></script>
-<script defer src="/radar58-i18n.js?v=8.5.0"></script>
-<script src="/radar60-intelligence.js?v=8.5.0" defer></script>
-<script src="/radar60.js?v=8.5.0" defer></script>
-<link rel="stylesheet" href="/radar62.css?v=8.5.0">
-<script type="module" src="/radar62.js?v=8.5.0"></script>
-<link rel="stylesheet" href="/radar63.css?v=8.5.0">
-<script src="/radar63.js?v=8.5.0" defer></script>
-<link rel="stylesheet" href="/radar64.css?v=8.5.0">
-<script src="/radar64.js?v=8.5.0" defer></script>
-<link rel="stylesheet" href="/radar65.css?v=8.5.0">
-<link rel="stylesheet" href="/radar66.css?v=8.5.0">
-<link rel="stylesheet" href="/radar661.css?v=8.5.0">
-<link rel="stylesheet" href="/radar67.css?v=8.5.0">
-<script src="/radar67.js?v=8.5.0" defer></script>
-<link rel="stylesheet" href="/radar671.css?v=8.5.0">
-<link rel="stylesheet" href="/radar68.css?v=8.5.0">
-<script src="/radar68.js?v=8.5.0" defer></script>
-<link rel="stylesheet" href="/radar69.css?v=8.5.0">
-<script src="/radar69.js?v=8.5.0" defer></script>
-<link rel="stylesheet" href="/radar692.css?v=8.5.0">
-<script type="module" src="/radar692.js?v=8.5.0"></script>
-<link rel="stylesheet" href="/radar70.css?v=8.5.0">
-<script type="module" src="/radar70.js?v=8.5.0"></script>
-<link rel="stylesheet" href="/radar705.css?v=8.5.0">
-<link rel="stylesheet" href="/radar71.css?v=8.5.0">
-<script type="module" src="/radar71-camera.mjs?v=8.5.0"></script>
-<link rel="stylesheet" href="/radar72.css?v=8.5.0">
-<script src="/radar72.js?v=8.5.0" defer></script>
-<link rel="stylesheet" href="/radar73.css?v=8.5.0">
-<script src="/radar73.js?v=8.5.0" defer></script>
-<link rel="stylesheet" href="/radar74.css?v=8.5.0">
-<link rel="stylesheet" href="/radar75.css?v=8.5.0">
-<script src="/radar75.js?v=8.5.0" defer></script>
-<link rel="stylesheet" href="/radar76.css?v=8.5.0">
-<link rel="stylesheet" href="/radar77.css?v=8.5.0">
-<script src="/radar77.js?v=8.5.0" defer></script>
-<link rel="stylesheet" href="/radar78.css?v=8.5.0">
-<script type="module" src="/radar78.mjs?v=8.5.0"></script>
-<link rel="stylesheet" href="/radar79.css?v=8.5.0">
-<script type="module" src="/radar79.mjs?v=8.5.0"></script>
-<script src="/radar80.js?v=8.5.0" defer></script>
-<link rel="stylesheet" href="/radar80-map.css?v=8.5.0">
-<link rel="stylesheet" href="/radar82.css?v=8.5.0">
-<link rel="stylesheet" href="/radar83.css?v=8.5.0"><link rel="stylesheet" href="/radar84.css?v=8.5.0">
+<script src="/vendor/leaflet-1.9.4.js?v=9.6.0" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script>
+<script src="/radar-recovery.js?v=9.6.0" defer></script>
+<script src="/radar831-boot.js?v=9.6.0"></script>
+<script src="/radar431-stop.js?v=9.6.0"></script>
+<script src="/radar37.js?v=9.6.0"></script>
+<script src="/radar40.js?v=9.6.0"></script>
+<script src="/radar42.js?v=9.6.0"></script>
+<script type="module" src="/radar43.js?v=9.6.0"></script>
+<script type="module" src="/radar44.js?v=9.6.0"></script>
+<script type="module" src="/radar45.js?v=9.6.0"></script>
+<script type="module" src="/app.js?v=9.6.0"></script>
+<script src="/radar46.js?v=9.6.0" defer></script>
+<script src="/radar47.js?v=9.6.0" defer></script>
+<script type="module" src="/radar50.js?v=9.6.0"></script>
+<script type="module" src="/radar51.js?v=9.6.0"></script>
+<script type="module" src="/radar52.js?v=9.6.0"></script>
+<script type="module" src="/radar53.js?v=9.6.0"></script>
+<script type="module" src="/radar54.js?v=9.6.0"></script>
+<script type="module" src="/radar55.js?v=9.6.0"></script>
+<script type="module" src="/radar56.js?v=9.6.0"></script>
+<script type="module" src="/radar57.js?v=9.6.0"></script>
+<script type="module" src="/radar58.js?v=9.6.0"></script>
+<script defer src="/radar58-i18n.js?v=9.6.0"></script>
+<script src="/radar60-intelligence.js?v=9.6.0" defer></script>
+<script src="/radar60.js?v=9.6.0" defer></script>
+<link rel="stylesheet" href="/radar62.css?v=9.6.0">
+<script type="module" src="/radar62.js?v=9.6.0"></script>
+<link rel="stylesheet" href="/radar63.css?v=9.6.0">
+<script src="/radar63.js?v=9.6.0" defer></script>
+<link rel="stylesheet" href="/radar64.css?v=9.6.0">
+<script src="/radar64.js?v=9.6.0" defer></script>
+<link rel="stylesheet" href="/radar65.css?v=9.6.0">
+<link rel="stylesheet" href="/radar66.css?v=9.6.0">
+<link rel="stylesheet" href="/radar661.css?v=9.6.0">
+<link rel="stylesheet" href="/radar67.css?v=9.6.0">
+<script src="/radar67.js?v=9.6.0" defer></script>
+<link rel="stylesheet" href="/radar671.css?v=9.6.0">
+<link rel="stylesheet" href="/radar68.css?v=9.6.0">
+<script src="/radar68.js?v=9.6.0" defer></script>
+<link rel="stylesheet" href="/radar69.css?v=9.6.0">
+<script src="/radar69.js?v=9.6.0" defer></script>
+<link rel="stylesheet" href="/radar692.css?v=9.6.0">
+<script type="module" src="/radar692.js?v=9.6.0"></script>
+<link rel="stylesheet" href="/radar70.css?v=9.6.0">
+<script type="module" src="/radar70.js?v=9.6.0"></script>
+<link rel="stylesheet" href="/radar705.css?v=9.6.0">
+<link rel="stylesheet" href="/radar71.css?v=9.6.0">
+<script type="module" src="/radar71-camera.mjs?v=9.6.0"></script>
+<link rel="stylesheet" href="/radar72.css?v=9.6.0">
+<script src="/radar72.js?v=9.6.0" defer></script>
+<link rel="stylesheet" href="/radar73.css?v=9.6.0">
+<script src="/radar73.js?v=9.6.0" defer></script>
+<link rel="stylesheet" href="/radar74.css?v=9.6.0">
+<link rel="stylesheet" href="/radar75.css?v=9.6.0">
+<script src="/radar75.js?v=9.6.0" defer></script>
+<link rel="stylesheet" href="/radar76.css?v=9.6.0">
+<link rel="stylesheet" href="/radar77.css?v=9.6.0">
+<script src="/radar77.js?v=9.6.0" defer></script>
+<link rel="stylesheet" href="/radar78.css?v=9.6.0">
+<script type="module" src="/radar78.mjs?v=9.6.0"></script>
+<link rel="stylesheet" href="/radar79.css?v=9.6.0">
+<script type="module" src="/radar79.mjs?v=9.6.0"></script>
+<script src="/radar80.js?v=9.6.0" defer></script>
+<link rel="stylesheet" href="/radar80-map.css?v=9.6.0">
+<link rel="stylesheet" href="/radar82.css?v=9.6.0">
+<link rel="stylesheet" href="/radar83.css?v=9.6.0"><link rel="stylesheet" href="/radar84.css?v=9.6.0">
 </body>
 </html>

@@ -2,7 +2,7 @@
 
 > **Zuerst lesen, bevor du Code änderst.** Diese Datei ist der Einstieg für neue Coding-Assistenten (ChatGPT, Claude, AshnaAI, Gemini usw.). Sie beschreibt das gewünschte Verhalten und den technisch überprüften Stand. **GitHub `main` ist die Wahrheit**, nicht alte ZIP-Dateien, Chats, Versionspläne oder diese Datei, falls sich der Code später verändert hat.
 >
-> Stand dieser Übergabe: **2026-10-21**. Die Web-App nutzt laut `package.json` Version **8.5.0**; die separate Expo-Hülle hat in `mobile/app.json` weiterhin Version **8.0.0**. Versionen dürfen unterschiedlich sein und sollten nicht ungeprüft gleichgesetzt werden.
+> Stand dieser Übergabe: **2026-10-21**. Die Web-App nutzt laut `package.json` Version **9.6.0**; die separate Expo-Hülle hat in `mobile/app.json` weiterhin Version **8.0.0**. Versionen dürfen unterschiedlich sein und sollten nicht ungeprüft gleichgesetzt werden.
 
 ## 1. Auftrag und wichtigste Links
 
