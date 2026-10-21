@@ -2,6 +2,11 @@
  * FLIRT-inspired regional EMU silhouette is illustrative, NOT proof of the actual vehicle model.
  * Coordinates are physical metres: +y up, -z is front, +x is right.
  */
+/* Loads Three.js once and keeps the promise, so a failed CDN request can be
+ * retried instead of caching the failure forever. */
+const THREE_URL='https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
+let threePromise;
+export function loadThree(){return threePromise??=(import(THREE_URL).catch(e=>{threePromise=null;throw e}))}
 export const VEHICLE_SPECS=Object.freeze({
  train:{label:'Regionalzug · FLIRT-inspiriertes 3D-Modell',length:44.5,width:2.8,height:4.1},
  bus:{label:'Linienbus · schematisches 3D-Modell',length:12,width:2.55,height:3.25}

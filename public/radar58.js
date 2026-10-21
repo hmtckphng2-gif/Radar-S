@@ -1,5 +1,6 @@
 /* Radar 5.8 Traffic Intelligence: additive, no replacement of 5.7 map logic */
 import {collectTrafficIssues,feedDiagnostics,summarizeNetwork,matchesFavoriteIssue,resolveRollingStock} from './radar58-logic.mjs';
+import {isSevereDelay} from './radar52-logic.mjs';
 import {findConnections} from './radar56-logic.mjs';
 import {romeDay,romeSeconds} from './radar51-logic.mjs';
 (()=>{
@@ -18,7 +19,7 @@ function refresh(){
  lastUpdate=Date.now();
  issues=collectTrafficIssues(bridge.state);
  diagnostics=feedDiagnostics(bridge.state.statuses);
- const cancel=issues.filter(x=>x.severity==='danger'),severe=issues.filter(x=>x.severity==='delay'&&x.minutes>=15);
+ const cancel=issues.filter(x=>x.severity==='danger'),severe=issues.filter(x=>x.severity==='delay'&&isSevereDelay(x.minutes));
  const alerts=[...cancel,...severe],groups=summarizeNetwork(alerts);
  if(alerts.length){
   const activeIds=alerts.map(x=>x.id);
@@ -264,7 +265,7 @@ function init(){
  const controls=e('span','sr58-banner-controls');controls.append(e('span','','Details ›'));
  const close=btn('✕',event=>{},'sr58-banner-close');
  close.setAttribute('aria-label','Verkehrsstörungen schließen');
- close.addEventListener('click',event=>{event.stopPropagation();dismissedAlertIds=new Set(issues.filter(x=>x.severity==='danger'||x.severity==='delay'&&x.minutes>=15).map(x=>x.id));banner.hidden=true;document.body.classList.remove('sr58-has-banner')});
+ close.addEventListener('click',event=>{event.stopPropagation();dismissedAlertIds=new Set(issues.filter(x=>x.severity==='danger'||x.severity==='delay'&&isSevereDelay(x.minutes)).map(x=>x.id));banner.hidden=true;document.body.classList.remove('sr58-has-banner')});
  controls.append(close);heading.append(controls);
  const title=e('strong');title.id='sr58BannerTitle';
  const detail=e('small');detail.id='sr58BannerDetail';banner.append(heading,title,detail);

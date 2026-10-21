@@ -69,3 +69,13 @@ test('index.html ships the badge and the script tag of the current version', () 
   assert.ok(index.includes('/radar80.js?v=' + pkg.version), 'radar80.js needs a matching cache buster');
   assert.ok(index.includes('class="brand-title"'), 'the version badge element must exist');
 });
+
+test('every cache buster in index.html points at the current release', () => {
+  // A mixed set of cache busters means that some assets keep an old version
+  // in the browser cache while others are refreshed. That is exactly how a
+  // stale module can survive a release and start fighting the new one.
+  const busters = [...index.matchAll(/\?v=([^"'&\s]+)/g)].map(m => m[1]);
+  assert.ok(busters.length > 20, 'index.html should reference versioned assets: ' + busters.length);
+  const wrong = [...new Set(busters)].filter(v => v !== pkg.version);
+  assert.deepEqual(wrong, [], 'cache busters that do not match package.json: ' + wrong.join(', '));
+});

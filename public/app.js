@@ -1,7 +1,7 @@
 import {motionDuration,platformInfo} from './radar54-logic.mjs';
 import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs';
-import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=7.7.2';
-import {enrichTrainPlatform} from './train-platforms.js?v=5.4.4';
+import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=8.5.0';
+import {enrichTrainPlatform} from './train-platforms.js?v=8.5.0';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,

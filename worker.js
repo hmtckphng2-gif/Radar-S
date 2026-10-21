@@ -62,7 +62,7 @@ export default {
       return env.ASSETS.fetch(request);
     }
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
-    if(url.pathname==='/api/version'&&request.method==='GET')return respond({version:'8.4.0',release:'Radar 8.4.0',collectorScheduled:false,historyCollectorRequiresOptIn:true},200,{'cache-control':'no-store'});
+    if(url.pathname==='/api/version'&&request.method==='GET')return respond({version:'8.5.0',release:'Radar 8.5.0',collectorScheduled:false,historyCollectorRequiresOptIn:true},200,{'cache-control':'no-store'});
 
     if((url.pathname==='/api/ai/journey'||url.pathname==='/api/ai/journey-chat')&&request.method==='POST'){
       const noCache={'cache-control':'no-store'};

@@ -1,11 +1,78 @@
-# Südtirol Radar 2.0
+# Südtirol Radar 8.5
 
-Cloudflare Workers deployment (GitHub): root contains `worker.js`, `wrangler.jsonc`, and `public/index.html`.
+Mobil optimierte Live-Karte für Züge, Busse, Abfahrten und Haltestellen in Südtirol
+und Trentino. Cloudflare Worker, kein Build-Schritt, keine Abhängigkeiten.
 
-Cloudflare Workers Builds: build command empty; deploy command `npx wrangler deploy`.
+**Produktion:** https://radar-s.j9fr2vg4vm.workers.dev/
+**Quellcode:** https://github.com/hmtckphng2-gif/Radar-S
 
-Sources: BusOne STA and Trentino GTFS-RT JSON feeds. Provider may be offline; Trentino vehicle positions are simulated. No fictitious vehicles are generated. The current app is a live map MVP; alerts, reliable rail/bus classification, delay enrichment and track shapes need GTFS static mapping and additional verified integrations.
+## Aufbau
 
-API checks: `/api/health`, `/api/sta`, `/api/trentino`.
+| Ort | Inhalt |
+|---|---|
+| `worker.js` | Cloudflare Worker: Feed-Proxy, `/api/v1/*`, Workers-AI-Reiseberater, RFI- und ViaggiaTreno-Routen |
+| `wrangler.jsonc` | Bindings: `ASSETS`, `AI`, `AI_JOURNEY_LIMITER`, `HISTORY_DB` |
+| `public/` | Die Web-App. Wird 1:1 als statisches Asset ausgeliefert, kein Bundler |
+| `public/core.js` | Reine GTFS-Funktionen ohne DOM: Parser, Verspätung, Shape-Projektion |
+| `public/app.js` | Die App: Karte, Marker, Animation, Detail-Panels |
+| `public/radar83-*.mjs` | 3D-Modus: MapLibre-Karte, FLIRT-inspiriertes 3D-Modell, Kamera-Logik |
+| `public/data/*.json` | Statische GTFS-Indizes, Haltestellen und Strecken (täglich per Action erneuert) |
+| `tests/` | 190 Tests, reine Logik ohne Browser |
+| `tools/` | Architekturprüfung, GTFS-Import, Mobile-Konfigurationsprüfung |
+| `dev/legacy/` | Frühere Module, die nicht mehr geladen werden. Siehe `dev/legacy/README.md` |
 
-BusOne terms: noncommercial use, source attribution, sensible polling. For commercial deployment obtain provider permission.
+## API
+
+| Route | Zweck |
+|---|---|
+| `GET /api/version` | Version des laufenden Workers |
+| `GET /api/v1/vehicles` | normalisierte Fahrzeug-Snapshots mit `positionType`, `quality`, `observedAt` |
+| `GET /api/v1/diagnostics` | Feed-Status, Duplikate, Konflikte zwischen Quellen |
+| `GET /api/v1/models` | nur belegte Fahrzeugtyp-Zuordnungen |
+| `GET /api/health` | Erreichbarkeit des Proxys |
+| `GET /api/sta`, `/api/trentino`, `/api/trains` | Roh-Feeds (GTFS-RT JSON) |
+| `GET /api/station-platforms/{id}` | RFI-Anzeigetafel |
+| `GET /api/train-platforms/{nummer}` | ViaggiaTreno-Fahrtverlauf |
+| `POST /api/ai/journey`, `/api/ai/journey-chat` | Reiseberater, nur same-origin, Rate-Limit 6/60 s |
+| `GET /api/history/*` | Historie, **standardmäßig deaktiviert** |
+
+Alle lesenden Routen dürfen `GET`, `HEAD` und `OPTIONS`.
+
+## Datengrundsätze
+
+- Anzeigte Positionen sind **empfangene Feed-Positionen**, keine vorhergesagten GPS-Positionen.
+- Gemeldete Verspätung (GTFS-RT) und räumliche Abweichung vom Fahrplan sind **zwei verschiedene
+  Werte** und werden getrennt ausgewiesen. Kräftiges Rot gilt erst ab 15 Minuten Verspätung.
+- Linien, Zugnummern und Fahrtziele werden nur gezeigt, wenn sie durch statische GTFS-Daten
+  oder eine offizielle Quelle belegt sind.
+- Kein Zugriff auf den D1-History-Collector: `wrangler.jsonc` hat `triggers.crons: []` und der
+  Collector bleibt bis zu einer ausdrücklichen Freigabe deaktiviert.
+
+## Entwicklung
+
+```sh
+npm run verify        # Architekturprüfung + alle Tests
+npm run check         # nur Syntax, Imports, HTML-Referenzen
+npm test              # nur Tests
+node tools/mobile-config-check.mjs
+```
+
+Node 20 oder neuer wird gebraucht. Es gibt bewusst **keine** Abhängigkeiten.
+
+`public/.assetsignore` verhindert, dass die lokalen Vorschau-Seiten (`test-*.html`,
+`isolate-*.html`) hochgeladen werden. Die Diagnose-Seiten bleiben absichtlich öffentlich.
+
+## Deployment
+
+Die GitHub-Action „Deploy Radar to Cloudflare" deployed bei jedem Push auf `main`. Sie prüft
+zuerst `npm run verify`, stellt sicher, dass kein Cron-Trigger gesetzt ist, deployt und
+verifiziert danach die Live-Version gegen `package.json`.
+
+Die Cloudflare-Integration „Workers Builds" läuft zusätzlich und markiert Pull-Request-Branches
+als fehlgeschlagen, ohne dass dort etwas gebaut wird. Das ist kein Signal über die Qualität des
+Commits: maßgeblich sind der Quality-Gate-Check und der Deploy-Check auf `main`.
+
+## Nutzungsbedingungen
+
+BusOne: nichtkommerziell, Quellenangabe, vernünftige Abfragefrequenz. Für einen kommerziellen
+Einsatz ist die Erlaubnis des Anbieters einzuholen.

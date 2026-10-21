@@ -2,7 +2,7 @@
 import {calculateNetworkStats,searchTrainStats,searchBusLineStats,vehicleAgeSeconds,HistoricalStorage,tidy} from './radar50-logic.mjs';
 import {findStations,nearbyStationGroup,buildDepartureRows,romeSeconds,busDelayLabel} from './radar51-logic.mjs';
 import {mergeStationDepartures} from './radar53-logic.mjs';
-import {enrichTrainPlatform} from './train-platforms.js?v=5.4.4';
+import {enrichTrainPlatform} from './train-platforms.js?v=8.5.0';
 (() => {
 'use strict';
 const $=id=>document.getElementById(id);

@@ -2,9 +2,9 @@
  * The original Leaflet map stays intact underneath. Only selected cinematic
  * vehicles initialize MapLibre; errors or ?radar3d=off fall back to Radar 8.2.
  */
-import {loadThree} from './radar82-3d.mjs';
-import {makeVehicleMesh,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision} from './radar83-logic.mjs?v=8.4.0';
+
+import {loadThree,makeVehicleMesh,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=8.5.0';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision} from './radar83-logic.mjs?v=8.5.0';
 
 let libraryPromise=null;
 function loadMapLibre(){
