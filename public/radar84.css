@@ -1,0 +1,157 @@
+/* Südtirol Radar 8.4 — restrained, map-first design layer.
+   Existing app logic, data feeds, navigation, map layers and vehicle models remain untouched. */
+:root {
+  --radar84-ink: #f3f7fc;
+  --radar84-muted: #a4b2c5;
+  --radar84-glass: rgba(10, 18, 30, .88);
+  --radar84-glass-strong: rgba(13, 23, 38, .97);
+  --radar84-line: rgba(179, 201, 228, .15);
+  --radar84-blue: #398cff;
+  --radar84-ease: cubic-bezier(.23, 1, .32, 1);
+}
+
+/* Floating header: one quiet surface, clear hierarchy, no heavy neon glow. */
+#sr50MapTab .topbar {
+  position: absolute;
+  z-index: 1000;
+  top: calc(9px + env(safe-area-inset-top));
+  left: 10px;
+  right: 10px;
+  padding: 12px 13px 11px;
+  border: 1px solid var(--radar84-line);
+  border-radius: 21px;
+  background: var(--radar84-glass);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.25);
+  backdrop-filter: blur(22px) saturate(1.25);
+}
+#sr50MapTab .toprow { gap: 10px; }
+#sr50MapTab .brand-badge {
+  width: 40px; height: 40px; border-radius: 13px;
+  box-shadow: none; background: #152c49; color: #73b4ff;
+  border: 1px solid rgba(95, 158, 236, .27);
+}
+#sr50MapTab .brand-title { font-size: 17px; letter-spacing: -.55px; }
+#sr50MapTab .brand-title em {
+  display: inline-flex; align-items: center; margin-left: 6px;
+  padding: 3px 6px; border-radius: 6px; background: #183654;
+  color: #82bdff; font-size: 10px; letter-spacing: .02em;
+}
+#sr50MapTab .brand-sub { font-size: 10px; letter-spacing: .07em; }
+#sr50MapTab .status {
+  padding: 7px 9px; gap: 7px; border-radius: 999px;
+  border-color: var(--radar84-line); background: rgba(255,255,255,.035);
+  font-size: 9px; letter-spacing: .035em;
+}
+#sr50MapTab .status-dot { box-shadow: none; }
+#sr50MapTab .iconbtn, #sr50MapTab .round-action, #sr50MapTab .close {
+  border-color: var(--radar84-line); background: rgba(19, 33, 51, .92);
+  box-shadow: none; transition: transform 150ms var(--radar84-ease), background-color 150ms ease, border-color 150ms ease;
+}
+#sr50MapTab .iconbtn { width: 39px; height: 39px; border-radius: 13px; }
+
+/* Filter row stays reachable on narrow phones; search takes remaining width. */
+#sr50MapTab .controls { gap: 7px; margin-top: 12px; }
+#sr50MapTab .segments { gap: 5px; }
+#sr50MapTab .chip {
+  min-height: 38px; padding: 9px 12px; border-radius: 12px;
+  border-color: var(--radar84-line); background: rgba(255,255,255,.035);
+  font-size: 11px; font-weight: 650;
+  transition: transform 150ms var(--radar84-ease), background-color 150ms ease, border-color 150ms ease;
+}
+#sr50MapTab .chip.active {
+  background: #2879e8; border-color: #4b96ff; color: #fff; box-shadow: none;
+}
+#sr50MapTab .search-wrap {
+  height: 39px; border-radius: 12px; padding: 0 11px;
+  border-color: var(--radar84-line); background: rgba(255,255,255,.045);
+}
+#sr50MapTab .search-wrap input { font-size: 12px; }
+
+/* Map tools align in one consistent rail, clear of the header and data summary. */
+#sr50MapTab .map-actions {
+  right: 11px; bottom: calc(104px + env(safe-area-inset-bottom)); gap: 7px;
+}
+#sr50MapTab .round-action {
+  width: 42px; height: 42px; border-radius: 14px;
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  font-size: 16px;
+}
+#sr50MapTab .viewport-badge, #sr50MapTab .info-banner,
+#sr50MapTab .area-picker, #sr50MapTab .schedule-matches {
+  border: 1px solid var(--radar84-line); border-radius: 14px;
+  background: var(--radar84-glass-strong); box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+}
+#sr50MapTab .info-banner { top: calc(119px + env(safe-area-inset-top)); }
+
+/* Compact live summary: numbers first, source/update status secondary. */
+#sr50MapTab .stats {
+  left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom));
+  min-height: 64px; padding: 12px 13px; gap: 10px;
+  border-radius: 18px; border-color: var(--radar84-line);
+  background: var(--radar84-glass); box-shadow: 0 8px 28px rgba(0,0,0,.2);
+  -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px);
+}
+#sr50MapTab .stats-counts { gap: clamp(8px, 2.8vw, 15px); }
+#sr50MapTab .stat { gap: 5px; }
+#sr50MapTab .stat b { font-size: 17px; letter-spacing: -.45px; }
+#sr50MapTab .stat span, #sr50MapTab .stats-time { font-size: 10px; color: var(--radar84-muted); }
+
+/* Vehicle / station sheets: comfortable handle, calm surface, fast interruptible motion. */
+#sr50MapTab .sheet {
+  padding: 9px 17px calc(18px + env(safe-area-inset-bottom));
+  max-height: min(80dvh, 760px); border-radius: 25px 25px 0 0;
+  border-color: var(--radar84-line); background: var(--radar84-glass-strong);
+  box-shadow: 0 -12px 48px rgba(0,0,0,.28);
+  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  transition: transform 240ms cubic-bezier(.32,.72,0,1);
+  overscroll-behavior: contain;
+}
+#sr50MapTab .handle { width: 36px; height: 4px; margin-bottom: 16px; background: #8092a8; }
+#sr50MapTab .sheet-title { font-size: 23px; letter-spacing: -.65px; }
+#sr50MapTab .sheet-subtitle { line-height: 1.45; color: var(--radar84-muted); }
+#sr50MapTab .eyebrow { font-size: 10px; letter-spacing: .09em; }
+#sr50MapTab .close { width: 40px; height: 40px; border-radius: 50%; }
+#sr50MapTab .station-result { border-color: var(--radar84-line); border-radius: 14px; background: rgba(255,255,255,.035); }
+#sr50MapTab .station-result:active { transform: scale(.985); }
+#sr50MapTab .scrim { transition: opacity 180ms ease-out; }
+
+/* Consistent touch feedback, only transform/opacity are animated for performance. */
+#sr50MapTab button { -webkit-tap-highlight-color: transparent; }
+#sr50MapTab button:active { transform: scale(.975); }
+#sr50MapTab .sheet button:active { transform: scale(.985); }
+#sr50MapTab button:focus-visible, #sr50MapTab input:focus-visible { outline: 2px solid #78b8ff; outline-offset: 2px; }
+@media (hover:hover) and (pointer:fine) {
+  #sr50MapTab .round-action:hover, #sr50MapTab .iconbtn:hover { background: #203752; border-color: rgba(120,184,255,.34); }
+  #sr50MapTab .chip:not(.active):hover { background: rgba(255,255,255,.075); }
+}
+@media (max-width: 420px) {
+  #sr50MapTab .topbar { left: 8px; right: 8px; padding: 10px; border-radius: 19px; }
+  #sr50MapTab .toprow { gap: 7px; }
+  #sr50MapTab .brand-badge { width: 36px; height: 36px; }
+  #sr50MapTab .brand-title { font-size: 15px; }
+  #sr50MapTab .brand-sub { font-size: 9px; letter-spacing: .045em; }
+  #sr50MapTab .status { padding: 6px 7px; font-size: 8px; }
+  #sr50MapTab .iconbtn { width: 36px; height: 36px; }
+  #sr50MapTab .controls { gap: 5px; margin-top: 10px; }
+  #sr50MapTab .segments { gap: 4px; }
+  #sr50MapTab .chip { min-height: 36px; padding: 8px 9px; font-size: 10px; }
+  #sr50MapTab .search-wrap { height: 36px; min-width: 58px; padding: 0 8px; }
+  #sr50MapTab .search-wrap input { font-size: 11px; }
+  #sr50MapTab .stats { left: 8px; right: 8px; padding: 10px; gap: 6px; }
+  #sr50MapTab .stats-counts { gap: 8px; }
+  #sr50MapTab .stat b { font-size: 15px; }
+  #sr50MapTab .stat span, #sr50MapTab .stats-time { font-size: 9px; }
+  #sr50MapTab .map-actions { right: 8px; gap: 6px; }
+  #sr50MapTab .round-action { width: 39px; height: 39px; border-radius: 13px; }
+}
+@media (min-width: 760px) {
+  #sr50MapTab .topbar { top: 16px; left: 16px; right: auto; width: min(490px, calc(100vw - 32px)); }
+  #sr50MapTab .stats { left: 16px; right: auto; bottom: 16px; width: min(460px, calc(100vw - 32px)); }
+  #sr50MapTab .map-actions { right: 16px; bottom: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #sr50MapTab .iconbtn, #sr50MapTab .round-action, #sr50MapTab .chip,
+  #sr50MapTab .sheet, #sr50MapTab .scrim, #sr50MapTab .station-result { transition-duration: 0.01ms !important; }
+}
