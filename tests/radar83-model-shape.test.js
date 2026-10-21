@@ -35,8 +35,8 @@ function fakeThree() {
     length() { return Math.hypot(this.x, this.y, this.z); }
   }
   class Quaternion { setFromUnitVectors() {} }
-  class BoxGeometry { constructor(w, h, d) { this.w = w; this.h = h; this.d = d; } }
-  class CylinderGeometry { constructor(r1, r2, h) { this.w = r1 * 2; this.h = h; this.d = r1 * 2; } }
+  class BoxGeometry { constructor(w, h, d) { this.w = w; this.h = h; this.d = d; this.isBox = true; } }
+  class CylinderGeometry { constructor(r1, r2, h) { this.w = r1 * 2; this.h = h; this.d = r1 * 2; this.radius = r1; this.isCylinder = true; } }
   class Material { constructor(opts) { this.opts = opts; } }
   class Mesh {
     constructor(geometry, material) {
@@ -53,22 +53,32 @@ function fakeThree() {
   return {Vector3, Quaternion, BoxGeometry, CylinderGeometry, MeshStandardMaterial: Material, Mesh, Group};
 }
 
+// The body is measured from the boxes. Cylinders (wheels, pantograph rods) are
+// rotated in space, which the fake cannot follow, so they are measured
+// separately: only the wheels decide how deep the model reaches below y = 0.
 function measure(object) {
   const box = {minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity, minZ: Infinity, maxZ: -Infinity};
+  let wheelBottom = Infinity;
   object.traverse(node => {
     const g = node.geometry;
-    if (!g || !g.w) return;
-    // A cylinder that is rotated by 90 degrees around Z has its axis along
-    // X: then the height is the X extent and the diameter the Y extent.
-    const turned = Math.abs(Math.abs(node.rotation?.z ?? 0) - Math.PI / 2) < 0.01;
-    const w = turned ? g.h : g.w;
-    const h = turned ? g.w : g.h;
-    const p = node.position;
-    box.minX = Math.min(box.minX, p.x - w / 2); box.maxX = Math.max(box.maxX, p.x + w / 2);
-    box.minY = Math.min(box.minY, p.y - h / 2); box.maxY = Math.max(box.maxY, p.y + h / 2);
-    box.minZ = Math.min(box.minZ, p.z - g.d / 2); box.maxZ = Math.max(box.maxZ, p.z + g.d / 2);
+    if (!g) return;
+    if (g.isBox) {
+      const p = node.position;
+      box.minX = Math.min(box.minX, p.x - g.w / 2); box.maxX = Math.max(box.maxX, p.x + g.w / 2);
+      box.minY = Math.min(box.minY, p.y - g.h / 2); box.maxY = Math.max(box.maxY, p.y + g.h / 2);
+      box.minZ = Math.min(box.minZ, p.z - g.d / 2); box.maxZ = Math.max(box.maxZ, p.z + g.d / 2);
+    } else if (g.isCylinder && g.radius >= 0.3) {
+      wheelBottom = Math.min(wheelBottom, node.position.y - g.radius);
+    }
   });
-  return {length: box.maxZ - box.minZ, width: box.maxX - box.minX, height: box.maxY - box.minY, minY: box.minY};
+  return {
+    length: box.maxZ - box.minZ,
+    width: box.maxX - box.minX,
+    height: box.maxY - box.minY,
+    maxY: box.maxY,
+    minY: box.minY,
+    wheelBottom,
+  };
 }
 
 test('the height is not scaled with the mercator factor', () => {
@@ -84,10 +94,12 @@ test('the schematic train has the proportions of a modern regional EMU', () => {
   const m = measure(makeVehicleMesh(T, 'train'));
   assert.ok(m.length > 42 && m.length < 47, 'train length in metres: ' + m.length.toFixed(1));
   assert.ok(m.width > 2.85 && m.width < 3.15, 'train width in metres: ' + m.width.toFixed(2));
-  // The height includes the raised pantograph. A FLIRT is about 3.5 m over
-  // the roof and 4.35 m with the pantograph up.
-  assert.ok(m.height > 3.4 && m.height < 4.7, 'train height in metres: ' + m.height.toFixed(2));
-  assert.ok(Math.abs(m.minY) < 0.6, 'the train must stand on the ground, minY=' + m.minY.toFixed(2));
+  // Measured from the rail head to the roof: a FLIRT is about 3.85 m, the
+  // raised pantograph adds roughly 0.6 m on top of that.
+  const hoehe = m.maxY - m.wheelBottom;
+  assert.ok(hoehe > 3.4 && hoehe < 3.95, 'train height over the rail in metres: ' + hoehe.toFixed(2));
+  assert.ok(m.minY > 0.5 && m.minY < 1.0, 'the body must start above the wheel axles, minY=' + m.minY.toFixed(2));
+  assert.ok(Math.abs(m.wheelBottom) < 0.05, 'the wheels must touch the ground, bottom=' + m.wheelBottom.toFixed(2));
 });
 
 test('the schematic bus has the proportions of a 12 m city bus', () => {
@@ -95,8 +107,10 @@ test('the schematic bus has the proportions of a 12 m city bus', () => {
   const m = measure(makeVehicleMesh(T, 'bus'));
   assert.ok(m.length > 11 && m.length < 13, 'bus length in metres: ' + m.length.toFixed(1));
   assert.ok(m.width > 2.6 && m.width < 2.95, 'bus width in metres: ' + m.width.toFixed(2));
-  assert.ok(m.height > 2.9 && m.height < 3.5, 'bus height in metres: ' + m.height.toFixed(2));
-  assert.ok(Math.abs(m.minY) < 0.6, 'the bus must stand on the ground, minY=' + m.minY.toFixed(2));
+  const hoehe = m.maxY - m.wheelBottom;
+  assert.ok(hoehe > 2.85 && hoehe < 3.25, 'bus height over the road in metres: ' + hoehe.toFixed(2));
+  assert.ok(m.minY > 0.4 && m.minY < 0.9, 'the body must start above the wheel axles, minY=' + m.minY.toFixed(2));
+  assert.ok(Math.abs(m.wheelBottom) < 0.05, 'the wheels must touch the ground, bottom=' + m.wheelBottom.toFixed(2));
 });
 
 test('the real dimensions are documented in the model specification', () => {
