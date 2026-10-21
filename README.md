@@ -51,13 +51,27 @@ Alle lesenden Routen dürfen `GET`, `HEAD` und `OPTIONS`.
 ## Entwicklung
 
 ```sh
-npm run verify        # Architekturprüfung + alle Tests
-npm run check         # nur Syntax, Imports, HTML-Referenzen
+npm run verify        # Versionspruefung + Architekturpruefung + alle Tests
+npm run check         # nur Versionspruefung, Syntax, Imports, HTML-Referenzen
+npm run sync          # setzt alle Cache-Buster auf die package.json-Version
 npm test              # nur Tests
 node tools/mobile-config-check.mjs
 ```
 
 Node 20 oder neuer wird gebraucht. Es gibt bewusst **keine** Abhängigkeiten.
+
+**Eine Versionsangabe im ganzen Projekt.** `package.json` ist die Quelle. Beim
+Erhoehen der Version:
+
+```sh
+npm version 8.6.0 --no-git-tag-version
+npm run sync          # alle "?v="-Stellen nachziehen
+```
+
+`npm run check` bricht ab, wenn eine Cache-Buster-Stelle nicht zur
+`package.json` passt. Ein vergessener Cache-Buster wuerde eine alte Datei im
+Browser-Cache liegen lassen, die dann mit der neuen Datei kämpft - genau das
+hat im August 2026 zu einer falschen Versionsanzeige gefuehrt.
 
 `public/.assetsignore` verhindert, dass die lokalen Vorschau-Seiten (`test-*.html`,
 `isolate-*.html`) hochgeladen werden. Die Diagnose-Seiten bleiben absichtlich öffentlich.
