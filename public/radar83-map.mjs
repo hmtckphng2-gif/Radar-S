@@ -168,7 +168,7 @@ export class Radar83Cinematic {
   constructor(leaflet,{onExit=()=>{},onManual=()=>{},onFailure=()=>{},onModel=()=>{}}={}){
    this.leaflet=leaflet;this.onExit=onExit;this.onManual=onManual;this.onFailure=onFailure;this.onModel=onModel;
   this.sequence=0;this.map=null;this.overlay=null;this.layer=null;
-  this.ready=false;this.touched=false;this.active=false;this.flight=null;
+  this.ready=false;this.touched=false;this.active=false;this.flight=null;this.flying=false;this.flightTimer=0;
  }
  get enabled(){return enabled3D(location.search)}
  makeOverlay(){
@@ -220,7 +220,18 @@ export class Radar83Cinematic {
     if(map.loaded?.())end();
    });
    if(seq!==this.sequence)return false;
-   // Real 3D map data is mandatory. Never show a black empty canvas over 2D.
+   // Interrupt handlers first, so a gesture can stop the flight right away.
+   map.on('dragstart',()=>this.interrupt());
+   map.getCanvas().addEventListener('touchstart',()=>this.interrupt(),{passive:true});
+   map.getCanvas().addEventListener('wheel',()=>this.interrupt(),{passive:true});
+   // The camera starts moving NOW. Waiting for the tiles and for the model
+   // before the first movement felt like a dead second on every tap.
+   this.flight={start,target};
+   map.resize();map.triggerRepaint();
+   this.overlay.classList.add('sr83-loading');
+   document.body.classList.add('sr83-cinematic');
+   this.replay();
+   // From here the scene is built while the camera is already flying.
    await waitFor3DScene(map);
    if(seq!==this.sequence)return false;
    try{build3DBuildings(map)}catch(error){console.info('3D building fallback',error)}
@@ -238,15 +249,7 @@ export class Radar83Cinematic {
    const kind=vehicleKind(vehicle);
    this.info.textContent=kind==='train'?'3D · FLIRT-Stil':'3D · Linienbus';
    this.overlay.classList.add('sr83-ready');
-   document.body.classList.add('sr83-cinematic');
    this.ready=true;
-   this.flight={start,target};
-   map.resize();map.triggerRepaint();
-   map.on('dragstart',()=>this.interrupt());
-   map.getCanvas().addEventListener('touchstart',()=>this.interrupt(),{passive:true});
-   map.getCanvas().addEventListener('wheel',()=>this.interrupt(),{passive:true});
-   // The map (not the vehicle model) performs the cinematic tilt and orbit.
-   this.replay();
    return true;
   }catch(error){
    if(seq===this.sequence){
@@ -257,13 +260,15 @@ export class Radar83Cinematic {
   }
  }
  replay(){
-  if(!this.ready||!this.map||!this.flight)return;
+  if(!this.map||!this.flight)return;
   const {start,target}=this.flight;
   this.map.stop();
   this.map.jumpTo(start);
+  this.flying=true;
+  clearTimeout(this.flightTimer);
   this.map.easeTo({...target,easing:t=>t*t*(3-2*t),essential:true});
+  this.flightTimer=setTimeout(()=>{this.flying=false},(Number(target.duration)||0)+150);
  }
-
  interrupt(){
   if(!this.active||this.touched)return;
   this.touched=true;
@@ -275,7 +280,7 @@ export class Radar83Cinematic {
   this.layer.update(point,heading);
   // The camera follows the vehicle while the user has not taken over. A
   // deliberate gesture always wins; the model keeps its real feed position.
-  if(this.touched||!this.map)return;
+  if(this.touched||this.flying||!this.map)return;
   const decision=followDecision({touched:this.touched,center:this.map.getCenter?.(),point});
   if(!decision)return;
   this.map.easeTo({center:decision.center,duration:900,essential:false});
@@ -288,7 +293,7 @@ export class Radar83Cinematic {
     this.leaflet.setView([center.lat,center.lng],Math.min(18,Math.max(3,zoom)),{animate:false});
    }catch{}
   }
-  this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.flight=null;
+  this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);
   if(oldMap)try{oldMap.stop();oldMap.remove()}catch(error){console.info('3D map cleanup',error)}
   this.overlay?.remove();this.overlay=null;this.surface=null;
   document.body.classList.remove('sr83-cinematic');

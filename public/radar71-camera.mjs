@@ -5,6 +5,7 @@ import {Radar83Cinematic} from './radar83-map.mjs?v=8.5.0';
  * map panes with CSS and corrupt touch coordinates or marker hit testing.
  */
 import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from './radar71-camera-logic.mjs';
+import {cinematicDuration} from './radar83-logic.mjs';
 (()=>{'use strict';
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -73,7 +74,9 @@ import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,sho
   const heading=focusHeading(vehicle),arrow=$('sr71HeadingArrow');
   if(arrow){arrow.hidden=heading===null;arrow.style.setProperty('--sr71-direction',((heading??0)-45)+'deg')}
   const toZoom=focusZoom(map.getZoom(),map.getMaxZoom(),vehicle.kind);
-  const duration=focusDuration(motion.matches,map.getZoom(),toZoom,focusDistanceKm(map.getCenter(),pos));
+  const distanceKm=focusDistanceKm(map.getCenter(),pos);
+  // The camera move is short and starts on the tap. A long flight felt sluggish.
+  const duration=cinematicDuration(distanceKm,focusDuration(motion.matches,map.getZoom(),toZoom,distanceKm)*0.62);
   const classic=()=>{
    if(seq!==token)return;
    try{

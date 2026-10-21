@@ -58,3 +58,13 @@ export function followDecision({touched=false,center=null,point=null,thresholdMe
   if(!Number.isFinite(meters)||meters<thresholdMeters)return null;
   return {center:[lng,lat],meters:Math.round(meters)};
 }
+// The 3D cinematic is a camera move, not a page transition. It has to feel
+// immediate: it starts on the tap and is done in about two seconds, while
+// the 3D scene is still being built up in the background. The old flow
+// waited for the tiles and for the model first, which felt like a dead
+// second on every single tap.
+export function cinematicDuration(distanceKm=0,base=3000){
+  const d=Number(distanceKm);
+  const extra=Number.isFinite(d)&&d>2?350:0;
+  return Math.round(Math.max(1600,Math.min(3000,Number(base)||3000))+extra);
+}
