@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090e15">
+<meta name="description" content="Südtirol Radar: Live-Karte, Abfahrten und transparente Verspätungsinformationen für Züge und Busse in Südtirol und Trentino.">
+<title>Südtirol Radar – Züge und Busse live verfolgen</title>
+<link rel="canonical" href="https://radar-s.j9fr2vg4vm.workers.dev/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_DE">
+<meta property="og:site_name" content="Südtirol Radar">
+<meta property="og:title" content="Südtirol Radar – Züge und Busse live verfolgen">
+<meta property="og:description" content="Live-Karte, Abfahrten und Verspätungsinformationen für Südtirol und Trentino.">
+<meta property="og:url" content="https://radar-s.j9fr2vg4vm.workers.dev/">
+<meta property="og:image" content="https://radar-s.j9fr2vg4vm.workers.dev/radar60-icon-512.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/png" href="/radar60-icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/vendor/leaflet-1.9.4.css?v=8.3.1">
+<link rel="stylesheet" href="/styles.css?v=3.4">
+<link rel="stylesheet" href="/radar35.css?v=3.5.1">
+<link rel="stylesheet" href="/radar37.css?v=3.7">
+<link rel="stylesheet" href="/radar40.css?v=4.2">
+<link rel="stylesheet" href="/radar42.css?v=4.4">
+<link rel="stylesheet" href="/radar43.css?v=4.3.1">
+<link rel="stylesheet" href="/radar44.css?v=4.4">
+<link rel="stylesheet" href="/radar45.css?v=4.5.2">
+<link rel="stylesheet" href="/radar46.css?v=4.6">
+<link rel="stylesheet" href="/radar47.css?v=4.7">
+<link rel="stylesheet" href="/radar50.css?v=5.1">
+<link rel="stylesheet" href="/radar51.css?v=5.1">
+<link rel="stylesheet" href="/radar52.css?v=5.2">
+<link rel="stylesheet" href="/radar53.css?v=5.4">
+<link rel="stylesheet" href="/radar54.css?v=5.4">
+<link rel="stylesheet" href="/radar55.css?v=5.5.5">
+<link rel="stylesheet" href="/radar56.css?v=5.6">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/radar60-icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="/radar57.css?v=7.0.3">
+<link rel="stylesheet" href="/radar58.css?v=5.8.7">
+<link rel="stylesheet" href="/radar60.css?v=6.1.1-header-sharp">
+<link rel="stylesheet" href="/radar601.css?v=6.0.1">
+</head>
+<body>
+<div id="sr50MapTab" class="sr50-map-tab">
+  <div id="map" role="application" aria-label="Karte mit Zug- und Buspositionen"></div>
+  <header class="topbar">
+    <div class="toprow">
+      <div class="brand-badge" aria-hidden="true"><svg viewBox="0 0 48 48" width="30" height="30"><path d="M12 35L35 12M13 13h22v22" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="24" r="5" fill="currentColor"/></svg></div>
+      <div class="brand"><div class="brand-title">RADAR <em>8.3.2</em></div><div class="brand-sub">SÜDTIROL · TRENTINO</div></div>
+      <button id="statusBtn" class="status" aria-label="Status und Datenquellen" title="Datenquellen ansehen"><span class="status-dot"></span><span id="statusText">VERBINDE</span></button>
+      <button id="themeToggle" class="iconbtn" aria-label="Hell-/Dunkelmodus wechseln" title="Theme wechseln">☀</button>
+    </div>
+    <nav class="controls" aria-label="Fahrzeugfilter">
+      <div class="segments"><button class="chip active" data-filter="all">Alle</button><button class="chip" data-filter="trains">🚆 Züge</button><button class="chip" data-filter="buses">🚌 Busse</button></div>
+      <div class="search-wrap"><span aria-hidden="true">⌕</span><input type="search" id="search" autocomplete="off" spellcheck="false" aria-label="Zugnummer, Linie oder Ziel suchen" placeholder="Nummer / Ziel"></div>
+    </nav>
+  </header>
+  <div id="scheduleMatches" class="schedule-matches" hidden aria-live="polite"></div>
+  <div class="info-banner" id="notice"><button class="info-close" id="noticeClose" aria-label="Hinweis schließen">×</button><strong>Positionshinweis:</strong> Trenitalia und Trentino zeigen teilweise simulierte Fahrzeugpositionen. Zugnummern und Buslinien werden nicht geraten.</div>
+  <button id="viewportBadge" class="viewport-badge" type="button" title="Alle Fahrzeuge anzeigen">📍 Keine Positionen</button>
+  <div id="areaPicker" class="area-picker" hidden>
+    <strong>Ort auswählen</strong>
+    <button type="button" data-place="bozen">Bozen</button>
+    <button type="button" data-place="meran">Meran</button>
+    <button type="button" data-place="brixen">Brixen</button>
+    <button type="button" data-place="sterzing">Sterzing</button>
+    <button type="button" data-place="bruneck">Bruneck</button>
+    <button type="button" data-place="trento">Trient</button>
+    <button type="button" data-place="all">Alle Fahrzeuge</button>
+  </div>
+  <div class="map-actions">
+    <button id="refreshBtn" class="round-action" title="Daten jetzt aktualisieren" aria-label="Daten aktualisieren">↻</button>
+    <button id="fitBtn" class="round-action" title="Alle Fahrzeuge zeigen" aria-label="Karte auf Fahrzeuge zentrieren">⌗</button>
+    <button id="stationBtn" class="round-action" title="Bahnhöfe und Haltestellen suchen" aria-label="Haltestellen suchen">▦</button>
+    <button id="areaBtn" class="round-action" title="Ort auswählen" aria-label="Ort auswählen">📍</button>
+    <button id="tileBtn" class="round-action" title="Kartenanbieter wechseln" aria-label="Kartenanbieter wechseln">🗺</button>
+  </div>
+  <footer class="stats" aria-live="polite"><div class="stats-counts"><div class="stat"><b id="countAll">0</b><span>Fahrzeuge</span></div><div class="stat"><b id="countTrains">0</b><span>Züge</span></div><div class="stat"><b id="countBuses">0</b><span>Busse</span></div></div><div id="lastUpdate" class="stats-time">Warte auf Daten</div></footer>
+  <div class="scrim" id="scrim"></div>
+  <section id="sheet" class="sheet" aria-label="Fahrzeugdetails" role="dialog" aria-modal="false" aria-hidden="true">
+    <div class="handle"></div>
+    <div class="sheet-heading"><div class="sheet-heading-main"><div id="sheetKind" class="eyebrow">Fahrtinformation</div><h2 id="sheetTitle" class="sheet-title">–</h2><div id="sheetSub" class="sheet-subtitle">–</div></div><button id="closeSheet" class="close" aria-label="Details schließen">✕</button></div>
+    <div class="sheet-scroll" tabindex="0" aria-label="Fahrzeugdetails scrollen">
+    <div class="badge-row" id="sheetBadges"></div>
+    <div class="model-card" id="modelCard" hidden><img id="modelImage" alt="Baureihenfoto" loading="lazy" referrerpolicy="no-referrer"><div class="model-text"><strong id="modelTitle"></strong><small id="modelCaption"></small></div></div>
+    <div id="details" class="details"></div>
+    <div class="note" id="sheetNote"></div>
+    <div id="scheduleSection" hidden><div class="section-title">Fahrtverlauf <span class="section-sub" id="scheduleSource">GTFS-Fahrplan</span></div><ol class="stop-list" id="stops"></ol></div>
+    <div id="emptySchedule" class="empty">Keine vollständigen Haltestelleninformationen für diese Fahrt verfügbar.</div>
+    </div>
+  </section>
+  <section id="stationSheet" class="sheet" aria-hidden="true" aria-label="Haltestellensuche" role="dialog" aria-modal="false">
+    <div class="handle"></div><div class="sheet-heading"><div class="sheet-heading-main"><div class="eyebrow">Fahrplan-Suche</div><h2 class="sheet-title">Haltestellen</h2><div class="sheet-subtitle">GTFS-Fahrplandaten, keine amtliche RFI-Anzeigetafel</div></div><button id="closeStations" class="close" aria-label="Haltestellensuche schließen">✕</button></div>
+    <div class="sheet-scroll" tabindex="0" aria-label="Haltestellenliste scrollen">
+    <div class="search-wrap" style="margin:14px 0"><span>⌕</span><input id="stationSearch" type="search" placeholder="Bahnhof oder Haltestelle suchen" aria-label="Haltestelle suchen"></div>
+    <div class="station-results" id="stationResults"></div>
+    <div id="stationBoard" hidden><div class="section-title" id="stationName">Abfahrten</div><div class="section-sub">Geplante Zeiten aus GTFS, nicht mit RFI abgeglichen</div><div class="station-results" id="stationDepartures" style="margin-top:10px"></div><button id="backStations" class="chip" style="margin-top:12px">← Andere Haltestelle</button></div>
+    </div>
+  </section>
+</div>
+
+<script src="/vendor/leaflet-1.9.4.js?v=8.3.1" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script>
+<script>
+(function(){
+ var failures=[];
+ window.addEventListener('error',function(e){failures.push((e.message||e.target&&e.target.src||'resource error').slice(0,150));},true);
+ window.addEventListener('unhandledrejection',function(e){failures.push(String(e.reason&&e.reason.message||e.reason).slice(0,150));});
+ setTimeout(function(){
+  var map=document.getElementById('map');
+  var state=window.SuedtirolRadar37&&window.SuedtirolRadar37.state;
+  var tiles=map?map.querySelectorAll('.leaflet-tile-loaded').length:0;
+  if(tiles>0&&state&&state.fetchedAt)return;
+  var pane=document.createElement('div');pane.id='radar-emergency-diagnostic';
+  pane.style.cssText='position:fixed!important;left:12px!important;right:12px!important;top:35%!important;z-index:2147483647!important;background:#15243b!important;color:white!important;border:2px solid #e2ad55!important;border-radius:14px!important;padding:18px!important;font:14px/1.5 system-ui!important;box-shadow:0 8px 40px #000c!important;pointer-events:auto!important';
+  var title=document.createElement('b');title.textContent='Radar Startdiagnose';pane.append(title);
+  var info=document.createElement('div');info.style.cssText='margin-top:9px;overflow-wrap:anywhere';
+  info.textContent='Phase: '+(document.documentElement.dataset.radarBoot||'Modul nicht gestartet')+' | Leaflet: '+(window.L?'ja':'nein')+' | Karte: '+(state&&state.map?'ja':'nein')+' | Kacheln: '+tiles+' | Feeds: '+(state&&state.fetchedAt?'geprüft':'nicht geprüft')+' | Fehler: '+(failures.join(' / ')||'keine erfasst');
+  pane.append(info);
+  var close=document.createElement('button');close.textContent='Schließen';close.style.cssText='display:block;margin-top:12px;padding:8px;background:#355375;color:white;border:0;border-radius:8px';close.onclick=function(){pane.remove()};pane.append(close);
+  document.body.append(pane);
+ },12000);
+})();
+</script>
+
+
+
+
+
+
+
+
+
+<script type="module" src="/app.js?v=8.3.3"></script>
+<script src="/radar46.js?v=4.6" defer></script>
+<script src="/radar47.js?v=7.0.3" defer></script>
+<script type="module" src="/radar50.js?v=7.0.3"></script>
+<script type="module" src="/radar51.js?v=7.4.0"></script>
+<script type="module" src="/radar52.js?v=7.1.0"></script>
+<script type="module" src="/radar53.js?v=5.4"></script>
+<script type="module" src="/radar54.js?v=5.7.1"></script>
+
+
+
+
+
+
+<script src="/radar60.js?v=6.7.0" defer></script>
+<link rel="stylesheet" href="/radar62.css?v=6.2.0">
+<script type="module" src="/radar62.js?v=6.6.1"></script>
+<link rel="stylesheet" href="/radar63.css?v=6.3.0">
+
+<link rel="stylesheet" href="/radar64.css?v=6.4.0">
+
+<link rel="stylesheet" href="/radar65.css?v=6.5.0">
+<link rel="stylesheet" href="/radar66.css?v=6.6.0">
+<link rel="stylesheet" href="/radar661.css?v=6.6.1">
+<link rel="stylesheet" href="/radar67.css?v=6.7.0">
+
+<link rel="stylesheet" href="/radar671.css?v=6.7.3">
+<link rel="stylesheet" href="/radar68.css?v=6.8.0">
+
+<link rel="stylesheet" href="/radar69.css?v=6.9.0">
+
+<link rel="stylesheet" href="/radar692.css?v=6.9.1">
+
+<link rel="stylesheet" href="/radar70.css?v=7.0.3">
+
+<link rel="stylesheet" href="/radar705.css?v=7.0.5">
+<link rel="stylesheet" href="/radar71.css?v=7.1.1">
+
+<link rel="stylesheet" href="/radar72.css?v=7.2.0">
+
+<link rel="stylesheet" href="/radar73.css?v=7.3.0">
+
+<link rel="stylesheet" href="/radar74.css?v=7.4.0">
+<link rel="stylesheet" href="/radar75.css?v=7.5.0">
+
+<link rel="stylesheet" href="/radar76.css?v=7.6.0">
+<script src="/radar76.js?v=7.7.0" defer></script>
+<link rel="stylesheet" href="/radar77.css?v=7.7.2">
+<script src="/radar77.js?v=7.8.0" defer></script>
+<link rel="stylesheet" href="/radar78.css?v=7.8.0">
+<script type="module" src="/radar78.mjs?v=7.8.0"></script>
+<link rel="stylesheet" href="/radar79.css?v=7.9.0">
+<script type="module" src="/radar79.mjs?v=7.9.0"></script>
+<script src="/radar80.js?v=8.3.2" defer></script>
+<link rel="stylesheet" href="/radar80-map.css?v=8.0.1">
+<link rel="stylesheet" href="/radar82.css?v=8.2.0">
+</body>
+</html>
