@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const src=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
+test('map-ready fires before awaiting feeds',()=>{
+ const map=src.indexOf("bootPhase('map-ready')");
+ const event=src.indexOf("document.dispatchEvent(new Event('sr37:ready'))");
+ const feeds=src.indexOf('await feeds;',event);
+ assert.ok(map>=0&&map<event&&event<feeds);
+});
+test('static data waits do not gate ready phase',()=>{
+ assert.ok(src.indexOf("bootPhase('ready')")<src.indexOf('Promise.allSettled([indexes,rail,buses])'));
+});

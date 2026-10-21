@@ -904,6 +904,7 @@ async function init(){
   setupControls();
   if(!initMap()){bootPhase('map-error');return}
   bootPhase('map-ready');
+  document.dispatchEvent(new Event('sr37:ready'));
   // These asynchronous jobs are deliberately independent. No fabricated
   // realtime positions: refreshFeeds still uses only actual source payloads.
   const feeds=refreshFeeds().catch(error=>console.error('Initial realtime fetch failed',error));
@@ -913,12 +914,9 @@ async function init(){
   bootPhase('loading-data');
   await feeds;
   bootPhase('feeds-checked');
-  // Other map modules can attach as soon as initial live data is processed.
-  document.dispatchEvent(new Event('sr37:ready'));
   setInterval(()=>{if(!document.hidden)refreshFeeds()},AVERAGE_POLL_MS);
-  await Promise.allSettled([indexes,rail,buses]);
   bootPhase('ready');
-  refreshMarkers();updateViewportBadge();
+  Promise.allSettled([indexes,rail,buses]).then(()=>{refreshMarkers();updateViewportBadge();});
   // Refresh labels/route associations after GTFS indexes become available.
   // Any valid reported position remains derived only from official feeds.
   if(!document.hidden)refreshFeeds().catch(error=>console.info('Post-index refresh unavailable',error));
