@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {makeVehicleMesh,modelCreditText,normalizeModel,VEHICLE_SPECS} from '../public/radar83-model.mjs';
+import {makeVehicleMesh,makeContactShadow,modelCreditText,normalizeModel,VEHICLE_SPECS} from '../public/radar83-model.mjs';
 
 /* Radar 8.5 - the 3D model must be right in every respect.
  *
@@ -269,5 +269,30 @@ test('a real model carries the credit that CC BY requires', () => {
     assert.ok(entry.credit.license, kind + ' braucht eine Lizenzangabe');
     assert.match(entry.credit.license, /CC|Creative Commons/i, kind + ': die Lizenz muss eine Namensnennung erlauben');
     assert.ok(entry.credit.source, kind + ' braucht die Quelle');
+  }
+});
+
+test('a model authored the wrong way round can be turned with frontAxis', () => {
+  const T = fakeThree();
+  const straight = fakeModel({x: 2, y: 4, z: 40}, {x: -1, y: 1, z: -20});
+  const flipped = fakeModel({x: 2, y: 4, z: 40}, {x: -1, y: 1, z: -20});
+  const a = normalizeModel(straight, {lengthMeters: 44.5, heightMeters: 4.1, scaleBy: 'length', yawOffset: 0}, T);
+  const b = normalizeModel(flipped, {lengthMeters: 44.5, heightMeters: 4.1, scaleBy: 'length', yawOffset: 0, frontAxis: '+z'}, T);
+  assert.equal(a.object.rotation.y, 0, 'ohne frontAxis bleibt die Ausrichtung');
+  assert.ok(Math.abs(b.object.rotation.y - Math.PI) < 1e-9, 'frontAxis +z dreht um 180 Grad');
+});
+
+test('the contact shadow is flat, transparent and free of textures', () => {
+  const T = fakeThree();
+  T.CircleGeometry = class { constructor(r, s) { this.radius = r; this.segments = s; } };
+  T.MeshBasicMaterial = class { constructor(o) { this.opts = o; } };
+  T.Mesh = class { constructor(g, m) { this.geometry = g; this.material = m; this.position = new T.Vector3(); this.rotation = {x: 0, y: 0, z: 0}; } };
+  const shadow = makeContactShadow(T, 14);
+  assert.equal(shadow.children.length, 2, 'zwei Scheiben fuer einen weichen Verlauf');
+  for (const disc of shadow.children) {
+    assert.equal(disc.material.opts.transparent, true, 'der Schatten muss transparent sein');
+    assert.equal(disc.material.opts.depthWrite, false, 'der Schatten darf nichts verdecken');
+    assert.equal(disc.material.opts.map, undefined, 'keine Textur, das waere auf dem Handy zu teuer');
+    assert.equal(disc.rotation.x, -Math.PI / 2, 'der Schatten liegt flach auf der Karte');
   }
 });

@@ -2,8 +2,7 @@
  * The original Leaflet map stays intact underneath. Only selected cinematic
  * vehicles initialize MapLibre; errors or ?radar3d=off fall back to Radar 8.2.
  */
-
-import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=8.5.0';
+import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=8.5.0';
 import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision} from './radar83-logic.mjs?v=8.5.0';
 
 let libraryPromise=null;
@@ -120,6 +119,7 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
    const fill=new T.DirectionalLight(0xb4d9ff,.8);fill.position.set(25,25,30);this.scene.add(fill);
    this.object=makeVehicleMesh(T,kind);this.scene.add(this.object);
    this.modelKind='schematic';this.disposed=false;
+   this.shadow=makeContactShadow(T,kind==='bus'?6.5:14);this.scene.add(this.shadow);
    this.renderer=new T.WebGLRenderer({canvas:m.getCanvas(),context:gl,antialias:true,powerPreference:'low-power'});
    this.renderer.autoClear=false;
    // A real downloaded model replaces the schematic one as soon as it has
@@ -129,6 +129,7 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
     const previous=this.object;
     this.object=loaded.object;this.scene.add(this.object);
     this.modelKind='real';
+    if(this.shadow)this.shadow.scale.setScalar(kind==='bus'?0.5:1);
     this.map?.triggerRepaint();
     disposeObject(previous);
     onModel({kind:'real',credit:loaded.credit||null});
@@ -158,6 +159,7 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
   onRemove(){
    this.disposed=true;
    disposeObject(this.object);
+   disposeObject(this.shadow);this.shadow=null;
    this.object=null;
    this.renderer?.dispose();
    this.renderer=null;

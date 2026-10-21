@@ -111,6 +111,9 @@ export function normalizeModel(object3D,spec,THREE){
   holder.scale.setScalar(scale);
   const yaw=Number(spec.yawOffset);
   if(Number.isFinite(yaw)&&yaw)holder.rotation.y=yaw*Math.PI/180;
+  // Manche Modelle sind um 180 Grad falsch herum authored. frontAxis sagt,
+  // wo die Nase des Modells liegt: Standard ist -z, '+z' dreht es um 180 Grad.
+  if(spec.frontAxis==='+z')holder.rotation.y+=Math.PI;
   return {object:holder,scale,rotated:longIsX,scaledBy:byHeight?'height':'length',sourceSize:{x:size.x,y:size.y,z:size.z},realHeight:byHeight?height:size.y*scale};
 }
 
@@ -147,6 +150,27 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
   const normalized=normalizeModel(scene,entry,THREE);
   if(!normalized)return null;
   return {object:normalized.object,scale:normalized.scale,credit:entry.credit||null,url};
+}
+
+// A cheap contact shadow so the vehicle reads as standing on the ground
+// instead of floating above it. Two flat discs with different opacity give a
+// soft falloff. No texture, no shadow map, no canvas - that would be far too
+// heavy for a phone and would not be testable outside the browser.
+export function makeContactShadow(T,radius=1){
+  const group=new T.Group();
+  group.name='radar-contact-shadow';
+  for(const [scale,opacity] of [[1,0.28],[1.55,0.1]]){
+    const mesh=new T.Mesh(
+      new T.CircleGeometry(radius*scale,24),
+      new T.MeshBasicMaterial({color:0x000000,transparent:true,depthWrite:false,opacity})
+    );
+    mesh.rotation.x=-Math.PI/2;
+    mesh.position.y=0.02;
+    mesh.renderOrder=-1;
+    group.add(mesh);
+  }
+  group.position.y=0.02;
+  return group;
 }
 
 /* The schematic fallback geometry. It is deliberately simple and is used
