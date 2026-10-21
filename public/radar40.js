@@ -96,7 +96,6 @@
   document.addEventListener('sr40:selection',()=>{lastKey='';setTimeout(updatePositions,0);});
   document.addEventListener('sr37:selection',()=>{lastKey='';setTimeout(updatePositions,0);});
   document.addEventListener('sr37:sheet-closed',updatePositions);
-  const brand=document.querySelector('.brand-title em');if(brand)brand.textContent='4.2';document.title='Südtirol Radar 4.2 · Züge & Busse';
   setInterval(()=>{if(!document.hidden)updatePositions();},4000);
   updatePositions();
  }

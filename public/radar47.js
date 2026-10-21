@@ -277,8 +277,6 @@
   started=true;
   // 4.6 and all 4.5.2 scripts remain authoritative; enhancement only.
   initVehicle();initBoard();initDiagnostics();
-  const ver=document.querySelector('.brand-title em');if(ver)ver.textContent='4.7';
-  document.title='Südtirol Radar 4.7 · Züge & Busse';
   const heading=$('radar40Settings')?.querySelector('.sr40-settings-head strong');
   if(heading)heading.textContent='Radar 4.7 · Einstellungen';
   for(const name of ['sr37:feeds','sr37:selection','sr37:sheet-closed','sr37:shapes','sr37:station-board'])

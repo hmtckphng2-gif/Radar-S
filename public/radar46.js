@@ -174,8 +174,6 @@
   if(!bridge?.state?.map)return;
   started=true;
   addUI();
-  const version=document.querySelector('.brand-title em');if(version)version.textContent='4.6';
-  document.title='Südtirol Radar 4.6 · Züge & Busse';
   const settingsHeading=$('radar40Settings')?.querySelector('.sr40-settings-head strong');
   if(settingsHeading)settingsHeading.textContent='Radar 4.6 · Einstellungen';
   for(const e of ['sr37:feeds','sr37:selection','sr37:shapes','sr37:sheet-closed'])document.addEventListener(e,refresh);

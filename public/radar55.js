@@ -13,21 +13,6 @@ const visible=()=>!$('sr50MapTab')?.classList.contains('sr50-map-inactive');
 const today=()=>{const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day};
 const nowSeconds=()=>{const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Rome',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));return Number(p.hour)*3600+Number(p.minute)*60+Number(p.second)};
 function announce(text){let a=$('sr55Announce');if(!a){a=make('div','sr55-sr-only');a.id='sr55Announce';a.setAttribute('aria-live','polite');document.body.append(a)}a.textContent=text}
-function setVersion(){const brand=document.querySelector('.brand-title em');if(brand)brand.textContent='5.6';document.title='Südtirol Radar 5.6 · Züge & Busse';const description=document.querySelector('meta[name=description]');if(description)description.content='Südtirol Radar 5.6: Mobile Live-Karte, Ist-/Soll-Position, Fahrpläne und Anschlussinformationen.'}
-function versionGuard(){const current=document.querySelector('.brand-title em')?.textContent||'';if(/^\d+(?:\.\d+)+/.test(current)&&Number.parseInt(current,10)>=6)return;setVersion();const brand=document.querySelector('.brand-title');if(brand)new MutationObserver(()=>{const shown=brand.querySelector('em')?.textContent||'';if(!(/^\d+(?:\.\d+)+/.test(shown)&&Number.parseInt(shown,10)>=6)&&shown!=='5.6')setVersion()}).observe(brand,{childList:true,subtree:true,characterData:true})}
-function openPanel(title,description){if(!panel){panel=make('section','sr55-popover');panel.id='sr55Panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Zusatzinformationen');const heading=make('div','sr55-row');const titleEl=make('h3','');titleEl.id='sr55PanelTitle';heading.append(titleEl,button('✕',()=>closePanel()));panelBody=make('div');panelBody.id='sr55PanelBody';panel.append(heading,panelBody);document.body.append(panel)}$('sr55PanelTitle').textContent=title;panelBody.replaceChildren();if(description)panelBody.append(make('p','',description));panel.hidden=false}
-function closePanel(){if(panel)panel.hidden=true}
-function tools(){
- const group=document.querySelector('.map-actions');if(!group||$('sr55ToolBtn'))return;
- const b=button('⋯',()=>{toolMenu.hidden=!toolMenu.hidden;b.setAttribute('aria-expanded',String(!toolMenu.hidden))},'sr55-toolbtn');b.id='sr55ToolBtn';b.title='Weitere Kartenwerkzeuge';b.setAttribute('aria-expanded','false');b.setAttribute('aria-label','Kartenwerkzeuge öffnen');
- toolMenu=make('div','sr55-toolmenu');toolMenu.id='sr55ToolMenu';toolMenu.hidden=true;
- for(const [label,id] of [['▦ Haltestellen','stationBtn'],['📍 Ort wählen','areaBtn'],['🗺 Kartenstil','tileBtn']]){
-   toolMenu.append(button(label,()=>{toolMenu.hidden=true;b.setAttribute('aria-expanded','false');$(id)?.click()}));
- }
- group.append(b,toolMenu);
- document.addEventListener('click',e=>{if(!group.contains(e.target)){toolMenu.hidden=true;b.setAttribute('aria-expanded','false')}});
- document.addEventListener('keydown',e=>{if(e.key==='Escape'){toolMenu.hidden=true;b.setAttribute('aria-expanded','false');closePanel()}});
-}
 function setFollow(on,reason=''){
  follow=!!on&&!!selected()&&visible();followKey=follow?selected().key:null;followLast=null;
  if(followBtn){followBtn.setAttribute('aria-pressed',String(follow));followBtn.textContent=follow?'◉ Folge aktiv':'◎ Live folgen'}
@@ -221,7 +206,7 @@ function setupScrollActions(){
 function init(){
  if(ready)return;bridge=window.SuedtirolRadar37;map=bridge?.state?.map;
  if(!map||!$('sheet')||!document.querySelector('.sr50-bottom-nav'))return;
- ready=true;document.body.classList.add('sr55-ready');versionGuard();tools();prepareSearch();extras();sheetGestures();setupCompactBadge();setupScrollActions();
+ ready=true;document.body.classList.add('sr55-ready');tools();prepareSearch();extras();sheetGestures();setupCompactBadge();setupScrollActions();
  let menuTries=0;const mount=()=>{if(!setupMoreMenuPortal()&&++menuTries<40)setTimeout(mount,160)};mount();
  if(!setupFollow()){let n=0;const poll=()=>{if(!setupFollow()&&++n<30)setTimeout(poll,200)};setTimeout(poll,220)}
  setupInformation();

@@ -47,7 +47,7 @@
  addOption('☆ Favoriten & Alerts','Favoriten und bestehende Alert-Einstellungen',()=>{close();window.SuedtirolRadar58?.open?.('alerts')});
  const launch=make('button','sr60-launch','✦ Intelligence',()=>{pop.hidden=false});launch.type='button';launch.id='sr60Launch';launch.setAttribute('aria-label','Intelligence Menü öffnen');document.body.append(launch);
  }
- function start(){if(initialized)return;initialized=true;document.body.classList.add('sr60');createDock();createMenu();setupLayout();const version=document.querySelector('.brand-title em');if(version)version.textContent='6.7';document.title='Südtirol Radar 6.7 · Horizon Preview';window.SuedtirolRadar60={version:'6.7',switchTab,openMenu:()=>{pop.hidden=false}};
+ function start(){if(initialized)return;initialized=true;document.body.classList.add('sr60');createDock();createMenu();setupLayout();window.SuedtirolRadar60={version:'6.7',switchTab,openMenu:()=>{pop.hidden=false}};
  let tries=0;const monitor=()=>{const old=$('sr50BottomNav');if(old){old.classList.add('sr60-native-nav');syncTabs()}else if(tries++<150)setTimeout(monitor,150)};monitor();}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();

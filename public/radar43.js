@@ -236,8 +236,6 @@ import {groupNearby} from './radar44-logic.mjs';
   document.addEventListener('sr37:sheet-closed',scheduleClusters);
   document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',scheduleClusters));
   $('search')?.addEventListener('input',scheduleClusters);
-  const brand=document.querySelector('.brand-title em');if(brand)brand.textContent='4.4';
-  document.title='Südtirol Radar 4.4 · Züge & Busse';
   scheduleClusters();updateMini();
   window.SuedtirolRadar43={version:'4.4',renderClusters,renderPins,updateMini,bridge};
  }

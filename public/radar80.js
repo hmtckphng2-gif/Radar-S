@@ -33,6 +33,9 @@
   if(badge&&badge.textContent!==shown())badge.textContent=shown();
   const status=$('sr76LiveVersion');
   if(status&&status.textContent!==statusText())status.textContent=statusText();
+  // The stations monitor shows a second version label. It is owned here too.
+  const monitor=document.querySelector('.sr57-version');
+  if(monitor&&monitor.textContent!==shown())monitor.textContent=shown();
  };
  const ensureStatus=()=>{
   const existing=$('sr76LiveVersion');
@@ -49,6 +52,9 @@
   if(!node)return;
   new MutationObserver(paint).observe(node,{childList:true,characterData:true,subtree:true});
  };
+ // The single place that knows the version. Other modules ask instead of
+ // writing their own number into the badge.
+ window.SuedtirolRadar80={version:()=>shown()};
  function init(){
   ensureStatus();
   document.title=TITLE_PREFIX+shown();
