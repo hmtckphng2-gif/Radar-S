@@ -167,3 +167,14 @@ html[data-theme="light"] .leaflet-tile-pane,
 /* The independent marker pane must remain above every basemap tile. */
 #map .leaflet-marker-pane .radar-custom {visibility:visible;pointer-events:auto;}
 #map .leaflet-marker-pane .marker-wrap {overflow:visible;}
+
+/* Restore original key-free OSM dark appearance. Filter individual raster tiles only,
+   never marker/overlay panes (avoids map-sync and marker color changes). */
+html[data-theme="dark"] #map img.leaflet-tile {
+  -webkit-filter: invert(1) hue-rotate(180deg) brightness(.78) contrast(.92) saturate(.72) !important;
+  filter: invert(1) hue-rotate(180deg) brightness(.78) contrast(.92) saturate(.72) !important;
+}
+html[data-theme="light"] #map img.leaflet-tile {
+  -webkit-filter: none !important;
+  filter: none !important;
+}

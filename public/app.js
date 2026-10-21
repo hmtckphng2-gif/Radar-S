@@ -196,16 +196,8 @@ async function loadDetails(source){
 }
 // Key-free raster sources. Respect cache headers and provider usage terms.
 // Tiles load only for the user's current viewport (no bulk prefetch).
-const DARK_BASEMAP_URL='https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-function tileConfig(which=0){
-  const provider=TILE_PROVIDERS[which];
-  if(document.documentElement.getAttribute('data-theme')==='dark'){
-    return {url:DARK_BASEMAP_URL,options:{...provider.options,subdomains:'abcd',attribution:provider.options.attribution+' · © CARTO'}};
-  }
-  return provider;
-}
 function createTileLayer(which=0){
-  const provider=tileConfig(which);
+  const provider=TILE_PROVIDERS[which];
   return L.tileLayer(provider.url,{
     minZoom:3,maxZoom:19,maxNativeZoom:19,
     keepBuffer:2,updateWhenIdle:true,updateWhenZooming:false,
@@ -274,18 +266,7 @@ function changeTheme(theme){
   document.documentElement.setAttribute('data-theme',theme);
   $('themeToggle').textContent=theme==='dark'?'☀':'☾';
   try{localStorage.setItem('sr-theme',theme)}catch(e){}
-  // Switch only the raster basemap; preserve map, markers, vehicle feeds and Map-Sync-Fix.
-  if(state.map&&state.tiles){
-    const next=tileConfig(tileProviderIndex);
-    const previousCredit=state.tiles.options.attribution;
-    if(previousCredit!==next.options.attribution){
-      state.map.attributionControl?.removeAttribution(previousCredit);
-      state.map.attributionControl?.addAttribution(next.options.attribution);
-      state.tiles.options.attribution=next.options.attribution;
-    }
-    state.tiles.options.subdomains=next.options.subdomains||'abc';
-    state.tiles._url!==next.url&&state.tiles.setUrl(next.url);
-  }
+  // No URL change/re-download required when switching modes.
 }
 function initMap(){
   if(window.__radarRecoveryMap){try{window.__radarRecoveryMap.remove()}catch(e){console.warn(e)}window.__radarRecoveryMap=null}
