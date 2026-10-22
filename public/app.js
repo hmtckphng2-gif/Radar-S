@@ -914,7 +914,15 @@ function setupControls(){
   $('areaBtn').onclick=()=>{ $('areaPicker').hidden=!$('areaPicker').hidden; };
   for(const btn of document.querySelectorAll('[data-place]'))btn.onclick=()=>moveToPlace(btn.dataset.place);
   $('stationSearch').oninput=renderStationResults;$('backStations').onclick=()=>{$('stationBoard').hidden=true;$('stationResults').hidden=false};
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheets()});
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape')closeSheets();
+    // Tastatur-Shortcuts (nur außerhalb von Eingabefeldern):
+    if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+    if(e.key==='r'||e.key==='R'){e.preventDefault();refreshFeeds();}
+    if(e.key==='f'||e.key==='F'){e.preventDefault();fitMap();}
+    if(e.key==='s'||e.key==='S'){e.preventDefault();showStations();}
+    if(e.key==='?'){e.preventDefault();showSourceStatus();}
+  });
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden){for(const [key,job] of state.jobs){const e=state.markers.get(key);if(e)e.marker.setLatLng([job.to.lat,job.to.lon]);}state.jobs.clear();state.busTracks.clear();}
     else { if(Date.now()-state.fetchedAt>30000)refreshFeeds();if(state.map)state.map.invalidateSize({pan:false}); }
