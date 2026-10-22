@@ -1,3 +1,4 @@
+import {state,bootPhase} from './app-state.js?v=9.7.0';
 import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.7.0';
 import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.7.0';
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.7.0';
@@ -19,17 +20,6 @@ const DIRECT_UPDATE_SOURCES=['sta_direct_updates'];
 const ALL_UPDATE_SOURCES=[...UPDATE_SOURCES,...DIRECT_UPDATE_SOURCES];
 const ALERT_SOURCES=['sta_alerts'];
 const ENDPOINTS=[...POSITION_SOURCES,...ALL_UPDATE_SOURCES,...ALERT_SOURCES];
-const state = {
-  map: null, layer: null, selectedLayer: null, activeSheet: null, selectedKey: null,
-  filter: 'all', query: '', busy: false, statuses: {},
-  vehicles: new Map(), markers: new Map(), jobs: new Map(), updates: new Map(),
-  indexes: {}, details: {}, shapes: {}, models: {}, counts: {}, lastSuccess: {},
-  stationChoice: null, stationList: [], fetchedAt: 0, failCount: 0, scheduledSearch: null,
-  busShapeManifests: {}, busShapePending: new Set(), busShapeLoaded: new Set(),
-  busShapeFailures: new Set(),
-  busTracks: new Map(), fusion:{sources:new Map(),duplicates:0}, performance:{lastMarkerRefresh:0}
-};
-let frameId = 0;
 let lastMotionFrame = 0;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const DETAIL_MAX_AGE = 120000;
@@ -974,12 +964,6 @@ window.SuedtirolRadar37={state,showStations,showStationBoard,getStationList,open
   verifiedRouteCount:()=>[...state.vehicles.values()].filter(v=>v.kind==='bus' && v.tripId && v.shapeId && mapTarget(v).path).length,
   routeOnlyCount:()=>[...state.vehicles.values()].filter(v=>v.kind==='bus' && !v.shapeId && v.routeShapeId && mapTarget(v).path).length,
   routeMatchFor:v=>mapTarget(v),vehicleDelay:currentVehicleDelay,qualityFor:v=>observationQuality(v),fusionInfo:()=>state.fusion,diagnostics:()=>state.diagnostics||feedDiagnostics(state.vehicles.values(),state.statuses)};
-// Start feed positions independently from large timetable and route files.
-// On mobile, a slow GTFS download must NEVER leave the map stuck at VERBINDE.
-function bootPhase(phase){
-  state.bootPhase=phase;
-  document.documentElement.dataset.radarBoot=phase;
-}
 async function init(){
   bootPhase('start');
   try{changeTheme(localStorage.getItem('sr-theme')==='light'?'light':'dark')}catch{changeTheme('dark')}
