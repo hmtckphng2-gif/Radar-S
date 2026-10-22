@@ -197,3 +197,22 @@
   margin-left:10px;padding:4px 10px;border:none;border-radius:8px;
   background:#7fd6a8;color:#0b1220;font-weight:bold;cursor:pointer
 }
+/* 9.7 - Live-Suche: Trefferliste unter dem Suchfeld. Klick springt zum Fahrzeug. */
+#searchResults.search-results{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  max-height:260px;overflow-y:auto;border:1px solid var(--radar84-line);
+  border-top:none;border-radius:0 0 12px 12px;background:var(--radar84-glass-strong);
+  box-shadow:0 8px 24px rgba(0,0,0,.28);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  z-index:150;
+}
+#searchResults.search-results.hidden{display:none}
+#searchResults .search-hit{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 12px;border-bottom:1px solid var(--radar84-line);cursor:pointer;
+  font-size:12px;line-height:1.4
+}
+#searchResults .search-hit:last-child{border-bottom:none}
+#searchResults .search-hit:hover{background:rgba(120,184,255,.15)}
+#searchResults .search-hit strong{color:#7fd6a8}
+#searchResults .search-hit small{color:var(--radar84-muted)}
+#searchResults .search-hit .kind{font-size:10px;text-transform:uppercase;opacity:.7}

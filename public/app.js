@@ -902,6 +902,29 @@ function jumpToFirstHit(){
   if(p&&state.map)state.map.setView([p.lat,p.lng],Math.max(state.map.getZoom(),14),{animate:true});
   return true;
 }
+function renderSearchResults(){
+  const list=$('searchResults');
+  const q=state.query.trim().toLocaleLowerCase('de');
+  list.replaceChildren();
+  if(!q||q.length<2){list.hidden=true;return;}
+  const hits=[];
+  for(const v of state.vehicles.values()){
+    if(!visible(v))continue;
+    const hay=`${v.name} ${v.headsign} ${v.vehicleId} ${v.tripId} ${v.routeLongName}`.toLocaleLowerCase('de');
+    if(hay.includes(q))hits.push(v);
+  }
+  if(!hits.length){list.hidden=true;return;}
+  for(const v of hits.slice(0,10)){
+    const btn=document.createElement('button');btn.className='search-hit';
+    const left=document.createElement('div');
+    const strong=document.createElement('strong');strong.textContent=v.name;left.append(strong);
+    const small=document.createElement('small');small.textContent=v.headsign||'Ziel unbekannt';left.append(small);
+    const kind=document.createElement('span');kind.className='kind';kind.textContent=v.kind==='train'?'ZUG':'BUS';btn.append(left,kind);
+    btn.onclick=()=>{selectVehicle(v.key);list.hidden=true;};
+    list.append(btn);
+  }
+  list.hidden=false;
+}
 function setupControls(){
   setupSheetTouchGuards();
   offlineState();
@@ -910,10 +933,13 @@ function setupControls(){
   for(const b of document.querySelectorAll('[data-filter]'))b.addEventListener('click',()=>setFilter(b.dataset.filter));
   let debounce=0;
   $('search').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();jumpToFirstHit()}});
-  $('search').oninput=e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.query=e.target.value.toLocaleLowerCase('de').trim();refreshMarkers();refreshScheduleMatches();updateViewportBadge()},130)};
+  $('search').oninput=e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.query=e.target.value.toLocaleLowerCase('de').trim();refreshMarkers();refreshScheduleMatches();updateViewportBadge();renderSearchResults()},130)};
   $('statusBtn').onclick=showSourceStatus;
   $('refreshBtnFromBanner').onclick=()=>refreshFeeds();
   $('tileBtn').onclick=()=>switchTileProvider(1-tileProviderIndex,'Benutzerwahl');
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('#search')&&!e.target.closest('#searchResults'))$('searchResults')?.classList.add('hidden');
+  });
   $('refreshBtn').onclick=()=>{
     if(Date.now()-state.fetchedAt>=manualRefreshDelayMs)refreshFeeds();
     // Recheck the viewport; only switch tile providers on user action or failures.
