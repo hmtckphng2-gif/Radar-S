@@ -82,9 +82,11 @@ function indexReady(source){
 function allSourceCount(){return Object.values(state.statuses).filter(s=>s==='ok').length}
 function statusLabel() {
   const good=allSourceCount(), vehicleGood=POSITION_SOURCES.filter(s=>state.statuses[s]==='ok').length;
+  const favCount=state.favorites.size;
   const status=$('statusBtn');status.classList.toggle('ok',good===ENDPOINTS.length);
   status.classList.toggle('error',vehicleGood===0);
-  $('statusText').textContent=good===ENDPOINTS.length?'FEEDS OK':vehicleGood===0?'OFFLINE':good+'/'+ENDPOINTS.length;
+  const favText=favCount>0?' · '+favCount+' Favorit'+(favCount>1?'en':'')+'★':'';
+  $('statusText').textContent=good===ENDPOINTS.length?'FEEDS OK':vehicleGood===0?'OFFLINE':good+'/'+ENDPOINTS.length+favText;
 }
 function isFeedHealthy(){
   return POSITION_SOURCES.some(s=>state.statuses[s]==='ok'||state.statuses[s]==='old');
@@ -611,7 +613,7 @@ function drawVehicleDetails(key,fetchSchedule){
   favBtn.className='badge fav-badge';
   favBtn.textContent=isFavorite(v.key)?'★ Favorit':'☆ Favorit';
   favBtn.title=isFavorite(v.key)?'Aus Favoriten entfernen':'Zu Favoriten hinzufügen';
-  favBtn.onclick=()=>{toggleFavorite(v.key);favBtn.textContent=isFavorite(v.key)?'★ Favorit':'☆ Favorit';favBtn.title=isFavorite(v.key)?'Aus Favoriten entfernen':'Zu Favoriten hinzufügen';refreshMarkers();};
+  favBtn.onclick=()=>{toggleFavorite(v.key);favBtn.textContent=isFavorite(v.key)?'★ Favorit':'☆ Favorit';favBtn.title=isFavorite(v.key)?'Aus Favoriten entfernen':'Zu Favoriten hinzufügen';refreshMarkers();statusLabel();};
   badges.append(favBtn);
   renderModel(v);
   $('details').replaceChildren();
@@ -909,7 +911,11 @@ function setupControls(){
   let debounce=0;
   $('search').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();jumpToFirstHit()}});
   $('search').oninput=e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.query=e.target.value.toLocaleLowerCase('de').trim();refreshMarkers();refreshScheduleMatches();updateViewportBadge();renderSearchResults()},130)};
-  $('statusBtn').onclick=showSourceStatus;
+  $('statusBtn').onclick=()=>{
+    const fav=[...state.favorites].filter(k=>state.vehicles.has(k));
+    if(fav.length){selectVehicle(fav[0]);return;}
+    showSourceStatus();
+  };
   $('refreshBtnFromBanner').onclick=()=>refreshFeeds();
   $('tileBtn').onclick=()=>switchTileProvider(1-tileProviderIndex,'Benutzerwahl');
   document.addEventListener('click',e=>{
