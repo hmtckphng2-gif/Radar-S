@@ -629,6 +629,8 @@ function drawVehicleDetails(key,fetchSchedule){
   detail('Positionsalter',feedAgeSeconds(v)===null?'Unbekannt':duration(feedAgeSeconds(v)*1000)+' Sek.');
   detail('Geschwindigkeit',v.speed===null?'Nicht verfügbar':v.speed+' km/h (Feed)');
   detail('Quelle',v.source.toUpperCase()+' / GTFS-RT');
+  const quality=observationQuality(v,Date.now());
+  detail('Zuverlässigkeit',quality.status.toUpperCase(),quality.status==='aktuell'?'delay-ok':quality.status==='verzögert'?'delay-warn':'delay-severe');
   let note='Die Kartenposition ist '+(v.source==='sta'?'ein Feed-Messwert, nicht zwingend GPS.':'simuliert/geschätzt, keine GPS-Ortung.')+' ';
   if(v.stale)note+='Dieser Marker ist nur die letzte bekannte Position; der aktuelle Feed enthält ihn nicht. ';
   if(v.kind==='bus'&&!v.lineVerified)note+='Ohne passenden statischen GTFS-Eintrag keine bestätigte Liniennummer. ';
