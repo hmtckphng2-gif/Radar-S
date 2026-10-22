@@ -963,6 +963,10 @@ async function init(){
   bootPhase('feeds-checked');
   setInterval(()=>{if(!document.hidden)refreshFeeds()},AVERAGE_POLL_MS);
   bootPhase('ready');
+  // 9.4: Die App-Huelle wird offline faehig. Live-Daten bleiben unberuehrt.
+  if('serviceWorker' in navigator){
+   try{navigator.serviceWorker.register('/sw.js').catch(()=>{})}catch{}
+  }
   Promise.allSettled([indexes,rail,buses]).then(()=>{refreshMarkers();updateViewportBadge();});
   // Refresh labels/route associations after GTFS indexes become available.
   // Any valid reported position remains derived only from official feeds.

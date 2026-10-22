@@ -25,3 +25,21 @@ test('offline state and search jump are wired up', () => {
   assert.match(html, /id="offlineBanner"/);
   assert.match(html, /role="status"/);
 });
+test('the offline shell never caches live data', () => {
+  // 9.4: Ein Service Worker darf niemals /api/ cachen. Sonst wuerden alte
+  // Positionen als aktuell angezeigt.
+  const sw = get('sw.js');
+  assert.match(sw, /if\(isApi\(url\)\)return;/);
+  // Die API-Pruefung muss vor der ersten Antwortbehandlung stehen, sonst
+  // wuerde fuer /api/ doch eine Cache-Antwort gebaut.
+  const guard = sw.indexOf('if(isApi(url))return;');
+  const firstRespond = sw.indexOf('event.respondWith');
+  assert.ok(guard > 0, 'die API-Pruefung fehlt');
+  assert.ok(guard < firstRespond, 'die API-Pruefung muss vor jeder Antwortbehandlung kommen');
+  // Nur GET wird behandelt, POST bleibt unangetastet.
+  assert.match(sw, /if\(request\.method!=='GET'\)return;/);
+  assert.match(sw, /skipWaiting/);
+  assert.match(sw, /clients\.claim/);
+  const src = get('app.js');
+  assert.match(src, /navigator\.serviceWorker\.register\('\/sw\.js'\)/);
+});
