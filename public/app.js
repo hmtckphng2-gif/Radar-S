@@ -1,16 +1,16 @@
-import {motionDuration,platformInfo} from './radar54-logic.mjs';
-import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs';
+import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.6.0';
+import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.6.0';
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.6.0';
 import {enrichTrainPlatform} from './train-platforms.js?v=9.6.0';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
   vehicleDelayInfo, bufferedAlong, departureDelay, isLiveUpdate
-} from './core.js';
-import {playbackLag} from './radar45-logic.mjs';
-import {trainReplayDuration} from './radar705-motion.mjs';
-import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs';
-import {trainScheduledPosition} from './radar51-logic.mjs';
+} from './core.js?v=9.6.0';
+import {playbackLag} from './radar45-logic.mjs?v=9.6.0';
+import {trainReplayDuration} from './radar705-motion.mjs?v=9.6.0';
+import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.6.0';
+import {trainScheduledPosition} from './radar51-logic.mjs?v=9.6.0';
 
 const $ = id => document.getElementById(id);
 const DIRECT_POSITION_SOURCES=['sta_direct'];

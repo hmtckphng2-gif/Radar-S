@@ -44,8 +44,10 @@ self.addEventListener('fetch',event=>{
     event.respondWith(caches.open(CACHE).then(async cache=>{
       const hit=await cache.match(request);
       const net=fetch(request).then(response=>{
-        if(response&&response.ok)cache.put(request,response.clone());
-        return response;
+        if(response&&response.ok){cache.put(request,response.clone());return response}
+        // Eine Fehlerseite ist kein Inhalt. Lieber die alte, versionierte
+        // Datei zeigen als eine kaputte.
+        return hit||response;
       }).catch(()=>hit);
       return hit||net;
     }));
@@ -54,6 +56,10 @@ self.addEventListener('fetch',event=>{
   // 3. Navigationen: Netz zuerst, Cache als Rueckfall.
   if(request.mode==='navigate'){
     event.respondWith(fetch(request).then(response=>{
+      // Eine Fehlerseite (502, 404) ist keine App. Sie darf weder gezeigt
+      // noch gespeichert werden - sonst zeigt die App offline eine
+      // Proxy-Fehlermeldung statt der Huelle.
+      if(!response.ok)throw new Error('Antwort nicht gut: '+response.status);
       const copy=response.clone();
       caches.open(CACHE).then(cache=>cache.put(SHELL,copy));
       return response;
@@ -61,7 +67,7 @@ self.addEventListener('fetch',event=>{
       '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Südtirol Radar - offline</title></head>'+
       '<body style="font:16px system-ui;background:#0b1220;color:#e8f0fa;display:grid;place-items:center;height:100vh;margin:0;text-align:center;padding:24px">'+
       '<div><h1 style="font-size:20px;margin:0 0 8px">Offline</h1><p style="margin:0;color:#9fb3c8">Der Radar ist gerade nicht erreichbar. Fahrplan und gespeicherte Daten bleiben erhalten.</p></div></body></html>',
-      {headers:{'content-type':'text/html; charset=utf-8'}}
+      {status:200,headers:{'content-type':'text/html; charset=utf-8'}}
     ))));
     return;
   }
@@ -70,8 +76,10 @@ self.addEventListener('fetch',event=>{
     event.respondWith(caches.open(CACHE).then(async cache=>{
       const hit=await cache.match(request);
       const net=fetch(request).then(response=>{
-        if(response&&response.ok)cache.put(request,response.clone());
-        return response;
+        if(response&&response.ok){cache.put(request,response.clone());return response}
+        // Eine Fehlerseite ist kein Inhalt. Lieber die alte, versionierte
+        // Datei zeigen als eine kaputte.
+        return hit||response;
       }).catch(()=>hit);
       return hit||net;
     }));

@@ -1,8 +1,8 @@
 /* Radar 5.8 Traffic Intelligence: additive, no replacement of 5.7 map logic */
-import {collectTrafficIssues,feedDiagnostics,summarizeNetwork,matchesFavoriteIssue,resolveRollingStock} from './radar58-logic.mjs';
-import {isSevereDelay} from './radar52-logic.mjs';
-import {findConnections} from './radar56-logic.mjs';
-import {romeDay,romeSeconds} from './radar51-logic.mjs';
+import {collectTrafficIssues,feedDiagnostics,summarizeNetwork,matchesFavoriteIssue,resolveRollingStock} from './radar58-logic.mjs?v=9.6.0';
+import {isSevereDelay} from './radar52-logic.mjs?v=9.6.0';
+import {findConnections} from './radar56-logic.mjs?v=9.6.0';
+import {romeDay,romeSeconds} from './radar51-logic.mjs?v=9.6.0';
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),e=(tag,cls='',txt)=>{const n=document.createElement(tag);n.className=cls;if(txt!==undefined)n.textContent=String(txt);return n};
