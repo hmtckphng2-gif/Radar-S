@@ -1,4 +1,4 @@
-import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite} from './app-state.js?v=9.7.0';
+import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite} from './app-state.js?v=9.7.0';
 import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.7.0';
 import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.7.0';
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.7.0';
@@ -297,6 +297,10 @@ function initMap(){
 }
 function visible(v){
   if(state.filter==='trains'&&v.kind!=='train'||state.filter==='buses'&&v.kind!=='bus')return false;
+  if(state.filter==='linefav'){
+    const lineKey=v.routeId?(v.source+':'+v.routeId):'';
+    if(!lineKey||!isLineFavorite(lineKey))return false;
+  }
   if(state.query&&!`${v.name} ${v.headsign} ${v.vehicleId} ${v.tripId} ${v.routeLongName}`.toLocaleLowerCase('de').includes(state.query))return false;
   return true;
 }
@@ -304,7 +308,9 @@ function markerIcon(v){
   const train=v.kind==='train',label=v.name.startsWith('Linie unbekannt')||v.name==='Zugnummer unbekannt'?'':v.name;
   const isOld=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
   const isFav=isFavorite(v.key);
-  const cls='marker-wrap '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'')+(isFav?' favorite':'');
+  const lineKey=v.routeId?(v.source+':'+v.routeId):'';
+  const lineFav=lineKey&&isLineFavorite(lineKey);
+  const cls='marker-wrap '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'')+(isFav?' favorite':'')+(lineFav?' line-favorite':'');
   const icon=`<div class="${cls}"><div class="marker-label">${escapeHtml(label)}</div><div class="marker-circle">${train?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="17" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 19.5l-2 2m10-2 2 2"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="16" rx="3"/><path d="M3 11h18M7 15h2m6 0h2M7 19l-2 2m14-2 2 2"/></svg>'}${isFav?'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22l-5-4.87L2 9.27l6.91-1.02L12 2z"/></svg>':''}</div></div>`;
   return L.divIcon({className:'radar-custom',html:icon,iconSize:[30,43],iconAnchor:[15,38]});
 }
@@ -469,7 +475,8 @@ function refreshMarkers(){
     const rawTarget={lat:v.lat,lon:v.lon,path:null,along:null};
     const target=motionDuration(v,null)?mapTarget(v):rawTarget;
     const aged=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
-    const iconKey=`${v.kind}|${v.name}|${state.selectedKey===key}|${aged}`;
+    const lineKey=v.routeId?(v.source+':'+v.routeId):'';
+    const iconKey=`${v.kind}|${v.name}|${state.selectedKey===key}|${aged}|${lineKey}`;
     let entry=state.markers.get(key);
     if(!entry){
       const marker=L.marker([target.lat,target.lon],{icon:markerIcon(v),keyboard:true,title:v.name}).addTo(state.layer);
@@ -640,6 +647,15 @@ function drawVehicleDetails(key,fetchSchedule){
   detail('Quelle',v.source.toUpperCase()+' / GTFS-RT');
   const quality=observationQuality(v,Date.now());
   detail('Zuverlässigkeit',quality.status.toUpperCase(),quality.status==='aktuell'?'delay-ok':quality.status==='verzögert'?'delay-warn':'delay-severe');
+  const lineKey=v.routeId?(v.source+':'+v.routeId):'';
+  if(lineKey){
+    const favBtn=document.createElement('button');
+    favBtn.className='badge line-fav-badge';
+    favBtn.textContent=isLineFavorite(lineKey)?'★ Linie favorisiert':'☆ Linie favorisieren';
+    favBtn.title=isLineFavorite(lineKey)?'Linie aus Favoriten entfernen':'Linie zu Favoriten hinzufügen';
+    favBtn.onclick=()=>{toggleLineFavorite(lineKey);favBtn.textContent=isLineFavorite(lineKey)?'★ Linie favorisiert':'☆ Linie favorisieren';favBtn.title=isLineFavorite(lineKey)?'Linie aus Favoriten entfernen':'Linie zu Favoriten hinzufügen';refreshMarkers();statusLabel();};
+    badges.append(favBtn);
+  }
   let note='Die Kartenposition ist '+(v.source==='sta'?'ein Feed-Messwert, nicht zwingend GPS.':'simuliert/geschätzt, keine GPS-Ortung.')+' ';
   if(v.stale)note+='Dieser Marker ist nur die letzte bekannte Position; der aktuelle Feed enthält ihn nicht. ';
   if(v.kind==='bus'&&!v.lineVerified)note+='Ohne passenden statischen GTFS-Eintrag keine bestätigte Liniennummer. ';
@@ -977,6 +993,7 @@ async function init(){
   bootPhase('start');
   try{changeTheme(localStorage.getItem('sr-theme')==='light'?'light':'dark')}catch{changeTheme('dark')}
   loadFavorites();
+  loadLineFavorites();
   setupControls();
   if(!initMap()){bootPhase('map-error');return}
   bootPhase('map-ready');

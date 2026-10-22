@@ -207,6 +207,8 @@
 .sr50-deps .dep-delay-warn{color:#ffd166}
 .fav-badge{background:#ffd700!important;color:#000!important;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:bold}
 .marker-wrap.favorite .marker-label{color:#ffd700!important}
+.marker-wrap.line-favorite{filter:drop-shadow(0 0 3px #ffd700)}
+.marker-wrap.line-favorite .marker-label{color:#ffd700!important}
 /* 9.7 - Live-Suche: Trefferliste unter dem Suchfeld. Klick springt zum Fahrzeug. */
 #searchResults.search-results{
   position:absolute;top:calc(100% + 4px);left:0;right:0;

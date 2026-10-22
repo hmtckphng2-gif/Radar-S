@@ -10,7 +10,8 @@ export const state = {
   busShapeManifests: {}, busShapePending: new Set(), busShapeLoaded: new Set(),
   busShapeFailures: new Set(),
   busTracks: new Map(), fusion:{sources:new Map(),duplicates:0}, performance:{lastMarkerRefresh:0},
-  favorites: new Set()
+  favorites: new Set(),
+  lineFavorites: new Set()
 };
 
 // Lädt gespeicherte Favoriten aus LocalStorage.
@@ -38,6 +39,34 @@ export function toggleFavorite(key){
 
 // Prüft ob ein Fahrzeug favorisiert ist.
 export function isFavorite(key){return state.favorites.has(key);}
+
+// Schaltet eine Linie als Favorit um. Schlüssel: source:routeId.
+// Gibt den neuen Zustand zurück.
+export function toggleLineFavorite(lineKey){
+  if(state.lineFavorites.has(lineKey)){state.lineFavorites.delete(lineKey);}
+  else{state.lineFavorites.add(lineKey);}
+  saveLineFavorites();
+  return state.lineFavorites.has(lineKey);
+}
+
+// Prüft ob eine Linie favorisiert ist.
+export function isLineFavorite(lineKey){return state.lineFavorites.has(lineKey);}
+
+// Lädt gespeicherte Linien-Favoriten aus LocalStorage.
+export function loadLineFavorites(){
+  try{
+    const raw=localStorage.getItem('sr-line-favorites');
+    if(raw){
+      const arr=JSON.parse(raw);
+      if(Array.isArray(arr))for(const k of arr)state.lineFavorites.add(k);
+    }
+  }catch{}
+}
+
+// Speichert Linien-Favoriten in LocalStorage.
+export function saveLineFavorites(){
+  try{localStorage.setItem('sr-line-favorites',JSON.stringify([...state.lineFavorites]))}catch{}
+}
 
 // Boot-Phase für den Startsequenz-Status (wird im data-Attribut gespiegelt).
 export function bootPhase(phase){
