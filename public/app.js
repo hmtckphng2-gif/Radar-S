@@ -12,6 +12,7 @@ import {playbackLag} from './radar45-logic.mjs?v=9.7.0';
 import {trainReplayDuration} from './radar705-motion.mjs?v=9.7.0';
 import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.7.0';
 import {trainScheduledPosition} from './radar51-logic.mjs?v=9.7.0';
+import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates} from './feed-process.mjs?v=9.7.0';
 
 const $ = id => document.getElementById(id);
 const DIRECT_POSITION_SOURCES=['sta_direct'];
@@ -77,11 +78,6 @@ function indexReady(source){
   if(!db?.meta?.ready)return false;
   // A stale static database can map a reused trip ID to the wrong destination or bus line.
   return Array.isArray(db.meta.days)&&db.meta.days.includes(gtfsLocalDate());
-}
-function freshness(feed){
-  const stamp=Number(feed?.header?.timestamp ?? feed?.header?.timeStamp);
-  if(!Number.isFinite(stamp)||stamp<1000000000)return 'ok'; // unknown generation age: do not invent freshness
-  return Date.now()/1000-stamp>RT_MAX_AGE_SEC?'old':'ok';
 }
 function allSourceCount(){return Object.values(state.statuses).filter(s=>s==='ok').length}
 function statusLabel() {
@@ -519,65 +515,27 @@ async function refreshFeeds(){
   state.busy=true;$('statusText').textContent='LÄDT ...';
   try{
     const results=await Promise.allSettled(ENDPOINTS.map(name=>fetchJson('/api/'+name,16000)));
-    const ok={}, oldFeeds={};
-    for(let i=0;i<results.length;i++){
-      const name=ENDPOINTS[i],result=results[i];
-      const fresh=result.status==='fulfilled' ? freshness(result.value) : 'error';
-      state.statuses[name]=fresh;
-      if(fresh==='ok'){ok[name]=result.value;state.lastSuccess[name]=Date.now();}
-      if(fresh==='old' && result.status==='fulfilled')oldFeeds[name]=result.value;
-      else console.warn('Feed unavailable or outdated',name,result.reason || fresh);
+    const {ok, oldFeeds, statuses}=buildFeedStatus(results, ENDPOINTS);
+    state.statuses=statuses;
+    for(const [name, feed] of Object.entries(ok)){
+      state.lastSuccess[name]=Date.now();
+    }
+    for(const name of ENDPOINTS){
+      if(statuses[name]!=='ok' && statuses[name]!=='old'){
+        console.warn('Feed unavailable or outdated',name,statuses[name]);
+      }
     }
     const now=Date.now();state.fetchedAt=now;
     for(const source of POSITION_SOURCES){
       if(!ok[source] && !oldFeeds[source])continue;
       // Old upstream data is last-known context, never live GPS or moving animation.
       const staleFeed=!ok[source];
-      const parsed=parseVehicles(ok[source]||oldFeeds[source],source,state.indexes,now);
-      if(source==='sta_direct')for(const v of parsed.vehicles)v.positionType='STA Open Data Hub · offizielle Feedposition (GPS nicht garantiert)';
-      // Derive official route/direction geometry candidates only from valid
-      // static GTFS services. No bus fleet ID becomes a route or trip ID.
-      const today=gtfsLocalDate();
-      for(const v of parsed.vehicles){
-        if(v.kind!=='bus' || v.shapeId || v.routeShapeId || !v.tripStartDate)continue;
-        const day=/^\d{8}$/.test(v.tripStartDate)
-          ? v.tripStartDate.slice(0,4)+'-'+v.tripStartDate.slice(4,6)+'-'+v.tripStartDate.slice(6,8):'';
-        v.routeShapeCandidates=deriveCandidates(state.indexes[source],day,today,v.routeId,v.directionId);
-      }
+      const {parsed, latest}=processPositionFeed(source, ok[source]||oldFeeds[source], now, state.indexes, gtfsLocalDate());
       state.counts[source]=parsed;
-      const latest=new Map(parsed.vehicles.filter(v=>
-        staleFeed ? (v.timestamp && now/1000-v.timestamp<=STALE_MAX_AGE_SEC) :
-        (!v.timestamp || now/1000-v.timestamp<MARKER_MAX_AGE_SEC)
-      ).map(v=>[v.key,v]));
-      for(const [key,old] of state.vehicles){
-        if(old.source!==source)continue;
-        if(latest.has(key))continue;
-        if(now-old.lastRealSeen<VEHICLE_KEEP_MS)state.vehicles.set(key,{...old,stale:true});
-        else state.vehicles.delete(key);
-      }
-      for(const [key,v] of latest){
-        const old=state.vehicles.get(key);
-        // Never replace a newer observation with an older stale-feed response.
-        if(old?.timestamp && v.timestamp && old.timestamp>v.timestamp)continue;
-        const stale=staleFeed || (v.timestamp && now/1000-v.timestamp>300);
-        state.vehicles.set(key,{...v,lastRealSeen:now,stale:Boolean(stale)});
-      }
+      mergePositionVehicles(state.vehicles, latest, source, now, staleFeed);
     }
-    for(const [key,v] of state.vehicles){
-      if(state.statuses[v.source]!=='ok'){
-        const age=v.timestamp ? now/1000-v.timestamp : Infinity;
-        if(now-(v.lastRealSeen||0)>VEHICLE_KEEP_MS || age>STALE_MAX_AGE_SEC)
-          state.vehicles.delete(key);
-        else state.vehicles.set(key,{...v,stale:true});
-      }
-    }
-    for(const source of POSITION_SOURCES){
-      const name=source+'_updates';if(!ok[name])continue;
-      for(const key of [...state.updates.keys()])if(key.startsWith(source+':'))state.updates.delete(key);
-      for(const [key,upd] of parseUpdates(ok[name],source,now))state.updates.set(key,upd);
-    }
-    // Existing updates age out if no feed responds.
-    for(const [key,upd] of state.updates)if(now-upd.fetchedAt>DETAIL_MAX_AGE)state.updates.delete(key);
+    pruneStaleVehicles(state.vehicles, now, state.statuses);
+    processUpdates(ok, state, now);
     state.failCount=ENDPOINTS.filter(s=>state.statuses[s]!=='ok').length;
     statusLabel();updateFeedHealthBanner();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);displayStats();refreshScheduleMatches();
     // Bus-shape fetching happens after the live updates; do not delay feed painting.
