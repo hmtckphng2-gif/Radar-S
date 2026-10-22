@@ -23,7 +23,7 @@
       "heightMeters": 3.0,
       "scaleBy": "length",
       "yawOffset": 0,
-      "frontAxis": "-z",
+      "frontAxis": "+z",
       "credit": {
         "title": "Mercedes-Benz Citaro",
         "author": "Villanueva-Jonatan-32621",

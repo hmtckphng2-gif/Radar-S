@@ -296,3 +296,11 @@ test('the contact shadow is flat, transparent and free of textures', () => {
     assert.equal(disc.rotation.x, -Math.PI / 2, 'der Schatten liegt flach auf der Karte');
   }
 });
+test('the bus is turned around because its front points to +z', () => {
+  // Aus den GLB-Knoten abgeleitet: das Armaturenbrett sitzt bei z = +4,00,
+  // der Auspuff bei z = -7,05. Die Nase zeigt nach +z, die App erwartet -z.
+  const config = JSON.parse(read('public/models/models.json'));
+  assert.equal(config.models.bus.frontAxis, '+z', 'der Citaro muss um 180 Grad gedreht werden');
+  // Der FLIRT hat zwei Fuehrerhaus, seine Ausrichtung ist ohne Bedeutung.
+  assert.equal(config.models.train.frontAxis, '-z');
+});
