@@ -74,3 +74,29 @@ export function prefersReducedMotion(){
   try{return typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches}
   catch{return false}
 }
+
+// The direction a point of the model points to in the world.
+//
+// The 3D transform of the vehicle layer is:
+//   translate * scale(s, -s, s) * rotateX(90 Grad) * rotateY(-heading)
+// A model whose nose sits at -z therefore points exactly along the heading,
+// that is the direction of travel. This function is the reference for that:
+// it answers "where does this local direction end up in the world?".
+//
+// MapLibre's world: +x = east, +y = south, +z = up. The heading is the
+// bearing, clockwise from north.
+export function modelWorldDirection(local, heading){
+  const x=Number(local?.[0])||0, y=Number(local?.[1])||0, z=Number(local?.[2])||0;
+  const h=(Number(heading)||0)*Math.PI/180;
+  const c=Math.cos(h), s=Math.sin(h);
+  // rotateY(-heading)
+  const a=c*x-s*z, b=s*x+c*z;
+  // rotateX(90 Grad) and scale(1,-1,1) turn that into east, south and up
+  return {east:a, south:b, up:y};
+}
+
+// The bearing in degrees a local direction ends up pointing to.
+export function modelWorldBearing(local, heading){
+  const d=modelWorldDirection(local,heading);
+  return Math.atan2(d.east,-d.south)*180/Math.PI;
+}

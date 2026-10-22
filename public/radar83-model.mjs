@@ -113,7 +113,7 @@ export function normalizeModel(object3D,spec,THREE){
   if(Number.isFinite(yaw)&&yaw)holder.rotation.y=yaw*Math.PI/180;
   // Manche Modelle sind um 180 Grad falsch herum authored. frontAxis sagt,
   // wo die Nase des Modells liegt: Standard ist -z, '+z' dreht es um 180 Grad.
-  if(spec.frontAxis==='+z')holder.rotation.y+=Math.PI;
+  holder.rotation.y+=frontAxisYaw(spec);
   return {object:holder,scale,rotated:longIsX,scaledBy:byHeight?'height':'length',sourceSize:{x:size.x,y:size.y,z:size.z},realHeight:byHeight?height:size.y*scale};
 }
 
@@ -183,6 +183,13 @@ export function makeContactShadow(T,radius=1){
  * rounded cab at both ends and a raised pantograph on the middle segment.
  * All measures are physical metres: +y up, -z is the front, +x is right.
  */
+// The extra turn a model needs so that its nose ends up at -z, the direction
+// the app expects. The app wants the nose at -z because the 3D transform
+// (see modelWorldDirection) turns a model nose at -z exactly along the
+// heading, that is along the direction of travel.
+export function frontAxisYaw(spec){
+  return spec&&spec.frontAxis==='+z'?Math.PI:0;
+}
 export function makeVehicleMesh(T,kind){
   const bus=kind==='bus',root=new T.Group();
   const mat=(hex,metalness=.15,roughness=.67)=>new T.MeshStandardMaterial({color:hex,metalness,roughness});

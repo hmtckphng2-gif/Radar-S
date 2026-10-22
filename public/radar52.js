@@ -1,6 +1,6 @@
 /* Südtirol Radar 5.2 — cinematic focus, route, verified delay history,
    arrival board and same-line vehicles. No changes to feed/map renderer. */
-import {sameLine,shapeSections,addDelaySample,localTime} from './radar52-logic.mjs?v=9.6.0';
+import {sameLine,shapeSections,addDelaySample,localTime} from './radar52-logic.mjs?v=9.7.0';
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);

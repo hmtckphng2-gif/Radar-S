@@ -1,6 +1,6 @@
-# Südtirol Radar – Upgrade-Report 8.7 bis 9.6
+# Südtirol Radar – Upgrade-Report 8.7 bis 9.7
 
-**Ergebnis:** Version **9.6.0**, **239 Tests grün**, **live seit 22.10.2026**.
+**Ergebnis:** Version **9.7.0**, **244 Tests grün**, **live seit 22.10.2026**.
 **PR #18** (Qualitäts-Gate grün) wurde gemerged, der Deploy auf Cloudflare lief durch.
 
 **Geprüft an der Live-App:** 810 Fahrzeuge, alle 9 Feeds „ok", keine Konsolenfehler,
@@ -211,6 +211,55 @@ Beides wurde **nicht** neu gebaut.
 
 1. **Auf dem iPhone prüfen**: FLIRT-Ausrichtung (`frontAxis` steht auf `-z`, bei Bedarf auf `+z` umstellen), Citaro (sollte jetzt vorwärts fahren), Kontaktschatten, Offline-Banner, Fokuswechsel im Detail-Panel, Abfahrten mit Live-Status.
 2. **Die visuelle Prüfung der 3D-Ausrichtung steht noch aus.** Der Screenshot-Weg im Browser war nicht bedienbar; die Ausrichtung habe ich deshalb aus den GLB-Knoten abgeleitet. Das ist belastbar, aber ein Blick auf das Gerät wäre besser.
+
+---
+
+## 9.7 - Ausrichtung bewiesen, WebGL-Verlust abgefangen
+
+Zwei Befunde aus dem Betrieb, nicht aus dem Code.
+
+### Die Fahrtrichtung ist jetzt bewiesen, nicht behauptet
+
+Beim Versuch, die 3D-Ansicht im Browser zu pruefen, kam kein Screenshot zustande.
+Statt zu raten, habe ich die Rechnung aus der App herausgezogen und mit den
+**echten Modelldaten** nachgeprueft:
+
+- Die 3D-Umrechnung der Fahrzeugschicht ist
+  	ranslate * scale(s,-s,s) * rotateX(90 Grad) * rotateY(-heading).
+  MapLibres Welt: +x = Osten, +y = Sueden, +z = Oben.
+- Daraus folgt: ein Modell mit der Nase bei **-z** zeigt genau in der
+  Fahrtrichtung. Das ist die Konvention des schematischen Modells
+  (Windschutzscheibe und Scheinwerfer bei z = -5,86).
+- Der Citaro ist anders herum authored (Armaturenbrett z = +4,00, Auspuff
+  z = -7,05) und wird deshalb um 180 Grad gedreht.
+
+modelWorldDirection() in adar83-logic.mjs ist die Referenz fuer diese
+Umrechnung, rontAxisYaw() die eine Stelle, an der gedreht wird. Der Test
+liest die echten Knoten aus us.glb und beweist:
+
+- mit der Drehung zeigt die Nase bei 0, 37, 90, 180 und 275 Grad **in** der
+  Fahrtrichtung,
+- ohne die Drehung zeigt sie **gegen** die Fahrtrichtung,
+- und die Umrechnung in der App stimmt weiterhin mit der Referenz ueberein
+  (sonst wuerde der Test bei einer Aenderung der Rotationsreihenfolge rot).
+
+### Ein verlorener WebGL-Kontext blockierte die 3D-Ansicht
+
+In der Konsole stand THREE.WebGLRenderer: Context Lost. Danach blieb die
+3D-Ansicht ** rund 30 Sekunden leer, bis die Zeitouts abgelaufen waren. Ein
+verlorener Kontext kommt auf dem iPhone regelmaessig vor: beim Wechsel in den
+Hintergrund, bei Speicherdruck, wenn zu viele Kontexte offen sind.
+
+Jetzt gilt:
+
+- webglcontextlost wird abgefangen, preventDefault() sorgt dafuer, dass der
+  Kontext wiederherstellbar bleibt,
+- das Warten auf den Kartenstil endet **sofort** statt nach dem Timeout,
+- die App faellt ohne Umweg auf die 2D-Karte zurueck und fliegt das Fahrzeug
+  dort an.
+
+*Tests:* adar83-model.test.js (Ausrichtung, 4 neue Tests),
+adar83-ui-guard.test.js (Kontextverlust).
 
 ---
 

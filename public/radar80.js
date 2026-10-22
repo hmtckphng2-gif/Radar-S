@@ -17,7 +17,7 @@
  *    here and restored if a legacy module writes them.
  */
 (()=>{'use strict';
- const BUILD='9.6.0';
+ const BUILD='9.7.0';
  const TITLE_PREFIX='Südtirol Radar ';
  const $=id=>document.getElementById(id);
  let serverVersion=null,serverChecked=false;

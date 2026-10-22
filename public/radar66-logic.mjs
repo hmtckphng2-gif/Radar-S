@@ -1,5 +1,5 @@
 /* Radar 6.6: pure, conservative source quality and conflict diagnostics. */
-import {distanceMeters,selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.6.0';
+import {distanceMeters,selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.7.0';
 const fleetId=v=>String(v?.vehicleId||'');
 export function sameStaFleet(a,b){const pair=new Set([a?.source,b?.source]);return pair.size===2&&pair.has('sta')&&pair.has('sta_direct')&&a?.kind==='bus'&&b?.kind==='bus'&&/^\d{2,6}$/.test(fleetId(a))&&fleetId(a)===fleetId(b)}
 export function sourceConflicts(vehicles,now=Date.now()){

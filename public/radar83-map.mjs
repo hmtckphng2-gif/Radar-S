@@ -2,8 +2,8 @@
  * The original Leaflet map stays intact underneath. Only selected cinematic
  * vehicles initialize MapLibre; errors or ?radar3d=off fall back to Radar 8.2.
  */
-import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.6.0';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion} from './radar83-logic.mjs?v=9.6.0';
+import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.7.0';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion} from './radar83-logic.mjs?v=9.7.0';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -226,11 +226,34 @@ export class Radar83Cinematic {
     attributionControl:true,interactive:true
    });
    this.map=map;
+   // 9.7: Ein verlorener WebGL-Kontext (GPU-Neustart, Speicherdruck, zu
+   // viele offene Kontexte) darf die 3D-Ansicht nicht ewig blockieren. Ohne
+   // diesen Handler wartet die App auf Timeouts und der Nutzer schaut
+   // minutenlang auf eine leere Karte.
+   const canvas=map.getCanvas();
+   const onContextLost=event=>{
+    try{event.preventDefault()}catch{}
+    console.info('Radar 8.3: WebGL-Kontext verloren, zurueck auf die 2D-Karte');
+    this.contextLost=true;
+     // Das Warten auf den Kartenstil sofort beenden, nicht erst nach dem
+     // Timeout. close() erhoeht die sequence, damit open() false liefert
+     // und die 2D-Karte die Fahrt uebernimmt.
+     this.contextLostCancel?.();
+    // close() erhoeht die sequence. Damit liefert open() sofort false und
+    // die 2D-Karte uebernimmt die Fahrt.
+    this.close({sync:false});
+   };
+   canvas?.addEventListener('webglcontextlost',onContextLost);
+   this.contextLostHandler=onContextLost;
+   this.contextCanvas=canvas;
    await new Promise((resolve,reject)=>{
     let done=false;
-    const end=e=>{if(done)return;done=true;clearTimeout(timeout);map.off('load',loaded);map.off('error',failed);e?reject(e):resolve()};
+    const end=e=>{if(done)return;done=true;clearTimeout(timeout);map.off('load',loaded);map.off('error',failed);this.contextLostCancel=null;e?reject(e):resolve()};
     const loaded=()=>end();
     const failed=e=>{if(!map.isStyleLoaded?.())end(e?.error||Error('Map style failed'))};
+    // 9.7: Ein Kontextverlust beendet das Warten sofort, nicht erst nach
+    // dem Timeout.
+    this.contextLostCancel=()=>end(Error('WebGL context lost'));
     const timeout=setTimeout(()=>end(Error('3D map style timed out')),11000);
     map.on('load',loaded);map.on('error',failed);
     if(map.loaded?.())end();
@@ -313,5 +336,9 @@ export class Radar83Cinematic {
   if(oldMap)try{oldMap.stop();oldMap.remove()}catch(error){console.info('3D map cleanup',error)}
   this.overlay?.remove();this.overlay=null;this.surface=null;
   document.body.classList.remove('sr83-cinematic');
+   if(this.contextCanvas&&this.contextLostHandler){
+    try{this.contextCanvas.removeEventListener('webglcontextlost',this.contextLostHandler)}catch{}
+   }
+   this.contextCanvas=null;this.contextLostHandler=null;this.contextLostCancel=null;
  }
 }

@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {makeVehicleMesh,makeContactShadow,modelCreditText,normalizeModel,VEHICLE_SPECS} from '../public/radar83-model.mjs';
+import {makeVehicleMesh,makeContactShadow,modelCreditText,normalizeModel,VEHICLE_SPECS,frontAxisYaw,modelYawRadians} from '../public/radar83-model.mjs';
+import {modelWorldBearing,modelWorldDirection} from '../public/radar83-logic.mjs';
 
 /* Radar 8.5 - the 3D model must be right in every respect.
  *
@@ -303,4 +304,77 @@ test('the bus is turned around because its front points to +z', () => {
   assert.equal(config.models.bus.frontAxis, '+z', 'der Citaro muss um 180 Grad gedreht werden');
   // Der FLIRT hat zwei Fuehrerhaus, seine Ausrichtung ist ohne Bedeutung.
   assert.equal(config.models.train.frontAxis, '-z');
+});
+/* 9.7 - the direction of the model is proved with the real files.
+ *
+ * The 3D transform of the vehicle layer is
+ *   translate * scale(s,-s,s) * rotateX(90) * rotateY(-heading)
+ * A model whose nose sits at -z therefore points exactly along the heading,
+ * that is along the direction of travel. The Citaro is authored the other way
+ * round (the dashboard sits at z = +4.0, the exhaust at z = -7.05), so it has
+ * to be turned by 180 degrees. Without that turn the bus drives backwards.
+ */
+function glbNodes(file){
+  const buf=readFileSync(root+'public/models/'+file);
+  const len=buf.readUInt32LE(12);
+  return JSON.parse(buf.subarray(20,20+len).toString('utf8')).nodes||[];
+}
+function nodePosition(nodes,name){
+  const node=nodes.find(n=>n.name===name);
+  return node?(node.translation||[0,0,0]):null;
+}
+function turnY(v,yaw){
+  const c=Math.cos(yaw),s=Math.sin(yaw);
+  return [c*v[0]+s*v[2],v[1],-s*v[0]+c*v[2]];
+}
+function angleDiff(a,b){
+  return Math.abs(((a-b+540)%360)-180);
+}
+
+test('a nose at -z points along the heading', () => {
+  for (const heading of [0,45,90,137,180,270,359]) {
+    const bearing=modelWorldBearing([0,0,-1],heading);
+    assert.ok(angleDiff(bearing,heading)<0.001,
+      'bei '+heading+' Grad zeigt die Nase auf '+bearing+' Grad');
+  }
+});
+
+test('the bus shows its nose in the direction of travel', () => {
+  const nodes=glbNodes('bus.glb');
+  const dash=nodePosition(nodes,'Object020_dash_Base_Color_0');
+  const exhaust=nodePosition(nodes,'exhaust0_Material__25_0');
+  assert.ok(dash&&exhaust,'die Teile des Busses wurden nicht gefunden');
+  assert.ok(dash[2]>0&&exhaust[2]<0,'das Armaturenbrett muss vorne und der Auspuff hinten liegen');
+  const nose=[dash[0]-exhaust[0],dash[1]-exhaust[1],dash[2]-exhaust[2]];
+  const config=JSON.parse(read('public/models/models.json'));
+  const turned=turnY(nose,frontAxisYaw(config.models.bus));
+  for (const heading of [0,37,90,180,275]) {
+    const bearing=modelWorldBearing(turned,heading);
+    assert.ok(angleDiff(bearing,heading)<5,
+      'bei '+heading+' Grad zeigt die Nase auf '+Math.round(bearing)+' Grad');
+  }
+});
+
+test('without the turn the bus would drive backwards', () => {
+  const nodes=glbNodes('bus.glb');
+  const dash=nodePosition(nodes,'Object020_dash_Base_Color_0');
+  const exhaust=nodePosition(nodes,'exhaust0_Material__25_0');
+  const nose=[dash[0]-exhaust[0],dash[1]-exhaust[1],dash[2]-exhaust[2]];
+  for (const heading of [0,37,90,180,275]) {
+    const bearing=modelWorldBearing(nose,heading);
+    assert.ok(angleDiff(bearing,heading)>170,
+      'ohne die Drehung zeigt die Nase gegen die Fahrtrichtung');
+  }
+});
+
+test('the 3D transform still matches the direction reference', () => {
+  // Wenn sich die Reihenfolge der Drehungen aendert, stimmt die Referenz
+  // nicht mehr. Dieser Test haelt beides zusammen.
+  const src=read('public/radar83-map.mjs');
+  assert.match(src,/\.scale\(new T\.Vector3\(scale,-scale,scale\)\)/);
+  assert.match(src,/makeRotationX\(Math\.PI\/2\)/);
+  assert.match(src,/makeRotationY\(modelYawRadians\(heading\)\)/);
+  assert.equal(modelYawRadians(90),-Math.PI/2,'die Drehung ist -heading');
+  const up=modelWorldDirection([0,1,0],0);
+  assert.ok(Math.abs(up.up-1)<1e-9,'die Hoehe bleibt oben');
 });

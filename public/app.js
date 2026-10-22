@@ -1,16 +1,16 @@
-import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.6.0';
-import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.6.0';
-import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.6.0';
-import {enrichTrainPlatform} from './train-platforms.js?v=9.6.0';
+import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.7.0';
+import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.7.0';
+import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.7.0';
+import {enrichTrainPlatform} from './train-platforms.js?v=9.7.0';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
   vehicleDelayInfo, bufferedAlong, departureDelay, isLiveUpdate
-} from './core.js?v=9.6.0';
-import {playbackLag} from './radar45-logic.mjs?v=9.6.0';
-import {trainReplayDuration} from './radar705-motion.mjs?v=9.6.0';
-import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.6.0';
-import {trainScheduledPosition} from './radar51-logic.mjs?v=9.6.0';
+} from './core.js?v=9.7.0';
+import {playbackLag} from './radar45-logic.mjs?v=9.7.0';
+import {trainReplayDuration} from './radar705-motion.mjs?v=9.7.0';
+import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.7.0';
+import {trainScheduledPosition} from './radar51-logic.mjs?v=9.7.0';
 
 const $ = id => document.getElementById(id);
 const DIRECT_POSITION_SOURCES=['sta_direct'];
@@ -968,7 +968,7 @@ async function init(){
   // neuer Worker geholt wird - auch wenn der Browser den alten lange cached.
   // Der Scope muss ausdruecklich auf '/' stehen, sonst waere er '/sw.js'.
   if('serviceWorker' in navigator){
-   try{navigator.serviceWorker.register('/sw.js?v=9.6.0',{scope:'/'}).catch(()=>{})}catch{}
+   try{navigator.serviceWorker.register('/sw.js?v=9.7.0',{scope:'/'}).catch(()=>{})}catch{}
   }
   Promise.allSettled([indexes,rail,buses]).then(()=>{refreshMarkers();updateViewportBadge();});
   // Refresh labels/route associations after GTFS indexes become available.

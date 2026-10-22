@@ -1,6 +1,6 @@
 /* Official station monitors: match one actual board entry, never infer a platform. */
-import {RFI_STATIONS} from './rfi-stations.mjs?v=9.6.0';
-import {displayTrack,stationNames,romeTime} from './train-platforms-logic.mjs?v=9.6.0';
+import {RFI_STATIONS} from './rfi-stations.mjs?v=9.7.0';
+import {displayTrack,stationNames,romeTime} from './train-platforms-logic.mjs?v=9.7.0';
 export const rfiStation=id=>RFI_STATIONS.find(s=>s.placeId===String(id))||null;
 export function resolveStation(context){
  if(context.source==='trains'){const s=RFI_STATIONS.find(s=>s.stopId===String(context.stopId).replace(/^S/,''));if(s)return s}

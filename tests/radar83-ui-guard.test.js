@@ -60,3 +60,13 @@ test('the detail panel can take and give back the focus', () => {
   assert.match(src, /sheet\.focus\(\{preventScroll:true\}\)/);
   assert.match(src, /\$\('map'\)\?\.focus\(\{preventScroll:true\}\)/);
 });
+test('a lost WebGL context ends the 3D view at once', () => {
+  // 9.7: Ohne Handler wartet die App auf Timeouts, der Nutzer schaut auf
+  // eine leere Karte. Der Kontextverlust muss sofort auf die 2D-Karte
+  // zurueckfuehren.
+  const src = get('radar83-map.mjs');
+  assert.match(src, /addEventListener\('webglcontextlost'/);
+  assert.match(src, /event\.preventDefault\(\)/, 'ohne preventDefault gibt es keine Wiederherstellung');
+  assert.match(src, /this\.contextLostCancel\?\.\(\)/, 'das Warten muss sofort enden');
+  assert.match(src, /removeEventListener\('webglcontextlost'/, 'der Listener muss wieder entfernt werden');
+});
