@@ -508,7 +508,7 @@ function displayStats(){
   $('countAll').textContent=all.length;$('countTrains').textContent=all.filter(v=>v.kind==='train').length;
   $('countBuses').textContent=all.filter(v=>v.kind==='bus').length;
   const staleCount=all.filter(v=>v.stale || (v.timestamp && Date.now()/1000-v.timestamp>300)).length;
-  $('lastUpdate').textContent=state.fetchedAt?'Abfrage '+new Date(state.fetchedAt).toLocaleTimeString('de-IT',{hour:'2-digit',minute:'2-digit'})+(staleCount?' · '+staleCount+' NICHT LIVE':''):'Noch keine Daten';
+  $('lastUpdate').textContent=state.fetchedAt?'Abfrage '+new Date(state.fetchedAt).toLocaleString('de-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+(staleCount?' · '+staleCount+' NICHT LIVE':''):'Noch keine Daten';
 }
 async function refreshFeeds(){
   if(state.busy)return;
