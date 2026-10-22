@@ -1,5 +1,5 @@
 /* Radar 7.9 — source quality inspector and reliable favorite station shortcuts. */
-import {findFavoriteStations,feedHealthRows,qualityAgeText} from './radar79-logic.mjs?v=9.7.0';
+import {findFavoriteStations,feedHealthRows,qualityAgeText} from './radar79-logic.mjs?v=9.8.0';
 (()=>{'use strict';const $=id=>document.getElementById(id);let timer=0;let lastSelected='';
  const bridge=()=>window.SuedtirolRadar37;
  const make=(tag,cls,text)=>{const e=document.createElement(tag);e.className=cls;if(text!==undefined)e.textContent=text;return e};

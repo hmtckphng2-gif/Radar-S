@@ -1,18 +1,18 @@
-import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite,loadJourneyFavorites,saveJourneyFavorites,toggleJourneyFavorite,isJourneyFavorite} from './app-state.js?v=9.7.0';
-import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.7.0';
-import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.7.0';
-import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.7.0';
-import {enrichTrainPlatform} from './train-platforms.js?v=9.7.0';
+import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite,loadJourneyFavorites,saveJourneyFavorites,toggleJourneyFavorite,isJourneyFavorite} from './app-state.js?v=9.8.0';
+import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.8.0';
+import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.8.0';
+import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.8.0';
+import {enrichTrainPlatform} from './train-platforms.js?v=9.8.0';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
   vehicleDelayInfo, bufferedAlong, departureDelay, isLiveUpdate
-} from './core.js?v=9.7.0';
-import {playbackLag} from './radar45-logic.mjs?v=9.7.0';
-import {trainReplayDuration} from './radar705-motion.mjs?v=9.7.0';
-import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.7.0';
-import {trainScheduledPosition} from './radar51-logic.mjs?v=9.7.0';
-import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.7.0';
+} from './core.js?v=9.8.0';
+import {playbackLag} from './radar45-logic.mjs?v=9.8.0';
+import {trainReplayDuration} from './radar705-motion.mjs?v=9.8.0';
+import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.8.0';
+import {trainScheduledPosition} from './radar51-logic.mjs?v=9.8.0';
+import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.8.0';
 
 const $ = id => document.getElementById(id);
 const DIRECT_POSITION_SOURCES=['sta_direct'];
@@ -1065,7 +1065,7 @@ async function init(){
   // Der Scope muss ausdruecklich auf '/' stehen, sonst waere er '/sw.js'.
   if('serviceWorker' in navigator){
    try{
-    navigator.serviceWorker.register('/sw.js?v=9.7.0',{scope:'/'}).then(reg=>{
+    navigator.serviceWorker.register('/sw.js?v=9.8.0',{scope:'/'}).then(reg=>{
      reg.addEventListener('updatefound',()=>{
       const w=reg.installing;
       if(!w)return;

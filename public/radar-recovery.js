@@ -21,7 +21,7 @@ function start(){
 async function fetchVehicles(){
  if(!fallback||!group)return;
  try{
-  var core=await import('/core.js?v=9.7.0');
+  var core=await import('/core.js?v=9.8.0');
   var names=['sta','trentino','trains','sta_direct'];
   var results=await Promise.allSettled(names.map(function(name){
    return fetch('/api/'+name,{cache:'no-store'}).then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()});

@@ -1,5 +1,5 @@
 /* Südtirol Radar 5.3 – progressive UI enhancements, no feed or map-engine changes. */
-import {displayDelay,delayPill} from './radar53-logic.mjs?v=9.7.0';
+import {displayDelay,delayPill} from './radar53-logic.mjs?v=9.8.0';
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
