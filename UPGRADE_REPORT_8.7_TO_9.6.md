@@ -126,10 +126,12 @@ Es gab **keinen** Service Worker – das Manifest und die Apple-Meta-Daten waren
 Die Regeln, die dafür gelten:
 
 1. **Live-Daten werden nie zwischengespeichert.** Alles unter `/api/` läuft ausschließlich über das Netz. Eine alte Position als „aktuell" anzuzeigen wäre eine erfundene Angabe.
-2. **Die App-Huelle wird zwischengespeichert**, damit die Karte ohne Verbindung startet.
-3. **Keine Fehlerseite wird gespeichert.** Ein 502 vom Proxy darf nicht als Startseite in den Cache wandern.
+2. **Nur was die Version in der URL trägt, kommt zuerst aus dem Cache.** Eine versionierte Datei gehört genau zu einem Release, sie kann also nicht veraltet sein. Alles ohne Version (Fahrplandaten, Bilder) kommt zuerst aus dem Netz – der Cache ist dort nur der Rückfall für den Offline-Betrieb.
+3. **Die App-Huelle wird zwischengespeichert**, damit die Karte ohne Verbindung startet.
+4. **Keine Fehlerseite wird gespeichert.** Ein 502 vom Proxy darf nicht als Startseite in den Cache wandern. (Das ist im Test passiert und wurde behoben.)
+5. **Der Worker wird versionsfest registriert** (`/sw.js?v=9.6.0`, Scope `/`), sonst läge ein alter Worker lange im Browser-Cache.
 
-*Im Browser nachgemessen:* Cache **134 Dateien**, davon **0 aus `/api/`**. Mit abgeschaltetem Server lädt die App vollständig aus dem Cache (Titel, 41 Module, Version 9.6.0).
+*Im Browser nachgemessen:* Cache **132 Dateien** (120 versioniert, 12 unversioniert), davon **0 aus `/api/`**. Mit abgeschaltetem Server lädt die App vollständig aus dem Cache (Titel, 41 Module, Version 9.6.0).
 
 ## 9.5 – Barrierefreiheit
 
