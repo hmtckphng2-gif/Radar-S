@@ -40,3 +40,11 @@ test('feedHealthBanner-Element existiert im HTML', () => {
   assert.match(html, /id="feedHealthBanner"/);
   assert.match(html, /role="alert"/);
 });
+
+test('Tastatur-Shortcuts definiert in app.js', () => {
+  const app = read('public/app.js');
+  assert.match(app, /refreshFeeds\(\)/);
+  assert.match(app, /fitMap\(\)/);
+  assert.match(app, /showStations\(\)/);
+  assert.match(app, /showSourceStatus\(\)/);
+});
