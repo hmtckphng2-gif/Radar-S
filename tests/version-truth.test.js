@@ -86,10 +86,16 @@ test('the live data is never answered from the cache', () => {
   const guard=sw.indexOf('if(isApi(url))return;');
   const first=sw.indexOf('event.respondWith');
   assert.ok(guard>0&&guard<first,'die API-Pruefung muss vor jeder Antwortbehandlung kommen');
-  // Die API-Pruefung muss auch vor dem Zweig fuer Fahrplandaten stehen,
-  // sonst wuerde /api/ dort hineinlaufen.
-  const datenZweig=sw.indexOf("startsWith('/data/')");
-  assert.ok(guard>0&&guard<datenZweig,'die API-Pruefung muss vor dem Datenzweig kommen');
   // Und die Live-Daten duerfen in keinem Zweig in den Cache geschrieben werden.
   assert.ok(!/isApi[\s\S]{0,200}cache\.put/.test(sw),'ein API-Zweig schreibt in den Cache');
+});
+
+test('only versioned files are served from the cache first', () => {
+  // Ohne Version in der URL ist die Datei keinem Release zuzuordnen. Dann
+  // kommt das Netz zuerst, der Cache ist nur der Rueckfall.
+  const sw=read('sw.js');
+  assert.match(sw,/const versioniert=url\.searchParams\.has\('v'\);/);
+  assert.match(sw,/return \(versioniert&&hit\)\|\|net;/);
+  // Die Live-Daten sind der Sonderfall: die kommen nie in den Cache.
+  assert.match(sw,/if\(isApi\(url\)\)return;/);
 });

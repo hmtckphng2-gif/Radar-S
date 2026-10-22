@@ -5,10 +5,17 @@
  * 1. **Live-Daten werden nie zwischengespeichert.** Alles unter /api/ laeuft
  *    ausschliesslich ueber das Netz. Eine alte Position als "aktuell" anzuzeigen
  *    waere eine erfundene Angabe - genau das verbietet das Projekt.
- * 2. **Die App-Huelle wird zwischengespeichert**, damit die Karte auch ohne
- *    Verbindung startet. Die Cache-URLs enthalten die Versionsnummer (?v=),
- *    deshalb ist ein neues Release automatisch ein neuer Cache.
- * 3. **Nichts wird im Voraus geladen.** Der Cache waechst nur mit dem, was
+ * 2. **Nur was die Version in der URL traegt, kommt zuerst aus dem Cache.**
+ *    Eine versionierte Datei gehoert genau zu einem Release, sie kann also
+ *    nicht veraltet sein. Alles ohne Version (Fahrplandaten, Bilder) kommt
+ *    zuerst aus dem Netz, der Cache ist dort nur der Rueckfall fuer den
+ *    Offline-Betrieb.
+ * 3. **Die App-Huelle wird zwischengespeichert**, damit die Karte auch ohne
+ *    Verbindung startet. Die Cache-URLs tragen die Versionsnummer, ein neues
+ *    Release ist damit automatisch ein neuer Cache.
+ * 4. **Keine Fehlerseite wird gespeichert.** Ein 502 vom Proxy darf nicht als
+ *    Startseite in den Cache wandern.
+ * 5. **Nichts wird im Voraus geladen.** Der Cache waechst nur mit dem, was
  *    tatsaechlich benutzt wurde. Das haelt den Speicherbedarf klein.
  */
 const CACHE='radar-shell-v9.6.0';
@@ -38,22 +45,12 @@ self.addEventListener('fetch',event=>{
   const url=new URL(request.url);
   // 1. Live-Daten: immer aus dem Netz, nie cachen.
   if(isApi(url))return;
-  // 2. Datenbanken mit Fahrplan und Modellen duerfen gecacht werden, sie
-  //    aendern sich nur mit dem Release.
-  if(url.pathname.startsWith('/data/')||url.pathname.startsWith('/models/')){
-    event.respondWith(caches.open(CACHE).then(async cache=>{
-      const hit=await cache.match(request);
-      const net=fetch(request).then(response=>{
-        if(response&&response.ok){cache.put(request,response.clone());return response}
-        // Eine Fehlerseite ist kein Inhalt. Lieber die alte, versionierte
-        // Datei zeigen als eine kaputte.
-        return hit||response;
-      }).catch(()=>hit);
-      return hit||net;
-    }));
-    return;
-  }
-  // 3. Navigationen: Netz zuerst, Cache als Rueckfall.
+  // Die Regel fuer den Rest ist einfach:
+  //   - URL traegt die Version  ->  aus dem Cache, die Version ist eindeutig
+  //   - URL traegt keine Version ->  erst das Netz fragen
+  // Der Cache ist in beiden Faellen der Rueckfall, wenn kein Netz da ist.
+  const versioniert=url.searchParams.has('v');
+  // 2. Navigationen: Netz zuerst, Cache als Rueckfall.
   if(request.mode==='navigate'){
     event.respondWith(fetch(request).then(response=>{
       // Eine Fehlerseite (502, 404) ist keine App. Sie darf weder gezeigt
@@ -71,7 +68,7 @@ self.addEventListener('fetch',event=>{
     ))));
     return;
   }
-  // 4. Statische Dateien: Cache zuerst, im Hintergrund auffrischen.
+  // 3. Dateien der App: mit Version aus dem Cache, ohne erst aus dem Netz.
   if(isAsset(url)){
     event.respondWith(caches.open(CACHE).then(async cache=>{
       const hit=await cache.match(request);
@@ -81,7 +78,7 @@ self.addEventListener('fetch',event=>{
         // Datei zeigen als eine kaputte.
         return hit||response;
       }).catch(()=>hit);
-      return hit||net;
+      return (versioniert&&hit)||net;
     }));
   }
 });
