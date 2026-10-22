@@ -923,6 +923,16 @@ function setupControls(){
     if(e.key==='s'||e.key==='S'){e.preventDefault();showStations();}
     if(e.key==='?'){e.preventDefault();showSourceStatus();}
   });
+  // Hinweis auf Tastatur-Shortcuts (einmalig beim Start)
+  if(!localStorage.getItem('sr-shortcuts-hint')){
+    const hint=document.createElement('div');
+    hint.className='shortcut-hint';
+    hint.textContent='Tastatur: R = neu laden · F = Fahrzeuge zeigen · S = Stationen · ? = Quellen';
+    hint.style.cssText='position:fixed;bottom:10px;right:10px;padding:6px 10px;border-radius:8px;background:rgba(10,18,30,.85);color:#f3f7fc;font-size:11px;z-index:900;cursor:pointer';
+    hint.onclick=()=>{hint.remove();localStorage.setItem('sr-shortcuts-hint','1');};
+    document.body.append(hint);
+    setTimeout(()=>hint.remove(),6000);
+  }
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden){for(const [key,job] of state.jobs){const e=state.markers.get(key);if(e)e.marker.setLatLng([job.to.lat,job.to.lon]);}state.jobs.clear();state.busTracks.clear();}
     else { if(Date.now()-state.fetchedAt>30000)refreshFeeds();if(state.map)state.map.invalidateSize({pan:false}); }
