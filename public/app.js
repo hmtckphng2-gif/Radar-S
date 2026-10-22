@@ -963,12 +963,41 @@ async function init(){
   bootPhase('feeds-checked');
   setInterval(()=>{if(!document.hidden)refreshFeeds()},AVERAGE_POLL_MS);
   bootPhase('ready');
+  // 9.7: Neue Version verfügbar melden und zum Neu-Laden einladen.
+  function updateToast(){
+    const el=document.getElementById('sr-update-toast');
+    if(el)return el;
+    const t=document.createElement('div');
+    t.id='sr-update-toast';
+    t.className='sr-update-toast';
+    t.innerHTML='<b>Neue Version verfügbar.</b> Zum Aktualisieren Seite neu laden.<button id="sr-update-reload">Jetzt laden</button>';
+    document.body.append(t);
+    t.querySelector('#sr-update-reload').addEventListener('click',()=>{
+      navigator.serviceWorker.getRegistration().then(reg=>{
+        if(reg&&reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});
+        location.reload();
+      });
+    });
+    return t;
+  }
   // 9.4: Die App-Huelle wird offline faehig. Live-Daten bleiben unberuehrt.
   // Die Versionsangabe im Pfad sorgt dafuer, dass nach einem Release ein
   // neuer Worker geholt wird - auch wenn der Browser den alten lange cached.
   // Der Scope muss ausdruecklich auf '/' stehen, sonst waere er '/sw.js'.
   if('serviceWorker' in navigator){
-   try{navigator.serviceWorker.register('/sw.js?v=9.7.0',{scope:'/'}).catch(()=>{})}catch{}
+   try{
+    navigator.serviceWorker.register('/sw.js?v=9.7.0',{scope:'/'}).then(reg=>{
+     reg.addEventListener('updatefound',()=>{
+      const w=reg.installing;
+      if(!w)return;
+      w.addEventListener('statechange',()=>{
+       if(w.state==='installed'&&navigator.serviceWorker.controller){
+        const u=updateToast();u.hidden=false;
+       }
+      });
+     });
+    }).catch(()=>{});
+   }catch{}
   }
   Promise.allSettled([indexes,rail,buses]).then(()=>{refreshMarkers();updateViewportBadge();});
   // Refresh labels/route associations after GTFS indexes become available.

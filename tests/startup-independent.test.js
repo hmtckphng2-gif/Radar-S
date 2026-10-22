@@ -44,3 +44,19 @@ test('the offline shell never caches live data', () => {
   assert.match(src, /navigator\.serviceWorker\.register\('\/sw\.js\?v=[0-9.]+',\{scope:'\/'\}\)/,
     'der Worker muss versionsfest und mit Scope / registriert werden');
 });
+test('der Update-Toast und der Service-Worker-Update-Handler sind eingebaut', () => {
+  // 9.7: Wenn eine neuere Version ausgeliefert wird, soll die App das
+  // sagen und zum Neu-Laden einladen.
+  const app = get('app.js');
+  assert.match(app, /function updateToast\(\)/);
+  assert.match(app, /addEventListener\('updatefound'/);
+  assert.match(app, /postMessage\(\{type:'SKIP_WAITING'\}\)/);
+  const sw = get('sw.js');
+  assert.match(sw, /self\.addEventListener\('message'/);
+  assert.match(sw, /event\.data\.type==='SKIP_WAITING'/);
+  assert.match(sw, /self\.clients\.claim\(\)/);
+  const css = get('radar84.css');
+  assert.match(css, /\.sr-update-toast/);
+  assert.match(css, /\.sr-update-toast button/);
+  assert.match(app, /#sr-update-reload/);
+});

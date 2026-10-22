@@ -18,7 +18,7 @@
  * 5. **Nichts wird im Voraus geladen.** Der Cache waechst nur mit dem, was
  *    tatsaechlich benutzt wurde. Das haelt den Speicherbedarf klein.
  */
-const CACHE='radar-shell-v9.6.0';
+const CACHE='radar-shell-v9.7.0';
 const SHELL='/index.html';
 
 self.addEventListener('install',event=>{
@@ -29,6 +29,11 @@ self.addEventListener('activate',event=>{
   event.waitUntil(caches.keys()
     .then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key))))
     .then(()=>self.clients.claim()));
+});
+
+// Neue Version wird vom Client aktiviert (Klick auf "Jetzt laden" im Toast).
+self.addEventListener('message',event=>{
+  if(event.data&&event.data.type==='SKIP_WAITING')self.skipWaiting();
 });
 
 function isApi(url){

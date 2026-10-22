@@ -170,3 +170,16 @@
   font-size:12px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,.28);
 }
 @media (max-width:420px){.offline-banner{left:8px;right:8px;top:calc(120px + env(safe-area-inset-top,0px));font-size:11px}}
+/* 9.7 - Update-Toast: erscheint, wenn der Service Worker eine neuere
+   Version gefunden hat. Klick auf "Jetzt laden" aktiviert den neuen
+   Worker sofort und ladet die Seite neu. */
+.sr-update-toast{
+  position:fixed;z-index:2000;left:10px;right:10px;bottom:10px;
+  padding:10px 13px;border-radius:14px;border:1px solid #7a5a2a;
+  background:#2a2013f2;color:#f0d9ae;font-size:12px;line-height:1.45;
+  box-shadow:0 8px 24px rgba(0,0,0,.28);display:none;
+}
+.sr-update-toast button{
+  margin-left:10px;padding:4px 10px;border:none;border-radius:8px;
+  background:#7fd6a8;color:#0b1220;font-weight:bold;cursor:pointer
+}
