@@ -11,7 +11,9 @@ export const state = {
   busShapeFailures: new Set(),
   busTracks: new Map(), fusion:{sources:new Map(),duplicates:0}, performance:{lastMarkerRefresh:0},
   favorites: new Set(),
-  lineFavorites: new Set()
+  lineFavorites: new Set(),
+  journeyFavorites: new Set(),
+  alerts: {}
 };
 
 // Lädt gespeicherte Favoriten aus LocalStorage.
@@ -66,6 +68,34 @@ export function loadLineFavorites(){
 // Speichert Linien-Favoriten in LocalStorage.
 export function saveLineFavorites(){
   try{localStorage.setItem('sr-line-favorites',JSON.stringify([...state.lineFavorites]))}catch{}
+}
+
+// Schaltet eine Verbindung als Favorit um. Schlüssel: source:routeId:fromStop:toStop:departureTime.
+// Gibt den neuen Zustand zurück.
+export function toggleJourneyFavorite(key){
+  if(state.journeyFavorites.has(key)){state.journeyFavorites.delete(key);}
+  else{state.journeyFavorites.add(key);}
+  saveJourneyFavorites();
+  return state.journeyFavorites.has(key);
+}
+
+// Prüft ob eine Verbindung favorisiert ist.
+export function isJourneyFavorite(key){return state.journeyFavorites.has(key);}
+
+// Lädt gespeicherte Verbindungs-Favoriten aus LocalStorage.
+export function loadJourneyFavorites(){
+  try{
+    const raw=localStorage.getItem('sr-journey-favorites');
+    if(raw){
+      const arr=JSON.parse(raw);
+      if(Array.isArray(arr))for(const k of arr)state.journeyFavorites.add(k);
+    }
+  }catch{}
+}
+
+// Speichert Verbindungs-Favoriten in LocalStorage.
+export function saveJourneyFavorites(){
+  try{localStorage.setItem('sr-journey-favorites',JSON.stringify([...state.journeyFavorites]))}catch{}
 }
 
 // Boot-Phase für den Startsequenz-Status (wird im data-Attribut gespiegelt).

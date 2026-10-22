@@ -4,6 +4,7 @@ import {findStations,romeDay,romeSeconds} from './radar51-logic.mjs?v=9.7.0';
 import {buildTimetable,searchJourneys,walkEstimate,transferAssessment} from './radar70-route.mjs?v=9.7.0';
 import {assessJourneys,orderJourneys,explainRecommendation,answerLocally,summarizeJourneyOptions} from './radar703-advisor.mjs?v=9.7.0';
 import {groupJourneyChoices} from './radar705-groups.mjs?v=9.7.0';
+import {toggleJourneyFavorite,isJourneyFavorite} from './app-state.js?v=9.7.0';
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const E=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e};
@@ -176,6 +177,9 @@ function freshDelay(leg,end){const state=bridge.state,upd=state.updates?.get?.(l
 }
 function drawDetail(i){const trip=journeys[i];if(!trip)return;pane='detail';stage.replaceChildren(back('Reisedetails',()=>drawResults(selected.from,selected.to,'')));
  const head=E('section','sr70-detailhead');head.append(E('p','sr70-overline','DEINE REISE'),E('h2','',clock(trip.departure)+' → '+clock(trip.arrival)),E('p','',trip.legs.length+' Fahrt(en) · GTFS-Fahrplan, kein Ticketangebot'));stage.append(head,E('p','sr70-hint','Umsteigewege sind nur aus Luftlinie geschätzt. Prognosen stammen ausschließlich aus aktuellen GTFS-RT-Meldungen, wenn sie für beide Fahrten verfügbar sind.'));
+  const favKey=selected.from.name+'→'+selected.to.name+':'+trip.departure;
+  const favBtn=B('sr70-primary-fav',isJourneyFavorite(favKey)?'★ Aus Favoriten':'☆ Als Favorit',()=>{toggleJourneyFavorite(favKey);favBtn.textContent=isJourneyFavorite(favKey)?'★ Aus Favoriten':'☆ Als Favorit';drawDetail(i);});
+  head.append(favBtn);
  const timeline=E('div','sr70-timeline');for(let j=0;j<trip.legs.length;j++){const leg=trip.legs[j];
   const a=E('div','sr70-stop');a.append(E('time','',clock(leg.departure)),E('strong','',leg.fromStop.name),E('small','',leg.fromStop.platform?'Steig/Gleis '+leg.fromStop.platform:'Steig/Gleis unbekannt'));timeline.append(a);
   const line=E('div','sr70-ride');line.append(E('span',leg.type==='train'?'sr70-train':'sr70-bus',leg.name),E('span','',leg.headsign));const delay=freshDelay(leg,false);if(delay!==null)line.append(E('small','sr70-delay','GTFS-RT '+(delay>=0?'+':'')+Math.round(delay/60)+' Min.'));timeline.append(line);

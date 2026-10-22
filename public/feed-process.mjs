@@ -101,3 +101,44 @@ export function processUpdates(ok, state, now){
   }
   for(const [key, upd] of state.updates) if(now - upd.fetchedAt > DETAIL_MAX_AGE) state.updates.delete(key);
 }
+
+// Extrahiert aktive Alerts aus einem GTFS-RT Feed.
+// Gibt Array von {id, cause, effect, header, description, active_period, informed_entity, url, source, fetchedAt}.
+export function parseAlerts(feed, source, now){
+  const alerts=[];
+  const nowSec=Math.floor(now/1000);
+  for(const entity of (feed?.entity||[])){
+    const a=entity?.alert;
+    if(!a)continue;
+    // Aktualität prüfen
+    let active=false;
+    if(a.active_period&&a.active_period.length){
+      for(const p of a.active_period){
+        const start=Number(p.start)||0;
+        const end=Number(p.end)||Infinity;
+        if(nowSec>=start&&nowSec<=end){active=true;break;}
+      }
+    }else{
+      active=true; // Keine Zeitraum-Angabe = immer aktiv
+    }
+    if(!active)continue;
+    const getText=(obj)=>{
+      if(!obj||!obj.translation)return '';
+      const de=obj.translation.find(t=>t.language==='de'||t.language==='DE');
+      return de?de.text:(obj.translation[0]?obj.translation[0].text:'');
+    };
+    alerts.push({
+      id: entity.id||'',
+      cause: Number(a.cause)||null,
+      effect: Number(a.effect)||null,
+      header: getText(a.header_text)||'Störung',
+      description: getText(a.description_text)||'',
+      active_period: a.active_period||[],
+      informed_entity: a.informed_entity||[],
+      url: getText(a.url)||'',
+      source,
+      fetchedAt: now
+    });
+  }
+  return alerts;
+}

@@ -205,6 +205,16 @@
 /* 9.7 - Verspätungs-Farben im Abfahrts-Board */
 .sr50-deps .dep-delay-severe{color:#ef476f}
 .sr50-deps .dep-delay-warn{color:#ffd166}
+/* 9.8 - Störungs-Ticker */
+.alert-ticker{
+  position:fixed;top:150px;left:10px;right:10px;z-index:1002;
+  background:#8a4a12;color:#fff;padding:8px 12px;border-radius:8px;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);font-size:12px;line-height:1.3;
+}
+.alert-ticker.hidden{display:none}
+.alert-count{font-weight:bold;margin-bottom:4px}
+.alert-item{margin:2px 0;opacity:.95}
+.alert-item .effect{text-transform:uppercase;font-size:10px;opacity:.7;margin-right:6px}
 .fav-badge{background:#ffd700!important;color:#000!important;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:bold}
 .marker-wrap.favorite .marker-label{color:#ffd700!important}
 .marker-wrap.line-favorite{filter:drop-shadow(0 0 3px #ffd700)}

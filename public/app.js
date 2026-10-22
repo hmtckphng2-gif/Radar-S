@@ -1,4 +1,4 @@
-import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite} from './app-state.js?v=9.7.0';
+import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite,loadJourneyFavorites,saveJourneyFavorites,toggleJourneyFavorite,isJourneyFavorite} from './app-state.js?v=9.7.0';
 import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.7.0';
 import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.7.0';
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.7.0';
@@ -12,7 +12,7 @@ import {playbackLag} from './radar45-logic.mjs?v=9.7.0';
 import {trainReplayDuration} from './radar705-motion.mjs?v=9.7.0';
 import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.7.0';
 import {trainScheduledPosition} from './radar51-logic.mjs?v=9.7.0';
-import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates} from './feed-process.mjs?v=9.7.0';
+import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.7.0';
 
 const $ = id => document.getElementById(id);
 const DIRECT_POSITION_SOURCES=['sta_direct'];
@@ -95,6 +95,31 @@ function updateFeedHealthBanner(){
   const banner=$('feedHealthBanner');
   if(!banner)return;
   banner.hidden=isFeedHealthy();
+}
+function updateAlertTicker(){
+  const ticker=$('alertTicker');
+  const countEl=ticker.querySelector('.alert-count');
+  const listEl=ticker.querySelector('.alert-list');
+  if(!ticker)return;
+  const all=[];
+  for(const source of Object.keys(state.alerts)){
+    for(const a of state.alerts[source]){
+      all.push({...a, source});
+    }
+  }
+  if(all.length===0){ticker.hidden=true;return;}
+  ticker.hidden=false;
+  countEl.textContent=all.length+' Störung'+(all.length>1?'en':'')+' im System';
+  listEl.innerHTML='';
+  const causeNames={1:'Verspätung',2:'Verspätung',3:'Ausfall',4:'Ausfall',5:'Verspätung',6:'Verspätung',7:'Verspätung',8:'Störung',9:'Störung'};
+  for(const a of all.slice(0,6)){
+    const item=document.createElement('div');
+    item.className='alert-item';
+    const cName=causeNames[a.cause]||'Störung';
+    const effName=a.effect===1?'Verspätung':a.effect===2?'Ausfall':a.effect===3?'Verspätung':a.effect===4?'Ausfall':a.effect===5?'Verspätung':a.effect===6?'Verspätung':'Störung';
+    item.innerHTML='<span class="effect">'+cName+'</span>'+escapeHtml(a.header)+(a.description?': '+escapeHtml(a.description.substring(0,80)):'');
+    listEl.appendChild(item);
+  }
 }
 function showSourceStatus(){
   const lines=ENDPOINTS.map(ep=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0"><b>'+escapeHtml(ep)+'</b><span>'+ (state.statuses[ep]==='ok'?'✓ Antwort':'↻ '+(state.statuses[ep]==='old'?'veraltet':'Fehler'))+'</span></div>').join('');
@@ -546,8 +571,15 @@ async function refreshFeeds(){
     }
     pruneStaleVehicles(state.vehicles, now, state.statuses);
     processUpdates(ok, state, now);
+    // Alerts verarbeiten
+    for(const source of ALERT_SOURCES){
+      if(!ok[source])continue;
+      state.alerts[source]=parseAlerts(ok[source],source,now);
+    }
+    // Alte Alerts entfernen wenn Feed nicht mehr antwortet
+    for(const s of Object.keys(state.alerts))if(!ok[s])delete state.alerts[s];
     state.failCount=ENDPOINTS.filter(s=>state.statuses[s]!=='ok').length;
-    statusLabel();updateFeedHealthBanner();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);displayStats();refreshScheduleMatches();
+    statusLabel();updateFeedHealthBanner();updateAlertTicker();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);displayStats();refreshScheduleMatches();
     // Bus-shape fetching happens after the live updates; do not delay feed painting.
     loadBusShapesForVehicles().catch(e=>console.info('Bus shape preload:',e));
     if(!initiallyLocated && state.vehicles.size && state.map){
@@ -994,6 +1026,7 @@ async function init(){
   try{changeTheme(localStorage.getItem('sr-theme')==='light'?'light':'dark')}catch{changeTheme('dark')}
   loadFavorites();
   loadLineFavorites();
+  loadJourneyFavorites();
   setupControls();
   if(!initMap()){bootPhase('map-error');return}
   bootPhase('map-ready');
