@@ -1,7 +1,10 @@
 # Südtirol Radar – Upgrade-Report 8.7 bis 9.6
 
-**Ergebnis:** Version **9.6.0**, **238 Tests grün**, 16 Commits lokal.
-**Push und Deployment wurden bewusst NICHT ausgeführt** – das braucht deine ausdrückliche Zustimmung.
+**Ergebnis:** Version **9.6.0**, **239 Tests grün**, **live seit 22.10.2026**.
+**PR #18** (Qualitäts-Gate grün) wurde gemerged, der Deploy auf Cloudflare lief durch.
+
+**Geprüft an der Live-App:** 810 Fahrzeuge, alle 9 Feeds „ok", keine Konsolenfehler,
+Service Worker aktiv mit 133 Cache-Einträgen – **0 davon aus `/api/`**.
 
 ---
 
@@ -190,11 +193,10 @@ Lokaler Server, echter Browser, Konsole und Cache geprüft:
 
 ## Was nicht gemacht wurde
 
-- **Kein Push, kein Deploy.** Alles liegt lokal.
-- **Keine bestehende Funktion neu gebaut.** 3D-Zuganimation, Abfahrten, Live-Daten, Ist/Soll und die 2D-Karte sind unverändert vorhanden.
 - **Keine Secrets**, keine neuen Abhängigkeiten, kein Build-Schritt.
 - **Der History-Collector bleibt deaktiviert** (`triggers.crons: []`, Opt-in-Guard unverändert).
 - **Apple/EAS unverändert** – kein App-Store-Zugang, keine Signaturen.
+- **Keine bestehende Funktion neu gebaut.** 3D-Zuganimation, Abfahrten, Live-Daten, Ist/Soll und die 2D-Karte sind unverändert vorhanden.
 
 ### Zwei Punkte, die schon fertig waren
 
@@ -207,6 +209,19 @@ Beides wurde **nicht** neu gebaut.
 
 ## Offen für dich
 
-1. **Push und Deploy** freigeben – dann laufen CI, Quality Gate und Deploy.
-2. **Auf dem iPhone prüfen**: FLIRT-Ausrichtung (`frontAxis` steht auf `-z`, bei Bedarf auf `+z` umstellen), Citaro (sollte jetzt vorwärts fahren), Kontaktschatten, Offline-Banner, Fokuswechsel im Detail-Panel, Abfahrten mit Live-Status.
-3. **Die visuelle Prüfung der 3D-Ausrichtung steht noch aus.** Der Screenshot-Weg im Browser war nicht bedienbar; die Ausrichtung habe ich deshalb aus den GLB-Knoten abgeleitet. Das ist belastbar, aber ein Blick auf das Gerät wäre besser.
+1. **Auf dem iPhone prüfen**: FLIRT-Ausrichtung (`frontAxis` steht auf `-z`, bei Bedarf auf `+z` umstellen), Citaro (sollte jetzt vorwärts fahren), Kontaktschatten, Offline-Banner, Fokuswechsel im Detail-Panel, Abfahrten mit Live-Status.
+2. **Die visuelle Prüfung der 3D-Ausrichtung steht noch aus.** Der Screenshot-Weg im Browser war nicht bedienbar; die Ausrichtung habe ich deshalb aus den GLB-Knoten abgeleitet. Das ist belastbar, aber ein Blick auf das Gerät wäre besser.
+
+---
+
+## Auslieferung
+
+| Schritt | Ergebnis |
+|---|---|
+| PR #18 eröffnet | Konflikt behoben (Branch auf `main` umgestellt, Inhalt unverändert) |
+| Radar Quality Gate | **grün** (13 s) – `npm run check` + 239 Tests |
+| Workers Builds (Cloudflare) | rot in 0 s – **Vorbefund**, auf jedem PR-Branch so, in der README als kein Qualitätssignal vermerkt |
+| Merge auf `main` | Squash, `be1c9ad` |
+| Deploy auf Cloudflare | **grün** (40 s) |
+| Live geprüft | `/api/version` = 9.6.0, Badge 9.6.0, 810 Fahrzeuge, 9 Feeds ok, keine Konsolenfehler |
+| Service Worker live | aktiv, 133 Cache-Einträge, **0 aus `/api/`** |
