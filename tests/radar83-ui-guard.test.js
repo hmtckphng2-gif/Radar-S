@@ -24,3 +24,39 @@ test('the 3D toolbar is not covered by the fixed launch button', () => {
   const css = get('radar83.css');
   assert.match(css, /body\.sr83-cinematic \.sr40-launch\{[^}]*opacity:0/);
 });
+
+test('the 3D toolbar fits on a narrow phone', () => {
+  // 9.1: Auf 390 px Breite lag der "2D"-Knopf hinter dem Werkzeugknopf.
+  const css = get('radar83.css');
+  assert.match(css, /@media \(max-width: 430px\)/);
+  assert.match(css, /#map \.sr83-replay,#map \.sr83-back\{min-height:44px/);
+});
+
+test('the 3D layer only asks for a new frame when something moved', () => {
+  // 9.2: MapLibre loescht bei jedem Frame den Zeichenpuffer. Wird in
+  // render() nicht gezeichnet, verschwindet die 3D-Szene. Der sparsame Weg
+  // ist deshalb: keinen Frame anfordern, wenn sich nichts bewegt hat.
+  const src = get('radar83-map.mjs');
+  assert.doesNotMatch(src, /if\(key===this\.renderKey\)return;/);
+  assert.match(src, /const moved=Math\.abs\(safeLat-origin\.lat\)>1e-5/);
+  assert.match(src, /if\(moved\)this\.map\?\.triggerRepaint\(\);/);
+  // render() zeichnet immer, sonst fehlt die Szene nach dem Puffer-Leeren.
+  const block = src.slice(src.indexOf('render(gl,args)'));
+  const tryAt = block.indexOf('try{');
+  const to = block.indexOf('this.renderer.render(this.scene,this.camera)');
+  assert.ok(tryAt > 0 && to > tryAt, 'render() muss zeichnen');
+  assert.ok(!block.slice(tryAt, to).includes('return;'),
+    'nach der Pufferpruefung darf nicht zurueckgekehrt werden, sonst fehlt die Szene');
+  // Ungueltige Werte duerfen die Modellrotation nicht zerstoeren.
+  assert.match(src, /Number\.isFinite\(lat\)\?lat:origin\.lat/);
+});
+test('the detail panel can take and give back the focus', () => {
+  // 9.5
+  const html = get('index.html');
+  assert.match(html, /id="sheet" class="sheet" tabindex="-1"/);
+  assert.match(html, /aria-labelledby="sheetTitle"/);
+  assert.match(html, /id="map" role="application" tabindex="0"/);
+  const src = get('app.js');
+  assert.match(src, /sheet\.focus\(\{preventScroll:true\}\)/);
+  assert.match(src, /\$\('map'\)\?\.focus\(\{preventScroll:true\}\)/);
+});

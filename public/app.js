@@ -1,15 +1,16 @@
-import {motionDuration,platformInfo} from './radar54-logic.mjs';
-import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs';
-import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=8.5.0';
-import {enrichTrainPlatform} from './train-platforms.js?v=8.5.0';
+import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.6.0';
+import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.6.0';
+import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.6.0';
+import {enrichTrainPlatform} from './train-platforms.js?v=9.6.0';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
-  vehicleDelayInfo, bufferedAlong
-} from './core.js';
-import {playbackLag} from './radar45-logic.mjs';
-import {trainReplayDuration} from './radar705-motion.mjs';
-import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs';
+  vehicleDelayInfo, bufferedAlong, departureDelay, isLiveUpdate
+} from './core.js?v=9.6.0';
+import {playbackLag} from './radar45-logic.mjs?v=9.6.0';
+import {trainReplayDuration} from './radar705-motion.mjs?v=9.6.0';
+import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.6.0';
+import {trainScheduledPosition} from './radar51-logic.mjs?v=9.6.0';
 
 const $ = id => document.getElementById(id);
 const DIRECT_POSITION_SOURCES=['sta_direct'];
@@ -611,10 +612,14 @@ function openSheet(which){
   if(scroller)scroller.scrollTop=0;
   sheet.classList.add('open');
   sheet.setAttribute('aria-hidden','false');
+  // 9.5: Der Fokus wandert in das Panel und kommt beim Schliessen zurueck.
+  try{sheet.focus({preventScroll:true})}catch{}
   $('scrim').classList.add('show');
 }
 function closeSheets(resetSelection=true){
   for(const id of ['sheet','stationSheet']){$(id).classList.remove('open');$(id).setAttribute('aria-hidden','true');}
+  // 9.5: Der Fokus geht zurueck auf die Karte.
+  try{$('map')?.focus({preventScroll:true})}catch{}
   $('scrim').classList.remove('show');state.activeSheet=null;
   if(resetSelection){state.selectedKey=null;refreshMarkers();}
   document.dispatchEvent(new Event('sr37:sheet-closed'));
@@ -656,6 +661,10 @@ function drawVehicleDetails(key,fetchSchedule){
   detail('Fahrtziel',v.headsign);
   detail('Fahrzeug-ID',v.vehicleId);
   detail('Fahrt-ID',v.tripId||'Nicht verfügbar');
+  // Zwei getrennte Werte: die gemeldete Verspaetung und die Abweichung vom Fahrplan.
+  // Die eine ist eine Zeitangabe, die andere eine Ortsangabe.
+  const schedule=trainScheduledPosition(v,state.indexes,state.details,state.shapes);
+  if(schedule)detail('Abweichung Fahrplan','~'+schedule.differenceKm.toFixed(1)+' km '+schedule.relative+' ('+schedule.from+' - '+schedule.to+')');
   detail('Positionsalter',feedAgeSeconds(v)===null?'Unbekannt':duration(feedAgeSeconds(v)*1000)+' Sek.');
   detail('Geschwindigkeit',v.speed===null?'Nicht verfügbar':v.speed+' km/h (Feed)');
   detail('Quelle',v.source.toUpperCase()+' / GTFS-RT');
@@ -784,7 +793,13 @@ function showStationBoard(st){
   for(const d of departures.slice(0,28)){
     const btn=document.createElement('button');btn.className='station-result';
     const body=document.createElement('div'),title=document.createElement('strong'),sub=document.createElement('small'),clock=document.createElement('span');
-    title.textContent=d.name+' · '+d.headsign;sub.textContent='Geplant · '+st.source.toUpperCase();clock.textContent=formatClock(d.sec);
+    const upd=state.updates.get(st.source+':'+d.tripId);
+    const live=isLiveUpdate(upd)&&state.statuses[st.source+'_updates']==='ok';
+    const delay=live?departureDelay(upd,st.stopId):null;
+    title.textContent=d.name+' · '+d.headsign;
+    sub.textContent=delay===null?(live?'Live, keine Verspätung':'Geplant'):(delay>0?'Live · +'+Math.round(delay/60)+' Min.':'Live · '+Math.round(delay/60)+' Min. früher')+' · '+st.source.toUpperCase();
+    sub.classList.toggle('sr-dep-live',live);
+    clock.textContent=formatClock(d.sec);
     body.append(title,sub);btn.append(body,clock);list.append(btn);
   }
   if(!departures.length)list.textContent='Keine kommenden GTFS-Abfahrten für den heutigen Tag gefunden. Das ist keine Aussage über aktuelle Zugausfälle.';
@@ -854,10 +869,40 @@ function setupSheetTouchGuards(){
     scroller.addEventListener('touchcancel',()=>{touchY=null},{passive:true});
   }
 }
+function offlineState(online=navigator.onLine!==false){
+  const banner=$('offlineBanner');
+  if(banner)banner.hidden=online;
+  document.body.classList.toggle('sr-offline',!online);
+  return !online;
+}
+function firstSearchHit(){
+  const q=state.query.trim().toLocaleLowerCase('de');
+  if(!q)return null;
+  for(const v of state.vehicles.values()){
+    if(!visible(v))continue;
+    const hay=`${v.name} ${v.headsign} ${v.vehicleId} ${v.tripId} ${v.routeLongName}`.toLocaleLowerCase('de');
+    if(hay.includes(q))return v;
+  }
+  return null;
+}
+function jumpToFirstHit(){
+  const v=firstSearchHit();
+  if(!v)return false;
+  selectVehicle(v.key);
+  const marker=state.markers.get(v.key)?.marker;
+  const p=marker?.getLatLng();
+  if(p&&state.map)state.map.setView([p.lat,p.lng],Math.max(state.map.getZoom(),14),{animate:true});
+  return true;
+}
 function setupControls(){
   setupSheetTouchGuards();
+  offlineState();
+  window.addEventListener('offline',()=>offlineState(false));
+  window.addEventListener('online',()=>offlineState(true));
   for(const b of document.querySelectorAll('[data-filter]'))b.addEventListener('click',()=>setFilter(b.dataset.filter));
-  let debounce=0;$('search').oninput=e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.query=e.target.value.toLocaleLowerCase('de').trim();refreshMarkers();refreshScheduleMatches();updateViewportBadge()},130)};
+  let debounce=0;
+  $('search').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();jumpToFirstHit()}});
+  $('search').oninput=e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.query=e.target.value.toLocaleLowerCase('de').trim();refreshMarkers();refreshScheduleMatches();updateViewportBadge()},130)};
   $('statusBtn').onclick=showSourceStatus;
   $('tileBtn').onclick=()=>switchTileProvider(1-tileProviderIndex,'Benutzerwahl');
   $('refreshBtn').onclick=()=>{
@@ -918,6 +963,13 @@ async function init(){
   bootPhase('feeds-checked');
   setInterval(()=>{if(!document.hidden)refreshFeeds()},AVERAGE_POLL_MS);
   bootPhase('ready');
+  // 9.4: Die App-Huelle wird offline faehig. Live-Daten bleiben unberuehrt.
+  // Die Versionsangabe im Pfad sorgt dafuer, dass nach einem Release ein
+  // neuer Worker geholt wird - auch wenn der Browser den alten lange cached.
+  // Der Scope muss ausdruecklich auf '/' stehen, sonst waere er '/sw.js'.
+  if('serviceWorker' in navigator){
+   try{navigator.serviceWorker.register('/sw.js?v=9.6.0',{scope:'/'}).catch(()=>{})}catch{}
+  }
   Promise.allSettled([indexes,rail,buses]).then(()=>{refreshMarkers();updateViewportBadge();});
   // Refresh labels/route associations after GTFS indexes become available.
   // Any valid reported position remains derived only from official feeds.

@@ -81,3 +81,20 @@ npx @gltf-transform/cli optimize train.glb --compress meshopt --texture-compress
 
 Zielgroesse: unter 1,5 MB. Das Modell wird **erst geladen, wenn jemand die
 3D-Ansicht oeffnet** - wer 3D nie nutzt, laedt es nie.
+
+## frontAxis - wohin schaut die Nase
+
+Aus den GLB-Dateien selbst abgeleitet, nicht geraten:
+
+- **Citaro:** Das Armaturenbrett (`Object020_dash`) sitzt bei z = +4,00, der Tacho
+  (`ac_kmh_7700_gauges`) bei z = +4,08, der Auspuff bei z = -7,05. Die Front
+  zeigt also nach **+z** → `frontAxis: "+z"`.
+- **RABe 523 (FLIRT):** Ein FLIRT hat an **beiden** Enden ein Fuehrerhaus, die
+  Ausrichtung ist damit ohne Bedeutung → `frontAxis: "-z"`.
+
+Die App erwartet die Nase bei -z, wie beim schematischen Modell. Ein Modell mit
+`frontAxis: "+z"` wird um 180 Grad gedreht.
+
+Ausserdem: Das FLIRT-Modell ist **halb so gross** wie das Original (1,53 m breit
+statt 2,8 m, 31,96 m lang statt rund 64 m). Genau deshalb wird nach der Hoehe
+skaliert und nicht nach der Laenge.

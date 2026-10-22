@@ -68,3 +68,9 @@ export function cinematicDuration(distanceKm=0,base=3000){
   const extra=Number.isFinite(d)&&d>2?350:0;
   return Math.round(Math.max(1600,Math.min(3000,Number(base)||3000))+extra);
 }
+// If the system asks for less motion, the cinematic camera must not fly.
+// It jumps straight to the vehicle instead.
+export function prefersReducedMotion(){
+  try{return typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches}
+  catch{return false}
+}

@@ -1,8 +1,8 @@
 /* Südtirol Radar 4.3.1 — progressive enhancement over the proven 4.2 app.
  * No map remount, no outside tile API, no fabricated GPS or ETAs.
  */
-import {classifyPosition,nearbyStations,followNeedsPan,stopSummary} from './radar43-logic.mjs';
-import {groupNearby} from './radar44-logic.mjs';
+import {classifyPosition,nearbyStations,followNeedsPan,stopSummary} from './radar43-logic.mjs?v=9.6.0';
+import {groupNearby} from './radar44-logic.mjs?v=9.6.0';
 (() => {
  'use strict';
  const $=id=>document.getElementById(id);

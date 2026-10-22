@@ -2,7 +2,7 @@
 
 > **Zuerst lesen, bevor du Code änderst.** Diese Datei ist der Einstieg für neue Coding-Assistenten (ChatGPT, Claude, AshnaAI, Gemini usw.). Sie beschreibt das gewünschte Verhalten und den technisch überprüften Stand. **GitHub `main` ist die Wahrheit**, nicht alte ZIP-Dateien, Chats, Versionspläne oder diese Datei, falls sich der Code später verändert hat.
 >
-> Stand dieser Übergabe: **2026-10-21**. Die Web-App nutzt laut `package.json` Version **8.5.0**; die separate Expo-Hülle hat in `mobile/app.json` weiterhin Version **8.0.0**. Versionen dürfen unterschiedlich sein und sollten nicht ungeprüft gleichgesetzt werden.
+> Stand dieser Übergabe: **2026-10-21**. Die Web-App nutzt laut `package.json` Version **9.6.0**; die separate Expo-Hülle hat in `mobile/app.json` weiterhin Version **8.0.0**. Versionen dürfen unterschiedlich sein und sollten nicht ungeprüft gleichgesetzt werden.
 
 ## 1. Auftrag und wichtigste Links
 
@@ -40,6 +40,8 @@
 - **`public/radar70-route.mjs`**, **`public/radar703-advisor.mjs`**, **`public/radar705-groups.mjs`**, **`public/radar705-motion.mjs`**: Fahrplan-Suche/Deterministik, Advisor, Gruppierung, konservative Bewegungsdarstellung. Siehe Architektur-Doku.
 - `public/radar80.js`: **einzige Quelle** fuer die angezeigte Version. Der Brand-Badge zeigt die Version des ausgelieferten Workers (`/api/version`); der Build-Marker `BUILD` dient nur der Erkennung eines veralteten Cache-Standes. Andere Module schreiben keine Version mehr.
 - `public/radar83-map.mjs`: 3D-Kinematik. Die Kamera folgt dem Fahrzeug, solange der Nutzer die Karte nicht selbst bewegt hat (`followDecision` in `radar83-logic.mjs`).
+- `public/sw.js`: Service Worker der App-Huelle. **Regel: `/api/*` wird nie gecacht** (Live-Daten duerfen nicht als aktuell erscheinen, wenn sie alt sind). Nur die Huelle wird zwischengespeichert; eine Fehlerseite darf nie als Startseite in den Cache.
+- `tools/sync-version.mjs`: vergibt die Versionsangabe an **alle** `?v=`-Stellen, auch an die Importe der Module untereinander. Die Worker-Einstiege (`radar-history-worker.mjs`) behalten ihre reinen Pfade, weil der Worker sie von der Platte aufloest.
 - `dev/legacy/`: frueher geladene Module, die nicht mehr gebraucht werden. Sie bleiben zum Nachschauen im Repository, werden aber nicht ausgeliefert und nicht getestet.
 - `public/.assetsignore`: verhindert, dass lokale Vorschau-Seiten (`test-*.html`, `isolate-*.html`) hochgeladen werden. Die Diagnose-Seiten bleiben oeffentlich.
 - **`public/radar66-api.mjs`**: normalisierte Fahrzeuge/Datenqualität für API v1.

@@ -1,5 +1,5 @@
 /* Pure, conservative Radar Intelligence calculations. No fabricated predictions. */
-import {aggregateDays} from './radar54-logic.mjs';
+import {aggregateDays} from './radar54-logic.mjs?v=9.6.0';
 
 export function trainHistory(samples,number,today,days=30){
  const clean=Array.isArray(samples)?samples.filter(x=>x&&String(x.number)===String(number)&&typeof x.day==='string'&&Number.isFinite(x.minutes)&&Number.isFinite(x.t)):[];

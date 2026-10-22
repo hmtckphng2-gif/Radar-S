@@ -2,9 +2,8 @@
  * The original Leaflet map stays intact underneath. Only selected cinematic
  * vehicles initialize MapLibre; errors or ?radar3d=off fall back to Radar 8.2.
  */
-
-import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=8.5.0';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision} from './radar83-logic.mjs?v=8.5.0';
+import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.6.0';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion} from './radar83-logic.mjs?v=9.6.0';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -120,6 +119,7 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
    const fill=new T.DirectionalLight(0xb4d9ff,.8);fill.position.set(25,25,30);this.scene.add(fill);
    this.object=makeVehicleMesh(T,kind);this.scene.add(this.object);
    this.modelKind='schematic';this.disposed=false;
+   this.shadow=makeContactShadow(T,kind==='bus'?6.5:14);this.scene.add(this.shadow);
    this.renderer=new T.WebGLRenderer({canvas:m.getCanvas(),context:gl,antialias:true,powerPreference:'low-power'});
    this.renderer.autoClear=false;
    // A real downloaded model replaces the schematic one as soon as it has
@@ -129,13 +129,26 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
     const previous=this.object;
     this.object=loaded.object;this.scene.add(this.object);
     this.modelKind='real';
+    if(this.shadow)this.shadow.scale.setScalar(kind==='bus'?0.5:1);
     this.map?.triggerRepaint();
     disposeObject(previous);
     onModel({kind:'real',credit:loaded.credit||null});
    }).catch(()=>{});
   },
   update(p,h){
-   origin.lat=p.lat;origin.lng=p.lng;heading=h;this.map?.triggerRepaint();
+   const lat=Number(p?.lat),lng=Number(p?.lng),head=Number(h);
+   // Ungueltige Werte werden verworfen, sonst wird die Modellrotation NaN.
+   const safeLat=Number.isFinite(lat)?lat:origin.lat;
+   const safeLng=Number.isFinite(lng)?lng:origin.lng;
+   const safeHead=Number.isFinite(head)?head:heading;
+   // 9.2: MapLibre loescht bei jedem Frame den Zeichenpuffer. Deshalb muss
+   // der 3D-Layer in jedem Frame auch zeichnen. Der sparsame Weg ist nicht
+   // "nicht zeichnen", sondern "keinen Frame anfordern", wenn sich nichts
+   // bewegt hat. Dann bleibt der Puffer stehen und die ganze Karte wird
+   // nicht neu gezeichnet.
+   const moved=Math.abs(safeLat-origin.lat)>1e-5||Math.abs(safeLng-origin.lng)>1e-5||Math.abs(safeHead-heading)>0.05;
+   origin.lat=safeLat;origin.lng=safeLng;heading=safeHead;
+   if(moved)this.map?.triggerRepaint();
   },
   render(gl,args){
    const matrix=readProjectionMatrix(args);if(!matrix||!this.renderer)return;
@@ -150,6 +163,8 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
      .multiply(new T.Matrix4().makeRotationX(Math.PI/2))
      .multiply(new T.Matrix4().makeRotationY(modelYawRadians(heading)));
     this.camera.projectionMatrix=new T.Matrix4().fromArray(matrix).multiply(transform);
+    // Jeder Frame, in dem MapLibre den Puffer leert, muss hier auch gezeichnet
+    // werden. Sonst waere die 3D-Szene beim naechsten Frame weg.
     this.renderer.resetState();
     this.renderer.render(this.scene,this.camera);
     this.didRender=true;
@@ -158,6 +173,7 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
   onRemove(){
    this.disposed=true;
    disposeObject(this.object);
+   disposeObject(this.shadow);this.shadow=null;
    this.object=null;
    this.renderer?.dispose();
    this.renderer=null;
@@ -263,10 +279,10 @@ export class Radar83Cinematic {
   if(!this.map||!this.flight)return;
   const {start,target}=this.flight;
   this.map.stop();
-  this.map.jumpTo(start);
   this.flying=true;
   clearTimeout(this.flightTimer);
-  this.map.easeTo({...target,easing:t=>t*t*(3-2*t),essential:true});
+  if(prefersReducedMotion())this.map.jumpTo(target);
+  else{this.map.jumpTo(start);this.map.easeTo({...target,easing:t=>t*t*(3-2*t),essential:true});}
   this.flightTimer=setTimeout(()=>{this.flying=false},(Number(target.duration)||0)+150);
  }
  interrupt(){

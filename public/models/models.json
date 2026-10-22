@@ -8,6 +8,7 @@
       "heightMeters": 3.85,
       "scaleBy": "height",
       "yawOffset": 0,
+      "frontAxis": "-z",
       "credit": {
         "title": "RABe 523",
         "author": "hotdoghans",
@@ -22,6 +23,7 @@
       "heightMeters": 3.0,
       "scaleBy": "length",
       "yawOffset": 0,
+      "frontAxis": "+z",
       "credit": {
         "title": "Mercedes-Benz Citaro",
         "author": "Villanueva-Jonatan-32621",

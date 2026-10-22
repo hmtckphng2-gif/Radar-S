@@ -1,8 +1,8 @@
 /* Radar 5.8: source-verified traffic events; no fabricated line outages. */
-import {freshUpdate,tripCancelled} from './radar56-logic.mjs';
-import {isRailRoute} from './core.js';
-import {platformInfo} from './radar54-logic.mjs';
-import {romeDay,romeSeconds,dateGTFSValid} from './radar51-logic.mjs';
+import {freshUpdate,tripCancelled} from './radar56-logic.mjs?v=9.6.0';
+import {isRailRoute} from './core.js?v=9.6.0';
+import {platformInfo} from './radar54-logic.mjs?v=9.6.0';
+import {romeDay,romeSeconds,dateGTFSValid} from './radar51-logic.mjs?v=9.6.0';
 const finite=v=>v===null||v===undefined||v===''?null:Number.isFinite(Number(v))?Number(v):null;
 function stopEvidence(u,times,nowSec){
  if(!Array.isArray(times)||!Array.isArray(u?.stops))return null;
