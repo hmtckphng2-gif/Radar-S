@@ -15,6 +15,7 @@ und Trentino. Cloudflare Worker, kein Build-Schritt, keine Abhängigkeiten.
 | `public/` | Die Web-App. Wird 1:1 als statisches Asset ausgeliefert, kein Bundler |
 | `public/core.js` | Reine GTFS-Funktionen ohne DOM: Parser, Verspätung, Shape-Projektion |
 | `public/app.js` | Die App: Karte, Marker, Animation, Detail-Panels |
+| `public/sw.js` | Service Worker: legt die App-Huelle offline-fähig in den Cache, **`/api/*` wird nie gecacht** |
 | `public/radar83-*.mjs` | 3D-Modus: MapLibre-Karte, FLIRT-inspiriertes 3D-Modell, Kamera-Logik |
 | `public/data/*.json` | Statische GTFS-Indizes, Haltestellen und Strecken (täglich per Action erneuert) |
 | `tests/` | 190 Tests, reine Logik ohne Browser |
@@ -72,6 +73,17 @@ npm run sync          # alle "?v="-Stellen nachziehen
 `package.json` passt. Ein vergessener Cache-Buster wuerde eine alte Datei im
 Browser-Cache liegen lassen, die dann mit der neuen Datei kämpft - genau das
 hat im August 2026 zu einer falschen Versionsanzeige gefuehrt.
+
+`npm run sync` vergibt die Versionsangabe auch fuer die **Importe der Module
+untereinander**. Vorher importierten die Module einander ohne Versionsangabe -
+nach einem Release konnte der Browser eine neue `index.html` mit einem alten
+`core.js` mischen. Die Worker-Einstiege behalten ihre reinen Pfade, weil der
+Worker sie von der Platte aufloest.
+
+**Offline.** `public/sw.js` legt die App-Huelle in einen Cache, damit die Karte
+auch ohne Verbindung startet. **Live-Daten werden nie gecacht**: alles unter
+`/api/` laeuft ausschliesslich ueber das Netz. Eine alte Position als
+"aktuell" anzuzeigen waere eine erfundene Angabe.
 
 **Ein echtes 3D-Modell einbauen.** Die 3D-Karte kann statt des schematischen Modells
 eine heruntergeladene `.glb` benutzen. Mit einem kostenlosen Sketchfab-Token geht das
