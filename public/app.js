@@ -1,4 +1,4 @@
-import {state,bootPhase} from './app-state.js?v=9.7.0';
+import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite} from './app-state.js?v=9.7.0';
 import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.7.0';
 import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.7.0';
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.7.0';
@@ -301,8 +301,9 @@ function visible(v){
 function markerIcon(v){
   const train=v.kind==='train',label=v.name.startsWith('Linie unbekannt')||v.name==='Zugnummer unbekannt'?'':v.name;
   const isOld=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
-  const cls='marker-wrap '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'');
-  const icon=`<div class="${cls}"><div class="marker-label">${escapeHtml(label)}</div><div class="marker-circle">${train?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="17" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 19.5l-2 2m10-2 2 2"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="16" rx="3"/><path d="M3 11h18M7 15h2m6 0h2M7 19l-2 2m14-2 2 2"/></svg>'}</div></div>`;
+  const isFav=isFavorite(v.key);
+  const cls='marker-wrap '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'')+(isFav?' favorite':'');
+  const icon=`<div class="${cls}"><div class="marker-label">${escapeHtml(label)}</div><div class="marker-circle">${train?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="17" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 19.5l-2 2m10-2 2 2"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="16" rx="3"/><path d="M3 11h18M7 15h2m6 0h2M7 19l-2 2m14-2 2 2"/></svg>'}${isFav?'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22l-5-4.87L2 9.27l6.91-1.02L12 2z"/></svg>':''}</div></div>`;
   return L.divIcon({className:'radar-custom',html:icon,iconSize:[30,43],iconAnchor:[15,38]});
 }
 function shapeOf(v){
@@ -606,6 +607,12 @@ function drawVehicleDetails(key,fetchSchedule){
   badges.append(badge(v.stale?'Letzte bekannte Position':'Aktueller Feed',v.stale?'warn':'ok'));
   badges.append(badge(v.positionType,'warn'));
   if(v.kind==='bus') badges.append(badge(v.lineVerified?'GTFS-Linie geprüft':'Linie unbekannt',v.lineVerified?'ok':'warn'));
+  const favBtn=document.createElement('button');
+  favBtn.className='badge fav-badge';
+  favBtn.textContent=isFavorite(v.key)?'★ Favorit':'☆ Favorit';
+  favBtn.title=isFavorite(v.key)?'Aus Favoriten entfernen':'Zu Favoriten hinzufügen';
+  favBtn.onclick=()=>{toggleFavorite(v.key);favBtn.textContent=isFavorite(v.key)?'★ Favorit':'☆ Favorit';favBtn.title=isFavorite(v.key)?'Aus Favoriten entfernen':'Zu Favoriten hinzufügen';refreshMarkers();};
+  badges.append(favBtn);
   renderModel(v);
   $('details').replaceChildren();
   detail('Zug / Linie',v.name);
@@ -963,6 +970,7 @@ window.SuedtirolRadar37={state,showStations,showStationBoard,getStationList,open
 async function init(){
   bootPhase('start');
   try{changeTheme(localStorage.getItem('sr-theme')==='light'?'light':'dark')}catch{changeTheme('dark')}
+  loadFavorites();
   setupControls();
   if(!initMap()){bootPhase('map-error');return}
   bootPhase('map-ready');
