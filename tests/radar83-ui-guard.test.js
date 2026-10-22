@@ -32,11 +32,23 @@ test('the 3D toolbar fits on a narrow phone', () => {
   assert.match(css, /#map \.sr83-replay,#map \.sr83-back\{min-height:44px/);
 });
 
-test('the 3D layer only redraws when something changed', () => {
-  // 9.2: MapLibre ruft den Layer in jedem Frame auf.
+test('the 3D layer only asks for a new frame when something moved', () => {
+  // 9.2: MapLibre loescht bei jedem Frame den Zeichenpuffer. Wird in
+  // render() nicht gezeichnet, verschwindet die 3D-Szene. Der sparsame Weg
+  // ist deshalb: keinen Frame anfordern, wenn sich nichts bewegt hat.
   const src = get('radar83-map.mjs');
-  assert.match(src, /if\(key===this\.renderKey\)return;/);
-  assert.match(src, /this\.renderKey=key;/);
+  assert.doesNotMatch(src, /if\(key===this\.renderKey\)return;/);
+  assert.match(src, /const moved=Math\.abs\(safeLat-origin\.lat\)>1e-5/);
+  assert.match(src, /if\(moved\)this\.map\?\.triggerRepaint\(\);/);
+  // render() zeichnet immer, sonst fehlt die Szene nach dem Puffer-Leeren.
+  const block = src.slice(src.indexOf('render(gl,args)'));
+  const tryAt = block.indexOf('try{');
+  const to = block.indexOf('this.renderer.render(this.scene,this.camera)');
+  assert.ok(tryAt > 0 && to > tryAt, 'render() muss zeichnen');
+  assert.ok(!block.slice(tryAt, to).includes('return;'),
+    'nach der Pufferpruefung darf nicht zurueckgekehrt werden, sonst fehlt die Szene');
+  // Ungueltige Werte duerfen die Modellrotation nicht zerstoeren.
+  assert.match(src, /Number\.isFinite\(lat\)\?lat:origin\.lat/);
 });
 test('the detail panel can take and give back the focus', () => {
   // 9.5

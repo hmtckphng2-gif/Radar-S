@@ -136,7 +136,19 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
    }).catch(()=>{});
   },
   update(p,h){
-   origin.lat=p.lat;origin.lng=p.lng;heading=h;this.map?.triggerRepaint();
+   const lat=Number(p?.lat),lng=Number(p?.lng),head=Number(h);
+   // Ungueltige Werte werden verworfen, sonst wird die Modellrotation NaN.
+   const safeLat=Number.isFinite(lat)?lat:origin.lat;
+   const safeLng=Number.isFinite(lng)?lng:origin.lng;
+   const safeHead=Number.isFinite(head)?head:heading;
+   // 9.2: MapLibre loescht bei jedem Frame den Zeichenpuffer. Deshalb muss
+   // der 3D-Layer in jedem Frame auch zeichnen. Der sparsame Weg ist nicht
+   // "nicht zeichnen", sondern "keinen Frame anfordern", wenn sich nichts
+   // bewegt hat. Dann bleibt der Puffer stehen und die ganze Karte wird
+   // nicht neu gezeichnet.
+   const moved=Math.abs(safeLat-origin.lat)>1e-5||Math.abs(safeLng-origin.lng)>1e-5||Math.abs(safeHead-heading)>0.05;
+   origin.lat=safeLat;origin.lng=safeLng;heading=safeHead;
+   if(moved)this.map?.triggerRepaint();
   },
   render(gl,args){
    const matrix=readProjectionMatrix(args);if(!matrix||!this.renderer)return;
@@ -151,11 +163,8 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
      .multiply(new T.Matrix4().makeRotationX(Math.PI/2))
      .multiply(new T.Matrix4().makeRotationY(modelYawRadians(heading)));
     this.camera.projectionMatrix=new T.Matrix4().fromArray(matrix).multiply(transform);
-     // 9.2: MapLibre ruft den Layer in jedem Frame auf. Wenn sich weder die
-     // Kamera noch das Modell bewegt haben, wird nicht neu gezeichnet.
-     const key=matrix.join(',')+'|'+origin.lat+','+origin.lng+','+heading;
-     if(key===this.renderKey)return;
-     this.renderKey=key;
+    // Jeder Frame, in dem MapLibre den Puffer leert, muss hier auch gezeichnet
+    // werden. Sonst waere die 3D-Szene beim naechsten Frame weg.
     this.renderer.resetState();
     this.renderer.render(this.scene,this.camera);
     this.didRender=true;
