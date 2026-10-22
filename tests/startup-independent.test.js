@@ -41,5 +41,6 @@ test('the offline shell never caches live data', () => {
   assert.match(sw, /skipWaiting/);
   assert.match(sw, /clients\.claim/);
   const src = get('app.js');
-  assert.match(src, /navigator\.serviceWorker\.register\('\/sw\.js'\)/);
+  assert.match(src, /navigator\.serviceWorker\.register\('\/sw\.js\?v=[0-9.]+',\{scope:'\/'\}\)/,
+    'der Worker muss versionsfest und mit Scope / registriert werden');
 });

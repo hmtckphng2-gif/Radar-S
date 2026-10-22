@@ -964,8 +964,11 @@ async function init(){
   setInterval(()=>{if(!document.hidden)refreshFeeds()},AVERAGE_POLL_MS);
   bootPhase('ready');
   // 9.4: Die App-Huelle wird offline faehig. Live-Daten bleiben unberuehrt.
+  // Die Versionsangabe im Pfad sorgt dafuer, dass nach einem Release ein
+  // neuer Worker geholt wird - auch wenn der Browser den alten lange cached.
+  // Der Scope muss ausdruecklich auf '/' stehen, sonst waere er '/sw.js'.
   if('serviceWorker' in navigator){
-   try{navigator.serviceWorker.register('/sw.js').catch(()=>{})}catch{}
+   try{navigator.serviceWorker.register('/sw.js?v=9.6.0',{scope:'/'}).catch(()=>{})}catch{}
   }
   Promise.allSettled([indexes,rail,buses]).then(()=>{refreshMarkers();updateViewportBadge();});
   // Refresh labels/route associations after GTFS indexes become available.
