@@ -903,7 +903,16 @@ function renderSearchResults(){
     const hay=`${v.name} ${v.headsign} ${v.vehicleId} ${v.tripId} ${v.routeLongName}`.toLocaleLowerCase('de');
     if(hay.includes(q))hits.push(v);
   }
-  if(!hits.length){list.hidden=true;return;}
+  if(!hits.length){
+    list.hidden=false;
+    const empty=document.createElement('div');
+    empty.className='search-hit';
+    empty.style.cursor='default';
+    empty.style.opacity='.6';
+    empty.innerHTML='<span style="color:var(--radar84-muted)">Keine Fahrzeuge gefunden</span>';
+    list.append(empty);
+    return;
+  }
   for(const v of hits.slice(0,10)){
     const btn=document.createElement('button');btn.className='search-hit';
     const left=document.createElement('div');
