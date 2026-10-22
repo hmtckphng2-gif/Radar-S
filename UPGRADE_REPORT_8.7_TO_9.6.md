@@ -261,6 +261,27 @@ Jetzt gilt:
 *Tests:* adar83-model.test.js (Ausrichtung, 4 neue Tests),
 adar83-ui-guard.test.js (Kontextverlust).
 
+### Auch die CI pruefte falsch
+
+Der Deploy vom 22.10.2026 schlug zu Unrecht fehl: Die Kontrolle fragte den
+Worker **einmal** direkt nach dem Deploy und sah noch die alte Version. Der
+Deploy selbst war erfolgreich.
+
+Die Pruefung wiederholt sich jetzt bis zu 24 Mal im Abstand von 5 Sekunden,
+also rund zwei Minuten. Cloudflare braucht diese Zeit, bis der neue Worker
+ausgeliefert wird. Dieselbe Wartezeit gilt fuer die Asset-Pruefungen.
+
+Ein Test gegen die Live-App hat dabei **einen Fehler in der ersten Fassung
+gezeigt**: `return check()` faengt die Rejection nicht ab, es braucht
+`return await check()`. Ohne `await` waere die Pruefung sofort rot geworden
+statt zu warten.
+
+Der bestehende Waechter `deploy-markers.test.js` hat danach zu Recht rot
+geschlagen: Er prueft, dass die Versionspruefung gegen `package.json`
+vergleicht, und mein Umbau hatte die Variable umbenannt. Der Waechter hat
+damals genau das getan, wofuer er da ist. Er prueft jetzt zusaetzlich, dass
+Warteschleife und `await` vorhanden sind.
+
 ---
 
 ## Auslieferung
