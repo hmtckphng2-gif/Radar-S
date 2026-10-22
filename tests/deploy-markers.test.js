@@ -57,6 +57,9 @@ test('every deploy marker exists in the file it belongs to', () => {
 test('the live version check compares against package.json', () => {
   assert.match(workflow, /readFileSync\('package\.json','utf8'\)/);
   assert.match(workflow, /response\.version!==expected/);
+  // 9.7: Die Pruefung muss warten, bis der neue Worker ausgeliefert ist.
+  assert.match(workflow, /const retry = async/, 'die Live-Pruefung braucht eine Warteschleife');
+  assert.match(workflow, /return await check\(\)/, 'ohne await faengt der try-Block die Rejection nicht');
 });
 
 test('the history collector stays off in the deployed configuration', () => {

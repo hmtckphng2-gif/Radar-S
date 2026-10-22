@@ -57,12 +57,12 @@ jobs:
             }
             throw Error(label+' failed after '+attempts+' attempts: '+last);
           };
-          const response = await retry('live version', async () => {
-            const parsed = JSON.parse(await request('/api/version'));
-            if(parsed.version!==expected)throw Error('Expected live '+expected+', got '+parsed.version);
-            return parsed;
+          const live = await retry('live version', async () => {
+            const response = JSON.parse(await request('/api/version'));
+            if(response.version!==expected)throw Error('Expected live '+expected+', got '+response.version);
+            return response;
           });
-          if(response.collectorScheduled!==false)throw Error('History collector unexpectedly scheduled');
+          if(live.collectorScheduled!==false)throw Error('History collector unexpectedly scheduled');
           for(const [path,marker] of [
             ['/radar43.js','sr80-group-chip'],
             ['/radar83-map.mjs','Radar 8.3'],
