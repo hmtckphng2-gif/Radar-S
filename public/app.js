@@ -100,6 +100,14 @@ function statusLabel() {
   status.classList.toggle('error',vehicleGood===0);
   $('statusText').textContent=good===ENDPOINTS.length?'FEEDS OK':vehicleGood===0?'OFFLINE':good+'/'+ENDPOINTS.length;
 }
+function isFeedHealthy(){
+  return POSITION_SOURCES.some(s=>state.statuses[s]==='ok'||state.statuses[s]==='old');
+}
+function updateFeedHealthBanner(){
+  const banner=$('feedHealthBanner');
+  if(!banner)return;
+  banner.hidden=isFeedHealthy();
+}
 function showSourceStatus(){
   const lines=ENDPOINTS.map(ep=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0"><b>'+escapeHtml(ep)+'</b><span>'+ (state.statuses[ep]==='ok'?'✓ Antwort':'↻ '+(state.statuses[ep]==='old'?'veraltet':'Fehler'))+'</span></div>').join('');
   const g=SOURCES.filter(indexReady).length;
@@ -581,7 +589,7 @@ async function refreshFeeds(){
     // Existing updates age out if no feed responds.
     for(const [key,upd] of state.updates)if(now-upd.fetchedAt>DETAIL_MAX_AGE)state.updates.delete(key);
     state.failCount=ENDPOINTS.filter(s=>state.statuses[s]!=='ok').length;
-    statusLabel();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);displayStats();refreshScheduleMatches();
+    statusLabel();updateFeedHealthBanner();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);displayStats();refreshScheduleMatches();
     // Bus-shape fetching happens after the live updates; do not delay feed painting.
     loadBusShapesForVehicles().catch(e=>console.info('Bus shape preload:',e));
     if(!initiallyLocated && state.vehicles.size && state.map){
@@ -904,6 +912,7 @@ function setupControls(){
   $('search').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();jumpToFirstHit()}});
   $('search').oninput=e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.query=e.target.value.toLocaleLowerCase('de').trim();refreshMarkers();refreshScheduleMatches();updateViewportBadge()},130)};
   $('statusBtn').onclick=showSourceStatus;
+  $('refreshBtnFromBanner').onclick=()=>refreshFeeds();
   $('tileBtn').onclick=()=>switchTileProvider(1-tileProviderIndex,'Benutzerwahl');
   $('refreshBtn').onclick=()=>{
     if(Date.now()-state.fetchedAt>=manualRefreshDelayMs)refreshFeeds();

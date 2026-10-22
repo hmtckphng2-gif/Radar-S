@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#090e15">
-<meta name="description" content="Südtirol Radar 9.6.0: Live-Karte, Abfahrten und transparente Verspätungsinformationen für Züge und Busse in Südtirol und Trentino.">
+<meta name="description" content="Südtirol Radar 9.7.0: Live-Karte, Abfahrten und transparente Verspätungsinformationen für Züge und Busse in Südtirol und Trentino.">
 <title>Südtirol Radar – Züge und Busse live verfolgen</title>
 <link rel="canonical" href="https://radar-s.j9fr2vg4vm.workers.dev/">
 <meta property="og:type" content="website">
@@ -70,6 +70,7 @@
   </header>
   <div id="scheduleMatches" class="schedule-matches" hidden aria-live="polite"></div>
   <div class="offline-banner" id="offlineBanner" role="status" hidden><b>Offline.</b> Die Live-Positionen können nicht aktualisiert werden. Fahrplan und gespeicherte Daten bleiben verfügbar.</div>
+  <div class="feed-health-banner" id="feedHealthBanner" role="alert" hidden><b>Alle Live-Feeds nicht erreichbar.</b> Die Kartenpositionen können veraltet sein. Fahrplan-Daten bleiben verfügbar. <button id="refreshBtnFromBanner" class="banner-retry">Erneut versuchen</button></div>
   <div class="info-banner" id="notice"><button class="info-close" id="noticeClose" aria-label="Hinweis schließen">×</button><strong>Positionshinweis:</strong> Trenitalia und Trentino zeigen teilweise simulierte Fahrzeugpositionen. Zugnummern und Buslinien werden nicht geraten.</div>
   <button id="viewportBadge" class="viewport-badge" type="button" title="Alle Fahrzeuge anzeigen">📍 Keine Positionen</button>
   <div id="areaPicker" class="area-picker" hidden>

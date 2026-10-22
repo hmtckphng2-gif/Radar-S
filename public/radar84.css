@@ -170,6 +170,20 @@
   font-size:12px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,.28);
 }
 @media (max-width:420px){.offline-banner{left:8px;right:8px;top:calc(120px + env(safe-area-inset-top,0px));font-size:11px}}
+/* 9.7 - Feed-Gesundheit: wird angezeigt, wenn ALLE Position-Feeds nicht
+   antworten (anders als offlineBanner, das nur navigator.onLine widerspiegelt). */
+.feed-health-banner{
+  position:absolute;z-index:1001;left:10px;right:10px;
+  top:calc(156px + env(safe-area-inset-top,0px));
+  padding:10px 13px;border-radius:14px;
+  border:1px solid #8a4a12;background:#3a2413f2;color:#f9d9a8;
+  font-size:12px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,.28);
+}
+.feed-health-banner .banner-retry{
+  margin-left:10px;padding:4px 10px;border:none;border-radius:8px;
+  background:#7fd6a8;color:#0b1220;font-weight:bold;cursor:pointer
+}
+@media (max-width:420px){.feed-health-banner{left:8px;right:8px;top:calc(150px + env(safe-area-inset-top,0px));font-size:11px}}
 /* 9.7 - Update-Toast: erscheint, wenn der Service Worker eine neuere
    Version gefunden hat. Klick auf "Jetzt laden" aktiviert den neuen
    Worker sofort und ladet die Seite neu. */
