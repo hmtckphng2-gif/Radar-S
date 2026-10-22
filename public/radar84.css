@@ -202,6 +202,9 @@
 .detail.delay-warn strong{color:#ffd166}
 .detail.delay-severe strong{color:#ef476f}
 .detail.delay-none strong{color:var(--radar84-muted)}
+/* 9.7 - Verspätungs-Farben im Abfahrts-Board */
+.sr50-deps .dep-delay-severe{color:#ef476f}
+.sr50-deps .dep-delay-warn{color:#ffd166}
 /* 9.7 - Live-Suche: Trefferliste unter dem Suchfeld. Klick springt zum Fahrzeug. */
 #searchResults.search-results{
   position:absolute;top:calc(100% + 4px);left:0;right:0;

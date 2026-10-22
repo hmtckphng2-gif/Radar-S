@@ -762,6 +762,8 @@ function showStationBoard(st){
     title.textContent=d.name+' · '+d.headsign;
     sub.textContent=delay===null?(live?'Live, keine Verspätung':'Geplant'):(delay>0?'Live · +'+Math.round(delay/60)+' Min.':'Live · '+Math.round(delay/60)+' Min. früher')+' · '+st.source.toUpperCase();
     sub.classList.toggle('sr-dep-live',live);
+    sub.classList.toggle('dep-delay-severe',live&&delay>=900);
+    sub.classList.toggle('dep-delay-warn',live&&delay>=120&&delay<900);
     clock.textContent=formatClock(d.sec);
     body.append(title,sub);btn.append(body,clock);list.append(btn);
   }
