@@ -197,6 +197,11 @@
   margin-left:10px;padding:4px 10px;border:none;border-radius:8px;
   background:#7fd6a8;color:#0b1220;font-weight:bold;cursor:pointer
 }
+/* 9.7 - Farbkodierte Verspätungsanzeige im Fahrzeug-Detail */
+.detail.delay-ok   strong{color:#7fd6a8}
+.detail.delay-warn strong{color:#ffd166}
+.detail.delay-severe strong{color:#ef476f}
+.detail.delay-none strong{color:var(--radar84-muted)}
 /* 9.7 - Live-Suche: Trefferliste unter dem Suchfeld. Klick springt zum Fahrzeug. */
 #searchResults.search-results{
   position:absolute;top:calc(100% + 4px);left:0;right:0;

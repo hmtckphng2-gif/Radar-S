@@ -581,7 +581,7 @@ function closeSheets(resetSelection=true){
   document.dispatchEvent(new Event('sr37:sheet-closed'));
 }
 function badge(text,style=''){const el=document.createElement('span');el.className='mini-badge '+style;el.textContent=text;return el;}
-function detail(name,value){const el=document.createElement('div');el.className='detail';const small=document.createElement('small');small.textContent=name;const strong=document.createElement('strong');strong.textContent=value;el.append(small,strong);$('details').append(el);}
+function detail(name,value,cls=''){const el=document.createElement('div');el.className='detail'+(cls?' '+cls:'');const small=document.createElement('small');small.textContent=name;const strong=document.createElement('strong');strong.textContent=value;el.append(small,strong);$('details').append(el);}
 function modelFor(v){if(v.kind!=='train')return null;
   // Model dictionary is explicitly keyed by real train number or exact GTFS trip ID.
   const model=state.models[v.name]||state.models[v.tripId];
@@ -613,7 +613,12 @@ function drawVehicleDetails(key,fetchSchedule){
   const cancelled=/^(?:CANCELED|CANCELLED|3)$/i.test(update?.scheduleRelationship||'');
   detail('Status',cancelled?'Fahrt entfällt':update?'RT-Fahrtdaten vorhanden':'Keine Fahrtstatusdaten');
   const info=currentVehicleDelay(v);
-  detail('Verspätung (GTFS-RT)',cancelled?'Entfällt':info?formatDelay(info.delay)+(info.basis==='fahrt'?' · Fahrtwert':/^(STOPPED_AT|1)$/i.test(v.currentStatus)?' · am Halt':' · nächster Halt'):'Keine bestätigten Verspätungsdaten');
+  let delayCls='delay-none';
+  if(info){
+    const d=Math.abs(info.delay||0);
+    delayCls=d>=900?'delay-severe':d>=120?'delay-warn':'delay-ok';
+  }
+  detail('Verspätung (GTFS-RT)',cancelled?'Entfällt':info?formatDelay(info.delay)+(info.basis==='fahrt'?' · Fahrtwert':/^(STOPPED_AT|1)$/i.test(v.currentStatus)?' · am Halt':' · nächster Halt'):'Keine bestätigten Verspätungsdaten',delayCls);
   detail('Fahrtziel',v.headsign);
   detail('Fahrzeug-ID',v.vehicleId);
   detail('Fahrt-ID',v.tripId||'Nicht verfügbar');
