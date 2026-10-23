@@ -274,7 +274,7 @@ function updateAlertTicker(){
       if(ent.route_id)lineCount++;
     }
     const lineStr=lineCount?'Betroffene Linien: '+lineCount:'';
-    item.innerHTML='<span class="effect">'+cName+'</span><span class="alert-sev '+sevClass+'">'+effName+'</span>'+escapeHtml(a.header)+(a.description?': '+escapeHtml(a.description.substring(0,70)):'')+(lineStr?' <span class="alert-lines">'+lineStr+'</span>':'')+'<span class="alert-age">'+ageStr+' · '+a.source.toUpperCase()+'</span>';
+    item.innerHTML='<span class="alert-chip alert-sev '+sevClass+'">'+cName+'</span>'+escapeHtml(a.header)+(a.description?': '+escapeHtml(a.description.substring(0,70)):'')+(lineStr?' <span class="alert-lines">'+lineStr+'</span>':'')+'<span class="alert-age">'+ageStr+' · '+a.source.toUpperCase()+'</span>';
     listEl.appendChild(item);
   }
   // Einzelner Schließen-Button für das gesamte Ticker-Panel
