@@ -62,6 +62,7 @@
       <div class="brand"><div class="brand-title">RADAR <em>9.8.0</em></div><div class="brand-sub">SÜDTIROL · TRENTINO</div></div>
       <button id="statusBtn" class="status" aria-label="Status und Datenquellen" title="Datenquellen ansehen"><span class="status-dot"></span><span id="statusText">VERBINDE</span></button>
       <button id="healthBtn" class="status" aria-label="Betriebsstatus" title="Betriebsstatus ansehen"><span class="status-dot"></span><span id="healthText">STATUS</span></button>
+      <button id="favBtnTop" class="status" aria-label="Fahrzeug-Favoriten" title="Meine favorisierten Fahrzeuge"><span class="status-dot"></span><span id="favText">★ FAV</span></button>
       <button id="themeToggle" class="iconbtn" aria-label="Hell-/Dunkelmodus wechseln" title="Theme wechseln">☀</button>
     </div>
     <nav class="controls" aria-label="Fahrzeugfilter">
@@ -81,6 +82,12 @@
       <div class="health-row"><span>GTFS-Regionen</span><span class="health-val" id="healthRegions">–</span></div>
       <div class="health-row"><span>Letzte Aktualisierung</span><span class="health-val" id="healthUpdated">–</span></div>
       <div class="health-row"><span>Kartenkacheln</span><span class="health-val" id="healthTiles">–</span></div>
+    </div>
+  </div>
+  <div class="fav-panel" id="favPanel" hidden role="dialog" aria-modal="false" aria-label="Fahrzeug-Favoriten">
+    <div class="health-header"><h3>Favorisierte Fahrzeuge</h3><button id="closeFav" class="close">×</button></div>
+    <div class="fav-body" id="favBody">
+      <div class="fav-empty">Keine favorisierten Fahrzeuge. Tippe in einem Fahrzeug-Detail auf „★ Favorit“.</div>
     </div>
   </div>
   <div class="info-banner" id="notice"><button class="info-close" id="noticeClose" aria-label="Hinweis schließen">×</button><strong>Positionshinweis:</strong> Trenitalia und Trentino zeigen teilweise simulierte Fahrzeugpositionen. Zugnummern und Buslinien werden nicht geraten.</div>

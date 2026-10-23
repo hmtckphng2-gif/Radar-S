@@ -89,6 +89,7 @@ function statusLabel() {
   status.classList.toggle('error',vehicleGood===0);
   const favText=favCount>0?' · '+favCount+' Favorit'+(favCount>1?'en':'')+'★':'';
   $('statusText').textContent=good===ENDPOINTS.length?'FEEDS OK':vehicleGood===0?'OFFLINE':good+'/'+ENDPOINTS.length+favText;
+  const favBtn=$('favBtnTop');if(favBtn){const dot=favBtn.querySelector('.status-dot');if(dot){dot.className='status-dot'+(favCount>0?' fav-active':'');}}
 }
 function isFeedHealthy(){
   return POSITION_SOURCES.some(s=>state.statuses[s]==='ok'||state.statuses[s]==='old');
@@ -115,6 +116,46 @@ function updateHealthPanel(){
   $('healthUpdated').textContent=lastUpd;
   $('healthTiles').textContent=tileLoadedCount+' geladen'+(tileErrorCount>0?' · '+tileErrorCount+' Fehler':'');
   $('healthTiles').className='health-val '+(tileErrorCount===0?'ok':'warn');
+}
+function updateFavPanel(){
+  const panel=$('favPanel');
+  const body=$('favBody');
+  if(!panel||!body||panel.hidden)return;
+  const favs=[...state.favorites].filter(k=>state.vehicles.has(k));
+  body.innerHTML='';
+  if(favs.length===0){
+    body.innerHTML='<div class="fav-empty">Keine favorisierten Fahrzeuge. Tippe in einem Fahrzeug-Detail auf „★ Favorit“.</div>';
+    return;
+  }
+  for(const key of favs){
+    const v=state.vehicles.get(key);
+    if(!v)continue;
+    const item=document.createElement('div');
+    item.className='fav-item';
+    const info=document.createElement('div');
+    info.className='fav-info';
+    const name=document.createElement('div');
+    name.className='fav-name';
+    name.textContent=v.name;
+    const sub=document.createElement('div');
+    sub.className='fav-sub';
+    sub.textContent=v.headsign||'Ziel unbekannt'+' · '+v.source.toUpperCase();
+    const delay=document.createElement('div');
+    delay.className='fav-delay';
+    const info2=currentVehicleDelay(v);
+    const d=info2?Math.abs(info2.delay||0):0;
+    delay.textContent=d>0?'+'+Math.round(d/60)+' Min.':'Pünktlich';
+    delay.className='fav-delay '+(d>=900?'bad':d>=120?'warn':'ok');
+    info.append(name,sub,delay);
+    const remove=document.createElement('button');
+    remove.className='fav-remove';
+    remove.textContent='✕';
+    remove.title='Aus Favoriten entfernen';
+    remove.onclick=(e)=>{e.stopPropagation();toggleFavorite(v.key);updateFavPanel();refreshMarkers();statusLabel();};
+    item.append(info,remove);
+    item.onclick=()=>{selectVehicle(v.key);$('favPanel').hidden=true;};
+    body.appendChild(item);
+  }
 }
 function updateAlertTicker(){
   const ticker=$('alertTicker');
@@ -614,7 +655,7 @@ async function refreshFeeds(){
     // Alte Alerts entfernen wenn Feed nicht mehr antwortet
     for(const s of Object.keys(state.alerts))if(!ok[s])delete state.alerts[s];
     state.failCount=ENDPOINTS.filter(s=>state.statuses[s]!=='ok').length;
-    statusLabel();updateFeedHealthBanner();updateAlertTicker();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);displayStats();refreshScheduleMatches();
+    statusLabel();updateFeedHealthBanner();updateFavPanel();updateAlertTicker();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);displayStats();refreshScheduleMatches();
     // Bus-shape fetching happens after the live updates; do not delay feed painting.
     loadBusShapesForVehicles().catch(e=>console.info('Bus shape preload:',e));
     if(!initiallyLocated && state.vehicles.size && state.map){
@@ -1052,10 +1093,20 @@ function setupControls(){
     if(!hidden)updateHealthPanel();
   };
   $('closeHealth').onclick=()=>$('healthPanel').hidden=true;
+  $('favBtnTop').onclick=()=>{
+    const panel=$('favPanel');
+    const hidden=panel.hidden;
+    closeSheets();$('searchResults')?.classList.add('hidden');if($('healthPanel'))$('healthPanel').hidden=true;
+    panel.hidden=!hidden;
+    if(!hidden)updateFavPanel();
+  };
+  $('closeFav').onclick=()=>$('favPanel').hidden=true;
   $('refreshBtnFromBanner').onclick=()=>refreshFeeds();
   $('tileBtn').onclick=()=>switchTileProvider(1-tileProviderIndex,'Benutzerwahl');
   document.addEventListener('click',e=>{
     if(!e.target.closest('#search')&&!e.target.closest('#searchResults'))$('searchResults')?.classList.add('hidden');
+    if($('healthPanel')&&!$('healthPanel').hidden)$('healthPanel').hidden=true;
+    if($('favPanel')&&!$('favPanel').hidden)$('favPanel').hidden=true;
   });
   $('refreshBtn').onclick=()=>{
     if(Date.now()-state.fetchedAt>=manualRefreshDelayMs)refreshFeeds();
@@ -1075,7 +1126,7 @@ function setupControls(){
   for(const btn of document.querySelectorAll('[data-place]'))btn.onclick=()=>moveToPlace(btn.dataset.place);
   $('stationSearch').oninput=renderStationResults;$('backStations').onclick=()=>{$('stationBoard').hidden=true;$('stationResults').hidden=false};
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){closeSheets();$('healthPanel').hidden=true;}
+    if(e.key==='Escape'){closeSheets();$('healthPanel').hidden=true;$('favPanel').hidden=true;}
     // Tastatur-Shortcuts (nur außerhalb von Eingabefeldern):
     if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
     if(e.key==='r'||e.key==='R'){e.preventDefault();refreshFeeds();}
