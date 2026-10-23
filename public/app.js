@@ -6,7 +6,7 @@ import {enrichTrainPlatform} from './train-platforms.js?v=9.8.0';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
-  vehicleDelayInfo, bufferedAlong, departureDelay, isLiveUpdate
+  vehicleDelayInfo, bufferedAlong, departureDelay, isLiveUpdate, normalizeStopId
 } from './core.js?v=9.8.0';
 import {playbackLag} from './radar45-logic.mjs?v=9.8.0';
 import {trainReplayDuration} from './radar705-motion.mjs?v=9.8.0';
@@ -114,12 +114,20 @@ function updateAlertTicker(){
   countEl.textContent=all.length+' Störung'+(all.length>1?'en':'')+' im System';
   listEl.innerHTML='';
   const causeNames={1:'Verspätung',2:'Verspätung',3:'Ausfall',4:'Ausfall',5:'Verspätung',6:'Verspätung',7:'Verspätung',8:'Störung',9:'Störung'};
-  for(const a of all.slice(0,6)){
+  const nowSec=Date.now()/1000;
+  for(const a of all.slice(0,8)){
     const item=document.createElement('div');
     item.className='alert-item';
     const cName=causeNames[a.cause]||'Störung';
     const effName=a.effect===1?'Verspätung':a.effect===2?'Ausfall':a.effect===3?'Verspätung':a.effect===4?'Ausfall':a.effect===5?'Verspätung':a.effect===6?'Verspätung':'Störung';
-    item.innerHTML='<span class="effect">'+cName+'</span>'+escapeHtml(a.header)+(a.description?': '+escapeHtml(a.description.substring(0,80)):'');
+    // Datenaktualität berechnen
+    const ageSec=a.fetchedAt?Math.max(0,Math.floor(nowSec-a.fetchedAt/1000)):null;
+    const ageStr=ageSec!==null?ageSec<60?'gerade':ageSec<3600?Math.floor(ageSec/60)+' Min.':Math.floor(ageSec/3600)+' Std.':'-';
+    // Schweregrad-Farbe
+    let sevClass='alert-sev-medium';
+    if(a.cause===3||a.cause===4||a.effect===2||a.effect===4)sevClass='alert-sev-high';
+    else if(a.cause===1||a.cause===2||a.cause===5||a.effect===1||a.effect===5)sevClass='alert-sev-low';
+    item.innerHTML='<span class="effect">'+cName+'</span><span class="alert-sev '+sevClass+'">'+effName+'</span>'+escapeHtml(a.header)+(a.description?': '+escapeHtml(a.description.substring(0,70)):'')+'<span class="alert-age">'+ageStr+' · '+a.source.toUpperCase()+'</span>';
     listEl.appendChild(item);
   }
 }
@@ -838,6 +846,7 @@ function showStationBoard(st){
   const list=$('stationDepartures');list.replaceChildren();
   const details=state.details[st.source],db=state.indexes[st.source];
   const now=italySeconds(), departures=[];
+  const normStopId=normalizeStopId(st.stopId);
   for(const [tripId,rows] of Object.entries(details?.times||{})){
     const trip=db?.trips?.[tripId];if(!trip||trip[5]===false)continue;
     for(const [sid,arr,dep] of rows){if(sid!==st.stopId)continue;
@@ -855,8 +864,24 @@ function showStationBoard(st){
     const upd=state.updates.get(st.source+':'+d.tripId);
     const live=isLiveUpdate(upd)&&state.statuses[st.source+'_updates']==='ok';
     const delay=live?departureDelay(upd,st.stopId):null;
+    // Plattform/Gleis aus GTFS-RT auslesen
+    let platform=null;
+    if(upd&&Array.isArray(upd.stops)){
+      const row=upd.stops.find(s=>normalizeStopId(s.stopId??s.stop_id)===normStopId);
+      if(row){
+        platform=row.departure?.platform??row.arrival?.platform??row.departure?.platform_code??row.arrival?.platform_code;
+      }
+    }
     title.textContent=d.name+' · '+d.headsign;
-    sub.textContent=delay===null?(live?'Live, keine Verspätung':'Geplant'):(delay>0?'Live · +'+Math.round(delay/60)+' Min.':'Live · '+Math.round(delay/60)+' Min. früher')+' · '+st.source.toUpperCase();
+    const depText=delay===null?(live?'Live, keine Verspätung':'Geplant'):(delay>0?'Live · +'+Math.round(delay/60)+' Min.':'Live · '+Math.round(delay/60)+' Min. früher')+' · '+st.source.toUpperCase();
+    sub.textContent=depText;
+    if(platform){
+      const chip=document.createElement('span');
+      chip.className='platform-chip'+(live?' live':' plan');
+      chip.textContent=platform;
+      sub.appendChild(document.createTextNode(' · '));
+      sub.appendChild(chip);
+    }
     sub.classList.toggle('sr-dep-live',live);
     sub.classList.toggle('dep-delay-severe',live&&delay>=900);
     sub.classList.toggle('dep-delay-warn',live&&delay>=120&&delay<900);

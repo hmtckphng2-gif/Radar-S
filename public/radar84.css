@@ -215,6 +215,11 @@
 .alert-count{font-weight:bold;margin-bottom:4px}
 .alert-item{margin:2px 0;opacity:.95}
 .alert-item .effect{text-transform:uppercase;font-size:10px;opacity:.7;margin-right:6px}
+.alert-sev{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:bold;margin-right:4px}
+.alert-sev-high{background:#ef476f;color:#fff}
+.alert-sev-medium{background:#ffd166;color:#0b1220}
+.alert-sev-low{background:#7fd6a8;color:#0b1220}
+.alert-age{font-size:9px;opacity:.6;margin-left:4px}
 .fav-badge{background:#ffd700!important;color:#000!important;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:bold}
 .marker-wrap.favorite .marker-label{color:#ffd700!important}
 .marker-wrap.line-favorite{filter:drop-shadow(0 0 3px #ffd700)}
@@ -266,3 +271,12 @@
   r:6;
   pointer-events:none;
 }
+/* 9.8 - Gleis/Plattform-Chip im Stations-Board */
+.platform-chip{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:24px;height:20px;padding:0 6px;border-radius:10px;
+  font-size:11px;font-weight:bold;letter-spacing:0.05em;
+}
+.platform-chip.live{background:#7fd6a8;color:#0b1220}
+.platform-chip.plan{background:rgba(120,184,255,.2);color:#9fc5ff}
+.station-result small{display:flex;align-items:center;gap:6px}
