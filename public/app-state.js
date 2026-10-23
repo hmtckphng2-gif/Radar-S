@@ -14,6 +14,7 @@ export const state = {
   lineFavorites: new Set(),
   journeyFavorites: new Set(),
   alerts: {},
+  dismissedAlerts: new Set(),
   vehicleTracks: new Map()
 };
 
@@ -31,6 +32,29 @@ export function loadFavorites(){
 // Speichert Favoriten in LocalStorage.
 export function saveFavorites(){
   try{localStorage.setItem('sr-favorites',JSON.stringify([...state.favorites]))}catch{}
+}
+
+// Lädt gelöschte Alert-IDs aus LocalStorage, damit sie nicht wieder auftauchen.
+export function loadDismissedAlerts(){
+  try{
+    const raw=localStorage.getItem('sr-dismissed-alerts');
+    if(raw){
+      const arr=JSON.parse(raw);
+      if(Array.isArray(arr))for(const id of arr)state.dismissedAlerts.add(id);
+    }
+  }catch{}
+}
+
+// Speichert gelöschte Alert-IDs in LocalStorage.
+export function saveDismissedAlerts(){
+  try{localStorage.setItem('sr-dismissed-alerts',JSON.stringify([...state.dismissedAlerts]))}catch{}
+}
+
+// Fügt eine Alert-ID zur Dismissed-Liste hinzu und speichert sie.
+export function dismissAlert(id){
+  if(!id)return;
+  state.dismissedAlerts.add(id);
+  saveDismissedAlerts();
 }
 
 // Schaltet ein Fahrzeug als Favorit um. Gibt den neuen Zustand zurück.

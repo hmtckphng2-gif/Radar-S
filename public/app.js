@@ -1,4 +1,4 @@
-import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite,loadJourneyFavorites,saveJourneyFavorites,toggleJourneyFavorite,isJourneyFavorite,addTrackPoint,getTrackPoints,clearTrack} from './app-state.js?v=9.8.0';
+import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite,loadJourneyFavorites,saveJourneyFavorites,toggleJourneyFavorite,isJourneyFavorite,addTrackPoint,getTrackPoints,clearTrack,loadDismissedAlerts,saveDismissedAlerts,dismissAlert} from './app-state.js?v=9.8.0';
 import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.8.0';
 import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.8.0';
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.8.0';
@@ -285,6 +285,12 @@ function updateAlertTicker(){
     closeBtn.textContent='Alle Meldungen ausblenden';
     closeBtn.title='Störungs-Ticker schließen';
     closeBtn.onclick=()=>{
+      // Aktuelle Alert-IDs merken damit sie beim nächsten Refresh nicht wieder auftauchen
+      for(const source of Object.keys(state.alerts)){
+        for(const a of state.alerts[source]){
+          if(a.id)dismissAlert(a.id);
+        }
+      }
       state.alerts={};
       ticker.hidden=true;
       updateAlertTicker();
@@ -752,10 +758,11 @@ async function refreshFeeds(){
     }
     pruneStaleVehicles(state.vehicles, now, state.statuses);
     processUpdates(ok, state, now);
-    // Alerts verarbeiten
+    // Alerts verarbeiten (gelöschte Alert-IDs werden ausgefiltert)
     for(const source of ALERT_SOURCES){
       if(!ok[source])continue;
-      state.alerts[source]=parseAlerts(ok[source],source,now);
+      const parsed=parseAlerts(ok[source],source,now);
+      state.alerts[source]=parsed.filter(a=>!state.dismissedAlerts.has(a.id));
     }
     // Alte Alerts entfernen wenn Feed nicht mehr antwortet
     for(const s of Object.keys(state.alerts))if(!ok[s])delete state.alerts[s];
@@ -1314,6 +1321,7 @@ async function init(){
   loadFavorites();
   loadLineFavorites();
   loadJourneyFavorites();
+  loadDismissedAlerts();
   initLocale();
   applyTranslations();
   setupControls();
