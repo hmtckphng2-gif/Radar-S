@@ -282,7 +282,7 @@ function updateAlertTicker(){
   if(!closeBtn){
     closeBtn=document.createElement('button');
     closeBtn.className='alert-close-all';
-    closeBtn.textContent='Alle Meldungen ausblenden';
+    closeBtn.textContent=t('alert.closeAll');
     closeBtn.title='Störungs-Ticker schließen';
     closeBtn.onclick=()=>{
       // Aktuelle Alert-IDs merken damit sie beim nächsten Refresh nicht wieder auftauchen
@@ -786,7 +786,7 @@ async function refreshFeeds(){
     document.dispatchEvent(new Event('sr37:feeds'));
   }catch(e){
     console.error('Unexpected refresh error',e);
-    $('statusText').textContent='FEHLER';$('statusBtn').classList.add('error');
+    $('statusText').textContent=t('status.error');$('statusBtn').classList.add('error');
   }finally{state.busy=false;}
 }
 function setFilter(which){state.filter=which;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter===which));refreshMarkers();refreshScheduleMatches();updateViewportBadge();}
@@ -824,13 +824,13 @@ function urlSafe(href){try{const url=new URL(href);return url.protocol==='https:
 function renderModel(v){const model=modelFor(v),card=$('modelCard'),img=$('modelImage');card.hidden=true;img.removeAttribute('src');
   if(!model || !urlSafe(model.image))return;
   $('modelTitle').textContent=model.name;
-  $('modelCaption').textContent=(model.confidence==='confirmed'?'Bestätigter Typ':'Geplanter Typ')+' · '+model.source+' · Baureihenfoto (nicht garantiert exakte Einheit)';
+  $('modelCaption').textContent=(model.confidence==='confirmed'?t('detail.trainType.confirmed'):t('detail.trainType.planned'))+' · '+model.source+' · '+t('detail.modelCard');
   img.onerror=()=>{card.hidden=true;img.removeAttribute('src')};
   img.src=model.image;card.hidden=false;
 }
 function drawVehicleDetails(key,fetchSchedule){
   const v=state.vehicles.get(key);if(!v)return;
-  $('sheetKind').textContent=v.kind==='train'?'ZUGDETAILS · '+v.source.toUpperCase():'BUSDETAILS · '+v.source.toUpperCase();
+  $('sheetKind').textContent=v.kind==='train'?t('detail.train')+' · '+v.source.toUpperCase():t('detail.bus')+' · '+v.source.toUpperCase();
   $('sheetTitle').textContent=(v.kind==='train'?'🚆 ':'🚌 ')+v.name;
   $('sheetSub').textContent=v.headsign;
   const badges=$('sheetBadges');badges.replaceChildren();
@@ -842,7 +842,7 @@ function drawVehicleDetails(key,fetchSchedule){
   favBtn.className='badge fav-badge';
   favBtn.textContent=isFavorite(v.key)?'★ Favorit':'☆ Favorit';
   favBtn.title=isFavorite(v.key)?'Aus Favoriten entfernen':'Zu Favoriten hinzufügen';
-  favBtn.onclick=()=>{toggleFavorite(v.key);favBtn.textContent=isFavorite(v.key)?'★ Favorit':'☆ Favorit';favBtn.title=isFavorite(v.key)?'Aus Favoriten entfernen':'Zu Favoriten hinzufügen';refreshMarkers();statusLabel();};
+  favBtn.onclick=()=>{toggleFavorite(v.key);favBtn.textContent=isFavorite(v.key)?t('fav.btnRemove'):t('fav.btnAdd');favBtn.title=isFavorite(v.key)?t('fav.btnRemove'):t('fav.btnAdd');refreshMarkers();statusLabel();};
   badges.append(favBtn);
   renderModel(v);
   $('details').replaceChildren();
@@ -875,7 +875,7 @@ function drawVehicleDetails(key,fetchSchedule){
     favBtn.className='badge line-fav-badge';
     favBtn.textContent=isLineFavorite(lineKey)?'★ Linie favorisiert':'☆ Linie favorisieren';
     favBtn.title=isLineFavorite(lineKey)?'Linie aus Favoriten entfernen':'Linie zu Favoriten hinzufügen';
-    favBtn.onclick=()=>{toggleLineFavorite(lineKey);favBtn.textContent=isLineFavorite(lineKey)?'★ Linie favorisiert':'☆ Linie favorisieren';favBtn.title=isLineFavorite(lineKey)?'Linie aus Favoriten entfernen':'Linie zu Favoriten hinzufügen';refreshMarkers();statusLabel();};
+    favBtn.onclick=()=>{toggleLineFavorite(lineKey);favBtn.textContent=isLineFavorite(lineKey)?t('fav.lineBtnRemove'):t('fav.lineBtnAdd');favBtn.title=isLineFavorite(lineKey)?t('fav.lineBtnRemove'):t('fav.lineBtnAdd');refreshMarkers();statusLabel();};
     badges.append(favBtn);
   }
   // Gleiche Linie: andere Fahrzeuge derselben Route anzeigen
@@ -911,7 +911,7 @@ function renderStops(v,details){
   list.replaceChildren();section.hidden=!rows.length;empty.hidden=!!rows.length;
   if(!rows.length)return;
   const update=state.updates.get(v.source+':'+v.tripId);
-  $('scheduleSource').textContent='GTFS-Fahrplan'+(update?.stops?.length?' + TripUpdates':'');
+  $('scheduleSource').textContent=t('board.source')+(update?.stops?.length?t('board.tripUpdate'):'');
   const lookup=new Map((update?.stops||[]).map(u=>[txt(u.stopId??u.stop_id),u]));
   const sameDay=!update?.tripStartDate||txt(update.tripStartDate).replaceAll('-','')===gtfsLocalDate().replaceAll('-','');
   const platformLive=Boolean(update&&sameDay&&state.statuses[v.source+'_updates']==='ok'&&Number.isFinite(update.fetchedAt)&&Date.now()-update.fetchedAt<=120000&&Date.now()>=update.fetchedAt-30000);
@@ -921,7 +921,7 @@ function renderStops(v,details){
     const upd=lookup.get(row.stopId)||(update?.stops||[]).find(u=>!txt(u.stopId??u.stop_id)&&Number(u.stopSequence??u.stop_sequence)===Number(row.seq));
     const platform=platformInfo(details.stops?.[row.stopId],platformLive?upd:null,details.stops);
     const track=document.createElement('small');track.className='stop-platform';
-    track.textContent=(v.kind==='bus'?'Steig ':'Gleis ')+(platform.current||'unbekannt')+(platform.changed?' · geändert':platform.live?' · gemeldet':platform.current?' · Plan':'');
+    track.textContent=(v.kind==='bus'?t('board.stop')+' ':(t('board.platform')+' '))+(platform.current||t('board.unknown'))+(platform.changed?t('board.changed'):platform.live?t('board.live'):platform.current?t('board.plan'):'');
     if(platform.changed)track.style.color='#ffc37d';
     left.append(track);
     if(v.kind==='train'){
@@ -930,18 +930,18 @@ function renderStops(v,details){
     }
     const d=upd?(upd.departure?.delay??upd.arrival?.delay):null;
     const skipped=/^(?:SKIPPED|1)$/i.test(txt(upd?.scheduleRelationship??upd?.schedule_relationship));
-    const info=document.createElement('small');info.textContent=skipped?'Halt entfällt':d!=null?'GTFS-RT: '+formatDelay(Number(d)):'Planzeit';left.append(info);
+    const info=document.createElement('small');info.textContent=skipped?t('station.skipped'):d!=null?t('board.rtDelay')+formatDelay(Number(d)):t('station.planTime');left.append(info);
     const time=document.createElement('div');time.className='stop-time';time.textContent=row.departure!=='–'?row.departure:row.arrival;
     li.append(left,time);list.append(li);
   }
 }
 async function loadSchedule(key){
   const v=state.vehicles.get(key);if(!v)return;
-  $('scheduleSection').hidden=true;$('emptySchedule').hidden=false;$('emptySchedule').textContent='Lade GTFS-Fahrplan …';
+  $('scheduleSection').hidden=true;$('emptySchedule').hidden=false;$('emptySchedule').textContent=t('station.loading');
   const details=await loadDetails(v.source);
   if(state.selectedKey!==key||state.activeSheet!=='vehicle')return;
   if(details)renderStops(v,details);
-  else $('emptySchedule').textContent='Keine verifizierten Haltestelleninformationen für diese Fahrt verfügbar.';
+  else $('emptySchedule').textContent=t('station.noStops');
 }
 function selectVehicle(key){
   if(!state.vehicles.has(key))return;
@@ -985,7 +985,7 @@ async function getStationList(){
 }
 async function showStations(){
   openSheet('station');$('stationBoard').hidden=true;$('stationResults').hidden=false;
-  $('stationResults').textContent='Lade Haltestellen …';
+  $('stationResults').textContent=t('station.loadingStops');
   await getStationList();
   if(state.activeSheet!=='station')return;
   renderStationResults();
@@ -997,14 +997,14 @@ async function openStationFromMap(st){
 function renderStationResults(){
   const q=$('stationSearch').value.toLocaleLowerCase('de').trim(),list=$('stationResults');list.replaceChildren();
   const matches=state.stationList.filter(st=>!q||st.name.toLocaleLowerCase('de').includes(q)).slice(0,40);
-  if(!state.stationList.length){list.textContent='Keine GTFS-Haltestellendaten geladen. Starte zuerst den automatischen GTFS-Import.';return;}
+  if(!state.stationList.length){list.textContent=t('station.noStations');return;}
   for(const st of matches){const btn=document.createElement('button');btn.className='station-result';
     const body=document.createElement('div');const strong=document.createElement('strong');strong.textContent=st.name;
     const small=document.createElement('small');small.textContent=st.source.toUpperCase();body.append(strong,small);
     const chevron=document.createElement('span');chevron.textContent='›';btn.append(body,chevron);
     btn.onclick=()=>showStationBoard(st);list.append(btn);
   }
-  if(!matches.length)list.textContent='Keine passende Haltestelle gefunden.';
+  if(!matches.length)list.textContent=t('station.noMatch');
 }
 function italySeconds(){
   const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Rome',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
@@ -1014,7 +1014,7 @@ function showStationBoard(st){
   state.stationChoice=st;$('stationResults').hidden=true;$('stationBoard').hidden=false;
   document.dispatchEvent(new CustomEvent('sr75:station-selected',{detail:{stopId:st.stopId,name:st.name}}));
   const scroller=$('stationSheet').querySelector('.sheet-scroll');if(scroller)scroller.scrollTop=0;
-  $('stationName').textContent='Abfahrten · '+st.name;
+  $('stationName').textContent=t('station.boardTitle')+st.name;
   const list=$('stationDepartures');list.replaceChildren();
   const details=state.details[st.source],db=state.indexes[st.source];
   const now=italySeconds(), departures=[];
@@ -1060,7 +1060,7 @@ function showStationBoard(st){
     clock.textContent=formatClock(d.sec);
     body.append(title,sub);btn.append(body,clock);list.append(btn);
   }
-  if(!departures.length)list.textContent='Keine kommenden GTFS-Abfahrten für den heutigen Tag gefunden. Das ist keine Aussage über aktuelle Zugausfälle.';
+  if(!departures.length)list.textContent=t('board.noDepartures');
   if(state.map&&Number.isFinite(st.lat)&&Number.isFinite(st.lon))state.map.panTo([st.lat,st.lon]);
   document.dispatchEvent(new CustomEvent('sr37:station-board',{detail:{source:st.source,stopId:st.stopId}}));
 }
@@ -1075,11 +1075,11 @@ function refreshScheduleMatches(){
   const db=state.indexes.trains;
   const entries=Object.entries(db.trips||{}).filter(([id,t])=>t[5]!==false && txt(t[3])===digits).slice(0,12);
   if(!entries.length)return;
-  const title=document.createElement('h3');title.textContent='Im Fahrplan · keine aktuelle Kartenposition gefunden';panel.append(title);
+  const title=document.createElement('h3');title.textContent=t('journey.noPosition');panel.append(title);
   for(const [tripId,trip] of entries){
     const btn=document.createElement('button');const left=document.createElement('div');
-    const strong=document.createElement('strong');strong.textContent='Zug '+digits;
-    const small=document.createElement('small');small.textContent=trip[1]||'Fahrtziel nicht verfügbar';
+    const strong=document.createElement('strong');strong.textContent=t('journey.train')+digits;
+    const small=document.createElement('small');small.textContent=trip[1]||t('journey.noDestination');
     const icon=document.createElement('span');icon.textContent='→';left.append(strong,small);btn.append(left,icon);
     btn.onclick=()=>selectScheduledTrain(tripId);panel.append(btn);
   }
@@ -1089,19 +1089,19 @@ async function selectScheduledTrain(tripId){
   const trip=state.indexes.trains?.trips?.[tripId];if(!trip)return;
   $('scheduleMatches').hidden=true;state.selectedKey=null;
   openSheet('vehicle');
-  $('sheetKind').textContent='FAHRPLAN · KEINE GEMELDETE FAHRZEUGPOSITION';
+  $('sheetKind').textContent=t('journey.noPositionTitle');
   $('sheetTitle').textContent='🚆 '+gtfsNumber('',trip[3]);
-  $('sheetSub').textContent=trip[1]||'Fahrtziel unbekannt';
+  $('sheetSub').textContent=trip[1]||t('journey.noDestination2');
   $('sheetBadges').replaceChildren(badge('Nur GTFS-Fahrplan','warn'));
   $('modelCard').hidden=true;$('details').replaceChildren();
   detail('Fahrt-ID',tripId);detail('Position','Im Echtzeitfeed nicht gefunden');
   detail('Zugnummer',gtfsNumber('',trip[3]));detail('Verspätung','Nicht überprüft');
-  $('sheetNote').textContent='Diese Fahrt steht im heutigen GTFS-Fahrplan. Die App hat derzeit keine gemeldete Position dafür. Das beweist weder einen Ausfall noch die tatsächliche Position.';
-  $('scheduleSection').hidden=true;$('emptySchedule').hidden=false;$('emptySchedule').textContent='Lade planmäßige Zwischenhalte …';
+  $('sheetNote').textContent=t('journey.noPositionNote');
+  $('scheduleSection').hidden=true;$('emptySchedule').hidden=false;$('emptySchedule').textContent=t('journey.loadingStops');
   const details=await loadDetails('trains');
   if(state.activeSheet==='vehicle'&&state.selectedKey===null){
     if(details)renderStops({source:'trains',tripId},details);
-    else $('emptySchedule').textContent='Keine Fahrplandetails verfügbar.';
+    else $('emptySchedule').textContent=t('journey.noSchedule');
   }
 }
 // Safari: keep swipes inside the detail panel, without blocking real scrolling.
@@ -1177,8 +1177,8 @@ function renderSearchResults(){
     const btn=document.createElement('button');btn.className='search-hit';
     const left=document.createElement('div');
     const strong=document.createElement('strong');strong.textContent=v.name;left.append(strong);
-    const small=document.createElement('small');small.textContent=v.headsign||'Ziel unbekannt';left.append(small);
-    const kind=document.createElement('span');kind.className='kind';kind.textContent=v.kind==='train'?'ZUG':'BUS';btn.append(left,kind);
+    const small=document.createElement('small');small.textContent=v.headsign||t('detail.trainLineUnverified');left.append(small);
+    const kind=document.createElement('span');kind.className='kind';kind.textContent=v.kind==='train'?t('search.train'):t('search.bus');btn.append(left,kind);
     btn.onclick=()=>{selectVehicle(v.key);list.hidden=true;};
     list.append(btn);
   }
@@ -1294,7 +1294,7 @@ function setupControls(){
   if(!localStorage.getItem('sr-shortcuts-hint')){
     const hint=document.createElement('div');
     hint.className='shortcut-hint';
-    hint.textContent='Tastatur: R = neu laden · F = Fahrzeuge zeigen · S = Stationen · ? = Quellen';
+    hint.textContent=t('shortcuts.hint');
     hint.style.cssText='position:fixed;bottom:10px;right:10px;padding:6px 10px;border-radius:8px;background:rgba(10,18,30,.85);color:#f3f7fc;font-size:11px;z-index:900;cursor:pointer';
     hint.onclick=()=>{hint.remove();localStorage.setItem('sr-shortcuts-hint','1');};
     document.body.append(hint);
@@ -1385,6 +1385,6 @@ async function init(){
 init().catch(e=>{
   bootPhase('startup-error');
   console.error('Startup error',e);
-  const status=$('statusText');if(status)status.textContent='STARTFEHLER';
+  const status=$('statusText');if(status)status.textContent=t('status.startupError');
   setNotice('<strong>Fehler beim Start.</strong> Bitte Diagnose im Hinweisfeld prüfen.');
 });
