@@ -321,3 +321,11 @@
 .platform-chip.live{background:#7fd6a8;color:#0b1220}
 .platform-chip.plan{background:rgba(120,184,255,.2);color:#9fc5ff}
 .station-result small{display:flex;align-items:center;gap:6px}
+/* 9.8 - Geschwindigkeit auf Markern (ab Zoom 13) */
+.marker-speed{
+  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  font-size:9px;font-weight:bold;color:#ffffff;
+  background:#0b1220;border:1px solid var(--radar84-line);border-radius:8px;
+  padding:1px 6px;white-space:nowrap;pointer-events:none;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+}

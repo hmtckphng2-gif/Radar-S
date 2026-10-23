@@ -405,9 +405,12 @@ function markerIcon(v){
   const isFav=isFavorite(v.key);
   const lineKey=v.routeId?(v.source+':'+v.routeId):'';
   const lineFav=lineKey&&isLineFavorite(lineKey);
+  const zoom=state.map?state.map.getZoom():0;
+  const showSpeed=zoom>=13 && v.speed!==null;
   const cls='marker-wrap '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'')+(isFav?' favorite':'')+(lineFav?' line-favorite':'');
-  const icon=`<div class="${cls}"><div class="marker-label">${escapeHtml(label)}</div><div class="marker-circle">${train?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="17" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 19.5l-2 2m10-2 2 2"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="16" rx="3"/><path d="M3 11h18M7 15h2m6 0h2M7 19l-2 2m14-2 2 2"/></svg>'}${isFav?'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22l-5-4.87L2 9.27l6.91-1.02L12 2z"/></svg>':''}</div></div>`;
-  return L.divIcon({className:'radar-custom',html:icon,iconSize:[30,43],iconAnchor:[15,38]});
+  const speedText=showSpeed?'<div class="marker-speed">'+v.speed+' km/h</div>':'';
+  const icon=`<div class="${cls}">${speedText}<div class="marker-label">${escapeHtml(label)}</div><div class="marker-circle">${train?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="17" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 19.5l-2 2m10-2 2 2"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="16" rx="3"/><path d="M3 11h18M7 15h2m6 0h2M7 19l-2 2m14-2 2 2"/></svg>'}${isFav?'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22l-5-4.87L2 9.27l6.91-1.02L12 2z"/></svg>':''}</div></div>`;
+  return L.divIcon({className:'radar-custom',html:icon,iconSize:[30,48],iconAnchor:[15,38]});
 }
 function shapeOf(v){
   const id=v.shapeId || v.routeShapeId;
