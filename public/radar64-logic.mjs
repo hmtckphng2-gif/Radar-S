@@ -18,7 +18,7 @@ export function samePhysicalTrip(a,b){
  // All other matches must have the same service day, and cannot rely
  // on a shared fleet number or route number alone.
  if(!a.tripStartDate||a.tripStartDate!==b.tripStartDate||age>120)return false;
- if(a.kind==='train')return !!number(a)&&number(a)===number(b)&&meters<=1500;
+ if(a.kind==='train')return !!number(a)&&number(a)===number(b)&&!!a.tripId&&a.tripId===b.tripId&&meters<=1500;
  return !!a.tripId&&a.tripId===b.tripId&&!!a.routeId&&a.routeId===b.routeId&&meters<=120;
 }
 export function selectRepresentatives(vehicles,selectedKey){const all=[...vehicles].filter(Boolean),removed=new Set(),groups=new Map();
