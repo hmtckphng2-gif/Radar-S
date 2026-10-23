@@ -61,6 +61,7 @@
       <div class="brand-badge" aria-hidden="true"><svg viewBox="0 0 48 48" width="30" height="30"><path d="M12 35L35 12M13 13h22v22" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="24" r="5" fill="currentColor"/></svg></div>
       <div class="brand"><div class="brand-title">RADAR <em>9.8.0</em></div><div class="brand-sub">SÜDTIROL · TRENTINO</div></div>
       <button id="statusBtn" class="status" aria-label="Status und Datenquellen" title="Datenquellen ansehen"><span class="status-dot"></span><span id="statusText">VERBINDE</span></button>
+      <button id="healthBtn" class="status" aria-label="Betriebsstatus" title="Betriebsstatus ansehen"><span class="status-dot"></span><span id="healthText">STATUS</span></button>
       <button id="themeToggle" class="iconbtn" aria-label="Hell-/Dunkelmodus wechseln" title="Theme wechseln">☀</button>
     </div>
     <nav class="controls" aria-label="Fahrzeugfilter">
@@ -72,6 +73,16 @@
   <div class="offline-banner" id="offlineBanner" role="status" hidden><b>Offline.</b> Die Live-Positionen können nicht aktualisiert werden. Fahrplan und gespeicherte Daten bleiben verfügbar.</div>
   <div class="feed-health-banner" id="feedHealthBanner" role="alert" hidden><b>Alle Live-Feeds nicht erreichbar.</b> Die Kartenpositionen können veraltet sein. Fahrplan-Daten bleiben verfügbar. <button id="refreshBtnFromBanner" class="banner-retry">Erneut versuchen</button></div>
   <div class="alert-ticker" id="alertTicker" role="alert" hidden><div class="alert-count"></div><div class="alert-list"></div></div>
+  <div class="health-panel" id="healthPanel" hidden role="dialog" aria-modal="false" aria-label="Betriebsstatus">
+    <div class="health-header"><h3>Betriebsstatus</h3><button id="closeHealth" class="close">×</button></div>
+    <div class="health-body">
+      <div class="health-row"><span>Live-Feeds</span><span class="health-val" id="healthFeeds">–</span></div>
+      <div class="health-row"><span>Fahrzeuge</span><span class="health-val" id="healthVehicles">–</span></div>
+      <div class="health-row"><span>GTFS-Regionen</span><span class="health-val" id="healthRegions">–</span></div>
+      <div class="health-row"><span>Letzte Aktualisierung</span><span class="health-val" id="healthUpdated">–</span></div>
+      <div class="health-row"><span>Kartenkacheln</span><span class="health-val" id="healthTiles">–</span></div>
+    </div>
+  </div>
   <div class="info-banner" id="notice"><button class="info-close" id="noticeClose" aria-label="Hinweis schließen">×</button><strong>Positionshinweis:</strong> Trenitalia und Trentino zeigen teilweise simulierte Fahrzeugpositionen. Zugnummern und Buslinien werden nicht geraten.</div>
   <button id="viewportBadge" class="viewport-badge" type="button" title="Alle Fahrzeuge anzeigen">📍 Keine Positionen</button>
   <div id="areaPicker" class="area-picker" hidden>

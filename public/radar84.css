@@ -205,6 +205,22 @@
 /* 9.7 - Verspätungs-Farben im Abfahrts-Board */
 .sr50-deps .dep-delay-severe{color:#ef476f}
 .sr50-deps .dep-delay-warn{color:#ffd166}
+/* 9.8 - Betriebsstatus-Panel */
+.health-panel{
+  position:fixed;top:60px;right:10px;width:320px;max-width:90vw;
+  background:#0b1220f2;border:1px solid var(--radar84-line);border-radius:14px;
+  padding:12px;box-shadow:0 12px 40px rgba(0,0,0,.4);z-index:1800;
+  color:#f3f7fc;font-size:12px;line-height:1.5;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+}
+.health-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.health-header h3{margin:0;font-size:15px;color:#f3f7fc}
+.health-header .close{background:none;border:none;color:#a4b2c5;font-size:20px;cursor:pointer}
+.health-header .close:hover{color:#fff}
+.health-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--radar84-line)}
+.health-row:last-child{border-bottom:none}
+.health-val{font-weight:600}
+.health-val.ok{color:#7fd6a8}.health-val.warn{color:#ffd166}.health-val.bad{color:#ef476f}
+#healthBtn .status-dot{background:#7fd6a8;box-shadow:0 0 8px rgba(127,214,168,.4)}
 /* 9.8 - Störungs-Ticker */
 .alert-ticker{
   position:fixed;top:150px;left:10px;right:10px;z-index:1002;

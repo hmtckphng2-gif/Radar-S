@@ -98,6 +98,24 @@ function updateFeedHealthBanner(){
   if(!banner)return;
   banner.hidden=isFeedHealthy();
 }
+function updateHealthPanel(){
+  const panel=$('healthPanel');
+  if(!panel||panel.hidden)return;
+  const good=allSourceCount();
+  const vehicleGood=POSITION_SOURCES.filter(s=>state.statuses[s]==='ok').length;
+  const g=SOURCES.filter(indexReady).length;
+  const now=Date.now();
+  const lastUpd=state.fetchedAt?new Date(state.fetchedAt).toLocaleTimeString('de-IT',{hour:'2-digit',minute:'2-digit'}):'–';
+  $('healthFeeds').textContent=good+'/'+ENDPOINTS.length;
+  $('healthFeeds').className='health-val '+(good===ENDPOINTS.length?'ok':good>0?'warn':'bad');
+  $('healthVehicles').textContent=state.vehicles.size+' ('+vehicleGood+' live)';
+  $('healthVehicles').className='health-val '+(vehicleGood>0?'ok':vehicleGood===0?'bad':'warn');
+  $('healthRegions').textContent=g+'/3';
+  $('healthRegions').className='health-val '+(g===3?'ok':g>0?'warn':'bad');
+  $('healthUpdated').textContent=lastUpd;
+  $('healthTiles').textContent=tileLoadedCount+' geladen'+(tileErrorCount>0?' · '+tileErrorCount+' Fehler':'');
+  $('healthTiles').className='health-val '+(tileErrorCount===0?'ok':'warn');
+}
 function updateAlertTicker(){
   const ticker=$('alertTicker');
   const countEl=ticker.querySelector('.alert-count');
@@ -1026,6 +1044,14 @@ function setupControls(){
     if(fav.length){selectVehicle(fav[0]);return;}
     showSourceStatus();
   };
+  $('healthBtn').onclick=()=>{
+    const panel=$('healthPanel');
+    const hidden=panel.hidden;
+    closeSheets();$('searchResults')?.classList.add('hidden');
+    panel.hidden=!hidden;
+    if(!hidden)updateHealthPanel();
+  };
+  $('closeHealth').onclick=()=>$('healthPanel').hidden=true;
   $('refreshBtnFromBanner').onclick=()=>refreshFeeds();
   $('tileBtn').onclick=()=>switchTileProvider(1-tileProviderIndex,'Benutzerwahl');
   document.addEventListener('click',e=>{
@@ -1049,7 +1075,7 @@ function setupControls(){
   for(const btn of document.querySelectorAll('[data-place]'))btn.onclick=()=>moveToPlace(btn.dataset.place);
   $('stationSearch').oninput=renderStationResults;$('backStations').onclick=()=>{$('stationBoard').hidden=true;$('stationResults').hidden=false};
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape')closeSheets();
+    if(e.key==='Escape'){closeSheets();$('healthPanel').hidden=true;}
     // Tastatur-Shortcuts (nur außerhalb von Eingabefeldern):
     if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
     if(e.key==='r'||e.key==='R'){e.preventDefault();refreshFeeds();}
