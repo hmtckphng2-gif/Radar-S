@@ -55,7 +55,7 @@
 </head>
 <body>
 <div id="sr50MapTab" class="sr50-map-tab">
-  <div id="map" role="application" tabindex="0" aria-label="Karte mit Zug- und Buspositionen. Mit Tab erreichbar, Pfeiltasten verschieben die Karte."></div>
+  <div id="map" role="application" tabindex="0" aria-label="Karte mit Zug- und Buspositionen. Mit Tab erreichbar, Pfeiltasten verschieben die Karte." data-t-aria-label="map.aria"></div>
   <header class="topbar">
     <div class="toprow">
       <div class="brand-badge" aria-hidden="true"><svg viewBox="0 0 48 48" width="30" height="30"><path d="M12 35L35 12M13 13h22v22" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="24" r="5" fill="currentColor"/></svg></div>
@@ -110,7 +110,7 @@
       <div class="lines-empty" data-t="lines.noLines">Keine Linien gefunden.</div>
     </div>
   </div>
-  <div class="info-banner" id="notice"><button class="info-close" id="noticeClose" aria-label="Hinweis schließen" data-t="misc.close">×</button><strong data-t="notice.positionTitle">Positionshinweis:</strong> <span data-t="notice.position">Trenitalia und Trentino zeigen teilweise simulierte Fahrzeugpositionen. Zugnummern und Buslinien werden nicht geraten.</span></div>
+  <div class="info-banner" id="notice"><button class="info-close" id="noticeClose" aria-label="Hinweis schließen" data-t-aria-label="notice.close">×</button><strong data-t="notice.positionTitle">Positionshinweis:</strong> <span data-t="notice.position">Trenitalia und Trentino zeigen teilweise simulierte Fahrzeugpositionen. Zugnummern und Buslinien werden nicht geraten.</span></div>
   <button id="viewportBadge" class="viewport-badge" type="button" title="Alle Fahrzeuge anzeigen" data-t-title="map.mapButton" data-t="map.noVehicles">📍 Keine Positionen</button>
   <div id="areaPicker" class="area-picker" hidden>
     <strong data-t="map.areaButton">Ort auswählen</strong>
@@ -123,30 +123,30 @@
     <button type="button" data-place="all" data-t="map.area.all">Alle Fahrzeuge</button>
   </div>
   <div class="map-actions">
-    <button id="refreshBtn" class="round-action" title="Daten jetzt aktualisieren" data-t-title="map.refreshButton" aria-label="Daten aktualisieren">↻</button>
-    <button id="fitBtn" class="round-action" title="Alle Fahrzeuge zeigen" data-t-title="map.mapButton" aria-label="Karte auf Fahrzeuge zentrieren">⌗</button>
-    <button id="stationBtn" class="round-action" title="Bahnhöfe und Haltestellen suchen" data-t-title="map.stationButton" aria-label="Haltestellen suchen">▦</button>
-    <button id="areaBtn" class="round-action" title="Ort auswählen" data-t-title="map.areaButton" aria-label="Ort auswählen">📍</button>
-    <button id="tileBtn" class="round-action" title="Kartenanbieter wechseln" data-t-title="map.tileButton" aria-label="Kartenanbieter wechseln">🗺</button>
+    <button id="refreshBtn" class="round-action" title="Daten jetzt aktualisieren" data-t-title="map.refreshButton" aria-label="Daten aktualisieren" data-t-aria-label="map.refreshBtn">↻</button>
+    <button id="fitBtn" class="round-action" title="Alle Fahrzeuge zeigen" data-t-title="map.mapButton" aria-label="Karte auf Fahrzeuge zentrieren" data-t-aria-label="map.fitBtn">⌗</button>
+    <button id="stationBtn" class="round-action" title="Bahnhöfe und Haltestellen suchen" data-t-title="map.stationButton" aria-label="Haltestellen suchen" data-t-aria-label="map.stationBtn">▦</button>
+    <button id="areaBtn" class="round-action" title="Ort auswählen" data-t-title="map.areaButton" aria-label="Ort auswählen" data-t-aria-label="map.areaBtn">📍</button>
+    <button id="tileBtn" class="round-action" title="Kartenanbieter wechseln" data-t-title="map.tileButton" aria-label="Kartenanbieter wechseln" data-t-aria-label="map.tileBtn">🗺</button>
   </div>
   <footer class="stats" aria-live="polite"><div class="stats-counts"><div class="stat"><b id="countAll">0</b><span data-t="misc.vehicles">Fahrzeuge</span></div><div class="stat"><b id="countTrains">0</b><span data-t="misc.trains">Züge</span></div><div class="stat"><b id="countBuses">0</b><span data-t="misc.buses">Busse</span></div></div><div id="lastUpdate" class="stats-time" data-t="time.noData">Warte auf Daten</div></footer>
   <div class="scrim" id="scrim"></div>
   <section id="sheet" class="sheet" tabindex="-1" aria-labelledby="sheetTitle" role="dialog" aria-modal="false" aria-hidden="true">
     <div class="handle"></div>
-    <div class="sheet-heading"><div class="sheet-heading-main"><div id="sheetKind" class="eyebrow" data-t="detail.train">Fahrtinformation</div><h2 id="sheetTitle" class="sheet-title">–</h2><div id="sheetSub" class="sheet-subtitle">–</div></div><button id="closeSheet" class="close" data-t="misc.close" aria-label="Details schließen">✕</button></div>
-    <div class="sheet-scroll" tabindex="0" aria-label="Fahrzeugdetails scrollen">
+    <div class="sheet-heading"><div class="sheet-heading-main"><div id="sheetKind" class="eyebrow" data-t="detail.train">Fahrtinformation</div><h2 id="sheetTitle" class="sheet-title">–</h2><div id="sheetSub" class="sheet-subtitle">–</div></div><button id="closeSheet" class="close" data-t="misc.close" aria-label="Details schließen" data-t-aria-label="sheet.close">✕</button></div>
+    <div class="sheet-scroll" tabindex="0" aria-label="Fahrzeugdetails scrollen" data-t-aria-label="sheet.scroll">
     <div class="badge-row" id="sheetBadges"></div>
-    <div class="model-card" id="modelCard" hidden><img id="modelImage" alt="Baureihenfoto" loading="lazy" referrerpolicy="no-referrer"><div class="model-text"><strong id="modelTitle"></strong><small id="modelCaption"></small></div></div>
+    <div class="model-card" id="modelCard" hidden><img id="modelImage" alt="Baureihenfoto" loading="lazy" referrerpolicy="no-referrer" data-t-aria-label="detail.modelImage"><div class="model-text"><strong id="modelTitle"></strong><small id="modelCaption"></small></div></div>
     <div id="details" class="details"></div>
     <div class="note" id="sheetNote"></div>
     <div id="scheduleSection" hidden><div class="section-title">Fahrtverlauf <span class="section-sub" id="scheduleSource">GTFS-Fahrplan</span></div><ol class="stop-list" id="stops"></ol></div>
     <div id="emptySchedule" class="empty">Keine vollständigen Haltestelleninformationen für diese Fahrt verfügbar.</div>
     </div>
   </section>
-  <section id="stationSheet" class="sheet" aria-hidden="true" aria-label="Haltestellensuche" role="dialog" aria-modal="false">
-    <div class="handle"></div><div class="sheet-heading"><div class="sheet-heading-main"><div class="eyebrow" data-t="station.title">Fahrplan-Suche</div><h2 class="sheet-title" data-t="station.title">Haltestellen</h2><div class="sheet-subtitle" data-t="station.subtitle">GTFS-Fahrplandaten, keine amtliche RFI-Anzeigetafel</div></div><button id="closeStations" class="close" data-t="misc.close" aria-label="Haltestellensuche schließen">✕</button></div>
-    <div class="sheet-scroll" tabindex="0" aria-label="Haltestellenliste scrollen">
-    <div class="search-wrap" style="margin:14px 0"><span>⌕</span><input id="stationSearch" type="search" data-t-placeholder="station.search" placeholder="Bahnhof oder Haltestelle suchen" aria-label="Haltestelle suchen" data-t-aria-label="station.search"></div>
+  <section id="stationSheet" class="sheet" aria-hidden="true" aria-label="Haltestellensuche" role="dialog" aria-modal="false" data-t-aria-label="stationSheet.aria">
+    <div class="handle"></div><div class="sheet-heading"><div class="sheet-heading-main"><div class="eyebrow" data-t="station.title">Fahrplan-Suche</div><h2 class="sheet-title" data-t="station.title">Haltestellen</h2><div class="sheet-subtitle" data-t="station.subtitle">GTFS-Fahrplandaten, keine amtliche RFI-Anzeigetafel</div></div><button id="closeStations" class="close" data-t="misc.close" aria-label="Haltestellensuche schließen" data-t-aria-label="stationSheet.close">✕</button></div>
+    <div class="sheet-scroll" tabindex="0" aria-label="Haltestellenliste scrollen" data-t-aria-label="stationSheet.scroll">
+    <div class="search-wrap" style="margin:14px 0"><span>⌕</span><input id="stationSearch" type="search" data-t-placeholder="station.search" placeholder="Bahnhof oder Haltestelle suchen" aria-label="Haltestelle suchen" data-t-aria-label="station.search">
     <div class="station-results" id="stationResults"></div>
     <div id="stationBoard" hidden><div class="section-title" id="stationName" data-t="board.title">Abfahrten</div><div class="section-sub" data-t="board.subtitle">Geplante Zeiten aus GTFS, nicht mit RFI abgeglichen</div><div class="station-results" id="stationDepartures" style="margin-top:10px"></div><button id="backStations" class="chip" style="margin-top:12px" data-t="misc.back">← Andere Haltestelle</button></div>
     </div>

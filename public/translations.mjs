@@ -262,6 +262,19 @@ const T = {
   'search.train': { de: 'ZUG', it: 'TRENO' },
   'search.bus': { de: 'BUS', it: 'AUTOBUS' },
   'shortcuts.hint': { de: 'Tastatur: R = neu laden · F = Fahrzeuge zeigen · S = Stationen · ? = Quellen', it: 'Tastiera: R = ricarica · F = mostra veicoli · S = stazioni · ? = fonti' },
+  'map.aria': { de: 'Karte mit Zug- und Buspositionen. Mit Tab erreichbar, Pfeiltasten verschieben die Karte.', it: 'Mappa con posizioni di treni e autobus. Raggiungibile con Tab, i tasti freccia spostano la mappa.' },
+  'notice.close': { de: 'Hinweis schließen', it: 'Chiudi avviso' },
+  'map.refreshBtn': { de: 'Daten aktualisieren', it: 'Aggiorna dati' },
+  'map.fitBtn': { de: 'Karte auf Fahrzeuge zentrieren', it: 'Centra la mappa sui veicoli' },
+  'map.stationBtn': { de: 'Haltestellen suchen', it: 'Cerca fermate' },
+  'map.areaBtn': { de: 'Ort auswählen', it: 'Scegli località' },
+  'map.tileBtn': { de: 'Kartenanbieter wechseln', it: 'Cambia fornitore mappe' },
+  'sheet.close': { de: 'Details schließen', it: 'Chiudi dettagli' },
+  'sheet.scroll': { de: 'Fahrzeugdetails scrollen', it: 'Scorri dettagli veicolo' },
+  'detail.modelImage': { de: 'Baureihenfoto', it: 'Foto della serie' },
+  'stationSheet.aria': { de: 'Haltestellensuche', it: 'Ricerca fermate' },
+  'stationSheet.close': { de: 'Haltestellensuche schließen', it: 'Chiudi ricerca fermate' },
+  'stationSheet.scroll': { de: 'Haltestellenliste scrollen', it: 'Scorri elenco fermate' },
 };
 
 export function t(key, params = {}) {
