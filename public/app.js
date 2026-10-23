@@ -13,6 +13,7 @@ import {trainReplayDuration} from './radar705-motion.mjs?v=9.8.0';
 import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.8.0';
 import {trainScheduledPosition} from './radar51-logic.mjs?v=9.8.0';
 import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.8.0';
+import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.8.0';
 
 const $ = id => document.getElementById(id);
 const DIRECT_POSITION_SOURCES=['sta_direct'];
@@ -87,8 +88,8 @@ function statusLabel() {
   const favCount=state.favorites.size;
   const status=$('statusBtn');status.classList.toggle('ok',good===ENDPOINTS.length);
   status.classList.toggle('error',vehicleGood===0);
-  const favText=favCount>0?' · '+favCount+' Favorit'+(favCount>1?'en':'')+'★':'';
-  $('statusText').textContent=good===ENDPOINTS.length?'FEEDS OK':vehicleGood===0?'OFFLINE':good+'/'+ENDPOINTS.length+favText;
+  const favText=favCount>0?' · '+favCount+' '+t('misc.favorites')+'★':'';
+  $('statusText').textContent=good===ENDPOINTS.length?t('status.feedsOk'):vehicleGood===0?t('status.offline'):good+'/'+ENDPOINTS.length+favText;
   const favBtn=$('favBtnTop');if(favBtn){const dot=favBtn.querySelector('.status-dot');if(dot){dot.className='status-dot'+(favCount>0?' fav-active':'');}}
 }
 function isFeedHealthy(){
@@ -157,6 +158,85 @@ function updateFavPanel(){
     body.appendChild(item);
   }
 }
+function buildLineStatus(){
+  const lines=new Map();
+  for(const v of state.vehicles.values()){
+    if(!v.routeId)continue;
+    const key=v.source+':'+v.routeId;
+    if(!lines.has(key))lines.set(key,{routeId:v.routeId,source:v.source,name:v.name,vehicles:[],maxDelay:0,delayed:0});
+    const l=lines.get(key);
+    l.vehicles.push(v);
+    const info=currentVehicleDelay(v);
+    const d=info?Math.abs(info.delay||0):0;
+    l.maxDelay=Math.max(l.maxDelay,d);
+    if(d>=120)l.delayed++;
+  }
+  // Störungs-Alerts pro Linie einbeziehen
+  for(const source of Object.keys(state.alerts||{})){
+    for(const a of state.alerts[source]||[]){
+      if(a.routeId){
+        const key=source+':'+a.routeId;
+        if(!lines.has(key))lines.set(key,{routeId:a.routeId,source,name:a.routeId,vehicles:[],maxDelay:0,delayed:0});
+        const l=lines.get(key);
+        if(a.cause===3||a.cause===4||a.effect===2||a.effect===4)l.maxDelay=Math.max(l.maxDelay,900);
+      }
+    }
+  }
+  return [...lines.values()].map(l=>{
+    let status='unknown';
+    if(l.maxDelay>=900||l.delayed>0)status='disturbed';
+    else if(l.maxDelay>=120)status='delayed';
+    else if(l.maxDelay>0)status='delayed';
+    else if(l.vehicles.length>0)status='ok';
+    return {...l,status};
+  }).sort((a,b)=>a.name.localeCompare(b.name));
+}
+function renderLinesPanel(){
+  const panel=$('linesPanel');
+  const body=$('linesBody');
+  if(!panel||!body)return;
+  const q=$('linesSearch')?$('linesSearch').value.toLowerCase():'';
+  const filter=$('linesFilter')?document.querySelector('.lines-filters .chip.active')?.dataset?.lineFilter:'all';
+  const lines=buildLineStatus().filter(l=>{
+    if(q&&!l.name.toLowerCase().includes(q)&&!l.routeId.toLowerCase().includes(q))return false;
+    if(filter==='onTime'&&l.status!=='ok')return false;
+    if(filter==='delayed'&&l.status!=='delayed')return false;
+    if(filter==='disturbed'&&l.status!=='disturbed')return false;
+    return true;
+  });
+  body.innerHTML='';
+  if(lines.length===0){
+    body.innerHTML='<div class="lines-empty">Keine Linien gefunden.</div>';
+    return;
+  }
+  for(const l of lines){
+    const item=document.createElement('div');
+    item.className='lines-item';
+    const name=document.createElement('div');
+    name.className='line-name';
+    name.textContent=l.name||l.routeId;
+    const info=document.createElement('div');
+    info.className='line-info';
+    info.textContent=l.vehicles.length+' Fahrzeug'+(l.vehicles.length>1?'en':'')+' · '+l.source.toUpperCase();
+    const status=document.createElement('div');
+    status.className='line-status '+l.status;
+    status.textContent=l.status==='ok'?t('lines.onTimeShort'):l.status==='delayed'?t('lines.delayedBy'):l.status==='disturbed'?t('lines.status.disturbed'):t('lines.status.unknown');
+    const chevron=document.createElement('div');
+    chevron.className='line-chevron';
+    chevron.textContent='›';
+    item.append(name,info,status,chevron);
+    item.onclick=()=>{highlightLine(l.routeId);$('linesPanel').hidden=true;};
+    body.appendChild(item);
+  }
+}
+function highlightLine(routeId){
+  for(const [key,entry] of state.markers){
+    const el=entry.marker.getElement?.();
+    const v=state.vehicles.get(key);
+    if(v&&v.routeId===routeId){el.classList.add('lines-item-line-highlight');}
+    else if(el)el.classList.remove('lines-item-line-highlight');
+  }
+}
 function updateAlertTicker(){
   const ticker=$('alertTicker');
   const countEl=ticker.querySelector('.alert-count');
@@ -191,7 +271,7 @@ function updateAlertTicker(){
   }
 }
 function showSourceStatus(){
-  const lines=ENDPOINTS.map(ep=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0"><b>'+escapeHtml(ep)+'</b><span>'+ (state.statuses[ep]==='ok'?'✓ Antwort':'↻ '+(state.statuses[ep]==='old'?'veraltet':'Fehler'))+'</span></div>').join('');
+  const lines=ENDPOINTS.map(ep=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0"><b>'+escapeHtml(ep)+'</b><span>'+ (state.statuses[ep]==='ok'?'✓ '+t('status.feedsOk'):'↻ '+(state.statuses[ep]==='old'?t('status.old'):t('status.error')))+'</span></div>').join('');
   const g=SOURCES.filter(indexReady).length;
   setNotice('<strong>Datenquellen · Südtirol Radar '+(window.SuedtirolRadar80?.version?.()||'')+'</strong><div style="margin:7px 0">'+lines+'</div><div>GTFS-Fahrplandaten: <b>'+g+'/3</b> Regionen geladen.</div><div style="margin-top:5px">'+mapMetrics().inside+' Fahrzeuge hier, '+state.markers.size+' Marker geladen, '+state.vehicles.size+' Positionen im Feed. Kartenanbieter: '+escapeHtml(TILE_PROVIDERS[tileProviderIndex].name)+' ('+tileLoadedCount+' Kacheln geladen, '+tileErrorCount+' Fehler).</div><div style="margin-top:5px">Kartenebenen: <b>'+escapeHtml(leafletLayoutHealth())+'</b>.</div><div style="margin-top:5px">STA Open Data Hub: direkter offizieller Positions- und Trip-Update-Feed. Trenitalia/Trentino: teilweise geschätzte Positionen. RFI-Daten sind nur in speziellen Stationsfunktionen verfügbar. Feed-Erreichbarkeit bedeutet nicht echtes GPS.</div>');
 }
@@ -1074,6 +1154,25 @@ function renderSearchResults(){
   }
   list.hidden=false;
 }
+function applyTranslations(){
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    const key=el.getAttribute('data-t');
+    if(key)el.textContent=t(key);
+  });
+  // Platzhalter-Attribute
+  document.querySelectorAll('[data-t-placeholder]').forEach(el=>{
+    const key=el.getAttribute('data-t-placeholder');
+    if(key)el.placeholder=t(key);
+  });
+  document.querySelectorAll('[data-t-title]').forEach(el=>{
+    const key=el.getAttribute('data-t-title');
+    if(key)el.title=t(key);
+  });
+  document.querySelectorAll('[data-t-aria-label]').forEach(el=>{
+    const key=el.getAttribute('data-t-aria-label');
+    if(key)el.setAttribute('aria-label',t(key));
+  });
+}
 function setupControls(){
   setupSheetTouchGuards();
   offlineState();
@@ -1104,6 +1203,30 @@ function setupControls(){
     if(!hidden)updateFavPanel();
   };
   $('closeFav').onclick=()=>$('favPanel').hidden=true;
+  $('langBtn').onclick=()=>{
+    const next=getLocale()==='de'?'it':'de';
+    setLocale(next);
+    $('langText').textContent=next.toUpperCase();
+    applyTranslations();
+    updateHealthPanel();
+    updateFavPanel();
+    statusLabel();
+    refreshMarkers();
+  };
+  $('linesBtn').onclick=()=>{
+    const panel=$('linesPanel');
+    const hidden=panel.hidden;
+    closeSheets();$('searchResults')?.classList.add('hidden');if($('healthPanel'))$('healthPanel').hidden=true;if($('favPanel'))$('favPanel').hidden=true;
+    panel.hidden=!hidden;
+    if(!hidden)renderLinesPanel();
+  };
+  $('closeLines').onclick=()=>$('linesPanel').hidden=true;
+  $('linesSearch').oninput=renderLinesPanel;
+  document.querySelectorAll('.lines-filters .chip').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.lines-filters .chip').forEach(c=>c.classList.remove('active'));
+    b.classList.add('active');
+    renderLinesPanel();
+  });
   $('refreshBtnFromBanner').onclick=()=>refreshFeeds();
   $('tileBtn').onclick=()=>switchTileProvider(1-tileProviderIndex,'Benutzerwahl');
   document.addEventListener('click',e=>{
@@ -1169,6 +1292,8 @@ async function init(){
   loadFavorites();
   loadLineFavorites();
   loadJourneyFavorites();
+  initLocale();
+  applyTranslations();
   setupControls();
   if(!initMap()){bootPhase('map-error');return}
   bootPhase('map-ready');

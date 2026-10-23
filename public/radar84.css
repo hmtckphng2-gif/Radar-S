@@ -329,3 +329,35 @@
   padding:1px 6px;white-space:nowrap;pointer-events:none;
   box-shadow:0 2px 6px rgba(0,0,0,.4);
 }
+/* 9.9 - Linien-Status-Panel */
+.lines-panel{
+  position:fixed;top:60px;right:10px;width:360px;max-width:92vw;
+  background:#0b1220f2;border:1px solid var(--radar84-line);border-radius:14px;
+  padding:12px;box-shadow:0 12px 40px rgba(0,0,0,.4);z-index:1800;
+  color:#f3f7fc;font-size:12px;line-height:1.5;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+}
+.lines-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px}
+.lines-header h3{margin:0;font-size:15px;color:#f3f7fc}
+.lines-controls{display:flex;gap:8px;align-items:center;flex:1;max-width:240px}
+.lines-controls input{flex:1;padding:6px 10px;border-radius:8px;border:1px solid var(--radar84-line);background:#0a1018;color:#f3f7fc;font-size:11px}
+.lines-filters{display:flex;gap:4px}
+.lines-close{background:none;border:none;color:#a4b2c5;font-size:20px;cursor:pointer}
+.lines-close:hover{color:#fff}
+.lines-body{max-height:420px;overflow-y:auto}
+.lines-empty{padding:20px;color:#a4b2c5;text-align:center;font-size:12px}
+.lines-item{
+  display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--radar84-line);cursor:pointer
+}
+.lines-item:last-child{border-bottom:none}
+.lines-item:hover{background:rgba(127,214,168,.08)}
+.lines-item .line-name{font-weight:600;color:#f3f7fc}
+.lines-item .line-info{font-size:11px;color:#a4b2c5}
+.lines-item .line-status{font-size:10px;font-weight:bold;padding:2px 6px;border-radius:10px;text-transform:uppercase}
+.lines-item .line-status.ok{background:rgba(127,214,168,.2);color:#7fd6a8}
+.lines-item .line-status.delayed{background:rgba(255,209,102,.2);color:#ffd166}
+.lines-item .line-status.disturbed{background:rgba(239,71,111,.2);color:#ef476f}
+.lines-item .line-status.unknown{background:rgba(164,181,197,.2);color:#a4b2c5}
+.lines-item .line-chevron{color:#a4b2c5;font-size:10px}
+.lines-item.line-highlight{background:rgba(127,214,168,.15)!important}
+.lines-item.line-highlight .line-name{color:#7fd6a8}
+.marker-line-highlight{filter:drop-shadow(0 0 6px #7fd6a8)!important;outline:2px solid #7fd6a8;outline-offset:2px}
