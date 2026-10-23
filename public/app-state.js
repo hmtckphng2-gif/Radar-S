@@ -13,7 +13,8 @@ export const state = {
   favorites: new Set(),
   lineFavorites: new Set(),
   journeyFavorites: new Set(),
-  alerts: {}
+  alerts: {},
+  vehicleTracks: new Map()
 };
 
 // Lädt gespeicherte Favoriten aus LocalStorage.
@@ -102,4 +103,25 @@ export function saveJourneyFavorites(){
 export function bootPhase(phase){
   state.bootPhase=phase;
   document.documentElement.dataset.radarBoot=phase;
+}
+
+// Fahrzeug-Trajektur: speichert die letzten Positionen pro Fahrzeug für die
+// Spur-Anzeige auf der Karte. Maximal 30 Punkte pro Fahrzeug.
+export function addTrackPoint(key, lat, lng){
+  const trk=state.vehicleTracks.get(key);
+  if(trk){
+    trk.points.push({lat,lng,t:Date.now()});
+    if(trk.points.length>30)trk.points.shift();
+  }else{
+    state.vehicleTracks.set(key,{points:[{lat,lng,t:Date.now()}]});
+  }
+}
+
+export function getTrackPoints(key){
+  const trk=state.vehicleTracks.get(key);
+  return trk?trk.points:null;
+}
+
+export function clearTrack(key){
+  state.vehicleTracks.delete(key);
 }

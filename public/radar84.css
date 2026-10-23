@@ -238,3 +238,20 @@
 #searchResults .search-hit strong{color:#7fd6a8}
 #searchResults .search-hit small{color:var(--radar84-muted)}
 #searchResults .search-hit .kind{font-size:10px;text-transform:uppercase;opacity:.7}
+/* 9.8 - Fahrzeug-Trajektur: rote Linie auf der Karte zeigt die letzte Fahrspur */
+.sr-track-line{
+  stroke:#ff3b30;
+  stroke-width:3;
+  stroke-opacity:0.8;
+  fill:none;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  pointer-events:none;
+}
+.sr-track-dot{
+  fill:#ff3b30;
+  stroke:#ffffff;
+  stroke-width:2;
+  r:6;
+  pointer-events:none;
+}

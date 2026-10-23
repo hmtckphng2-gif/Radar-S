@@ -1,4 +1,4 @@
-import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite,loadJourneyFavorites,saveJourneyFavorites,toggleJourneyFavorite,isJourneyFavorite} from './app-state.js?v=9.8.0';
+import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite,loadJourneyFavorites,saveJourneyFavorites,toggleJourneyFavorite,isJourneyFavorite,addTrackPoint,getTrackPoints,clearTrack} from './app-state.js?v=9.8.0';
 import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.8.0';
 import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.8.0';
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.8.0';
@@ -310,6 +310,7 @@ function initMap(){
   // Explicit marker z-index survives broken/blocked external Leaflet CSS.
   const markerPane=map.getPane('markerPane');if(markerPane)markerPane.style.zIndex='650';
   state.layer=L.layerGroup().addTo(map);
+  state.trackLayer=L.layerGroup().addTo(map);
   L.control.zoom({position:'bottomleft'}).addTo(map);
   map.on('moveend',()=>{
     updateViewportBadge();
@@ -523,6 +524,12 @@ function refreshMarkers(){
       }
     }
     entry.feedTimestamp=v.timestamp;
+    // Fahrzeug-Trajektur aufzeichnen (letzte 30 Positionen pro Fahrzeug)
+    const trk=state.vehicleTracks.get(key);
+    const last=trk&&trk.points.length?trk.points[trk.points.length-1]:null;
+    if(!last||Math.abs(last.lat-v.lat)>0.0001||Math.abs(last.lng-v.lng)>0.0001){
+      addTrackPoint(key,v.lat,v.lng);
+    }
     if(!motionDuration(v,null)){
       stopJob(key);state.busTracks.delete(key);entry.marker.setLatLng([v.lat,v.lon]);
     }
@@ -620,6 +627,7 @@ function closeSheets(resetSelection=true){
   try{$('map')?.focus({preventScroll:true})}catch{}
   $('scrim').classList.remove('show');state.activeSheet=null;
   if(resetSelection){state.selectedKey=null;refreshMarkers();}
+  state.trackLayer.clearLayers();
   document.dispatchEvent(new Event('sr37:sheet-closed'));
 }
 function badge(text,style=''){const el=document.createElement('span');el.className='mini-badge '+style;el.textContent=text;return el;}
@@ -743,8 +751,18 @@ function selectVehicle(key){
   if(state.selectedKey===key&&state.activeSheet==='vehicle'){closeSheets();return;}
   state.selectedKey=key;
   document.dispatchEvent(new Event('sr40:selection'));
-  $('scheduleMatches').hidden=true;openSheet('vehicle');refreshMarkers();drawVehicleDetails(key,true);
+  $('scheduleMatches').hidden=true;openSheet('vehicle');refreshMarkers();drawVehicleDetails(key,true);drawVehicleTrack(key);
   document.dispatchEvent(new Event('sr37:selection'));
+}
+function drawVehicleTrack(key){
+  state.trackLayer.clearLayers();
+  const pts=getTrackPoints(key);
+  if(!pts||pts.length<2)return;
+  const latlngs=pts.map(p=>[p.lat,p.lng]);
+  L.polyline(latlngs,{className:'sr-track-line',color:'#ff3b30',weight:3,opacity:0.8}).addTo(state.trackLayer);
+  const first=pts[0],last=pts[pts.length-1];
+  L.circleMarker([first.lat,first.lng],{radius:6,fillColor:'#ff3b30',color:'#ffffff',weight:2,fillOpacity:0.8}).addTo(state.trackLayer);
+  L.circleMarker([last.lat,last.lng],{radius:8,fillColor:'#ff3b30',color:'#ffffff',weight:2,fillOpacity:0.9}).addTo(state.trackLayer);
 }
 function fitMap(){
   const locations=[...state.markers.values()].map(e=>e.marker.getLatLng());
