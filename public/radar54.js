@@ -1,8 +1,8 @@
 /* Radar 5.4 — openable timetable journeys and honest device-local delay history. */
-import {aggregateDays,recordObservation,trainNumber,platformInfo} from './radar54-logic.mjs?v=9.8.0';
-import {enrichTrainPlatform} from './train-platforms.js?v=9.8.0';
-import {romeDay,dateGTFSValid} from './radar51-logic.mjs?v=9.8.0';
-import {isRailRoute,formatClock,vehicleDelayInfo} from './core.js?v=9.8.0';
+import {aggregateDays,recordObservation,trainNumber,platformInfo} from './radar54-logic.mjs?v=9.9.0';
+import {enrichTrainPlatform} from './train-platforms.js?v=9.9.0';
+import {romeDay,dateGTFSValid} from './radar51-logic.mjs?v=9.9.0';
+import {isRailRoute,formatClock,vehicleDelayInfo} from './core.js?v=9.9.0';
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),mk=(tag,cls,text)=>{const e=document.createElement(tag);e.className=cls||'';if(text!==undefined)e.textContent=text;return e};

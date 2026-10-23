@@ -1,8 +1,8 @@
 /* Südtirol Radar 5.0 Final — Modulares Dashboard über der bewährten 4.7-Karte. */
-import {calculateNetworkStats,searchTrainStats,searchBusLineStats,vehicleAgeSeconds,HistoricalStorage,tidy} from './radar50-logic.mjs?v=9.8.0';
-import {findStations,nearbyStationGroup,buildDepartureRows,romeSeconds,busDelayLabel} from './radar51-logic.mjs?v=9.8.0';
-import {mergeStationDepartures} from './radar53-logic.mjs?v=9.8.0';
-import {enrichTrainPlatform} from './train-platforms.js?v=9.8.0';
+import {calculateNetworkStats,searchTrainStats,searchBusLineStats,vehicleAgeSeconds,HistoricalStorage,tidy} from './radar50-logic.mjs?v=9.9.0';
+import {findStations,nearbyStationGroup,buildDepartureRows,romeSeconds,busDelayLabel} from './radar51-logic.mjs?v=9.9.0';
+import {mergeStationDepartures} from './radar53-logic.mjs?v=9.9.0';
+import {enrichTrainPlatform} from './train-platforms.js?v=9.9.0';
 (() => {
 'use strict';
 const $=id=>document.getElementById(id);

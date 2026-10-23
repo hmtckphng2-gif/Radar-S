@@ -1,9 +1,9 @@
 // Reine Feed-Verarbeitungs-Logik ohne DOM-Abhängigkeit.
 // Wird von app.js.refreshFeeds aufgerufen. Alle Zeitwerte werden als
 // Parameter übergeben, damit die Funktionen deterministisch testbar sind.
-import {parseVehicles} from './core.js?v=9.8.0';
-import {deriveCandidates} from './radar451-logic.mjs?v=9.8.0';
-import {parseUpdates} from './core.js?v=9.8.0';
+import {parseVehicles} from './core.js?v=9.9.0';
+import {deriveCandidates} from './radar451-logic.mjs?v=9.9.0';
+import {parseUpdates} from './core.js?v=9.9.0';
 
 export const STALE_MAX_AGE_SEC = 60 * 60;
 export const MARKER_MAX_AGE_SEC = 12 * 60;

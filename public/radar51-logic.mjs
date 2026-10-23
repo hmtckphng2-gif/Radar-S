@@ -1,6 +1,6 @@
-import {platformInfo} from './radar54-logic.mjs?v=9.8.0';
+import {platformInfo} from './radar54-logic.mjs?v=9.9.0';
 /* Südtirol Radar 5.1 — pure, independently testable transit logic. No GPS is invented. */
-import {shapeProject,pointAtDistance,vehicleDelayInfo,isRailRoute} from './core.js?v=9.8.0';
+import {shapeProject,pointAtDistance,vehicleDelayInfo,isRailRoute} from './core.js?v=9.9.0';
 
 export const normalizeStation = text => String(text??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('de').replace(/\b(bahnhof|stazione|station|fermata|halte|bhf|staz)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 const aliasGroups = [

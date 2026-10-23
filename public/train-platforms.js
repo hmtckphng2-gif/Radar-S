@@ -1,7 +1,7 @@
 /* Shared, lazy platform enrichment. One request per train/day, three concurrent at most. */
-import {matchPlatform} from './train-platforms-logic.mjs?v=9.8.0';
-import {trainNumber} from './radar54-logic.mjs?v=9.8.0';
-import {resolveStation,matchRFI} from './rfi-platforms-logic.mjs?v=9.8.0';
+import {matchPlatform} from './train-platforms-logic.mjs?v=9.9.0';
+import {trainNumber} from './radar54-logic.mjs?v=9.9.0';
+import {resolveStation,matchRFI} from './rfi-platforms-logic.mjs?v=9.9.0';
 const cache=new Map(),queue=[],visible=new Set(),observed=new Set(),bindings=new WeakMap();let active=0;
 function pump(){while(active<3&&queue.length){const run=queue.shift();active++;run().finally(()=>{active--;pump()})}}
 function loadURL(key,url){

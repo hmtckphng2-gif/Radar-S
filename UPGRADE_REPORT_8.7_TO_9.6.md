@@ -295,3 +295,76 @@ Warteschleife und `await` vorhanden sind.
 | Deploy auf Cloudflare | **grün** (40 s) |
 | Live geprüft | `/api/version` = 9.6.0, Badge 9.6.0, 810 Fahrzeuge, 9 Feeds ok, keine Konsolenfehler |
 | Service Worker live | aktiv, 133 Cache-Einträge, **0 aus `/api/`** |
+
+---
+
+## 9.8.0 – Geschwindigkeit, Linien-Favoriten, Betriebsstatus, Gleis-Info
+
+**`645aa29`, `5679c1b`, `9c38c7d`, `853c31b`, `6f4c46c`**
+
+- **Geschwindigkeit auf Kartenmarkern** (ab Zoom 13): Fahrzeuge zeigen aktuelle km/h als kleines Badge über dem Marker.
+- **Fahrzeug-Favoriten-Liste Panel**: Sterne-Button im Fahrzeug-Detail, Favoriten-Panel mit Schnellauswahl, LocalStorage-Persistenz.
+- **Betriebsstatus-Panel**: Detaillierte Ansicht aller Feed-Quellen, Fahrzeuganzahl, GTFS-Regionen, Kartenkacheln, letzte Aktualisierung.
+- **Gleis-Info im Stations-Board**: `platform`-Chip bei Abfahrten (live vs. geplant), Störungs-Ticker mit Schweregrad (niedrig/mittel/hoch).
+- **Fahrzeug-Trajektur auf Karte**: Wiedergabe der Fahrtroute als Linie mit Start-/Endpunkt.
+- **Gleiche-Linie-Ansicht im Detail-Panel**: Alle Fahrzeuge derselben Linie mit individuellem Verspätungsstatus.
+- **Tastatur-Shortcuts**: R = neu laden, F = Fahrzeuge zeigen, S = Stationen, ? = Quellen.
+- **Update-Toast**: Benachrichtigung bei neuer Version.
+- **Feed-Gesundheits-Banner**: Warnt wenn alle Feeds nicht erreichbar, mit „Erneut versuchen"-Button.
+- **Farbkodierte Verspätung**: OK (grün), Warnung (gelb), Schwer (rot) im Fahrzeug-Detail und Favoriten-Panel.
+- **Zuverlässigkeits-Badge**: Aktuell / verzögert / alt-unklar.
+- **Last-Update mit Datum**: Präziser Zeitstempel statt nur Uhrzeit.
+- **Panel-Toggle**: Favoriten- und Linien-Panel öffnen/schließen per Klick.
+- **3D nur bei Änderung**: `renderKey` → `update()` mit `moved`-Check, Puffer bleibt bei ruhender Kamera erhalten.
+- **Service Worker**: `/api/*` nie cachen, App-Hülle cachen, Fehlerseiten nicht cachen, versionsfähige Registrierung `/sw.js?v=9.9.0`, scope `/`.
+- **Cache-Buster**: 167 Stellen, inkl. aller Importe im App-Graph; Sync-Werkzeug vergibt fehlende Versionen automatisch.
+- **Bug-Fixes**: `radar55.js` Funktionen `tools`/`openPanel`/`closePanel` wiederhergestellt; 3D-Szene bei ruhender Kamera erhalten; SW speichert keine 502-Fehlerseite mehr; `frontAxis` Citaro korrigiert auf `+z`.
+
+*Tests:* 270/273 → 270/270 grün (inkl. 11 neue i18n-Tests).
+
+---
+
+## 9.9.0 – Linien-Status-Übersicht und Mehrsprachigkeit (DE/IT)
+
+**`a5ed96e`, `143b6ca`, `ee589f1`, `27a3943`, `81f10b5`**
+
+### Mehrsprachigkeit (DE/IT)
+
+- **Zentrale Übersetzungsstruktur**: `public/translations.mjs` mit allen UI-Texten als `{ de, it }`-Paare. Fehlende Übersetzungen fallen auf Deutsch zurück, nie leere Texte.
+- **Sprachschalter**: DE/IT-Button in der Top-Leiste, Auswahl wird in `localStorage` (`sr-locale`) gespeichert und beim nächsten Besuch wiederhergestellt.
+- **`data-t` Attribute**: Alle statischen HTML-Texte (Buttons, Panels, Banner, Tooltips, Aria-Labels) übersetzt via `applyTranslations()`.
+- **Dynamische Texte**: `statusLabel()`, `updateHealthPanel()`, `updateFavPanel()`, `lastUpdate` verwenden `t()` für sprachgerechte Ausgabe.
+- **Locale-aware Datumsanzeige**: `toLocaleTimeString`/`toLocaleString` mit `de-IT` bzw. `it-IT`.
+- **Tests**: 11 neue i18n-Tests in `tests/i18n.test.js` (Sprache wechseln, Fallback, localStorage, Platzhalter, keine leeren Texte).
+
+### Linien-Status-Übersicht
+
+- **Linien-Status-Panel**: Togglebar über „LINIEN"-Button in der Top-Leiste.
+- **Alle verfügbaren Linien**: Aus Fahrzeugdaten und Störungs-Alerts (`informed_entity`) zusammengestellt, doppelte Fahrzeugzählung vermieden.
+- **Status pro Linie**: Pünktlich (grün), Verspätet (gelb), Gestört (rot), Unbekannt (grau) – basierend auf Fahrzeug-Verspätung und Alert-Schweregrad.
+- **Fahrzeuganzahl und Verspätung**: Je Linie angezeigt, nur zuverlässig berechenbare Werte.
+- **Suche und Filter**: Textsuche über Linienname/ID, Filter-Chips (Alle / Pünktlich / Verspätet / Gestört).
+- **Klick hebt hervor**: Fahrzeuge der gewählten Linie werden auf der Karte markiert (`line-highlight` CSS-Klasse, Drop-Shadow + Outline).
+- **Tests**: Keine separaten Tests (Panel nutzt bestehende `state.vehicles` und `state.alerts`).
+
+### Störungs-Ticker verbessert
+
+- **Einzelner Schließen-Button**: „Alle Meldungen ausblenden" für das gesamte Panel statt pro Eintrag.
+- **Betroffene Linien**: Anzahl der betroffenen Linien pro Störung angezeigt (keine technischen `route_id`s mehr).
+- **Gelöschte bleiben weg**: `dismissedAlerts` in `localStorage` (`sr-dismissed-alerts`), gelöschte IDs werden beim nächsten Feed-Refresh ausgefiltert.
+
+*Tests:* 281/281 grün (inkl. 11 neue i18n-Tests).
+
+---
+
+## Auslieferung 9.9.0
+
+| Schritt | Ergebnis |
+|---|---|
+| Version | 9.9.0 in `package.json`, `worker.js` (`/api/version`), `radar80.js` (`BUILD`), `index.html` (Badge + Meta) |
+| Cache-Buster | 167 Stellen auf `?v=9.9.0` via `tools/sync-version.mjs` |
+| Radar Quality Gate | **grün** |
+| Workers Builds (Cloudflare) | rot in 0 s – **Vorbefund**, auf jedem PR-Branch so, in der README als kein Qualitätssignal vermerkt |
+| Tests | 281/281 grün |
+| Service Worker | `/api/*` nie cachen, App-Hülle cachen, Fehlerseiten nicht cachen |
+
