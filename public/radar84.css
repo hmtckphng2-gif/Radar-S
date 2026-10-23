@@ -362,8 +362,10 @@
 .lines-item.line-highlight{background:rgba(127,214,168,.15)!important}
 .lines-item.line-highlight .line-name{color:#7fd6a8}
 .marker-line-highlight{filter:drop-shadow(0 0 6px #7fd6a8)!important;outline:2px solid #7fd6a8;outline-offset:2px}
-.alert-item{display:flex;align-items:center;gap:6px;justify-content:space-between}
-.alert-dismiss{
-  background:none;border:none;color:#a4b2c5;font-size:14px;font-weight:bold;cursor:pointer;padding:0 6px;
+.alert-item{display:flex;align-items:center;gap:6px;justify-content:space-between;flex-wrap:wrap}
+.alert-close-all{
+  width:100%;margin-top:8px;padding:6px 10px;border:1px solid var(--radar84-line);border-radius:8px;
+  background:rgba(239,71,111,.15);color:#ef476f;font-size:12px;font-weight:bold;cursor:pointer;
 }
-.alert-dismiss:hover{color:#ef476f;background:rgba(239,71,111,.15);border-radius:4px}
+.alert-close-all:hover{background:rgba(239,71,111,.3);color:#fff}
+.alert-lines{font-size:11px;color:#9fc5ff;margin-left:auto;white-space:nowrap}

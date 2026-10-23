@@ -266,26 +266,28 @@ function updateAlertTicker(){
     let sevClass='alert-sev-medium';
     if(a.cause===3||a.cause===4||a.effect===2||a.effect===4)sevClass='alert-sev-high';
     else if(a.cause===1||a.cause===2||a.cause===5||a.effect===1||a.effect===5)sevClass='alert-sev-low';
-    item.innerHTML='<span class="effect">'+cName+'</span><span class="alert-sev '+sevClass+'">'+effName+'</span>'+escapeHtml(a.header)+(a.description?': '+escapeHtml(a.description.substring(0,70)):'')+'<span class="alert-age">'+ageStr+' · '+a.source.toUpperCase()+'</span>';
-    const del=document.createElement('button');
-    del.className='alert-dismiss';
-    del.textContent='✕';
-    del.title='Meldung entfernen';
-    del.onclick=(e)=>{
-      e.stopPropagation();
-      e.preventDefault();
-      const srcList=state.alerts[a.source];
-      if(srcList){
-        const idx=srcList.findIndex(x=>x.id===a.id);
-        if(idx>=0){
-          srcList.splice(idx,1);
-          if(srcList.length===0)delete state.alerts[a.source];
-          updateAlertTicker();
-        }
-      }
-    };
-    item.appendChild(del);
+    // Betroffene Linien aus informed_entity (route_id)
+    const lines=[];
+    for(const ent of (a.informed_entity||[])){
+      if(ent.route_id && !lines.includes(ent.route_id))lines.push(ent.route_id);
+    }
+    const lineStr=lines.length?'Linie'+(lines.length>1?'n':'')+': '+lines.join(', '):'';
+    item.innerHTML='<span class="effect">'+cName+'</span><span class="alert-sev '+sevClass+'">'+effName+'</span>'+escapeHtml(a.header)+(a.description?': '+escapeHtml(a.description.substring(0,70)):'')+(lineStr?' <span class="alert-lines">'+lineStr+'</span>':'')+'<span class="alert-age">'+ageStr+' · '+a.source.toUpperCase()+'</span>';
     listEl.appendChild(item);
+  }
+  // Einzelner Schließen-Button für das gesamte Ticker-Panel
+  let closeBtn=ticker.querySelector('.alert-close-all');
+  if(!closeBtn){
+    closeBtn=document.createElement('button');
+    closeBtn.className='alert-close-all';
+    closeBtn.textContent='Alle Meldungen ausblenden';
+    closeBtn.title='Störungs-Ticker schließen';
+    closeBtn.onclick=()=>{
+      state.alerts={};
+      ticker.hidden=true;
+      updateAlertTicker();
+    };
+    ticker.insertBefore(closeBtn, listEl);
   }
 }
 function showSourceStatus(){
