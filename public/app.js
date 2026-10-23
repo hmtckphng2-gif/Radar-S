@@ -52,6 +52,8 @@ const RT_MAX_AGE_SEC=15*60;
 function safeText(value) { return txt(value); }
 function duration(ms) {return Math.round(ms/1000)}
 function escapeHtml(value) { return safeText(value).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function E(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e}
+function B(cls,txt,fn){const b=E('button',cls,txt);b.type='button';if(fn)b.addEventListener('click',fn);return b}
 function setNotice(message, visible=true) {
   $('notice').hidden=!visible;
   if(message) $('notice').innerHTML='<button class="info-close" id="noticeClose" aria-label="Hinweis schließen">×</button>'+message;
@@ -695,6 +697,23 @@ function drawVehicleDetails(key,fetchSchedule){
     favBtn.title=isLineFavorite(lineKey)?'Linie aus Favoriten entfernen':'Linie zu Favoriten hinzufügen';
     favBtn.onclick=()=>{toggleLineFavorite(lineKey);favBtn.textContent=isLineFavorite(lineKey)?'★ Linie favorisiert':'☆ Linie favorisieren';favBtn.title=isLineFavorite(lineKey)?'Linie aus Favoriten entfernen':'Linie zu Favoriten hinzufügen';refreshMarkers();statusLabel();};
     badges.append(favBtn);
+  }
+  // Gleiche Linie: andere Fahrzeuge derselben Route anzeigen
+  const lineVehicles=[...state.vehicles.values()].filter(v2=>v2.key!==key&&v2.routeId===v.routeId&&v2.source===v.source&&visible(v2));
+  if(lineVehicles.length){
+    const sec=document.createElement('div');sec.className='detail-section';
+    sec.append(E('strong','Gleiche Linie ('+lineVehicles.length+')'));
+    const list=E('div','line-vehicles');
+    for(const lv of lineVehicles.slice(0,8)){
+      const btn=B('badge line-item',lv.name,()=>{selectVehicle(lv.key);});
+      btn.title=lv.headsign||'Ziel unbekannt';
+      const delay=currentVehicleDelay(lv);
+      const dCls=delay? (Math.abs(delay.delay||0)>=120?'delay-severe':Math.abs(delay.delay||0)>=30?'delay-warn':'delay-ok') : 'delay-none';
+      btn.append(E('small',formatDelay(delay?.delay||0)+(delay?.basis==='fahrt'?'·Fahrt':''),dCls));
+      list.append(btn);
+    }
+    sec.append(list);
+    $('details').append(sec);
   }
   let note='Die Kartenposition ist '+(v.source==='sta'?'ein Feed-Messwert, nicht zwingend GPS.':'simuliert/geschätzt, keine GPS-Ortung.')+' ';
   if(v.stale)note+='Dieser Marker ist nur die letzte bekannte Position; der aktuelle Feed enthält ihn nicht. ';

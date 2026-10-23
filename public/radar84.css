@@ -219,6 +219,17 @@
 .marker-wrap.favorite .marker-label{color:#ffd700!important}
 .marker-wrap.line-favorite{filter:drop-shadow(0 0 3px #ffd700)}
 .marker-wrap.line-favorite .marker-label{color:#ffd700!important}
+/* 9.8 - Gleiche Linie im Fahrzeug-Detail */
+.line-vehicles{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.line-item{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 10px;border-radius:10px;border:1px solid var(--radar84-line);
+  background:var(--radar84-glass);font-size:12px;cursor:pointer;transition:background 0.2s;
+}
+.line-item:hover{background:rgba(120,184,255,.15)}
+.line-item .delay-ok{color:#7fd6a8;font-weight:bold}
+.line-item .delay-warn{color:#ffd166;font-weight:bold}
+.line-item .delay-severe{color:#ef476f;font-weight:bold}
 /* 9.7 - Live-Suche: Trefferliste unter dem Suchfeld. Klick springt zum Fahrzeug. */
 #searchResults.search-results{
   position:absolute;top:calc(100% + 4px);left:0;right:0;
