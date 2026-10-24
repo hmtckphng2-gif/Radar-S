@@ -250,18 +250,17 @@ function updateAlertTicker(){
   }
   if(all.length===0){ticker.hidden=true;return;}
   ticker.hidden=false;
-  countEl.textContent=all.length+' Störung'+(all.length>1?'en':'')+' im System';
+  countEl.textContent=all.length===1?t('alert.count.one'):t('alert.count.many',{n:all.length});
   listEl.innerHTML='';
-  const causeNames={1:'Verspätung',2:'Verspätung',3:'Ausfall',4:'Ausfall',5:'Verspätung',6:'Verspätung',7:'Verspätung',8:'Störung',9:'Störung'};
   const nowSec=Date.now()/1000;
   for(const a of all.slice(0,8)){
     const item=document.createElement('div');
     item.className='alert-item';
-    const cName=causeNames[a.cause]||'Störung';
-    const effName=a.effect===1?'Verspätung':a.effect===2?'Ausfall':a.effect===3?'Verspätung':a.effect===4?'Ausfall':a.effect===5?'Verspätung':a.effect===6?'Verspätung':'Störung';
+    const cName=t('alert.cause.'+(a.cause||0))||t('alert.stoerung');
+    const effName=t('alert.effect.'+(a.effect||0))||t('alert.stoerung');
     // Datenaktualität berechnen
     const ageSec=a.fetchedAt?Math.max(0,Math.floor(nowSec-a.fetchedAt/1000)):null;
-    const ageStr=ageSec!==null?ageSec<60?'gerade':ageSec<3600?Math.floor(ageSec/60)+' Min.':Math.floor(ageSec/3600)+' Std.':'-';
+    const ageStr=ageSec!==null?ageSec<60?t('alert.age.just'):ageSec<3600?Math.floor(ageSec/60)+' '+t('alert.age.min'):Math.floor(ageSec/3600)+' '+t('alert.age.hour'):'-';
     // Schweregrad-Farbe
     let sevClass='alert-sev-medium';
     if(a.cause===3||a.cause===4||a.effect===2||a.effect===4)sevClass='alert-sev-high';
@@ -273,7 +272,7 @@ function updateAlertTicker(){
     for(const ent of (a.informed_entity||[])){
       if(ent.route_id)lineCount++;
     }
-    const lineStr=lineCount?'Betroffene Linien: '+lineCount:'';
+    const lineStr=lineCount?t('alert.lines',{n:lineCount}):'';
     item.innerHTML='<span class="alert-chip alert-sev '+sevClass+'">'+cName+'</span>'+escapeHtml(a.header)+(a.description?': '+escapeHtml(a.description.substring(0,70)):'')+(lineStr?' <span class="alert-lines">'+lineStr+'</span>':'')+'<span class="alert-age">'+ageStr+' · '+a.source.toUpperCase()+'</span>';
     listEl.appendChild(item);
   }
@@ -834,10 +833,10 @@ function drawVehicleDetails(key,fetchSchedule){
   $('sheetTitle').textContent=(v.kind==='train'?'🚆 ':'🚌 ')+v.name;
   $('sheetSub').textContent=v.headsign;
   const badges=$('sheetBadges');badges.replaceChildren();
-  badges.append(badge(v.kind==='train'?'Zug':'Bus'));
-  badges.append(badge(v.stale?'Letzte bekannte Position':'Aktueller Feed',v.stale?'warn':'ok'));
+  badges.append(badge(v.kind==='train'?t('detail.kind.train'):t('detail.kind.bus')));
+  badges.append(badge(v.stale?t('detail.status.stale'):t('detail.status.live'),v.stale?'warn':'ok'));
   badges.append(badge(v.positionType,'warn'));
-  if(v.kind==='bus') badges.append(badge(v.lineVerified?'GTFS-Linie geprüft':'Linie unbekannt',v.lineVerified?'ok':'warn'));
+  if(v.kind==='bus') badges.append(badge(v.lineVerified?t('detail.line.verified'):t('detail.line.unverified'),v.lineVerified?'ok':'warn'));
   const favBtn=document.createElement('button');
   favBtn.className='badge fav-badge';
   favBtn.textContent=isFavorite(v.key)?'★ Favorit':'☆ Favorit';
@@ -846,35 +845,35 @@ function drawVehicleDetails(key,fetchSchedule){
   badges.append(favBtn);
   renderModel(v);
   $('details').replaceChildren();
-  detail('Zug / Linie',v.name);
+  detail(t('detail.label.trainLine'),v.name);
   const update=state.updates.get(v.source+':'+v.tripId);
   const cancelled=/^(?:CANCELED|CANCELLED|3)$/i.test(update?.scheduleRelationship||'');
-  detail('Status',cancelled?'Fahrt entfällt':update?'RT-Fahrtdaten vorhanden':'Keine Fahrtstatusdaten');
+  detail(t('detail.label.status'),cancelled?t('detail.status.cancelled'):update?t('detail.status.rtAvailable'):t('detail.status.noRt'));
   const info=currentVehicleDelay(v);
   let delayCls='delay-none';
   if(info){
     const d=Math.abs(info.delay||0);
     delayCls=d>=900?'delay-severe':d>=120?'delay-warn':'delay-ok';
   }
-  detail('Verspätung (GTFS-RT)',cancelled?'Entfällt':info?formatDelay(info.delay)+(info.basis==='fahrt'?' · Fahrtwert':/^(STOPPED_AT|1)$/i.test(v.currentStatus)?' · am Halt':' · nächster Halt'):'Keine bestätigten Verspätungsdaten',delayCls);
-  detail('Fahrtziel',v.headsign);
-  detail('Fahrzeug-ID',v.vehicleId);
-  detail('Fahrt-ID',v.tripId||'Nicht verfügbar');
+  detail(t('detail.label.delay'),cancelled?t('detail.status.delayed'):info?formatDelay(info.delay)+(info.basis==='fahrt'?t('detail.delay.tripValue'):/^(STOPPED_AT|1)$/i.test(v.currentStatus)?t('detail.delay.atStop'):t('detail.delay.nextStop')):t('detail.status.noDelayData'),delayCls);
+  detail(t('detail.label.destination'),v.headsign);
+  detail(t('detail.label.vehicleId'),v.vehicleId);
+  detail(t('detail.label.tripId'),v.tripId||t('detail.label.notAvailable'));
   // Zwei getrennte Werte: die gemeldete Verspaetung und die Abweichung vom Fahrplan.
   // Die eine ist eine Zeitangabe, die andere eine Ortsangabe.
   const schedule=trainScheduledPosition(v,state.indexes,state.details,state.shapes);
-  if(schedule)detail('Abweichung Fahrplan','~'+schedule.differenceKm.toFixed(1)+' km '+schedule.relative+' ('+schedule.from+' - '+schedule.to+')');
-  detail('Positionsalter',feedAgeSeconds(v)===null?'Unbekannt':duration(feedAgeSeconds(v)*1000)+' Sek.');
-  detail('Geschwindigkeit',v.speed===null?'Nicht verfügbar':v.speed+' km/h (Feed)');
-  detail('Quelle',v.source.toUpperCase()+' / GTFS-RT');
+  if(schedule)detail(t('detail.label.planDeviation'),'~'+schedule.differenceKm.toFixed(1)+t('detail.delay.km')+' '+schedule.relative+' ('+schedule.from+' - '+schedule.to+')');
+  detail(t('detail.label.positionAge'),feedAgeSeconds(v)===null?t('detail.label.notAvailable'):duration(feedAgeSeconds(v)*1000)+t('detail.delay.sec'));
+  detail(t('detail.label.speed'),v.speed===null?t('detail.label.notAvailable'):v.speed+t('detail.delay.kmh'));
+  detail(t('detail.label.source'),v.source.toUpperCase()+' / GTFS-RT');
   const quality=observationQuality(v,Date.now());
-  detail('Zuverlässigkeit',quality.status.toUpperCase(),quality.status==='aktuell'?'delay-ok':quality.status==='verzögert'?'delay-warn':'delay-severe');
+  detail(t('detail.label.reliability'),quality.status.toUpperCase(),quality.status==='aktuell'?'delay-ok':quality.status==='verzögert'?'delay-warn':'delay-severe');
   const lineKey=v.routeId?(v.source+':'+v.routeId):'';
   if(lineKey){
     const favBtn=document.createElement('button');
     favBtn.className='badge line-fav-badge';
-    favBtn.textContent=isLineFavorite(lineKey)?'★ Linie favorisiert':'☆ Linie favorisieren';
-    favBtn.title=isLineFavorite(lineKey)?'Linie aus Favoriten entfernen':'Linie zu Favoriten hinzufügen';
+    favBtn.textContent=isLineFavorite(lineKey)?t('fav.lineBtnRemove'):t('fav.lineBtnAdd');
+    favBtn.title=isLineFavorite(lineKey)?t('fav.lineBtnRemove'):t('fav.lineBtnAdd');
     favBtn.onclick=()=>{toggleLineFavorite(lineKey);favBtn.textContent=isLineFavorite(lineKey)?t('fav.lineBtnRemove'):t('fav.lineBtnAdd');favBtn.title=isLineFavorite(lineKey)?t('fav.lineBtnRemove'):t('fav.lineBtnAdd');refreshMarkers();statusLabel();};
     badges.append(favBtn);
   }
@@ -882,25 +881,25 @@ function drawVehicleDetails(key,fetchSchedule){
   const lineVehicles=[...state.vehicles.values()].filter(v2=>v2.key!==key&&v2.routeId===v.routeId&&v2.source===v.source&&visible(v2));
   if(lineVehicles.length){
     const sec=document.createElement('div');sec.className='detail-section';
-    sec.append(E('strong','Gleiche Linie ('+lineVehicles.length+')'));
+    sec.append(E('strong',t('detail.label.sameLine',{n:lineVehicles.length})));
     const list=E('div','line-vehicles');
     for(const lv of lineVehicles.slice(0,8)){
       const btn=B('badge line-item',lv.name,()=>{selectVehicle(lv.key);});
-      btn.title=lv.headsign||'Ziel unbekannt';
+      btn.title=lv.headsign||t('detail.label.unknownTarget');
       const delay=currentVehicleDelay(lv);
       const dCls=delay? (Math.abs(delay.delay||0)>=120?'delay-severe':Math.abs(delay.delay||0)>=30?'delay-warn':'delay-ok') : 'delay-none';
-      btn.append(E('small',formatDelay(delay?.delay||0)+(delay?.basis==='fahrt'?'·Fahrt':''),dCls));
+      btn.append(E('small',formatDelay(delay?.delay||0)+(delay?.basis==='fahrt'?t('detail.delay.tripValue').slice(1):''),dCls));
       list.append(btn);
     }
     sec.append(list);
     $('details').append(sec);
   }
-  let note='Die Kartenposition ist '+(v.source==='sta'?'ein Feed-Messwert, nicht zwingend GPS.':'simuliert/geschätzt, keine GPS-Ortung.')+' ';
-  if(v.stale)note+='Dieser Marker ist nur die letzte bekannte Position; der aktuelle Feed enthält ihn nicht. ';
-  if(v.kind==='bus'&&!v.lineVerified)note+='Ohne passenden statischen GTFS-Eintrag keine bestätigte Liniennummer. ';
-  if(v.kind==='bus')note+=mapTarget(v).path?'Kartenbewegung: zeitverzögert zwischen empfangenen Punkten entlang einer geprüften GTFS-Strecke; keine sekundengenaue GPS-Ortung. ':'Keine eindeutig passende GTFS-Straße: Nur tatsächlich empfangene Positionen, keine erfundene Bewegung. ';
-  if(v.kind==='train'&&!v.nameVerified)note+='Die offizielle Zugnummer ist noch nicht zugeordnet. ';
-  if(v.kind==='train')note+=state.jobs.get(v.key)?.replay ? 'Markerbewegung ist eine zeitverzögerte Wiedergabe zwischen empfangenen Feedpositionen auf einer passenden GTFS-Strecke, keine sekundengenaue Live-GPS-Ortung. ' : 'Nur empfangene Feedpositionen – ohne zwei passende Messpunkte wird keine zusätzliche Zugbewegung dargestellt. ';
+  let note=t('detail.note.feedValue')+' ';
+  if(v.stale)note+=t('detail.note.stale')+' ';
+  if(v.kind==='bus'&&!v.lineVerified)note+=t('detail.note.busNoLine')+' ';
+  if(v.kind==='bus')note+=mapTarget(v).path?t('detail.note.busMovement')+' ':t('detail.note.busNoShape')+' ';
+  if(v.kind==='train'&&!v.nameVerified)note+=t('detail.note.trainNoNumber')+' ';
+  if(v.kind==='train')note+=state.jobs.get(v.key)?.replay ? t('detail.note.trainReplay')+' ' : t('detail.note.trainPositions')+' ';
   $('sheetNote').textContent=note;
   if(fetchSchedule)loadSchedule(key);
   else if(state.details[v.source])renderStops(v,state.details[v.source]);
