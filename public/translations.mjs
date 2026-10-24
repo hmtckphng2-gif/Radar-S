@@ -179,6 +179,10 @@ const T = {
   'lines.status.disturbed': { de: 'Gestört', it: 'Interrotto' },
   'lines.status.unknown': { de: 'Unbekannt', it: 'Sconosciuto' },
   'lines.status.old': { de: 'Veraltet', it: 'Datato' },
+  'status.old': { de: 'veraltet', it: 'datato' },
+  'status.notLive': { de: 'NICHT LIVE', it: 'NON LIVE' },
+  'gtfs.indexStale': { de: 'Veralteter GTFS-Index', it: 'Indice GTFS obsoleto' },
+  'detail.label.unknownTarget': { de: 'Ziel unbekannt', it: 'Destinazione sconosciuta' },
   'lines.vehicles': { de: 'Fahrzeuge', it: 'Veicoli' },
   'lines.delay': { de: 'Verspätung', it: 'Ritardo' },
   'lines.onTime': { de: 'pünktlich', it: 'in orario' },
@@ -284,7 +288,6 @@ const T = {
   'detail.label.source': { de: 'Quelle', it: 'Fonte' },
   'detail.label.reliability': { de: 'Zuverlässigkeit', it: 'Affidabilità' },
   'detail.label.sameLine': { de: 'Gleiche Linie ({n})', it: 'Stessa linea ({n})' },
-  'detail.label.unknownTarget': { de: 'Ziel unbekannt', it: 'Destinazione sconosciuta' },
   'detail.status.cancelled': { de: 'Fahrt entfällt', it: 'Corsa soppressa' },
   'detail.status.rtAvailable': { de: 'RT-Fahrtdaten vorhanden', it: 'Dati RT disponibili' },
   'detail.status.noRt': { de: 'Keine Fahrtstatusdaten', it: 'Nessun dato stato corsa' },
@@ -321,7 +324,6 @@ const T = {
   // GTFS-Import Hinweise
   'gtfs.importPending': { de: 'GTFS-Import ausstehend:', it: 'Importazione GTFS in attesa:' },
   'gtfs.importPendingDesc': { de: '{n}/{m} Regionen haben Fahrplandaten. Die Karte funktioniert, aber Buslinien und Fahrtziele bleiben ohne Zuordnung unbekannt.', it: '{n}/{m} regioni hanno dati orari. La mappa funziona, ma linee autobus e destinazioni restano senza assegnazione.' },
-  'gtfs.indexStale': { de: 'Veralteter GTFS-Index', it: 'Indice GTFS obsoleto' },
   // Alert-Ticker Übersetzungen
   'alert.count.one': { de: '1 Störung im System', it: '1 segnalazione nel sistema' },
   'alert.count.many': { de: '{n} Störungen im System', it: '{n} segnalazioni nel sistema' },
