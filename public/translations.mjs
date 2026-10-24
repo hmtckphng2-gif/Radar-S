@@ -318,6 +318,10 @@ const T = {
   'board.positionNotFound': { de: 'Im Echtzeitfeed nicht gefunden', it: 'Non trovato nel feed in tempo reale' },
   'board.delayNotChecked': { de: 'Nicht überprüft', it: 'Non verificato' },
   'board.live': { de: 'Live', it: 'Live' },
+  // GTFS-Import Hinweise
+  'gtfs.importPending': { de: 'GTFS-Import ausstehend:', it: 'Importazione GTFS in attesa:' },
+  'gtfs.importPendingDesc': { de: '{n}/{m} Regionen haben Fahrplandaten. Die Karte funktioniert, aber Buslinien und Fahrtziele bleiben ohne Zuordnung unbekannt.', it: '{n}/{m} regioni hanno dati orari. La mappa funziona, ma linee autobus e destinazioni restano senza assegnazione.' },
+  'gtfs.indexStale': { de: 'Veralteter GTFS-Index', it: 'Indice GTFS obsoleto' },
   // Alert-Ticker Übersetzungen
   'alert.count.one': { de: '1 Störung im System', it: '1 segnalazione nel sistema' },
   'alert.count.many': { de: '{n} Störungen im System', it: '{n} segnalazioni nel sistema' },

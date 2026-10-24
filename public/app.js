@@ -309,7 +309,7 @@ async function loadIndexes(){
       state.indexes[source]=db;
       if(!indexReady(source)) {
         console.warn('GTFS index missing or outside its validity dates:',source);
-        state.indexes[source]={meta:{ready:false,note:'Veralteter GTFS-Index'}};
+        state.indexes[source]={meta:{ready:false,note:t('gtfs.indexStale')}};
       }
     }
     catch(e){state.indexes[source]={}; console.warn('GTFS index unavailable:',source,e)}
@@ -320,7 +320,7 @@ async function loadIndexes(){
   } catch(e){console.warn('Vehicle models unavailable:',e)}
   state.indexes.sta_direct=state.indexes.sta;
   const present=SOURCES.filter(indexReady);
-  if(present.length<3)setNotice('<strong>GTFS-Import ausstehend:</strong> '+present.length+'/3 Regionen haben Fahrplandaten. Die Karte funktioniert, aber Buslinien und Fahrtziele bleiben ohne Zuordnung unbekannt. Starte die GitHub-Action „Update GTFS timetable indexes“.');
+  if(present.length<3)setNotice('<strong>'+t('gtfs.importPending')+'</strong> '+t('gtfs.importPendingDesc',{n:present.length,m:SOURCES.length}));
 }
 async function loadRailShapes(){
   await Promise.all(SOURCES.map(async source=>{
