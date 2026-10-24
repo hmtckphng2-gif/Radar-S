@@ -316,6 +316,114 @@ Warteschleife und `await` vorhanden sind.
 - **Last-Update mit Datum**: Präziser Zeitstempel statt nur Uhrzeit.
 - **Panel-Toggle**: Favoriten- und Linien-Panel öffnen/schließen per Klick.
 - **3D nur bei Änderung**: `renderKey` → `update()` mit `moved`-Check, Puffer bleibt bei ruhender Kamera erhalten.
+- **Service Worker**: `/api/*` nie cachen, App-Hülle cachen, Fehlerseiten nicht cachen, versionsfähige Registrierung `/sw.js?v=9.8.0`, scope `/`.
+- **Cache-Buster**: 167 Stellen, inkl. aller Importe im App-Graph; Sync-Werkzeug vergibt fehlende Versionen automatisch.
+- **Bug-Fixes**: `radar55.js` Funktionen `tools`/`openPanel`/`closePanel` wiederhergestellt; 3D-Szene bei ruhender Kamera erhalten; SW speichert keine 502-Fehlerseite mehr; `frontAxis` Citaro korrigiert auf `+z`.
+
+*Tests:* 270/273 → 270/270 grün.
+
+---
+
+## 9.9.0 – Linien-Status-Übersicht und Mehrsprachigkeit (DE/IT)
+
+**`a5ed96e`, `143b6ca`, `ee589f1`, `27a3943`, `81f10b5`**
+
+### Mehrsprachigkeit (DE/IT)
+
+- **Zentrale Übersetzungsstruktur**: `public/translations.mjs` mit allen UI-Texten als `{ de, it }`-Paare. Fehlende Übersetzungen fallen auf Deutsch zurück, nie leere Texte.
+- **Sprachschalter**: DE/IT-Button in der Top-Leiste, Auswahl wird in `localStorage` (`sr-locale`) gespeichert und beim nächsten Besuch wiederhergestellt.
+- **`data-t` Attribute**: Alle statischen HTML-Texte (Buttons, Panels, Banner, Tooltips, Aria-Labels) übersetzt via `applyTranslations()`.
+- **Dynamische Texte**: `statusLabel()`, `updateHealthPanel()`, `updateFavPanel()`, `lastUpdate` verwenden `t()` für sprachgerechte Ausgabe.
+- **Locale-aware Datumsanzeige**: `toLocaleTimeString`/`toLocaleString` mit `de-IT` bzw. `it-IT`.
+- **Tests**: 11 neue i18n-Tests in `tests/i18n.test.js` (Sprache wechseln, Fallback, localStorage, Platzhalter, keine leeren Texte).
+
+### Linien-Status-Übersicht
+
+- **Linien-Status-Panel**: Togglebar über „LINIEN"-Button in der Top-Leiste.
+- **Alle verfügbaren Linien**: Aus Fahrzeugdaten und Störungs-Alerts (`informed_entity`) zusammengestellt, doppelte Fahrzeugzählung vermieden.
+- **Status pro Linie**: Pünktlich (grün), Verspätet (gelb), Gestört (rot), Unbekannt (grau) – basierend auf Fahrzeug-Verspätung und Alert-Schweregrad.
+- **Fahrzeuganzahl und Verspätung**: Je Linie angezeigt, nur zuverlässig berechenbare Werte.
+- **Suche und Filter**: Textsuche über Linienname/ID, Filter-Chips (Alle / Pünktlich / Verspätet / Gestört).
+- **Klick hebt hervor**: Fahrzeuge der gewählten Linie werden auf der Karte markiert (`line-highlight` CSS-Klasse, Drop-Shadow + Outline).
+
+### Störungs-Ticker verbessert
+
+- **Einzelner Schließen-Button**: „Alle Meldungen ausblenden" für das gesamte Panel statt pro Eintrag.
+- **Betroffene Linien**: Anzahl der betroffenen Linien pro Störung angezeigt (keine technischen `route_id`s mehr).
+- **Gelöschte bleiben weg**: `dismissedAlerts` in `localStorage` (`sr-dismissed-alerts`), gelöschte IDs werden beim nächsten Feed-Refresh ausgefiltert.
+
+*Tests:* 281/281 grün (inkl. 11 neue i18n-Tests).
+
+---
+
+## 10.0 – AI Engineering Team Upgrade (in Arbeit)
+
+**`adb6080` (lokal, nicht gepusht)**
+
+### Übernommene Komponenten aus externen Repositories
+
+| Repository | Komponente | Verwendung |
+|------------|------------|------------|
+| **gstack** (garrytan/gstack) | `/review`, `/qa`, `/benchmark`, `/document-release`, `/office-hours` | Methodik für Code-Review, QA, Performance, Dokumentation |
+| **ECC** (affaan-m/ECC) | `/ecc:plan`, `tdd-workflow`, `/code-review`, `/security-scan` | Entwicklungs-Workflow, Security-Scan |
+| **Huashu Design** (alchaincyf/huashu-design) | `assets/` (CSS-only, zero deps), `scripts/design_lint.py`, Style-Specimens | UI/UX-Konzept, Design-Bodycheck |
+
+Nicht übernommen: NPM-Pakete, Bun, Docker, kostenpflichtige Modelle ohne Zustimmung.
+
+### Umgesetzte Verbesserungen (10.0)
+
+- **i18n-Vervollständigung**: Alle UI-Texte in Fahrzeug-Detail, Abfahrts-Board, Reise-Detail, GTFS-Hinweisen auf DE/IT übersetzt.
+- **i18n-Completeness-Test**: `tests/i18n-completeness.test.js` prüft dass alle `data-t` und `t()` Keys Übersetzungen haben und beide Sprachen (de/it) vorhanden sind.
+- **Test-Update**: `tests/radar51.test.js` an `t()`-Struktur angepasst.
+
+*Tests:* 285/285 grün (281 Original + 4 neue i18n-Completeness Tests).
+
+### Architektur-Review (Engineering Review)
+
+**Befund:** `public/app.js` ist mit 79.532 Bytes und ~70 Funktionen eine "God Datei". Die größte Funktion `refreshMarkers()` vereint Marker-Erstellung, Bus-Track-Management, Animationen und Trajektur-Aufzeichnung.
+
+**Empfehlung für 10.0+:** Aufteilung von `app.js` in logische Module:
+- `app-core.js` – Initialisierung, Feed-Refresh, State-Management
+- `app-ui.js` – UI-Rendering (Panels, Badges, Details, Alerts)
+- `app-map.js` – Karten-Logik, Marker, Trajekturen
+- `app-search.js` – Suche, Stationen, Fahrplan
+
+**Wichtig:** Keine destruktiven Änderungen ohne ausdrückliche Zustimmung. Bestehende Funktionen (3D, Abfahrten, Live-Daten, Favoriten, Störungs-Ticker) bleiben unverändert.
+
+---
+
+## Auslieferung 10.0
+
+| Schritt | Ergebnis |
+|---------|----------|
+| Version | 9.9.0 (Upgrade auf 10.0 in Planung) |
+| Tests | 285/285 grün |
+| Architecture Check | 137 JS-Module, 92 HTML-Dateiverweise |
+| Cache-Buster | 167 Stellen auf `?v=9.9.0` |
+| Service Worker | `/api/*` nie cachen, App-Hülle cachen, Fehlerseiten nicht cachen |
+| Git | Commit `adb6080` lokal, **nicht gepusht** (warte auf Zustimmung) |
+
+
+---
+
+## 9.8.0 – Geschwindigkeit, Linien-Favoriten, Betriebsstatus, Gleis-Info
+
+**`645aa29`, `5679c1b`, `9c38c7d`, `853c31b`, `6f4c46c`**
+
+- **Geschwindigkeit auf Kartenmarkern** (ab Zoom 13): Fahrzeuge zeigen aktuelle km/h als kleines Badge über dem Marker.
+- **Fahrzeug-Favoriten-Liste Panel**: Sterne-Button im Fahrzeug-Detail, Favoriten-Panel mit Schnellauswahl, LocalStorage-Persistenz.
+- **Betriebsstatus-Panel**: Detaillierte Ansicht aller Feed-Quellen, Fahrzeuganzahl, GTFS-Regionen, Kartenkacheln, letzte Aktualisierung.
+- **Gleis-Info im Stations-Board**: `platform`-Chip bei Abfahrten (live vs. geplant), Störungs-Ticker mit Schweregrad (niedrig/mittel/hoch).
+- **Fahrzeug-Trajektur auf Karte**: Wiedergabe der Fahrtroute als Linie mit Start-/Endpunkt.
+- **Gleiche-Linie-Ansicht im Detail-Panel**: Alle Fahrzeuge derselben Linie mit individuellem Verspätungsstatus.
+- **Tastatur-Shortcuts**: R = neu laden, F = Fahrzeuge zeigen, S = Stationen, ? = Quellen.
+- **Update-Toast**: Benachrichtigung bei neuer Version.
+- **Feed-Gesundheits-Banner**: Warnt wenn alle Feeds nicht erreichbar, mit „Erneut versuchen"-Button.
+- **Farbkodierte Verspätung**: OK (grün), Warnung (gelb), Schwer (rot) im Fahrzeug-Detail und Favoriten-Panel.
+- **Zuverlässigkeits-Badge**: Aktuell / verzögert / alt-unklar.
+- **Last-Update mit Datum**: Präziser Zeitstempel statt nur Uhrzeit.
+- **Panel-Toggle**: Favoriten- und Linien-Panel öffnen/schließen per Klick.
+- **3D nur bei Änderung**: `renderKey` → `update()` mit `moved`-Check, Puffer bleibt bei ruhender Kamera erhalten.
 - **Service Worker**: `/api/*` nie cachen, App-Hülle cachen, Fehlerseiten nicht cachen, versionsfähige Registrierung `/sw.js?v=9.9.0`, scope `/`.
 - **Cache-Buster**: 167 Stellen, inkl. aller Importe im App-Graph; Sync-Werkzeug vergibt fehlende Versionen automatisch.
 - **Bug-Fixes**: `radar55.js` Funktionen `tools`/`openPanel`/`closePanel` wiederhergestellt; 3D-Szene bei ruhender Kamera erhalten; SW speichert keine 502-Fehlerseite mehr; `frontAxis` Citaro korrigiert auf `+z`.
