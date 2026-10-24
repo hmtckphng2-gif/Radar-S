@@ -276,6 +276,8 @@ const T = {
   'detail.label.destination': { de: 'Fahrtziel', it: 'Destinazione' },
   'detail.label.vehicleId': { de: 'Fahrzeug-ID', it: 'ID veicolo' },
   'detail.label.tripId': { de: 'Fahrt-ID', it: 'ID corsa' },
+  'detail.label.position': { de: 'Position', it: 'Posizione' },
+  'detail.label.trainNumber': { de: 'Zugnummer', it: 'Numero treno' },
   'detail.label.planDeviation': { de: 'Abweichung Fahrplan', it: 'Scostamento orario' },
   'detail.label.positionAge': { de: 'Positionsalter', it: 'Età posizione' },
   'detail.label.speed': { de: 'Geschwindigkeit', it: 'Velocità' },
@@ -308,6 +310,14 @@ const T = {
   'detail.delay.km': { de: ' km', it: ' km' },
   'detail.delay.sec': { de: ' Sek.', it: ' sec.' },
   'detail.delay.kmh': { de: ' km/h (Feed)', it: ' km/h (Feed)' },
+  // Abfahrts-Board
+  'board.liveNoDelay': { de: 'Live, keine Verspätung', it: 'Live, senza ritardo' },
+  'board.planned': { de: 'Geplant', it: 'Pianificato' },
+  'board.earlier': { de: 'Min. früher', it: 'Min. prima' },
+  'board.noGtfsPlan': { de: 'Nur GTFS-Fahrplan', it: 'Solo orario GTFS' },
+  'board.positionNotFound': { de: 'Im Echtzeitfeed nicht gefunden', it: 'Non trovato nel feed in tempo reale' },
+  'board.delayNotChecked': { de: 'Nicht überprüft', it: 'Non verificato' },
+  'board.live': { de: 'Live', it: 'Live' },
   // Alert-Ticker Übersetzungen
   'alert.count.one': { de: '1 Störung im System', it: '1 segnalazione nel sistema' },
   'alert.count.many': { de: '{n} Störungen im System', it: '{n} segnalazioni nel sistema' },

@@ -1044,7 +1044,8 @@ function showStationBoard(st){
       }
     }
     title.textContent=d.name+' · '+d.headsign;
-    const depText=delay===null?(live?'Live, keine Verspätung':'Geplant'):(delay>0?'Live · +'+Math.round(delay/60)+' Min.':'Live · '+Math.round(delay/60)+' Min. früher')+' · '+st.source.toUpperCase();
+    const liveStr=t('board.live');
+    const depText=delay===null?(live?t('board.liveNoDelay'):t('board.planned')):(delay>0?liveStr+' · +'+Math.round(delay/60)+' '+t('misc.minutes'):liveStr+' · '+Math.round(delay/60)+' '+t('board.earlier'))+' · '+st.source.toUpperCase();
     sub.textContent=depText;
     if(platform){
       const chip=document.createElement('span');
@@ -1091,10 +1092,10 @@ async function selectScheduledTrain(tripId){
   $('sheetKind').textContent=t('journey.noPositionTitle');
   $('sheetTitle').textContent='🚆 '+gtfsNumber('',trip[3]);
   $('sheetSub').textContent=trip[1]||t('journey.noDestination2');
-  $('sheetBadges').replaceChildren(badge('Nur GTFS-Fahrplan','warn'));
+  $('sheetBadges').replaceChildren(badge(t('board.noGtfsPlan'),'warn'));
   $('modelCard').hidden=true;$('details').replaceChildren();
-  detail('Fahrt-ID',tripId);detail('Position','Im Echtzeitfeed nicht gefunden');
-  detail('Zugnummer',gtfsNumber('',trip[3]));detail('Verspätung','Nicht überprüft');
+  detail(t('detail.label.tripId'),tripId);detail(t('detail.label.position'),t('board.positionNotFound'));
+  detail(t('detail.label.trainNumber'),gtfsNumber('',trip[3]));detail(t('detail.label.delay'),t('board.delayNotChecked'));
   $('sheetNote').textContent=t('journey.noPositionNote');
   $('scheduleSection').hidden=true;$('emptySchedule').hidden=false;$('emptySchedule').textContent=t('journey.loadingStops');
   const details=await loadDetails('trains');
