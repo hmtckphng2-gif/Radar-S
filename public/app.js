@@ -151,7 +151,7 @@ function updateFavPanel(){
     const remove=document.createElement('button');
     remove.className='fav-remove';
     remove.textContent='✕';
-    remove.title='Aus Favoriten entfernen';
+    remove.title=t('fav.btnRemove');
     remove.onclick=(e)=>{e.stopPropagation();toggleFavorite(v.key);updateFavPanel();refreshMarkers();statusLabel();};
     item.append(info,remove);
     item.onclick=()=>{selectVehicle(v.key);$('favPanel').hidden=true;};
@@ -1025,7 +1025,7 @@ function showStationBoard(st){
       if(sec===null||sec===undefined||sec<now-300)continue;
       const route=db.routes?.[trip[0]];
       const name=st.source==='trains'?txt(trip[3])||'Zug':txt(route?.[0])||'Bus';
-      departures.push({tripId,sec,name,headsign:trip[1]||'Ziel unbekannt'});
+      departures.push({tripId,sec,name,headsign:trip[1]||t('detail.label.unknownTarget')});
     }
   }
   departures.sort((a,b)=>a.sec-b.sec);
