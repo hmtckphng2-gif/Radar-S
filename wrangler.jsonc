@@ -1,5 +1,5 @@
 {
-  "name": "suedtirol-radar-2",
+  "name": "suedtirol-radar-preview",
   "main": "worker.js",
   "compatibility_date": "2026-10-01",
   "triggers": {
@@ -11,25 +11,5 @@
     "run_worker_first": [
       "/api/*"
     ]
-  },
-  "ratelimits": [
-    {
-      "name": "AI_JOURNEY_LIMITER",
-      "namespace_id": "7031",
-      "simple": {
-        "limit": 6,
-        "period": 60
-      }
-    }
-  ],
-  "ai": {
-    "binding": "AI"
-  },
-  "d1_databases": [
-    {
-      "binding": "HISTORY_DB",
-      "database_name": "radar-history",
-      "database_id": "99aa1fcd-23bb-433b-bb50-b4d62e834a4b"
-    }
-  ]
+  }
 }
