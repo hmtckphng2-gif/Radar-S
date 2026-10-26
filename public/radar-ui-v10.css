@@ -92,3 +92,36 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .iconbtn, .round-action { transition: none; }
 }
+
+/* Compact header on phones: retain every action but remove repeated text labels. */
+@media (max-width: 520px) {
+  .toprow {
+    display: grid;
+    grid-template-columns: 34px minmax(40px, 1fr) repeat(6, 32px);
+    gap: 5px;
+    align-items: center;
+    flex-wrap: unset;
+  }
+  .toprow > .brand-badge { width: 34px; height: 34px; }
+  .toprow > .brand { min-width: 0; }
+  .toprow > .status {
+    width: 32px; height: 32px; min-height: 32px; min-width: 32px;
+    padding: 0; justify-content: center; border-radius: 10px; font-size: 0;
+  }
+  .toprow > .status span:not(.status-dot) { display: none; }
+  #healthBtn .status-dot, #favBtnTop .status-dot, #linesBtn .status-dot { display: none; }
+  #healthBtn::after { content: "i"; font-size: 15px; font-weight: 700; }
+  #favBtnTop::after { content: "★"; font-size: 14px; }
+  #linesBtn::after { content: "≡"; font-size: 18px; }
+  #langBtn { font-size: 10px; font-weight: 700; }
+  #langBtn span { display: inline !important; }
+  .toprow > .iconbtn { width: 32px; height: 32px; min-width: 32px; min-height: 32px; border-radius: 10px; }
+}
+@media (max-width: 380px) {
+  .toprow { grid-template-columns: 32px minmax(32px, 1fr) repeat(6, 29px); gap: 4px; }
+  .toprow > .brand-badge { width: 32px; height: 32px; }
+  .toprow > .status { width: 29px; min-width: 29px; height: 30px; min-height: 30px; }
+  .toprow > .iconbtn { width: 29px; min-width: 29px; height: 30px; min-height: 30px; }
+  .brand-title { font-size: 14px; }
+  .brand-sub { font-size: 8px; }
+}
