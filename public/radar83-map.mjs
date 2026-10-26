@@ -305,7 +305,7 @@ export class Radar83Cinematic {
   this.flying=true;
   clearTimeout(this.flightTimer);
   if(prefersReducedMotion())this.map.jumpTo(target);
-  else{this.map.jumpTo(start);this.map.easeTo({...target,easing:t=>t*t*(3-2*t),essential:true});}
+  else{this.map.jumpTo(start);this.map.easeTo({...target,easing:t=>{const x=Math.max(0,Math.min(1,t));return x*x*x*(x*(x*6-15)+10)},essential:true});}
   this.flightTimer=setTimeout(()=>{this.flying=false},(Number(target.duration)||0)+150);
  }
  interrupt(){
