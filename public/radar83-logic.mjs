@@ -5,7 +5,7 @@ export const TERRAIN_TILES='https://s3.amazonaws.com/elevation-tiles-prod/terrar
 export function enabled3D(search=''){
  try{return new URLSearchParams(search).get('radar3d')!=='off'}catch{return true}
 }
-export function target3DCamera(point,zoom,heading=null,duration=3700){
+export function target3DCamera(point,zoom,heading=null,duration=4300){
  const lng=Number(point?.lng??point?.lon),lat=Number(point?.lat);
  if(!Number.isFinite(lng)||!Number.isFinite(lat)||lat< -85||lat>85||lng< -180||lng>180)return null;
  return {

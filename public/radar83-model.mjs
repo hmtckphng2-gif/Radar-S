@@ -266,13 +266,26 @@ export function makeVehicleMesh(T,kind){
     // introducing a new geometry class or extra GPU cost on mobile Safari.
     box(2.70,1.88,2.35,0,2.00,side*20.05,white,root,side*-0.085);
     box(2.42,.76,.72,0,2.60,side*20.96,white,root,side*-0.12);
-    box(1.94,.90,.10,0,2.82,side*21.30,glass,root,side*-0.17);
+    // Dark windscreen surround, divided panoramic glass and destination display.
+    box(2.12,1.06,.09,0,2.82,side*21.23,black,root,side*-0.17);
+    box(1.92,.86,.07,0,2.82,side*21.30,glass,root,side*-0.17);
+    box(.045,.78,.035,0,2.82,side*21.345,black,root,side*-0.17);
+    box(1.36,.18,.08,0,3.39,side*20.98,black,root);
+    // The lower blue mask and stainless lower skirt define the FLIRT nose.
     box(2.34,.26,.14,0,1.34,side*21.34,blue,root);
+    box(2.16,.13,.12,0,1.18,side*21.31,silver,root);
     box(2.06,.20,.14,0,3.04,side*20.92,white,root);
     for(const x of [-.91,.91]){
-     box(.28,.16,.12,x,1.66,side*21.32,light,root);
+     box(.30,.18,.12,x,1.66,side*21.32,light,root);
      box(.18,.08,.12,x,1.43,side*21.35,red,root);
+     box(.12,.34,.18,x*1.53,2.72,side*20.42,black,root,side*-.08);
+     box(.10,.16,.11,x*1.53,2.78,side*20.48,silver,root);
     }
+    // Fine wiper strokes on the windscreen; these are intentionally subtle at map scale.
+    const wiperL=box(.58,.035,.025,-.30,2.53,side*21.36,black,root,side*-.04);
+    wiperL.rotation.z=-.12;
+    const wiperR=box(.58,.035,.025,.30,2.53,side*21.36,black,root,side*.04);
+    wiperR.rotation.z=.12;
    }
    // Dachstromabnehmer auf dem mittleren Segment
    function rod(a,b,r=.065){

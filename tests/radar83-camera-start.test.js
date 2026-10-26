@@ -32,9 +32,9 @@ test('the overlay becomes visible while the scene is still loading', () => {
   const src = read('radar83-map.mjs');
   assert.match(src, /classList\.add\('sr83-loading'\)/);
   const css = read('radar83.css');
-  assert.match(css, /\.sr83-viewport\.sr83-loading\{opacity:\.?68;pointer-events:auto\}/);
+  assert.match(css, /\.sr83-viewport\.sr83-loading\{opacity:\.?42;pointer-events:auto\}/);
   assert.match(css, /\.sr83-viewport\.sr83-ready\{opacity:1;pointer-events:auto\}/);
-  assert.match(css, /transition:opacity 1\.12s cubic-bezier\(\.22,\.72,\.18,1\)/);
+  assert.match(css, /transition:opacity 1\.32s cubic-bezier\(\.22,\.72,\.18,1\)/);
 });
 
 test('the follow never fights the running flight', () => {
@@ -57,6 +57,11 @@ test('the camera move is short enough to feel immediate', () => {
   // A very long base value is still clamped.
   assert.ok(cinematicDuration(0.2, 9000) <= 4600);
   assert.ok(cinematicDuration(0.2, 100) >= 3800);
+});
+
+test('the default live camera flight uses the slower cinematic timing', () => {
+  const src = read('radar83-logic.mjs');
+  assert.match(src, /function target3DCamera\(point,zoom,heading=null,duration=4300\)/);
 });
 
 test('the flight still ends on the vehicle', () => {
