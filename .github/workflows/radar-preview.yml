@@ -45,4 +45,8 @@ jobs:
           curl --fail --silent --show-error "$BASE/radar-ui-v10.css?v=9.9.0" -o /tmp/radar-ui-v10.css
           grep -q 'prefers-reduced-motion' /tmp/radar-ui-v10.css
           grep -q -- '--radar10-silver' /tmp/radar-ui-v10.css
-          echo 'Base and v10 redesign stylesheets OK'
+          grep -q '.sr50-tab-view' /tmp/radar-ui-v10.css
+          grep -q '.sr50-bottom-nav' /tmp/radar-ui-v10.css
+          grep -q '.sheet' /tmp/radar-ui-v10.css
+          grep -q '.sr50-kpi-grid' /tmp/radar-ui-v10.css
+          echo 'Base and full v10 view stylesheets OK'

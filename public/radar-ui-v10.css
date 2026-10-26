@@ -444,6 +444,7 @@ button, a, input, select, textarea, [tabindex]:not([tabindex="-1"]) { -webkit-ta
     padding:0 !important; border-radius:10px !important; font-size:0 !important;
   }
   .toprow > .status .status-dot { display:none !important; }
+  .toprow > .status span:not(.status-dot) { display:none !important; }
   #statusBtn::after { content:"●"; font-size:10px; color:#b8c0c9; }
   #healthBtn::after { content:"i"; font-size:15px; font-weight:750; }
   #favBtnTop::after { content:"☆"; font-size:18px; }
