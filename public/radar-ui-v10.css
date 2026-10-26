@@ -97,7 +97,7 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 @media (max-width: 520px) {
   .toprow {
     display: grid;
-    grid-template-columns: 34px minmax(40px, 1fr) repeat(6, 32px);
+    grid-template-columns: 34px minmax(40px, 1fr) repeat(6, 36px);
     gap: 5px;
     align-items: center;
     flex-wrap: unset;
@@ -105,7 +105,7 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
   .toprow > .brand-badge { width: 34px; height: 34px; }
   .toprow > .brand { min-width: 0; }
   .toprow > .status {
-    width: 32px; height: 32px; min-height: 32px; min-width: 32px;
+    width: 36px; height: 36px; min-height: 36px; min-width: 36px;
     padding: 0; justify-content: center; border-radius: 10px; font-size: 0;
   }
   .toprow > .status span:not(.status-dot) { display: none; }
@@ -115,13 +115,31 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
   #linesBtn::after { content: "≡"; font-size: 18px; }
   #langBtn { font-size: 10px; font-weight: 700; }
   #langBtn span { display: inline !important; }
-  .toprow > .iconbtn { width: 32px; height: 32px; min-width: 32px; min-height: 32px; border-radius: 10px; }
+  .toprow > .iconbtn { width: 36px; height: 36px; min-width: 36px; min-height: 36px; border-radius: 10px; }
 }
 @media (max-width: 380px) {
-  .toprow { grid-template-columns: 32px minmax(32px, 1fr) repeat(6, 29px); gap: 4px; }
+  .toprow { grid-template-columns: 32px minmax(32px, 1fr) repeat(6, 32px); gap: 4px; }
   .toprow > .brand-badge { width: 32px; height: 32px; }
-  .toprow > .status { width: 29px; min-width: 29px; height: 30px; min-height: 30px; }
-  .toprow > .iconbtn { width: 29px; min-width: 29px; height: 30px; min-height: 30px; }
+  .toprow > .status { width: 32px; min-width: 32px; height: 32px; min-height: 32px; }
+  .toprow > .iconbtn { width: 32px; min-width: 32px; height: 32px; min-height: 32px; }
   .brand-title { font-size: 14px; }
   .brand-sub { font-size: 8px; }
+}
+
+
+/* Keyboard focus and motion preferences apply consistently across the whole app. */
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #d5dce4;
+  outline-offset: 2px;
+}
+.chip:focus-visible, .status:focus-visible, .iconbtn:focus-visible, .round-action:focus-visible {
+  border-color: #e0e6ed;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }

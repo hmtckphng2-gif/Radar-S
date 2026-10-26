@@ -42,4 +42,7 @@ jobs:
           node -e "const h=require('/tmp/health.json'); if(h.ok!==true) { console.error(h); process.exit(1) } console.log('Health endpoint OK')"
           curl --fail --silent --show-error "$BASE/radar-ui.css?v=9.9.0" -o /tmp/radar-ui.css
           grep -q . /tmp/radar-ui.css
-          echo 'Redesign stylesheet OK'
+          curl --fail --silent --show-error "$BASE/radar-ui-v10.css?v=9.9.0" -o /tmp/radar-ui-v10.css
+          grep -q 'prefers-reduced-motion' /tmp/radar-ui-v10.css
+          grep -q '--radar10-silver' /tmp/radar-ui-v10.css
+          echo 'Base and v10 redesign stylesheets OK'
