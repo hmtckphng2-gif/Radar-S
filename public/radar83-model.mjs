@@ -259,14 +259,19 @@ export function makeVehicleMesh(T,kind){
     box(1.26,.26,4.8,0,3.62,c-1.8,silver,coach);
     if(seg.center===0)box(.9,.18,2.2,0,3.60,c+3.4,silver,coach);
    }
-   // Bug und Heck mit geneigter Windschutzscheibe
+   // Gerundete FLIRT-Stirn mit geneigter Frontscheibe, Lichtgruppen und tiefer Schuerze.
+   // The downloaded RABe 523 GLB remains the primary model; this is the fallback.
    for(const side of [-1,1]){
-    box(2.72,2.00,2.70,0,1.98,side*20.85,white,root,side*-0.085);
-    box(2.46,0.98,.34,0,2.74,side*22.05,glass,root,side*-0.20);
-    box(2.60,.30,.22,0,1.34,side*22.12,blue,root);
-    box(2.30,.30,.20,0,3.28,side*21.4,white,root);
-    for(const x of [-.94,.94]){
-     box(.30,.17,.12,x,1.52,side*22.10,side>0?light:red,root);
+    const nose=new T.Mesh(new T.SphereGeometry(1,20,14),white);
+    nose.scale.set(1.34,1.03,1.72);
+    nose.position.set(0,2.08,side*19.78);
+    root.add(nose);
+    box(1.94,.90,.10,0,2.82,side*21.30,glass,root,side*-0.17);
+    box(2.34,.26,.14,0,1.34,side*21.34,blue,root);
+    box(2.06,.20,.14,0,3.04,side*20.92,white,root);
+    for(const x of [-.91,.91]){
+     box(.28,.16,.12,x,1.66,side*21.32,light,root);
+     box(.18,.08,.12,x,1.43,side*21.35,red,root);
     }
    }
    // Dachstromabnehmer auf dem mittleren Segment

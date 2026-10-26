@@ -32,9 +32,9 @@ test('the overlay becomes visible while the scene is still loading', () => {
   const src = read('radar83-map.mjs');
   assert.match(src, /classList\.add\('sr83-loading'\)/);
   const css = read('radar83.css');
-  assert.match(css, /\.sr83-viewport\.sr83-loading\{opacity:\.?94;pointer-events:auto\}/);
+  assert.match(css, /\.sr83-viewport\.sr83-loading\{opacity:\.?68;pointer-events:auto\}/);
   assert.match(css, /\.sr83-viewport\.sr83-ready\{opacity:1;pointer-events:auto\}/);
-  assert.match(css, /transition:opacity \.62s cubic-bezier\(\.22,\.8,\.2,1\)/);
+  assert.match(css, /transition:opacity 1\.12s cubic-bezier\(\.22,\.72,\.18,1\)/);
 });
 
 test('the follow never fights the running flight', () => {
@@ -52,11 +52,11 @@ test('replay works before the model is ready', () => {
 });
 
 test('the camera move is short enough to feel immediate', () => {
-  assert.ok(cinematicDuration(0.2) >= 1600 && cinematicDuration(0.2) <= 3000);
+  assert.ok(cinematicDuration(0.2) >= 3800 && cinematicDuration(0.2) <= 4600);
   assert.ok(cinematicDuration(0.2) < cinematicDuration(30), 'a distant vehicle may take a little longer');
   // A very long base value is still clamped.
-  assert.ok(cinematicDuration(0.2, 9000) <= 3000);
-  assert.ok(cinematicDuration(0.2, 100) >= 1600);
+  assert.ok(cinematicDuration(0.2, 9000) <= 4600);
+  assert.ok(cinematicDuration(0.2, 100) >= 3800);
 });
 
 test('the flight still ends on the vehicle', () => {
