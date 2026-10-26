@@ -1,7 +1,14 @@
 /* Radar 10 startup: short alpine intro, then honest live readiness. */
 .sr10-startup{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;overflow:hidden;background:#090e15;color:#eef2f5;font-family:Inter,system-ui,-apple-system,sans-serif;opacity:1;visibility:visible;transition:opacity .48s cubic-bezier(.2,.72,.2,1),visibility .48s; padding:calc(22px + env(safe-area-inset-top)) 22px calc(22px + env(safe-area-inset-bottom));}
 .sr10-startup.is-leaving{opacity:0;visibility:hidden;pointer-events:none}
-.sr10-startup__inner{width:min(100%,460px);display:flex;flex-direction:column;align-items:center;text-align:center;gap:15px}
+.sr10-startup__inner{width:min(100%,460px);display:flex;flex-direction:column;align-items:center;text-align:center;gap:15px;transform:translateY(0);transition:transform 1s cubic-bezier(.2,.7,.15,1)}
+.sr10-startup.is-intro .sr10-brand-mark{animation:sr10-logo-zoom 1.35s cubic-bezier(.16,.8,.2,1) both}
+.sr10-startup.is-intro .sr10-wordmark{animation:sr10-wordmark-zoom 1.35s cubic-bezier(.16,.8,.2,1) both}
+.sr10-startup.is-intro .sr10-brand-mark,.sr10-startup.is-intro .sr10-wordmark{transform-origin:center}
+.sr10-startup.is-raised .sr10-startup__inner{transform:translateY(-24px)}
+.sr10-startup.is-intro .sr10-landscape{opacity:0;transform:scale(.94);animation:sr10-landscape-reveal 1.5s cubic-bezier(.2,.72,.18,1) 1.25s both}
+.sr10-startup.is-intro .sr10-train{animation-delay:2.15s}
+.sr10-startup.is-intro .sr10-loading{opacity:0;animation:sr10-appear .5s ease 3.25s both}
 .sr10-brand-mark{display:grid;place-items:center;width:43px;height:43px;border:1px solid #58636e;border-radius:13px;color:#c4cbd1;background:linear-gradient(145deg,#202a35,#10161e);box-shadow:0 10px 30px #0005}
 .sr10-brand-mark svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .sr10-brand-mark circle{fill:currentColor;stroke:none}
@@ -20,12 +27,15 @@
 .sr10-steps li:before{content:'';position:absolute;left:1px;top:3px;width:11px;height:11px;border:1px solid #45515c;border-radius:50%;box-sizing:border-box}
 .sr10-steps li.is-done{color:#aab4bd}.sr10-steps li.is-done:before{content:'✓';display:grid;place-items:center;border:0;background:#53616d;color:#f5f7f8;font-size:9px;font-weight:800}
 .sr10-steps li.is-active{color:#e0e5e9}.sr10-steps li.is-active:before{border-color:#c0c9d0;box-shadow:0 0 0 3px #c0c9d014}
-.sr10-error{margin-top:16px;padding:13px;text-align:left;border:1px solid #654b45;border-radius:12px;background:#191b20;color:#e5e7e9;font-size:12px;line-height:1.5}
+.sr10-error{display:none!important;margin-top:16px;padding:13px;text-align:left;border:1px solid #654b45;border-radius:12px;background:#191b20;color:#e5e7e9;font-size:12px;line-height:1.5}
 .sr10-error p{margin:6px 0 8px;color:#aeb7bf}.sr10-error code{display:inline-block;color:#f0c6b9;font-size:11px;letter-spacing:.04em}
 .sr10-error__actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.sr10-error button{min-height:38px;padding:8px 11px;border:1px solid #4b5965;border-radius:9px;background:#242e38;color:#edf1f4;font:600 11px inherit;cursor:pointer}.sr10-error button:first-child{background:#d5dce1;color:#111820;border-color:#d5dce1}
 .sr10-footer{margin-top:2px;font-size:9px;letter-spacing:.15em}
-@keyframes sr10-train-pass{0%{transform:translateX(-110px)}100%{transform:translateX(900px)}}
+@keyframes sr10-train-pass{0%{transform:translateX(-260px)}100%{transform:translateX(900px)}}
+@keyframes sr10-logo-zoom{0%{opacity:0;transform:scale(1.65)}25%{opacity:1}100%{opacity:1;transform:scale(1)}}
+@keyframes sr10-wordmark-zoom{0%{opacity:0;transform:scale(1.32);letter-spacing:.25em}35%{opacity:1}100%{opacity:1;transform:scale(1);letter-spacing:.16em}}
+@keyframes sr10-landscape-reveal{0%{opacity:0;transform:scale(.94)}100%{opacity:1;transform:scale(1)}}
 @keyframes sr10-progress{0%{transform:translateX(-120%)}100%{transform:translateX(360%)}}
 @keyframes sr10-appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @media(min-width:700px){.sr10-startup__inner{gap:18px}.sr10-landscape{height:220px}.sr10-loading{max-width:330px}}
-@media(prefers-reduced-motion:reduce){.sr10-train,.sr10-progress span{animation:none}.sr10-train{transform:translateX(40%)}.sr10-startup,.sr10-loading{transition:none;animation:none}}
+@media(prefers-reduced-motion:reduce){.sr10-train,.sr10-progress span,.sr10-brand-mark,.sr10-wordmark,.sr10-landscape,.sr10-loading{animation:none!important;opacity:1!important;transform:none!important}.sr10-startup,.sr10-loading,.sr10-startup__inner{transition:none!important}}
