@@ -3,6 +3,8 @@ export const SOURCES = ['sta', 'trentino', 'trains'];
 export const UPDATE_SOURCES = SOURCES.map(s => s + '_updates');
 export const BBOX = { south:45.25, north:47.35, west:9.85, east:12.95 };
 export const txt = value => value == null ? '' : String(value).trim();
+// Some upstream feeds briefly publish literal dash placeholders for identity fields.
+export const displayText = value => { const s = txt(value); return /^(?:[-–—]+|n\/?a|null|undefined)$/i.test(s) ? '' : s; };
 export const entities = feed => Array.isArray(feed) ? feed : Array.isArray(feed?.entity) ? feed.entity : Array.isArray(feed?.entities) ? feed.entities : [];
 export const positionValid = (lat, lon) => Number.isFinite(lat) && Number.isFinite(lon) && lat >= BBOX.south && lat <= BBOX.north && lon >= BBOX.west && lon <= BBOX.east;
 export function gtfsNumber(label, shortName) {
@@ -45,20 +47,21 @@ export function parseVehicles(feed, source, staticData = {}, nowMs = Date.now())
     const tripStartDate = txt(trip.startDate ?? trip.start_date);
     const serviceDay = /^\d{8}$/.test(tripStartDate)
       ? tripStartDate.slice(0,4)+'-'+tripStartDate.slice(4,6)+'-'+tripStartDate.slice(6,8) : ''; 
-    const vehicleId = txt(v.vehicle?.id ?? v.vehicle?.vehicleId ?? v.vehicle?.vehicle_id);
-    const label = txt(v.vehicle?.label);
+    const vehicleId = displayText(v.vehicle?.id ?? v.vehicle?.vehicleId ?? v.vehicle?.vehicle_id);
+    const label = displayText(v.vehicle?.label);
     const entityId = txt(item.id);
     const identity = vehicleId || tripId || entityId;
     if (!identity) { invalid.missingIdentity++; continue; }
     const mapped = tripLookup(staticData, source, tripId, routeId);
     const routeType=mapped.route?.[2];
     const isTrain = routeType!==null && routeType!==undefined && routeType!=='' ? isRailRoute(routeType) : source === 'trains';
-    const name = isTrain ? gtfsNumber(label, mapped.tripShortName) : mapped.line || 'Linie unbekannt';
+    const mappedLine = displayText(mapped.line);
+    const name = isTrain ? gtfsNumber(label, displayText(mapped.tripShortName)) : mappedLine || 'Linie unbekannt';
     // A route-direction can have an official UNIQUE shape even if the realtime
     // feed omitted trip_id. Do not attribute the route's destination or timetable.
     const routeShapeId = !isTrain && !mapped.shapeId && directionId !== ''
       ? txt(staticData[source]?.uniqueBusShapesByDay?.[serviceDay]?.[mapped.routeId]?.[directionId]) : '';
-    const headsign = mapped.headsign || txt(trip.headsign ?? trip.headSign) || 'Fahrtziel unbekannt';
+    const headsign = displayText(mapped.headsign) || displayText(trip.headsign ?? trip.headSign) || 'Fahrtziel unbekannt';
     const speedValue = p.speed === undefined || p.speed === null ? null : Number(p.speed);
     const speed = speedValue !== null && Number.isFinite(speedValue) && speedValue >= 0 ? Math.round(speedValue * 3.6) : null;
     const rawTs = v.timestamp ?? item.timestamp ?? feed.header?.timestamp;
@@ -66,9 +69,9 @@ export function parseVehicles(feed, source, staticData = {}, nowMs = Date.now())
     const timestamp = Number.isFinite(ts) && ts > 1000000000 && ts < nowMs / 1000 + 300 ? ts : null;
     // Vehicle ID may be fleet number, and must never become route/line name.
     out.push({ key:source + ':' + identity, source, kind:isTrain ? 'train' : 'bus',
-      lat, lon, rawLat:lat, rawLon:lon, tripId, routeId:mapped.routeId, vehicleId:vehicleId || label || entityId || 'Nicht verfügbar',
+      lat, lon, rawLat:lat, rawLon:lon, tripId, routeId:mapped.routeId, vehicleId:vehicleId || label || displayText(entityId) || 'Nicht verfügbar',
       name, headsign, shapeId:mapped.shapeId, routeShapeId, directionId, routeLongName:mapped.route?.[1] || '',
-      lineVerified:!isTrain && Boolean(mapped.line), nameVerified:isTrain && name !== 'Zugnummer unbekannt',
+      lineVerified:!isTrain && Boolean(mappedLine), nameVerified:isTrain && name !== 'Zugnummer unbekannt',
       modelKey:isTrain && name !== 'Zugnummer unbekannt' ? name : '',
       bearing:Number.isFinite(Number(p.bearing)) ? Number(p.bearing) : null,
       timestamp, currentStopSequence: Number(v.currentStopSequence ?? v.current_stop_sequence) || null,
