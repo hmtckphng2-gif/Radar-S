@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="de" data-theme="dark" data-locale="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090e15">
+<meta name="description" content="Südtirol Radar 9.9.0: Live-Karte, Abfahrten und transparente Verspätungsinformationen für Züge und Busse in Südtirol und Trentino.">
+<title data-t="radar.title">Südtirol Radar – Züge und Busse live verfolgen</title>
+<link rel="canonical" href="https://radar-s.j9fr2vg4vm.workers.dev/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_DE">
+<meta property="og:site_name" content="Südtirol Radar">
+<meta property="og:title" content="Südtirol Radar – Züge und Busse live verfolgen">
+<meta property="og:description" content="Live-Karte, Abfahrten und Verspätungsinformationen für Südtirol und Trentino.">
+<meta property="og:url" content="https://radar-s.j9fr2vg4vm.workers.dev/">
+<meta property="og:image" content="https://radar-s.j9fr2vg4vm.workers.dev/radar60-icon-512.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/png" href="/radar60-icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/vendor/leaflet-1.9.4.css?v=9.9.0">
+<!-- The GLTFLoader imports "three" as a bare specifier. This map points it to
+     exactly the same three build that radar83-model.mjs loads, so both share
+     one instance. Without it the loader would run against a second copy of
+     three and every instanceof check would fail. The loader is optional: if a
+     browser ignores import maps, the 3D view falls back to the schematic
+     model. tests/radar83-model.test.js keeps both URLs identical. -->
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}</script>
+<link rel="stylesheet" href="/styles.css?v=9.9.0">
+<link rel="stylesheet" href="/radar35.css?v=9.9.0">
+<link rel="stylesheet" href="/radar37.css?v=9.9.0">
+<link rel="stylesheet" href="/radar40.css?v=9.9.0">
+<link rel="stylesheet" href="/radar42.css?v=9.9.0">
+<link rel="stylesheet" href="/radar43.css?v=9.9.0">
+<link rel="stylesheet" href="/radar44.css?v=9.9.0">
+<link rel="stylesheet" href="/radar45.css?v=9.9.0">
+<link rel="stylesheet" href="/radar46.css?v=9.9.0">
+<link rel="stylesheet" href="/radar47.css?v=9.9.0">
+<link rel="stylesheet" href="/radar50.css?v=9.9.0">
+<link rel="stylesheet" href="/radar51.css?v=9.9.0">
+<link rel="stylesheet" href="/radar52.css?v=9.9.0">
+<link rel="stylesheet" href="/radar53.css?v=9.9.0">
+<link rel="stylesheet" href="/radar54.css?v=9.9.0">
+<link rel="stylesheet" href="/radar55.css?v=9.9.0">
+<link rel="stylesheet" href="/radar56.css?v=9.9.0">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/radar60-icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="/radar57.css?v=9.9.0">
+<link rel="stylesheet" href="/radar58.css?v=9.9.0">
+<link rel="stylesheet" href="/radar60.css?v=9.9.0">
+<link rel="stylesheet" href="/radar601.css?v=9.9.0">
+</head>
+<body>
+<div id="sr50MapTab" class="sr50-map-tab">
+  <div id="map" role="application" tabindex="0" aria-label="Karte mit Zug- und Buspositionen. Mit Tab erreichbar, Pfeiltasten verschieben die Karte." data-t-aria-label="map.aria"></div>
+  <header class="topbar">
+    <div class="toprow">
+      <div class="brand-badge" aria-hidden="true"><svg viewBox="0 0 48 48" width="30" height="30"><path d="M12 35L35 12M13 13h22v22" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="24" r="5" fill="currentColor"/></svg></div>
+      <div class="brand"><div class="brand-title">RADAR <em>9.9.0</em></div><div class="brand-sub" data-t="radar.subtitle">SÜDTIROL · TRENTINO</div></div>
+      <button id="statusBtn" class="status" aria-label="Status und Datenquellen" data-t-aria-label="statusBtn.aria" title="Datenquellen ansehen" data-t-title="statusBtn.title"><span class="status-dot"></span><span id="statusText" data-t="status.connecting">VERBINDE</span></button>
+      <button id="healthBtn" class="status" aria-label="Betriebsstatus" data-t-aria-label="healthBtn.aria" title="Betriebsstatus ansehen" data-t-title="healthBtn.title"><span class="status-dot"></span><span id="healthText" data-t="health.feedsOk">STATUS</span></button>
+      <button id="favBtnTop" class="status" aria-label="Fahrzeug-Favoriten" data-t-aria-label="favBtn.aria" title="Meine favorisierten Fahrzeuge" data-t-title="favBtn.title"><span class="status-dot"></span><span id="favText" data-t="fav.status">★ FAV</span></button>
+      <button id="langBtn" class="status" aria-label="Sprache wechseln" data-t-aria-label="langBtn.aria" title="Sprache wechseln" data-t-title="langBtn.title"><span id="langText">DE</span></button>
+      <button id="linesBtn" class="status" aria-label="Linien-Status" data-t-aria-label="linesBtn.aria" title="Linien-Status ansehen" data-t-title="linesBtn.title"><span class="status-dot"></span><span id="linesText" data-t="lines.title">LINIEN</span></button>
+      <button id="themeToggle" class="iconbtn" aria-label="Hell-/Dunkelmodus wechseln" data-t-aria-label="themeToggle.aria" title="Theme wechseln" data-t-title="themeToggle.title">☀</button>
+    </div>
+    <nav class="controls" aria-label="Fahrzeugfilter" data-t-aria-label="nav.filter">
+      <div class="segments"><button class="chip active" data-filter="all" data-t="filter.all">Alle</button><button class="chip" data-filter="trains" data-t="filter.trains">🚆 Züge</button><button class="chip" data-filter="buses" data-t="filter.buses">🚌 Busse</button><button class="chip" data-filter="linefav" data-t="filter.linefav">★ Linien-Fav.</button></div>
+      <div class="search-wrap"><span aria-hidden="true">⌕</span><input type="search" id="search" autocomplete="off" spellcheck="false" aria-label="Zugnummer, Linie oder Ziel suchen" data-t-placeholder="search.placeholder" placeholder="Nummer / Ziel"><div id="searchResults" class="search-results" hidden></div></div>
+    </nav>
+  </header>
+  <div id="scheduleMatches" class="schedule-matches" hidden aria-live="polite"></div>
+  <div class="offline-banner" id="offlineBanner" role="status" hidden><b data-t="status.offline">Offline.</b> <span data-t="status.offlineSub">Die Live-Positionen können nicht aktualisiert werden. Fahrplan und gespeicherte Daten bleiben verfügbar.</span></div>
+  <div class="feed-health-banner" id="feedHealthBanner" role="alert" hidden><b data-t="health.feedsBanner">Alle Live-Feeds nicht erreichbar.</b> <span data-t="health.feedsBannerSub">Die Kartenpositionen können veraltet sein. Fahrplan-Daten bleiben verfügbar.</span> <button id="refreshBtnFromBanner" class="banner-retry" data-t="health.retry">Erneut versuchen</button></div>
+  <div class="alert-ticker" id="alertTicker" role="alert" hidden><div class="alert-count"></div><div class="alert-list"></div></div>
+  <div class="health-panel" id="healthPanel" hidden role="dialog" aria-modal="false" aria-label="Betriebsstatus" data-t-aria-label="healthPanel.aria">
+    <div class="health-header"><h3 data-t="health.title">Betriebsstatus</h3><button id="closeHealth" class="close" data-t="misc.close">×</button></div>
+    <div class="health-body">
+      <div class="health-row"><span data-t="health.feeds">Live-Feeds</span><span class="health-val" id="healthFeeds">–</span></div>
+      <div class="health-row"><span data-t="health.vehicles">Fahrzeuge</span><span class="health-val" id="healthVehicles">–</span></div>
+      <div class="health-row"><span data-t="health.regions">GTFS-Regionen</span><span class="health-val" id="healthRegions">–</span></div>
+      <div class="health-row"><span data-t="health.updated">Letzte Aktualisierung</span><span class="health-val" id="healthUpdated">–</span></div>
+      <div class="health-row"><span data-t="health.tiles">Kartenkacheln</span><span class="health-val" id="healthTiles">–</span></div>
+    </div>
+  </div>
+  <div class="fav-panel" id="favPanel" hidden role="dialog" aria-modal="false" aria-label="Fahrzeug-Favoriten" data-t-aria-label="favPanel.aria">
+    <div class="health-header"><h3 data-t="fav.title">Favorisierte Fahrzeuge</h3><button id="closeFav" class="close" data-t="misc.close">×</button></div>
+    <div class="fav-body" id="favBody">
+      <div class="fav-empty" data-t="fav.empty">Keine favorisierten Fahrzeuge. Tippe in einem Fahrzeug-Detail auf „★ Favorit“.</div>
+    </div>
+  </div>
+  <div class="lines-panel" id="linesPanel" hidden role="dialog" aria-modal="false" aria-label="Linien-Status" data-t-aria-label="linesPanel.aria">
+    <div class="lines-header">
+      <h3 data-t="lines.title">Linien-Status</h3>
+      <div class="lines-controls">
+        <input type="search" id="linesSearch" data-t-placeholder="lines.filterSearch" placeholder="Linie suchen…" aria-label="Linie suchen" data-t-aria-label="linesSearch.aria">
+        <div class="lines-filters">
+          <button class="chip active" data-line-filter="all" data-t="lines.filterAll">Alle</button>
+          <button class="chip" data-line-filter="onTime" data-t="lines.filterOnTime">Pünktlich</button>
+          <button class="chip" data-line-filter="delayed" data-t="lines.filterDelayed">Verspätet</button>
+          <button class="chip" data-line-filter="disturbed" data-t="lines.filterDisturbed">Gestört</button>
+        </div>
+      </div>
+      <button id="closeLines" class="close" data-t="misc.close">×</button>
+    </div>
+    <div class="lines-body" id="linesBody">
+      <div class="lines-empty" data-t="lines.noLines">Keine Linien gefunden.</div>
+    </div>
+  </div>
+  <div class="info-banner" id="notice"><button class="info-close" id="noticeClose" aria-label="Hinweis schließen" data-t-aria-label="notice.close">×</button><strong data-t="notice.positionTitle">Positionshinweis:</strong> <span data-t="notice.position">Trenitalia und Trentino zeigen teilweise simulierte Fahrzeugpositionen. Zugnummern und Buslinien werden nicht geraten.</span></div>
+  <button id="viewportBadge" class="viewport-badge" type="button" title="Alle Fahrzeuge anzeigen" data-t-title="map.mapButton" data-t="map.noVehicles">📍 Keine Positionen</button>
+  <div id="areaPicker" class="area-picker" hidden>
+    <strong data-t="map.areaButton">Ort auswählen</strong>
+    <button type="button" data-place="bozen" data-t="place.bozen">Bozen</button>
+    <button type="button" data-place="meran" data-t="place.meran">Meran</button>
+    <button type="button" data-place="brixen" data-t="place.brixen">Brixen</button>
+    <button type="button" data-place="sterzing" data-t="place.sterzing">Sterzing</button>
+    <button type="button" data-place="bruneck" data-t="place.bruneck">Bruneck</button>
+    <button type="button" data-place="trento" data-t="place.trento">Trient</button>
+    <button type="button" data-place="all" data-t="map.area.all">Alle Fahrzeuge</button>
+  </div>
+  <div class="map-actions">
+    <button id="refreshBtn" class="round-action" title="Daten jetzt aktualisieren" data-t-title="map.refreshButton" aria-label="Daten aktualisieren" data-t-aria-label="map.refreshBtn">↻</button>
+    <button id="fitBtn" class="round-action" title="Alle Fahrzeuge zeigen" data-t-title="map.mapButton" aria-label="Karte auf Fahrzeuge zentrieren" data-t-aria-label="map.fitBtn">⌗</button>
+    <button id="stationBtn" class="round-action" title="Bahnhöfe und Haltestellen suchen" data-t-title="map.stationButton" aria-label="Haltestellen suchen" data-t-aria-label="map.stationBtn">▦</button>
+    <button id="areaBtn" class="round-action" title="Ort auswählen" data-t-title="map.areaButton" aria-label="Ort auswählen" data-t-aria-label="map.areaBtn">📍</button>
+    <button id="tileBtn" class="round-action" title="Kartenanbieter wechseln" data-t-title="map.tileButton" aria-label="Kartenanbieter wechseln" data-t-aria-label="map.tileBtn">🗺</button>
+  </div>
+  <footer class="stats" aria-live="polite"><div class="stats-counts"><div class="stat"><b id="countAll">0</b><span data-t="misc.vehicles">Fahrzeuge</span></div><div class="stat"><b id="countTrains">0</b><span data-t="misc.trains">Züge</span></div><div class="stat"><b id="countBuses">0</b><span data-t="misc.buses">Busse</span></div></div><div id="lastUpdate" class="stats-time" data-t="time.noData">Warte auf Daten</div></footer>
+  <div class="scrim" id="scrim"></div>
+  <section id="sheet" class="sheet" tabindex="-1" aria-labelledby="sheetTitle" role="dialog" aria-modal="false" aria-hidden="true">
+    <div class="handle"></div>
+    <div class="sheet-heading"><div class="sheet-heading-main"><div id="sheetKind" class="eyebrow" data-t="detail.train">Fahrtinformation</div><h2 id="sheetTitle" class="sheet-title">–</h2><div id="sheetSub" class="sheet-subtitle">–</div></div><button id="closeSheet" class="close" data-t="misc.close" aria-label="Details schließen" data-t-aria-label="sheet.close">✕</button></div>
+    <div class="sheet-scroll" tabindex="0" aria-label="Fahrzeugdetails scrollen" data-t-aria-label="sheet.scroll">
+    <div class="badge-row" id="sheetBadges"></div>
+    <div class="model-card" id="modelCard" hidden><img id="modelImage" alt="Baureihenfoto" loading="lazy" referrerpolicy="no-referrer" data-t-aria-label="detail.modelImage"><div class="model-text"><strong id="modelTitle"></strong><small id="modelCaption"></small></div></div>
+    <div id="details" class="details"></div>
+    <div class="note" id="sheetNote"></div>
+    <div id="scheduleSection" hidden><div class="section-title">Fahrtverlauf <span class="section-sub" id="scheduleSource">GTFS-Fahrplan</span></div><ol class="stop-list" id="stops"></ol></div>
+    <div id="emptySchedule" class="empty">Keine vollständigen Haltestelleninformationen für diese Fahrt verfügbar.</div>
+    </div>
+  </section>
+  <section id="stationSheet" class="sheet" aria-hidden="true" aria-label="Haltestellensuche" role="dialog" aria-modal="false" data-t-aria-label="stationSheet.aria">
+    <div class="handle"></div><div class="sheet-heading"><div class="sheet-heading-main"><div class="eyebrow" data-t="station.title">Fahrplan-Suche</div><h2 class="sheet-title" data-t="station.title">Haltestellen</h2><div class="sheet-subtitle" data-t="station.subtitle">GTFS-Fahrplandaten, keine amtliche RFI-Anzeigetafel</div></div><button id="closeStations" class="close" data-t="misc.close" aria-label="Haltestellensuche schließen" data-t-aria-label="stationSheet.close">✕</button></div>
+    <div class="sheet-scroll" tabindex="0" aria-label="Haltestellenliste scrollen" data-t-aria-label="stationSheet.scroll">
+    <div class="search-wrap" style="margin:14px 0"><span>⌕</span><input id="stationSearch" type="search" data-t-placeholder="station.search" placeholder="Bahnhof oder Haltestelle suchen" aria-label="Haltestelle suchen" data-t-aria-label="station.search">
+    <div class="station-results" id="stationResults"></div>
+    <div id="stationBoard" hidden><div class="section-title" id="stationName" data-t="board.title">Abfahrten</div><div class="section-sub" data-t="board.subtitle">Geplante Zeiten aus GTFS, nicht mit RFI abgeglichen</div><div class="station-results" id="stationDepartures" style="margin-top:10px"></div><button id="backStations" class="chip" style="margin-top:12px" data-t="misc.back">← Andere Haltestelle</button></div>
+    </div>
+  </section>
+</div>
+
+<script src="/vendor/leaflet-1.9.4.js?v=9.9.0" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script>
+<script src="/radar-recovery.js?v=9.9.0" defer></script>
+<script src="/radar831-boot.js?v=9.9.0"></script>
+<script src="/radar431-stop.js?v=9.9.0"></script>
+<script src="/radar37.js?v=9.9.0"></script>
+<script src="/radar40.js?v=9.9.0"></script>
+<script src="/radar42.js?v=9.9.0"></script>
+<script type="module" src="/radar43.js?v=9.9.0"></script>
+<script type="module" src="/radar44.js?v=9.9.0"></script>
+<script type="module" src="/radar45.js?v=9.9.0"></script>
+<script type="module" src="/app.js?v=9.9.0"></script>
+<script src="/radar46.js?v=9.9.0" defer></script>
+<script src="/radar47.js?v=9.9.0" defer></script>
+<script type="module" src="/radar50.js?v=9.9.0"></script>
+<script type="module" src="/radar51.js?v=9.9.0"></script>
+<script type="module" src="/radar52.js?v=9.9.0"></script>
+<script type="module" src="/radar53.js?v=9.9.0"></script>
+<script type="module" src="/radar54.js?v=9.9.0"></script>
+<script type="module" src="/radar55.js?v=9.9.0"></script>
+<script type="module" src="/radar56.js?v=9.9.0"></script>
+<script type="module" src="/radar57.js?v=9.9.0"></script>
+<script type="module" src="/radar58.js?v=9.9.0"></script>
+<script defer src="/radar58-i18n.js?v=9.9.0"></script>
+<script src="/radar60-intelligence.js?v=9.9.0" defer></script>
+<script src="/radar60.js?v=9.9.0" defer></script>
+<link rel="stylesheet" href="/radar62.css?v=9.9.0">
+<script type="module" src="/radar62.js?v=9.9.0"></script>
+<link rel="stylesheet" href="/radar63.css?v=9.9.0">
+<script src="/radar63.js?v=9.9.0" defer></script>
+<link rel="stylesheet" href="/radar64.css?v=9.9.0">
+<script src="/radar64.js?v=9.9.0" defer></script>
+<link rel="stylesheet" href="/radar65.css?v=9.9.0">
+<link rel="stylesheet" href="/radar66.css?v=9.9.0">
+<link rel="stylesheet" href="/radar661.css?v=9.9.0">
+<link rel="stylesheet" href="/radar67.css?v=9.9.0">
+<script src="/radar67.js?v=9.9.0" defer></script>
+<link rel="stylesheet" href="/radar671.css?v=9.9.0">
+<link rel="stylesheet" href="/radar68.css?v=9.9.0">
+<script src="/radar68.js?v=9.9.0" defer></script>
+<link rel="stylesheet" href="/radar69.css?v=9.9.0">
+<script src="/radar69.js?v=9.9.0" defer></script>
+<link rel="stylesheet" href="/radar692.css?v=9.9.0">
+<script type="module" src="/radar692.js?v=9.9.0"></script>
+<link rel="stylesheet" href="/radar70.css?v=9.9.0">
+<script type="module" src="/radar70.js?v=9.9.0"></script>
+<link rel="stylesheet" href="/radar705.css?v=9.9.0">
+<link rel="stylesheet" href="/radar71.css?v=9.9.0">
+<script type="module" src="/radar71-camera.mjs?v=9.9.0"></script>
+<link rel="stylesheet" href="/radar72.css?v=9.9.0">
+<script src="/radar72.js?v=9.9.0" defer></script>
+<link rel="stylesheet" href="/radar73.css?v=9.9.0">
+<script src="/radar73.js?v=9.9.0" defer></script>
+<link rel="stylesheet" href="/radar74.css?v=9.9.0">
+<link rel="stylesheet" href="/radar75.css?v=9.9.0">
+<script src="/radar75.js?v=9.9.0" defer></script>
+<link rel="stylesheet" href="/radar76.css?v=9.9.0">
+<link rel="stylesheet" href="/radar77.css?v=9.9.0">
+<script src="/radar77.js?v=9.9.0" defer></script>
+<link rel="stylesheet" href="/radar78.css?v=9.9.0">
+<script type="module" src="/radar78.mjs?v=9.9.0"></script>
+<link rel="stylesheet" href="/radar79.css?v=9.9.0">
+<script type="module" src="/radar79.mjs?v=9.9.0"></script>
+<script src="/radar80.js?v=9.9.0" defer></script>
+<link rel="stylesheet" href="/radar80-map.css?v=9.9.0">
+<link rel="stylesheet" href="/radar82.css?v=9.9.0">
+<link rel="stylesheet" href="/radar83.css?v=9.9.0"><link rel="stylesheet" href="/radar84.css?v=9.9.0">
+<link rel="stylesheet" href="/radar-ui.css?v=9.9.0">
+<link rel="stylesheet" href="/radar-ui-compact.css">
+<link rel="stylesheet" href="/radar-ui-v10.css?v=9.9.0">
+<link rel="stylesheet" href="/radar10-shell.css">
+</body>
+</html>
