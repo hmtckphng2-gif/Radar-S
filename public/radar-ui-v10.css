@@ -1,0 +1,94 @@
+/* Südtirol Radar 10.0 — focused mobile-first visual system refinements. */
+:root {
+  --radar10-bg: #0b0d10;
+  --radar10-panel: #15181d;
+  --radar10-panel-raised: #1d2229;
+  --radar10-line: #30363e;
+  --radar10-silver: #c3cbd4;
+  --radar10-muted: #8c96a2;
+  --radar10-train: #6697ff;
+  --radar10-bus: #f09a55;
+}
+body { background: var(--radar10-bg); }
+/* Keep the map visually dominant and make controls feel like one system. */
+.topbar {
+  background: rgba(13, 15, 18, .94);
+  border-bottom-color: rgba(195, 203, 212, .13);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .16);
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+}
+.brand-badge { background: #1b2026; border-color: #343b44; border-radius: 11px; }
+.brand-title { font-weight: 700; letter-spacing: -.55px; }
+.brand-title em { color: var(--radar10-silver); background: #2a3038; border-radius: 5px; padding: 2px 5px; }
+.brand-sub { color: #9ba4af; }
+.status { background: #191d22; border-color: #343b44; color: #c7ced6; }
+.iconbtn, .round-action {
+  background: rgba(19, 22, 26, .96);
+  border-color: #363d46;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, .16);
+  transition: background-color .14s ease, border-color .14s ease, transform .14s ease;
+}
+.iconbtn:active, .round-action:active { transform: scale(.96); background: #282e36; }
+.controls { gap: 6px; }
+.chip { background: #171b20; border-color: #333a43; color: #b5bec8; font-size: 11px; font-weight: 600; border-radius: 11px; }
+.chip.active { background: #e1e6ec; border-color: #e1e6ec; color: #11151a; }
+.search-wrap { background: #171b20; border-color: #343b44; box-shadow: inset 0 1px 0 rgba(255,255,255,.025); }
+.search-wrap input { font-size: 13px; }
+.search-wrap input::placeholder { color: #929ca7; }
+.info-banner, .stats, .health-panel, .fav-panel, .lines-panel {
+  background: rgba(18, 21, 25, .97);
+  border-color: #353c45;
+  box-shadow: 0 12px 36px rgba(0,0,0,.28);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.stats { border-radius: 15px; padding: 9px 12px; }
+.stat b { font-size: 16px; letter-spacing: -.45px; }
+.stat span, .stats-time { color: #9aa4af; }
+.sheet {
+  background: #15181d;
+  border-color: #363d46;
+  box-shadow: 0 -14px 42px rgba(0,0,0,.32);
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+}
+.sheet-heading { border-bottom-color: rgba(195,203,212,.12); }
+.sheet-title { letter-spacing: -.3px; font-weight: 700; }
+.sheet-subtitle { color: #a1abb6; }
+.close {
+  min-width: 40px; min-height: 40px; width: 40px; height: 40px;
+  border-radius: 12px; border: 1px solid #3a424c;
+  background: #20252b; color: #e6ebf0;
+}
+.close:active { background: #303741; }
+.detail, .model-card, .station-result, .stop, .mini-badge {
+  border-color: rgba(195,203,212,.13);
+}
+.model-card, .station-result { background: #1a1e24; border-radius: 13px; }
+.section-title { letter-spacing: -.15px; font-weight: 700; }
+.marker-circle { background: var(--radar10-train); border-color: #f4f7fb; }
+.marker-wrap.bus .marker-circle { background: var(--radar10-bus); }
+.marker-label { background: rgba(17,20,24,.96); border-color: rgba(220,226,232,.28); }
+.sr50-bottom-nav {
+  background: rgba(17, 19, 23, .97) !important;
+  border-top: 1px solid rgba(195,203,212,.16) !important;
+  box-shadow: 0 -8px 28px rgba(0,0,0,.2) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.sr50-bottom-nav button, .sr50-bottom-nav [role="tab"] { font-size: 11px; font-weight: 600; }
+.sr50-bottom-nav button:focus-visible, .sr50-bottom-nav [role="tab"]:focus-visible { outline-offset: -3px; }
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+@media (max-width: 420px) {
+  .topbar { padding-top: calc(8px + env(safe-area-inset-top)); padding-bottom: 8px; }
+  .brand-badge { width: 34px; height: 34px; }
+  .brand-title { font-size: 15px; }
+  .controls { margin-top: 8px; }
+  .chip { padding-left: 8px; padding-right: 8px; font-size: 10px; }
+  .stats { left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); padding: 8px 9px; }
+  .stat b { font-size: 14px; }
+  .stat span, .stats-time { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .iconbtn, .round-action { transition: none; }
+}

@@ -2,6 +2,7 @@ import {collectHistory,historyApi} from './public/radar-history-worker.mjs';
 import {resolveTrain,normalizeTrain,romeTime} from './public/train-platforms-logic.mjs';
 import {rfiStation,parseMonitor} from './public/rfi-platforms-logic.mjs';
 import {buildSnapshot} from './public/radar66-api.mjs';
+import {normalizeStaVehicleFeed,STA_VEHICLE_POSITIONS_URL} from './public/radar10-collector.mjs';
 /** Read-only transit proxies, with fixed upstream hosts and bounded caching. */
 const FEEDS = Object.freeze({
   sta: 'https://proxy.busone.app/sta/gtfs-rt/vehicle-positions.json',
@@ -111,6 +112,19 @@ export default {
     if (request.method !== 'GET' && request.method !== 'HEAD') return respond({ error: 'Method not allowed' }, 405);
     if(url.pathname.startsWith('/api/history/'))return historyApi(request,env);
     const name = url.pathname.substring(5);
+    if(name==='v1/collector/sta'){
+      const started=Date.now();
+      try{
+        const upstream=await fetch(STA_VEHICLE_POSITIONS_URL,{headers:{accept:'application/json'},signal:AbortSignal.timeout(9000),cf:{cacheEverything:true,cacheTtl:15}});
+        if(!upstream.ok)return respond({error:'STA collector source unavailable',source:'sta-open-data-hub',upstreamStatus:upstream.status},502,{'cache-control':'no-store'});
+        if(!(upstream.headers.get('content-type')||'').toLowerCase().includes('json'))return respond({error:'STA collector received unexpected content type',source:'sta-open-data-hub'},502,{'cache-control':'no-store'});
+        const snapshot=normalizeStaVehicleFeed(await upstream.json(),Date.now());
+        return respond({...snapshot,elapsedMs:Date.now()-started,storage:{enabled:false,reason:'No storage binding approved; D1 remains disabled.'}},200,{'cache-control':'no-store','x-radar-collector':'sta-open-data-hub'});
+      }catch(error){
+        const unsupported=String(error?.message||'').includes('Unsupported STA vehicle feed format');
+        return respond({error:unsupported?'Unsupported STA feed payload format':'STA collector request failed',source:'sta-open-data-hub',reason:error?.name==='TimeoutError'?'timeout':unsupported?'format':'network'},502,{'cache-control':'no-store'});
+      }
+    }
     if(name==='v1/vehicles'||name==='v1/diagnostics'){
       const client=String(env.BUSONE_CLIENT||'Suedtirol Radar read-only transit viewer').slice(0,180);
       const snapshot=await buildSnapshot(async source=>{
