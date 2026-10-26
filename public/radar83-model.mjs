@@ -262,10 +262,10 @@ export function makeVehicleMesh(T,kind){
    // Gerundete FLIRT-Stirn mit geneigter Frontscheibe, Lichtgruppen und tiefer Schuerze.
    // The downloaded RABe 523 GLB remains the primary model; this is the fallback.
    for(const side of [-1,1]){
-    const nose=new T.Mesh(new T.SphereGeometry(1,20,14),white);
-    nose.scale.set(1.34,1.03,1.72);
-    nose.position.set(0,2.08,side*19.78);
-    root.add(nose);
+    // Two stepped, sloped body sections approximate the FLIRT cab without
+    // introducing a new geometry class or extra GPU cost on mobile Safari.
+    box(2.70,1.88,2.35,0,2.00,side*20.05,white,root,side*-0.085);
+    box(2.42,.76,.72,0,2.60,side*20.96,white,root,side*-0.12);
     box(1.94,.90,.10,0,2.82,side*21.30,glass,root,side*-0.17);
     box(2.34,.26,.14,0,1.34,side*21.34,blue,root);
     box(2.06,.20,.14,0,3.04,side*20.92,white,root);
