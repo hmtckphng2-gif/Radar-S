@@ -1,0 +1,7 @@
+/* Compact close/dismiss controls for Radar 10 preview. */
+.close { font-size: 0 !important; display: inline-grid; place-items: center; flex: 0 0 38px; }
+.close::after { content: "×"; font-size: 22px; line-height: 1; font-weight: 400; }
+.alert-close-all { width: 32px; height: 32px; font-size: 0 !important; }
+.alert-close-all::after { content: "×"; font-size: 21px; line-height: 1; font-weight: 400; }
+.sr63-tutorial-actions button { font-size: 12px; padding: 10px; line-height: 1.3; }
+@media (max-width: 420px) { .sr63-tutorial-actions button { font-size: 11px; padding: 9px 8px; } }
