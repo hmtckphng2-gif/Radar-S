@@ -58,6 +58,21 @@ export function processPositionFeed(source, feed, now, indexes, today){
   return {parsed, latest};
 }
 
+// Empty/dash values from a transient partial response must not erase already-known details.
+function usefulDetail(value){
+  if(value == null) return false;
+  const text=String(value).trim();
+  return Boolean(text) && !/^(?:[-–—]+|n\/?a|null|undefined)$/i.test(text);
+}
+function preserveKnownDetails(next, previous){
+  if(!previous) return next;
+  const out={...next};
+  for(const field of ['name','headsign','vehicleId','routeLongName','routeId','tripId']){
+    if(!usefulDetail(out[field]) && usefulDetail(previous[field])) out[field]=previous[field];
+  }
+  return out;
+}
+
 // Mergt gelesene Fahrzeuge in den State und entfernt veraltete des gleichen Sources.
 export function mergePositionVehicles(vehicles, latest, source, now, staleFeed){
   for(const [key, old] of vehicles){
@@ -73,7 +88,7 @@ export function mergePositionVehicles(vehicles, latest, source, now, staleFeed){
     const old = vehicles.get(key);
     if(old?.timestamp && v.timestamp && old.timestamp > v.timestamp) continue;
     const stale = staleFeed || (v.timestamp && now / 1000 - v.timestamp > 300);
-    vehicles.set(key, {...v, lastRealSeen: now, stale: Boolean(stale)});
+    vehicles.set(key, {...preserveKnownDetails(v, old), lastRealSeen: now, stale: Boolean(stale)});
   }
 }
 

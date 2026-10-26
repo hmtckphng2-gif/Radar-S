@@ -259,15 +259,33 @@ export function makeVehicleMesh(T,kind){
     box(1.26,.26,4.8,0,3.62,c-1.8,silver,coach);
     if(seg.center===0)box(.9,.18,2.2,0,3.60,c+3.4,silver,coach);
    }
-   // Bug und Heck mit geneigter Windschutzscheibe
+   // Gerundete FLIRT-Stirn mit geneigter Frontscheibe, Lichtgruppen und tiefer Schuerze.
+   // The downloaded RABe 523 GLB remains the primary model; this is the fallback.
    for(const side of [-1,1]){
-    box(2.72,2.00,2.70,0,1.98,side*20.85,white,root,side*-0.085);
-    box(2.46,0.98,.34,0,2.74,side*22.05,glass,root,side*-0.20);
-    box(2.60,.30,.22,0,1.34,side*22.12,blue,root);
-    box(2.30,.30,.20,0,3.28,side*21.4,white,root);
-    for(const x of [-.94,.94]){
-     box(.30,.17,.12,x,1.52,side*22.10,side>0?light:red,root);
+    // Two stepped, sloped body sections approximate the FLIRT cab without
+    // introducing a new geometry class or extra GPU cost on mobile Safari.
+    box(2.70,1.88,2.35,0,2.00,side*20.05,white,root,side*-0.085);
+    box(2.42,.76,.72,0,2.60,side*20.96,white,root,side*-0.12);
+    // Dark windscreen surround, divided panoramic glass and destination display.
+    box(2.12,1.06,.09,0,2.82,side*21.23,black,root,side*-0.17);
+    box(1.92,.86,.07,0,2.82,side*21.30,glass,root,side*-0.17);
+    box(.045,.78,.035,0,2.82,side*21.345,black,root,side*-0.17);
+    box(1.36,.18,.08,0,3.39,side*20.98,black,root);
+    // The lower blue mask and stainless lower skirt define the FLIRT nose.
+    box(2.34,.26,.14,0,1.34,side*21.34,blue,root);
+    box(2.16,.13,.12,0,1.18,side*21.31,silver,root);
+    box(2.06,.20,.14,0,3.04,side*20.92,white,root);
+    for(const x of [-.91,.91]){
+     box(.30,.18,.12,x,1.66,side*21.32,light,root);
+     box(.18,.08,.12,x,1.43,side*21.35,red,root);
+     box(.12,.34,.18,x*1.53,2.72,side*20.42,black,root,side*-.08);
+     box(.10,.16,.11,x*1.53,2.78,side*20.48,silver,root);
     }
+    // Fine wiper strokes on the windscreen; these are intentionally subtle at map scale.
+    const wiperL=box(.58,.035,.025,-.30,2.53,side*21.36,black,root,side*-.04);
+    wiperL.rotation.z=-.12;
+    const wiperR=box(.58,.035,.025,.30,2.53,side*21.36,black,root,side*.04);
+    wiperR.rotation.z=.12;
    }
    // Dachstromabnehmer auf dem mittleren Segment
    function rod(a,b,r=.065){

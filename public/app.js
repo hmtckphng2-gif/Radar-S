@@ -813,7 +813,8 @@ function closeSheets(resetSelection=true){
   document.dispatchEvent(new Event('sr37:sheet-closed'));
 }
 function badge(text,style=''){const el=document.createElement('span');el.className='mini-badge '+style;el.textContent=text;return el;}
-function detail(name,value,cls=''){const el=document.createElement('div');el.className='detail'+(cls?' '+cls:'');const small=document.createElement('small');small.textContent=name;const strong=document.createElement('strong');strong.textContent=value;el.append(small,strong);$('details').append(el);}
+function displayField(value,fallback='Nicht verfügbar'){const text=value==null?'':String(value).trim();return !text||/^(?:[-–—]+|n\/?a|null|undefined)$/i.test(text)?fallback:text;}
+function detail(name,value,cls=''){const el=document.createElement('div');el.className='detail'+(cls?' '+cls:'');const small=document.createElement('small');small.textContent=name;const strong=document.createElement('strong');strong.textContent=displayField(value);el.append(small,strong);$('details').append(el);}
 function modelFor(v){if(v.kind!=='train')return null;
   // Model dictionary is explicitly keyed by real train number or exact GTFS trip ID.
   const model=state.models[v.name]||state.models[v.tripId];
@@ -831,8 +832,8 @@ function renderModel(v){const model=modelFor(v),card=$('modelCard'),img=$('model
 function drawVehicleDetails(key,fetchSchedule){
   const v=state.vehicles.get(key);if(!v)return;
   $('sheetKind').textContent=v.kind==='train'?t('detail.train')+' · '+v.source.toUpperCase():t('detail.bus')+' · '+v.source.toUpperCase();
-  $('sheetTitle').textContent=(v.kind==='train'?'🚆 ':'🚌 ')+v.name;
-  $('sheetSub').textContent=v.headsign;
+  $('sheetTitle').textContent=(v.kind==='train'?'🚆 ':'🚌 ')+displayField(v.name,v.kind==='train'?'Zugnummer nicht verfügbar':'Linie nicht verfügbar');
+  $('sheetSub').textContent=displayField(v.headsign,'Ziel nicht verfügbar');
   const badges=$('sheetBadges');badges.replaceChildren();
   badges.append(badge(v.kind==='train'?'Zug':'Bus'));
   badges.append(badge(v.stale?'Letzte bekannte Position':'Aktueller Feed',v.stale?'warn':'ok'));

@@ -16,9 +16,6 @@
 <meta property="og:image" content="https://radar-s.j9fr2vg4vm.workers.dev/radar60-icon-512.png">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/png" href="/radar60-icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/vendor/leaflet-1.9.4.css?v=9.9.0">
 <!-- The GLTFLoader imports "three" as a bare specifier. This map points it to
      exactly the same three build that radar83-model.mjs loads, so both share
@@ -52,8 +49,39 @@
 <link rel="stylesheet" href="/radar58.css?v=9.9.0">
 <link rel="stylesheet" href="/radar60.css?v=9.9.0">
 <link rel="stylesheet" href="/radar601.css?v=9.9.0">
+<link rel="stylesheet" href="/radar10-startup.css?v=9.9.0">
 </head>
 <body>
+<div id="sr10Startup" class="sr10-startup" role="status" aria-live="polite" aria-label="Südtirol Radar wird gestartet">
+  <div class="sr10-startup__inner">
+    <div class="sr10-brand-mark" aria-hidden="true"><svg viewBox="0 0 44 44"><path d="M9 32 32 9M10 10h23v23"/><circle cx="22" cy="22" r="4"/></svg></div>
+    <div class="sr10-wordmark">SÜDTIROL <span>RADAR</span></div>
+    <div class="sr10-landscape" aria-hidden="true">
+      <svg viewBox="0 0 720 260" preserveAspectRatio="xMidYMid slice">
+        <defs><linearGradient id="sr10-sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#151f2b"/><stop offset="1" stop-color="#090e15"/></linearGradient><linearGradient id="sr10-hill" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#75818c"/><stop offset="1" stop-color="#252f3b"/></linearGradient></defs>
+        <rect width="720" height="260" fill="url(#sr10-sky)"/><circle cx="560" cy="48" r="19" fill="#c6d0d8" opacity=".7"/>
+        <path d="M0 190 100 76 152 132 240 35 350 166 430 75 515 147 610 55 720 175V260H0Z" fill="#34414e"/>
+        <path d="m199 87 41-52 44 55-43-19Z M579 92l31-37 37 43-35-17Z" fill="#a9b5bf" opacity=".8"/>
+        <path d="M0 210 100 145 195 193 310 115 420 205 540 143 720 207V260H0Z" fill="url(#sr10-hill)" opacity=".92"/>
+        <path d="M0 230 Q190 190 350 225 T720 215" fill="none" stroke="#a9b5bf" stroke-width="2" opacity=".55"/>
+        <g class="sr10-train" transform="translate(0 0)"><path d="M-170 196h194l21 18h-215Z" fill="#87939d"/><rect x="-157" y="158" width="180" height="40" rx="5" fill="#d4dbe0"/><path d="M-157 158h180v11h-180Z" fill="#3875b8"/><path d="M-157 193h180v5h-180Z" fill="#9cabb7"/><path d="M-137 164h31v18h-31Zm40 0h31v18h-31Zm40 0h31v18h-31Z" fill="#152536"/><path d="M8 158h15v40H8Z" fill="#d4dbe0"/><circle cx="-121" cy="202" r="5" fill="#0a1017"/><circle cx="-5" cy="202" r="5" fill="#0a1017"/><path d="M23 169 36 184 23 198Z" fill="#e2e7eb"/></g>
+        <path d="M0 242H720" stroke="#9aa7b2" stroke-width="2" opacity=".45"/><path d="M0 249H720" stroke="#56636f" stroke-width="1" opacity=".7"/>
+      </svg>
+      <div class="sr10-landscape__vignette"></div>
+    </div>
+    <div class="sr10-kicker" id="sr10StartupKicker">LIVE-VERKEHR AUS SÜDTIROL</div>
+    <div class="sr10-loading" id="sr10Loading" hidden>
+      <div class="sr10-loading__title" id="sr10LoadingTitle">Live-Karte wird vorbereitet</div>
+      <div class="sr10-progress" aria-hidden="true"><span></span></div>
+      <ul class="sr10-steps" id="sr10StartupSteps">
+        <li data-step="shell">Oberfläche wird vorbereitet</li><li data-step="map">Karte wird initialisiert</li><li data-step="live">Live-Daten werden geprüft</li>
+      </ul>
+</div>
+    </div>
+    <div class="sr10-footer">ZÜGE · BUSSE · LIVE-POSITIONEN</div>
+  </div>
+</div>
+
 <div id="sr50MapTab" class="sr50-map-tab">
   <div id="map" role="application" tabindex="0" aria-label="Karte mit Zug- und Buspositionen. Mit Tab erreichbar, Pfeiltasten verschieben die Karte." data-t-aria-label="map.aria"></div>
   <header class="topbar">
@@ -155,7 +183,6 @@
 
 <script src="/vendor/leaflet-1.9.4.js?v=9.9.0" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script>
 <script src="/radar-recovery.js?v=9.9.0" defer></script>
-<script src="/radar831-boot.js?v=9.9.0"></script>
 <script src="/radar431-stop.js?v=9.9.0"></script>
 <script src="/radar37.js?v=9.9.0"></script>
 <script src="/radar40.js?v=9.9.0"></script>
@@ -197,7 +224,7 @@
 <link rel="stylesheet" href="/radar692.css?v=9.9.0">
 <script type="module" src="/radar692.js?v=9.9.0"></script>
 <link rel="stylesheet" href="/radar70.css?v=9.9.0">
-<script type="module" src="/radar70.js?v=9.9.0"></script>
+<script type="module" src="/radar70-redesign.mjs"></script>
 <link rel="stylesheet" href="/radar705.css?v=9.9.0">
 <link rel="stylesheet" href="/radar71.css?v=9.9.0">
 <script type="module" src="/radar71-camera.mjs?v=9.9.0"></script>
@@ -219,5 +246,12 @@
 <link rel="stylesheet" href="/radar80-map.css?v=9.9.0">
 <link rel="stylesheet" href="/radar82.css?v=9.9.0">
 <link rel="stylesheet" href="/radar83.css?v=9.9.0"><link rel="stylesheet" href="/radar84.css?v=9.9.0">
+<link rel="stylesheet" href="/radar-ui.css?v=9.9.0">
+<link rel="stylesheet" href="/radar-ui-compact.css?v=9.9.0">
+<link rel="stylesheet" href="/radar-ui-v10.css?v=9.9.0">
+<link rel="stylesheet" href="/radar10-shell.css?v=9.9.0">
+<link rel="stylesheet" href="/radar10-polish.css?v=9.9.0">
+<link rel="stylesheet" href="/radar10-fixpack.css?v=9.9.0">
+<script defer src="/radar10-startup.js?v=9.9.0"></script>
 </body>
 </html>

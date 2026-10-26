@@ -4,10 +4,10 @@
 #map .sr83-viewport{
  position:absolute;inset:0;z-index:835;overflow:hidden;background:#0a1018;
  opacity:0;pointer-events:none;
- transition:opacity .28s ease;
+ transition:opacity 1.32s cubic-bezier(.22,.72,.18,1);
 }
-#map .sr83-viewport.sr83-ready,
-#map .sr83-viewport.sr83-loading{opacity:1;pointer-events:auto}
+#map .sr83-viewport.sr83-loading{opacity:.42;pointer-events:auto}
+#map .sr83-viewport.sr83-ready{opacity:1;pointer-events:auto}
 #map .sr83-map,#map .sr83-map .maplibregl-map{position:absolute;inset:0;width:100%;height:100%}
 #map .sr83-map .maplibregl-canvas-container,#map .sr83-map .maplibregl-canvas{touch-action:none}
 #map .sr83-toolbar{
@@ -81,3 +81,7 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
   #map .sr83-replay,#map .sr83-back{min-height:44px;padding:10px 12px;font-size:12px}
   #map .sr83-credit{bottom:calc(30dvh + 14px);font-size:9px;padding:6px 9px}
 }
+/* 10.0 motion polish: the camera flight eases into a stable final frame. */
+#map .sr83-map .maplibregl-canvas{transition:filter 1.32s cubic-bezier(.22,.72,.18,1)}
+#map .sr83-viewport.sr83-loading .maplibregl-canvas{filter:saturate(.94) brightness(.96) blur(1.2px)}
+#map .sr83-viewport.sr83-ready .maplibregl-canvas{filter:saturate(1) brightness(1) blur(0)}

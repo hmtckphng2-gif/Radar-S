@@ -15,13 +15,15 @@ function post(path='/api/ai/journey',origin=base){
   body:JSON.stringify(payload)});
 }
 const limiter=(success=true)=>({limit:async()=>({success})});
-test('Cloudflare AI binding is declared and OpenRouter config is not required',()=>{
+test('preview Worker is isolated from D1, AI and production rate-limit bindings',()=>{
  const cfg=JSON.parse(readFileSync(new URL('../wrangler.jsonc',import.meta.url),'utf8'));
- assert.equal(cfg.ai.binding,'AI');
- assert.ok(cfg.ratelimits.some(x=>x.name==='AI_JOURNEY_LIMITER'));
+ assert.equal(cfg.name,'suedtirol-radar-preview');
+ assert.equal(cfg.ai,undefined);
+ assert.equal(cfg.ratelimits,undefined);
+ assert.equal(cfg.d1_databases,undefined);
 });
-test('AI endpoint falls back safely when Cloudflare AI binding is absent',async()=>{
- const r=await worker.fetch(post(),{AI_JOURNEY_LIMITER:limiter()});
+test('AI endpoint fails safely when Cloudflare AI binding is absent',async()=>{
+ const r=await worker.fetch(post(),{});
  assert.equal(r.status,503);
  assert.equal((await r.json()).error,'AI model not configured');
  assert.match(r.headers.get('cache-control'),/no-store/);
@@ -37,16 +39,11 @@ test('Cloudflare binding receives bounded timetable, not an OpenRouter request',
   return {choices:[{message:{content:'REG 1 ist laut Fahrplan die einfachste Wahl.'}}]};
  }}};
  const r=await worker.fetch(post(),env),body=await r.json();
- assert.equal(r.status,200);
- assert.equal(body.ai,true);
- assert.match(body.answer,/REG 1/);
- assert.equal(invoked,1);
+ assert.equal(r.status,200);assert.equal(body.ai,true);
+ assert.match(body.answer,/REG 1/);assert.equal(invoked,1);
 });
 test('legacy journey-chat alias still supports conversation context',async()=>{
- const request=new Request(base+'/api/ai/journey-chat',{
-  method:'POST',headers:{'content-type':'application/json',origin:base},
-  body:JSON.stringify({...payload,history:[{role:'user',content:'Ich möchte wenig umsteigen.'}]})
- });
+ const request=new Request(base+'/api/ai/journey-chat',{method:'POST',headers:{'content-type':'application/json',origin:base},body:JSON.stringify({...payload,history:[{role:'user',content:'Ich möchte wenig umsteigen.'}]})});
  const r=await worker.fetch(request,{AI_JOURNEY_LIMITER:limiter(),AI:{run:async(_model,body)=>{
   assert.match(body.messages[1].content,/wenig umsteigen/);
   return {choices:[{message:{content:'Direktzug bevorzugen.'}}]};
@@ -56,10 +53,9 @@ test('legacy journey-chat alias still supports conversation context',async()=>{
 test('rejects cross-origin requests and rate-limited callers',async()=>{
  const env={AI_JOURNEY_LIMITER:limiter(),AI:{run:async()=>{throw Error('Must not run')}}};
  assert.equal((await worker.fetch(post('/api/ai/journey','https://other.example'),env)).status,403);
- const r=await worker.fetch(post(),{...env,AI_JOURNEY_LIMITER:limiter(false)});
- assert.equal(r.status,429);
+ assert.equal((await worker.fetch(post(),{...env,AI_JOURNEY_LIMITER:limiter(false)})).status,429);
 });
-test('provider errors give a temporary status without inventing AI answers',async()=>{
+test('provider errors return a temporary status without inventing AI answers',async()=>{
  const r=await worker.fetch(post(),{AI_JOURNEY_LIMITER:limiter(),AI:{run:async()=>{throw Error('Quota reached')}}});
  assert.equal(r.status,503);
  assert.match((await r.json()).error,/Cloudflare AI/);

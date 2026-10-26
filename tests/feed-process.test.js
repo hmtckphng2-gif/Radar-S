@@ -69,3 +69,15 @@ test('pruneStaleVehicles: entfernt Fahrzeuge von nicht antwortenden Sources', ()
   pruneStaleVehicles(vehicles, Date.now(), {sta: 'error'});
   assert.ok(!vehicles.has('k1'));
 });
+
+
+test('mergePositionVehicles: transient dash placeholders do not erase known vehicle details', () => {
+  const vehicles = new Map([['sta:v1', {key:'sta:v1', source:'sta', timestamp:1000, kind:'bus', name:'Linie 5', headsign:'Bozen Zentrum', vehicleId:'BUS-17', routeId:'R5', tripId:'T5'}]]);
+  const latest = new Map([['sta:v1', {key:'sta:v1', source:'sta', timestamp:1001, kind:'bus', name:'-', headsign:'–', vehicleId:'—', routeId:'-', tripId:'T5'}]]);
+  mergePositionVehicles(vehicles, latest, 'sta', Date.now(), false);
+  const v = vehicles.get('sta:v1');
+  assert.equal(v.name, 'Linie 5');
+  assert.equal(v.headsign, 'Bozen Zentrum');
+  assert.equal(v.vehicleId, 'BUS-17');
+  assert.equal(v.routeId, 'R5');
+});

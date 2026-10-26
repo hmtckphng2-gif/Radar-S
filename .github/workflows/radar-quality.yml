@@ -1,7 +1,7 @@
 name: Radar Quality Gate
 on:
   push:
-    branches: [main]
+    branches: [main, "feature/radar-10-redesign-integration"]
   pull_request:
     branches: [main]
 jobs:

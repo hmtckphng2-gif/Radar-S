@@ -5,7 +5,7 @@ export const TERRAIN_TILES='https://s3.amazonaws.com/elevation-tiles-prod/terrar
 export function enabled3D(search=''){
  try{return new URLSearchParams(search).get('radar3d')!=='off'}catch{return true}
 }
-export function target3DCamera(point,zoom,heading=null,duration=3700){
+export function target3DCamera(point,zoom,heading=null,duration=4300){
  const lng=Number(point?.lng??point?.lon),lat=Number(point?.lat);
  if(!Number.isFinite(lng)||!Number.isFinite(lat)||lat< -85||lat>85||lng< -180||lng>180)return null;
  return {
@@ -63,10 +63,11 @@ export function followDecision({touched=false,center=null,point=null,thresholdMe
 // the 3D scene is still being built up in the background. The old flow
 // waited for the tiles and for the model first, which felt like a dead
 // second on every single tap.
-export function cinematicDuration(distanceKm=0,base=3000){
+export function cinematicDuration(distanceKm=0,base=4300){
   const d=Number(distanceKm);
-  const extra=Number.isFinite(d)&&d>2?350:0;
-  return Math.round(Math.max(1600,Math.min(3000,Number(base)||3000))+extra);
+  const extra=Number.isFinite(d)&&d>2?400:0;
+  const duration=Math.max(3800,Math.min(4600,Number(base)||4300));
+  return Math.min(5000,Math.round(duration+extra));
 }
 // If the system asks for less motion, the cinematic camera must not fly.
 // It jumps straight to the vehicle instead.
