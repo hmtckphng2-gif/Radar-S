@@ -1,0 +1,45 @@
+name: Radar Preview Deploy
+
+on:
+  push:
+    branches: ["feature/radar-10-redesign-integration"]
+  workflow_dispatch:
+
+concurrency:
+  group: radar-preview-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify JavaScript and tests
+        run: |
+          npm run check
+          npm test
+      - name: Deploy isolated preview Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy worker.js --config wrangler.jsonc
+      - name: Smoke test preview endpoints
+        run: |
+          set -euo pipefail
+          BASE="https://suedtirol-radar-preview.j9fr2vg4vm.workers.dev"
+          curl --fail --silent --show-error "$BASE/api/version" -o /tmp/version.json
+          node -e "const v=require('/tmp/version.json'); if(v.version!=='9.9.0') { console.error(v); process.exit(1) } console.log('Version endpoint OK:',v.version)"
+          curl --fail --silent --show-error "$BASE/api/health" -o /tmp/health.json
+          node -e "const h=require('/tmp/health.json'); if(h.ok!==true) { console.error(h); process.exit(1) } console.log('Health endpoint OK')"
+          curl --fail --silent --show-error "$BASE/radar-ui.css?v=9.9.0" -o /tmp/radar-ui.css
+          grep -q . /tmp/radar-ui.css
+          echo 'Redesign stylesheet OK'
