@@ -38,7 +38,7 @@ function legacy(id,action){
 }
 function feature(id){
  switch(id){
- case 'map':navigate('map');break;
+ case 'map':navigate('map');break;case 'journey':navigate('journey');break;
  case 'station':legacy('map',()=>bridge.showStations?.());break;
  case 'departures':legacy('departures');break;
  case 'favorites':legacy('favorites');break;
