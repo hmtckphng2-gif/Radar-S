@@ -32,7 +32,9 @@ test('the overlay becomes visible while the scene is still loading', () => {
   const src = read('radar83-map.mjs');
   assert.match(src, /classList\.add\('sr83-loading'\)/);
   const css = read('radar83.css');
-  assert.match(css, /\.sr83-viewport\.sr83-loading\{opacity:1;pointer-events:auto\}/);
+  assert.match(css, /\.sr83-viewport\.sr83-loading\{opacity:\.?94;pointer-events:auto\}/);
+  assert.match(css, /\.sr83-viewport\.sr83-ready\{opacity:1;pointer-events:auto\}/);
+  assert.match(css, /transition:opacity \.62s cubic-bezier\(\.22,\.8,\.2,1\)/);
 });
 
 test('the follow never fights the running flight', () => {
