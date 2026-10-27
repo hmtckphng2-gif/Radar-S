@@ -386,3 +386,15 @@ test('configured GLB models use the instantiated GLTFLoader and fall back only o
   assert.match(model, /loadModelConfig\(\)/);
   assert.match(model, /catch\(error\)\{clearTimeout\(timer\);reject\(error\)\}/);
 });
+
+test('configured train and bus GLB assets exist and use the glTF 2 binary format', () => {
+  const config = JSON.parse(read('public/models/models.json'));
+  for (const kind of ['train', 'bus']) {
+    const entry = config.models[kind];
+    const file = readFileSync(root + 'public/models/' + entry.file);
+    assert.ok(file.length > 20_000, kind + ' GLB should not be an empty placeholder');
+    assert.equal(file.toString('ascii', 0, 4), 'glTF', kind + ' asset must have the binary glTF magic');
+    assert.equal(file.readUInt32LE(4), 2, kind + ' asset must use glTF version 2');
+    assert.equal(file.readUInt32LE(8), file.length, kind + ' declared GLB length must match the file');
+  }
+});
