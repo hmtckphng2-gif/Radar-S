@@ -147,8 +147,55 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
   });
   const scene=gltf?.scene;
   if(!scene)return null;
+  // South Tyrol regional liveries are applied at runtime so the original
+  // CC BY GLBs and their Meshopt-compressed buffers/textures remain intact.
+  // This is a visual livery treatment, not a claim that the source mesh is an
+  // exact ETR 170 / local fleet model. Keep glass, rubber, lights and interiors.
+  const liveryMaterials=[];
+  scene.traverse((node)=>{
+    if(!node.isMesh||!node.material)return;
+    const mats=Array.isArray(node.material)?node.material:[node.material];
+    for(const original of mats){
+      if(!original||!original.color)continue;
+      const material=original.clone();
+      const label=String(node.name+' '+original.name).toLowerCase();
+      if(kind==='bus'){
+        if(/glass|window|wheel|tire|tyre|rubber|mirror|dash|interior|gauge|light|lamp/.test(label))continue;
+        // Yellow body paint; the texture is preserved and modulated, not replaced.
+        material.color.set('#f1c928');
+        liveryMaterials.push(material);
+      }else{
+        if(/glass|window|wheel|tire|tyre|rubber|mirror|interior|light|lamp/.test(label))continue;
+        // Neutral metallic silver base; original texture details remain visible.
+        material.color.set('#d7dce0');
+        liveryMaterials.push(material);
+      }
+    }
+    if(Array.isArray(node.material)){
+      node.material=node.material.map(m=>{const found=liveryMaterials.find(x=>x.name===m.name&&x!==m);return found||m});
+    }else{const found=liveryMaterials.find(x=>x.name===node.material.name&&x!==node.material);if(found)node.material=found;}
+  });
   const normalized=normalizeModel(scene,entry,THREE);
   if(!normalized)return null;
+  // Fine accent bands sit on the exterior sides in model metres. Since these
+  // are children of the normalized holder, they inherit the measured model scale.
+  const accents=new THREE.Group(); accents.name='radar-regional-livery-accents';
+  const band=(width,height,length,x,y,z,color)=>{
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(width,height,length),new THREE.MeshBasicMaterial({color,roughness:.7}));
+    mesh.position.set(x,y,z);mesh.name='radar-livery-accent';accents.add(mesh);
+  };
+  if(kind==='train'){
+    for(const side of [-1,1]){
+      band(.018,.105,42.0,side*1.415,1.52,0,'#b73b32');
+      band(.019,.035,42.0,side*1.422,1.435,0,'#e28b32');
+    }
+  }else{
+    for(const side of [-1,1]){
+      band(.018,.19,10.7,side*1.29,1.62,0,'#c8cdd1');
+      band(.019,.045,10.7,side*1.30,1.505,0,'#e4e7e9');
+    }
+  }
+  normalized.object.add(accents);
   return {object:normalized.object,scale:normalized.scale,credit:entry.credit||null,url};
 }
 
