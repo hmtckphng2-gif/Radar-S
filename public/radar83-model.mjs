@@ -147,42 +147,36 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
   });
   const scene=gltf?.scene;
   if(!scene)return null;
-  // South Tyrol regional liveries are applied at runtime so the original
-  // CC BY GLBs and their Meshopt-compressed buffers/textures remain intact.
-  // This is a visual livery treatment, not a claim that the source mesh is an
-  // exact ETR 170 / local fleet model. Keep glass, rubber, lights and interiors.
-  const liveryMaterials=[];
+  // Repaint eligible exterior materials per mesh. Assign clones directly to source slots; material names are not unique.
+  // Remove source colour maps on painted panels so old livery textures cannot mask the repaint.
   scene.traverse((node)=>{
     if(!node.isMesh||!node.material)return;
-    const mats=Array.isArray(node.material)?node.material:[node.material];
-    for(const original of mats){
-      if(!original||!original.color)continue;
+    const sourceMats=Array.isArray(node.material)?node.material:[node.material];
+    const painted=sourceMats.map((original)=>{
+      if(!original||!original.color)return original;
+      const label=String((node.name||'')+' '+(original.name||'')).toLowerCase();
+      const protectedPart=kind==='bus'
+        ? /glass|window|wheel|tire|tyre|rubber|mirror|dash|interior|gauge|light|lamp|seat|screen|windshield/.test(label)
+        : /glass|window|wheel|tire|tyre|rubber|mirror|interior|light|lamp|seat|screen|windshield/.test(label);
+      if(protectedPart)return original;
       const material=original.clone();
-      const label=String(node.name+' '+original.name).toLowerCase();
-      if(kind==='bus'){
-        if(/glass|window|wheel|tire|tyre|rubber|mirror|dash|interior|gauge|light|lamp/.test(label))continue;
-        // Yellow body paint; the texture is preserved and modulated, not replaced.
-        material.color.set('#f1c928');
-        liveryMaterials.push(material);
-      }else{
-        if(/glass|window|wheel|tire|tyre|rubber|mirror|interior|light|lamp/.test(label))continue;
-        // Neutral metallic silver base; original texture details remain visible.
-        material.color.set('#d7dce0');
-        liveryMaterials.push(material);
-      }
-    }
-    if(Array.isArray(node.material)){
-      node.material=node.material.map(m=>{const found=liveryMaterials.find(x=>x.name===m.name&&x!==m);return found||m});
-    }else{const found=liveryMaterials.find(x=>x.name===node.material.name&&x!==node.material);if(found)node.material=found;}
+      material.color.set(kind==='bus'?'#f1c928':'#d7dce0');
+      material.map=null;
+      material.needsUpdate=true;
+      return material;
+    });
+    node.material=Array.isArray(node.material)?painted:painted[0];
   });
   const normalized=normalizeModel(scene,entry,THREE);
   if(!normalized)return null;
   // Fine accent bands sit on the exterior sides in model metres. Since these
   // are children of the normalized holder, they inherit the measured model scale.
   const accents=new THREE.Group(); accents.name='radar-regional-livery-accents';
+  // The normalized holder has a scale transform; compensate in local coordinates.
+  const localUnits=1/Math.max(1e-6,normalized.scale);
   const band=(width,height,length,x,y,z,color)=>{
-    const mesh=new THREE.Mesh(new THREE.BoxGeometry(width,height,length),new THREE.MeshBasicMaterial({color,roughness:.7}));
-    mesh.position.set(x,y,z);mesh.name='radar-livery-accent';accents.add(mesh);
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(width*localUnits,height*localUnits,length*localUnits),new THREE.MeshBasicMaterial({color,roughness:.7}));
+    mesh.position.set(x*localUnits,y*localUnits,z*localUnits);mesh.name='radar-livery-accent';accents.add(mesh);
   };
   if(kind==='train'){
     for(const side of [-1,1]){
