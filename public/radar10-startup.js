@@ -3,9 +3,9 @@
  'use strict';
  var root=document.getElementById('sr10Startup');if(!root)return;
  var loading=document.getElementById('sr10Loading'),kicker=document.getElementById('sr10StartupKicker'),title=document.getElementById('sr10LoadingTitle'),steps=document.getElementById('sr10StartupSteps');
- var start=Date.now(),introMs=3000,minimumMs=6200,timeoutMs=18000,shownLoading=false,finished=false,reduced=false;
+ var start=Date.now(),introMs=4200,minimumMs=4900,timeoutMs=16000,shownLoading=false,finished=false,reduced=false;
  try{reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(_){}
- if(reduced){introMs=700;minimumMs=1200;}
+ if(reduced){introMs=700;minimumMs=1000;}
  root.classList.add('is-intro');
  function state(){return window.SuedtirolRadar37&&window.SuedtirolRadar37.state||null}
  function tileCount(){var map=document.getElementById('map');return map?map.querySelectorAll('.leaflet-tile-loaded').length:0}
