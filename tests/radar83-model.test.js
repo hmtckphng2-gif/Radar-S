@@ -378,3 +378,11 @@ test('the 3D transform still matches the direction reference', () => {
   const up=modelWorldDirection([0,1,0],0);
   assert.ok(Math.abs(up.up-1)<1e-9,'die Hoehe bleibt oben');
 });
+
+test('configured GLB models use the instantiated GLTFLoader and fall back only on load failure', () => {
+  const model = read('public/radar83-model.mjs');
+  assert.match(model, /loader\.load\(url,\s*\(data\)=>/);
+  assert.doesNotMatch(model, /new\s+loader\s*\(\)\.load/);
+  assert.match(model, /loadModelConfig\(\)/);
+  assert.match(model, /catch\(error\)\{clearTimeout\(timer\);reject\(error\)\}/);
+});
