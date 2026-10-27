@@ -134,7 +134,7 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
     this.map?.triggerRepaint();
     disposeObject(previous);
     onModel({kind:'real',credit:loaded.credit||null});
-   }).catch(()=>{if(!this.disposed){this.modelKind='fallback';onModel({kind:'fallback'});this.map?.triggerRepaint()}});
+   }).catch(error=>{if(!this.disposed){const reason=String(error?.message||error||'unbekannter Fehler').replace(/\s+/g,' ').slice(0,100);console.error('[Radar 3D] real vehicle model failed',error);this.modelKind='fallback';onModel({kind:'fallback',error:reason});this.map?.triggerRepaint()}});
   },
   update(p,h){
    const lat=Number(p?.lat),lng=Number(p?.lng),head=Number(h);
@@ -280,9 +280,9 @@ export class Radar83Cinematic {
    if(use3DTerrain(location.search))enable3DTerrain(map);
    this.layer=make3DVehicleLayer(T,lib,map,vehicle,point,heading,info=>{
     this.onModel(info);
-    if(this.credit)this.credit.textContent=info.kind==='real'?modelCreditText(info.credit,true):'Ersatzmodell aktiv · echtes Modell nicht geladen';
+    if(this.credit)this.credit.textContent=info.kind==='real'?modelCreditText(info.credit,true):(info.error?'3D-Ladefehler: '+info.error:'Ersatzmodell aktiv · echtes Modell nicht geladen');
     if(this.info&&info.kind==='real')this.info.textContent='3D · '+(info.credit?.title||'Fahrzeug');
-    else if(this.info&&info.kind==='fallback')this.info.textContent='3D · Ersatzmodell (GLB nicht geladen)';
+    else if(this.info&&info.kind==='fallback')this.info.textContent=info.error?'3D · Ladefehler: '+info.error:'3D · Ersatzmodell (GLB nicht geladen)';
    });
    map.addLayer(this.layer);
    await waitFor3DModel(map,this.layer);
