@@ -178,12 +178,10 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
     const mesh=new THREE.Mesh(new THREE.BoxGeometry(width*localUnits,height*localUnits,length*localUnits),new THREE.MeshBasicMaterial({color,roughness:.7}));
     mesh.position.set(x*localUnits,y*localUnits,z*localUnits);mesh.name='radar-livery-accent';accents.add(mesh);
   };
-  if(kind==='train'){
-    for(const side of [-1,1]){
-      band(.018,.105,42.0,side*1.415,1.52,0,'#b73b32');
-      band(.019,.035,42.0,side*1.422,1.435,0,'#e28b32');
-    }
-  }else{
+  // Keep the real train body clean: the old 42 m decorative bars were
+  // visibly floating above the FLIRT instead of following its body panels.
+  // The bus keeps its compact silver accents over the yellow body.
+  if(kind==='bus'){
     for(const side of [-1,1]){
       band(.018,.19,10.7,side*1.29,1.62,0,'#c8cdd1');
       band(.019,.045,10.7,side*1.30,1.505,0,'#e4e7e9');
