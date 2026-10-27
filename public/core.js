@@ -186,6 +186,42 @@ export function stopRows(details, tripId, maxRows=120) {
   return entries.slice(0,maxRows).map(([stopId, arr, dep, seq])=>({stopId, name:details.stops?.[stopId]?.[0] || 'Haltestelle '+stopId,
     arrival:formatClock(arr), departure:formatClock(dep), seq}));
 }
+
+// Resolve a static GTFS trip for a live train without guessing. Exact trip IDs
+// win; fallback is allowed only when today's active GTFS trip is uniquely
+// identified by official train number plus every available route/shape/direction
+// constraint. Ambiguous matches deliberately return an empty ID.
+export function resolveScheduleTripId(vehicle, indexes, detailsBySource, now=new Date()) {
+  if(!vehicle)return '';
+  const source=vehicle.source==='sta_direct'?'sta':txt(vehicle.source);
+  const db=indexes?.[source],trips=db?.trips;
+  const details=detailsBySource?.times ? detailsBySource : (detailsBySource?.[source] || (source==='sta' ? detailsBySource?.sta_direct : null));
+  const times=details?.times;
+  if(!trips || !times)return '';
+  const exact=txt(vehicle.tripId);
+  if(exact && Array.isArray(times[exact]) && times[exact].length)return exact;
+  if(vehicle.kind!=='train')return '';
+  const normalizeNumber=value=>txt(value).normalize('NFKC').toUpperCase()
+    .replace(/^ZUG\s+/,'').replace(/^(?:REG|RE|RV|RJX|RJ|EC|IC|FR|FA|EN|S\d{1,2})[\s-]*/,'')
+    .replace(/[^A-Z0-9]/g,'');
+  const number=normalizeNumber(vehicle.name);
+  if(!number)return '';
+  const candidates=Object.entries(trips).filter(([tripId,trip])=>{
+    if(!Array.isArray(times[tripId]) || !times[tripId].length || trip?.[5]===false)return false;
+    if(normalizeNumber(trip?.[3])!==number)return false;
+    if(vehicle.shapeId && txt(trip?.[2])!==txt(vehicle.shapeId))return false;
+    if(vehicle.routeId && txt(trip?.[0])!==txt(vehicle.routeId))return false;
+    if(vehicle.directionId && txt(trip?.[6]) && txt(trip?.[6])!==txt(vehicle.directionId))return false;
+    return true;
+  });
+  if(candidates.length===1)return candidates[0][0];
+  if(candidates.length>1 && txt(vehicle.headsign)) {
+    const head=txt(vehicle.headsign).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('de').replace(/[^a-z0-9]+/g,' ').trim();
+    const byHead=candidates.filter(([,trip])=>txt(trip?.[1]).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('de').replace(/[^a-z0-9]+/g,' ').trim()===head);
+    if(byHead.length===1)return byHead[0][0];
+  }
+  return '';
+}
 // Project a GPS/estimated point onto its own GTFS trip shape; no nearest arbitrary railway.
 export function shapeProject(path, lat, lon) {
   if (!Array.isArray(path) || path.length < 2) return null;
