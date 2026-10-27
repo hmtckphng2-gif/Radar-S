@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const html=readFileSync('public/index.html','utf8');
+const ui=readFileSync('public/radar10-map-first.js','utf8');
+const css=readFileSync('public/radar10-map-first.css','utf8');
+const startup=readFileSync('public/radar10-startup.js','utf8');
+const startupCss=readFileSync('public/radar10-startup.css','utf8');
+test('map-first assets are linked with cache-busting revisions',()=>{assert.match(html,/radar10-map-first\.css\?v=9\.9\.0&rev=mapfirst/);assert.match(html,/radar10-map-first\.js\?v=9\.9\.0&rev=mapfirst/);});
+test('disturbance sheet reuses the live alert ticker and supports close controls',()=>{assert.match(html,/id="alertTicker"/);assert.match(ui,/content\.appendChild\(ticker\)/);assert.match(ui,/e\.key==='Escape'/);assert.match(ui,/touchend/);});
+test('compact filters, stats and clear-map control exist',()=>{for(const s of ['mf-filter-toggle','mfStatsToggle','mfClearMap','Live-Daten verfügbar','Teilweise geschätzt / eingeschränkt','Datenstörung'])assert.ok(ui.includes(s),s);assert.match(css,/mf-overlays-hidden/);assert.match(css,/safe-area-inset-bottom/);});
+test('startup train animation has a longer visible pass',()=>{assert.match(startup,/introMs=3000,minimumMs=6200/);assert.match(startupCss,/animation-duration:4\.8s/);});

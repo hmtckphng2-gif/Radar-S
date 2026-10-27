@@ -47,3 +47,12 @@
 #sr10Startup .sr10-brand-mark svg circle { fill: #e1e6ec !important; stroke: none !important; }
 #sr10Startup .sr10-wordmark { color: #f3f5f7 !important; }
 #sr10Startup .sr10-wordmark span { color: #c4cbd1 !important; }
+
+/* Keep the silver train pass visible instead of letting it finish before first paint settles. */
+.sr10-train{animation-duration:4.8s!important;animation-delay:.12s!important}
+.sr10-startup.is-intro .sr10-train{animation-duration:4.8s!important;animation-delay:.55s!important}
+.sr10-landscape{height:clamp(160px,32vh,236px)}
+.sr10-brand-mark{width:50px;height:50px;border-color:rgba(220,228,235,.58);box-shadow:0 0 0 5px rgba(195,207,218,.045),0 12px 34px #0006}
+.sr10-brand-mark svg{width:29px;height:29px}
+.sr10-wordmark{text-shadow:0 2px 22px rgba(210,220,230,.12)}
+@media(prefers-reduced-motion:reduce){.sr10-train,.sr10-startup.is-intro .sr10-train{animation-duration:.01ms!important;animation-delay:0s!important}}
