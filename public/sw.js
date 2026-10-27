@@ -18,18 +18,18 @@
  * 5. **Nichts wird im Voraus geladen.** Der Cache waechst nur mit dem, was
  *    tatsaechlich benutzt wurde. Das haelt den Speicherbedarf klein.
  */
-const version='9.9.0';
-const CACHE='radar-shell-v' + version + '-scrollcraft';
-const ACTIVE_CACHE=CACHE+'-3dfix';
+const CACHE='radar-shell-v9.9.0-scrollcraft';
 const SHELL='/index.html';
 
 self.addEventListener('install',event=>{
-  event.waitUntil(caches.open(ACTIVE_CACHE).then(cache=>cache.addAll([SHELL,'/manifest.webmanifest'])).then(()=>self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll([SHELL,'/manifest.webmanifest'])).then(()=>self.skipWaiting()));
 });
 
 self.addEventListener('activate',event=>{
   event.waitUntil(caches.keys()
-    .then(keys=>Promise.all(keys.filter(key=>key!==ACTIVE_CACHE).map(key=>caches.delete(key))))
+    .then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key))))
+    .then(()=>caches.open(CACHE))
+    .then(cache=>cache.keys().then(keys=>Promise.all(keys.filter(request=>!['/index.html','/manifest.webmanifest'].some(path=>new URL(path,self.location.origin).href===request.url)).map(request=>cache.delete(request)))))
     .then(()=>self.clients.claim()));
 });
 
@@ -65,7 +65,7 @@ self.addEventListener('fetch',event=>{
       // Proxy-Fehlermeldung statt der Huelle.
       if(!response.ok)throw new Error('Antwort nicht gut: '+response.status);
       const copy=response.clone();
-      caches.open(ACTIVE_CACHE).then(cache=>cache.put(SHELL,copy));
+      caches.open(CACHE).then(cache=>cache.put(SHELL,copy));
       return response;
     }).catch(()=>caches.match(SHELL).then(hit=>hit||new Response(
       '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Südtirol Radar - offline</title></head>'+
@@ -77,7 +77,7 @@ self.addEventListener('fetch',event=>{
   }
   // 3. Dateien der App: mit Version aus dem Cache, ohne erst aus dem Netz.
   if(isAsset(url)){
-    event.respondWith(caches.open(ACTIVE_CACHE).then(async cache=>{
+    event.respondWith(caches.open(CACHE).then(async cache=>{
       const hit=await cache.match(request);
       const net=fetch(request).then(response=>{
         if(response&&response.ok){cache.put(request,response.clone());return response}
