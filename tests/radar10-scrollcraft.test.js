@@ -7,7 +7,7 @@ const [html,css,sw]=await Promise.all([
  readFile(new URL("../public/sw.js",import.meta.url),"utf8")
 ]);
 test("Scroll-Craft stylesheet referenced by the app exists",()=>{
- assert.match(html,/radar10-scrollcraft\.css\?v=9\.9\.1/);
+ assert.match(html,/radar10-scrollcraft\.css\?v=9\.9\.0/);
  assert.match(css,/overflow-y:auto/);
 });
 test("sheet scroll is native, momentum-enabled, and isolated",()=>{
