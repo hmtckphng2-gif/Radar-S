@@ -18,7 +18,7 @@
  * 5. **Nichts wird im Voraus geladen.** Der Cache waechst nur mit dem, was
  *    tatsaechlich benutzt wurde. Das haelt den Speicherbedarf klein.
  */
-const CACHE='radar-shell-v9.9.1-scrollcraft';
+const CACHE='radar-shell-v9.9.0-scrollcraft-3dfix';
 const SHELL='/index.html';
 
 self.addEventListener('install',event=>{
