@@ -1364,7 +1364,7 @@ async function init(){
   // Der Scope muss ausdruecklich auf '/' stehen, sonst waere er '/sw.js'.
   if('serviceWorker' in navigator){
    try{
-    navigator.serviceWorker.register('/sw.js?v=9.9.0',{scope:'/'}).then(reg=>{
+    navigator.serviceWorker.register('/sw.js?v=9.9.1',{scope:'/'}).then(reg=>{
      reg.addEventListener('updatefound',()=>{
       const w=reg.installing;
       if(!w)return;
