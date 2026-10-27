@@ -1,0 +1,63 @@
+/* Scroll-Craft adaptation for Radar's app surfaces, not the landing-page engine.
+   Keep one scroll owner per panel and leave the map itself fixed. */
+.sheet {
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y;
+}
+.sheet .sheet-scroll {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  scroll-padding-block: 12px;
+  scrollbar-width: thin;
+}
+.sr70-home,
+.sr70-more {
+  min-height: 0;
+  max-height: 100dvh;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  scroll-padding-block: 16px 100px;
+}
+.sheet .handle {
+  position: relative !important;
+  touch-action: none !important;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sheet .handle:active { cursor: grabbing; }
+@media (max-width: 749px) {
+  .sheet .handle {
+    width: 100% !important;
+    height: 28px !important;
+    min-height: 28px;
+    margin: 0 auto 8px !important;
+    flex: 0 0 28px;
+    background: transparent !important;
+    opacity: 1 !important;
+  }
+  .sheet .handle::before {
+    content: "";
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    transform: translateX(-50%);
+    background: #69727d;
+  }
+  .sheet { padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet { transition: none !important; }
+  .sr70-home, .sr70-more { scroll-behavior: auto !important; }
+}

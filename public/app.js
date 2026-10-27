@@ -1105,27 +1105,27 @@ async function selectScheduledTrain(tripId){
     else $('emptySchedule').textContent=t('journey.noSchedule');
   }
 }
-// Safari: keep swipes inside the detail panel, without blocking real scrolling.
+// Scroll-Craft-inspired mobile interaction: native momentum scrolling belongs
+// to the content; only the dedicated handle recognises a downward dismiss swipe.
 function setupSheetTouchGuards(){
   for(const sheet of document.querySelectorAll('.sheet')){
-    const scroller=sheet.querySelector('.sheet-scroll');
-    if(!scroller)continue;
-    let touchY=null;
-    scroller.addEventListener('touchstart',event=>{
-      if(event.touches.length===1)touchY=event.touches[0].clientY;
-      else touchY=null;
-    },{passive:true});
-    scroller.addEventListener('touchmove',event=>{
-      if(touchY===null || event.touches.length!==1 || !event.cancelable)return;
-      const y=event.touches[0].clientY;
-      const delta=y-touchY;
-      const atTop=scroller.scrollTop<=0;
-      const atBottom=scroller.scrollTop+scroller.clientHeight>=scroller.scrollHeight-1;
-      if((atTop&&delta>0)||(atBottom&&delta<0))event.preventDefault();
-      touchY=y;
-    },{passive:false});
-    scroller.addEventListener('touchend',()=>{touchY=null},{passive:true});
-    scroller.addEventListener('touchcancel',()=>{touchY=null},{passive:true});
+    const handle=sheet.querySelector('.handle');
+    if(!handle)continue;
+    let start=null;
+    handle.addEventListener('pointerdown',event=>{
+      if(!sheet.classList.contains('open') || event.pointerType==='mouse' || event.isPrimary===false)return;
+      start={x:event.clientX,y:event.clientY,id:event.pointerId};
+      try{handle.setPointerCapture(event.pointerId)}catch{}
+    });
+    handle.addEventListener('pointerup',event=>{
+      if(!start || start.id!==event.pointerId)return;
+      const dx=event.clientX-start.x,dy=event.clientY-start.y;
+      start=null;
+      if(dy>=64 && Math.abs(dx)<72 && sheet.classList.contains('open'))closeSheets();
+    });
+    const cancel=()=>{start=null};
+    handle.addEventListener('pointercancel',cancel);
+    handle.addEventListener('lostpointercapture',cancel);
   }
 }
 function offlineState(online=navigator.onLine!==false){
