@@ -22,7 +22,7 @@ test('API errors are isolated from map failure detection', () => {
   assert.match(recovery, /function detectFailure\(\)/);
 });
 test('fallback only follows explicit startup or app-module failure signals', () => {
-  assert.match(recovery, /fehler beim start\|startup error\|startup-error\|kartenfehler\|map error/i);
+  assert.match(recovery, /(fehler beim start|startup error|startup-error|kartenfehler|map error)/i);
   assert.match(recovery, /app\.js/);
   assert.match(recovery, /window\.addEventListener\('error',onScriptError,true\)/);
 });
