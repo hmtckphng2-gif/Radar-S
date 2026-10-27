@@ -131,12 +131,12 @@ export function modelCreditText(credit,isReal){
 // goes wrong - the caller keeps the schematic model in that case.
 export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
   let config=null;
-  try{config=await loadModelConfig()}catch{return null}
+  try{config=await loadModelConfig()}catch(error){console.error('[Radar 3D] model config load failed',error);throw error}
   const entry=config?.models?.[kind];
   if(!entry||!entry.file)return null;
   if(!THREE)return null;
   let loader=null;
-  try{loader=await loadGLTFLoader()}catch{return null}
+  try{loader=await loadGLTFLoader()}catch(error){console.error('[Radar 3D] GLTFLoader/decoder import failed',error);throw error}
   if(!loader)return null;
   const url='/models/'+String(entry.file).replace(/^\/+/,'');
   const gltf=await new Promise((resolve,reject)=>{
