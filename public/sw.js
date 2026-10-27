@@ -19,7 +19,7 @@
  *    tatsaechlich benutzt wurde. Das haelt den Speicherbedarf klein.
  */
 const version='9.9.0';
-const CACHE='radar-shell-v'+version+'-scrollcraft';
+const CACHE='radar-shell-v' + version + '-scrollcraft';
 const ACTIVE_CACHE=CACHE+'-3dfix';
 const SHELL='/index.html';
 
