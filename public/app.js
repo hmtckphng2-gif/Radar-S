@@ -5,7 +5,7 @@ import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.
 import {enrichTrainPlatform} from './train-platforms.js?v=9.9.0';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
-  feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
+  feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, resolveScheduleTripId, formatClock, delayForVehicle,
   vehicleDelayInfo, bufferedAlong, departureDelay, isLiveUpdate, normalizeStopId
 } from './core.js?v=9.9.0';
 import {playbackLag} from './radar45-logic.mjs?v=9.9.0';
@@ -864,6 +864,14 @@ function drawVehicleDetails(key,fetchSchedule){
   // Zwei getrennte Werte: die gemeldete Verspaetung und die Abweichung vom Fahrplan.
   // Die eine ist eine Zeitangabe, die andere eine Ortsangabe.
   const schedule=trainScheduledPosition(v,state.indexes,state.details,state.shapes);
+  if(v.kind==='train'){
+    const scheduleTripId=resolveScheduleTripId(v,state.indexes,state.details);
+    detail('Ist / Soll',schedule
+      ? 'Ist: gemeldete Feedposition · Soll: '+schedule.from+' → '+schedule.to+' · rund '+schedule.differenceKm.toFixed(1)+' km '+schedule.relative
+      : scheduleTripId
+        ? 'GTFS-Fahrt gefunden; Soll-Position aktuell nicht berechenbar, weil kein gültiger Haltezeit-Abschnitt zur aktuellen Uhrzeit passt.'
+        : 'Keine eindeutige GTFS-Fahrt mit passender Zugnummer und Strecke gefunden.');
+  }
   if(schedule)detail('Abweichung Fahrplan','~'+schedule.differenceKm.toFixed(1)+' km '+schedule.relative+' ('+schedule.from+' - '+schedule.to+')');
   detail('Positionsalter',feedAgeSeconds(v)===null?'Unbekannt':duration(feedAgeSeconds(v)*1000)+' Sek.');
   detail('Geschwindigkeit',v.speed===null?'Nicht verfügbar':v.speed+' km/h (Feed)');
@@ -907,10 +915,12 @@ function drawVehicleDetails(key,fetchSchedule){
   else if(state.details[v.source])renderStops(v,state.details[v.source]);
 }
 function renderStops(v,details){
-  const rows=stopRows(details,v.tripId);
+  const resolvedTripId=resolveScheduleTripId(v,state.indexes,details);
+  const scheduleTripId=resolvedTripId||v.tripId;
+  const rows=stopRows(details,scheduleTripId);
   const section=$('scheduleSection'),list=$('stops'),empty=$('emptySchedule');
   list.replaceChildren();section.hidden=!rows.length;empty.hidden=!!rows.length;
-  if(!rows.length)return;
+  if(!rows.length){empty.textContent=v.kind==='train'?'Keine eindeutig zuordenbaren GTFS-Haltestellen für diesen Zug gefunden.':'Für diese Fahrt sind keine Haltestellen verfügbar.';return;}
   const update=state.updates.get(v.source+':'+v.tripId);
   $('scheduleSource').textContent=t('board.source')+(update?.stops?.length?t('board.tripUpdate'):'');
   const lookup=new Map((update?.stops||[]).map(u=>[txt(u.stopId??u.stop_id),u]));
@@ -926,8 +936,8 @@ function renderStops(v,details){
     if(platform.changed)track.style.color='#ffc37d';
     left.append(track);
     if(v.kind==='train'){
-      const timing=details.times?.[v.tripId]?.find(t=>String(t[0])===String(row.stopId)&&Number(t[3])===Number(row.seq));
-      enrichTrainPlatform(track,{number:state.indexes[v.source]?.trips?.[v.tripId]?.[3]||v.name,serviceDay:v.tripStartDate||gtfsLocalDate(),source:v.source,stopId:row.stopId,stopName:row.name,arrival:timing?.[1],departure:timing?.[2],terminal:Boolean(timing&&timing===details.times?.[v.tripId]?.at(-1))},platform);
+      const timing=details.times?.[scheduleTripId]?.find(t=>String(t[0])===String(row.stopId)&&Number(t[3])===Number(row.seq));
+      enrichTrainPlatform(track,{number:state.indexes[v.source]?.trips?.[scheduleTripId]?.[3]||v.name,serviceDay:v.tripStartDate||gtfsLocalDate(),source:v.source,stopId:row.stopId,stopName:row.name,arrival:timing?.[1],departure:timing?.[2],terminal:Boolean(timing&&timing===details.times?.[v.tripId]?.at(-1))},platform);
     }
     const d=upd?(upd.departure?.delay??upd.arrival?.delay):null;
     const skipped=/^(?:SKIPPED|1)$/i.test(txt(upd?.scheduleRelationship??upd?.schedule_relationship));
@@ -1336,6 +1346,12 @@ async function init(){
   const indexes=loadIndexes().catch(error=>console.warn('Timetable loading failed',error));
   const rail=loadRailShapes().catch(error=>console.info('Rail geometry unavailable',error));
   const buses=loadBusShapeManifests().catch(error=>console.info('Bus shapes unavailable',error));
+  // Timetables and rail shapes load independently from the realtime feed.
+  // Refresh an already-open vehicle sheet when those dependencies become ready.
+  Promise.all([indexes,rail]).then(()=>{
+    if(state.selectedKey && state.activeSheet==='vehicle')drawVehicleDetails(state.selectedKey,false);
+    document.dispatchEvent(new Event('sr37:feeds'));
+  });
   bootPhase('loading-data');
   await feeds;
   bootPhase('feeds-checked');

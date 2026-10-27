@@ -1,6 +1,6 @@
 import {platformInfo} from './radar54-logic.mjs?v=9.9.0';
 /* Südtirol Radar 5.1 — pure, independently testable transit logic. No GPS is invented. */
-import {shapeProject,pointAtDistance,vehicleDelayInfo,isRailRoute} from './core.js?v=9.9.0';
+import {shapeProject,pointAtDistance,vehicleDelayInfo,isRailRoute,resolveScheduleTripId} from './core.js?v=9.9.0';
 
 export const normalizeStation = text => String(text??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('de').replace(/\b(bahnhof|stazione|station|fermata|halte|bhf|staz)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 const aliasGroups = [
@@ -117,10 +117,14 @@ export function busDelayLabel(vehicle,updates,statuses,nowMs=Date.now()){
  return {minutes,label:minutes>0?`+${minutes}′`:minutes<0?`${minutes}′`:'0′',basis:info.basis};
 }
 export function trainScheduledPosition(vehicle, indexes,details,shapes,now=new Date()){
- if(vehicle?.kind!=='train'||!vehicle.tripId||!vehicle.shapeId)return null;
- const db=indexes?.[vehicle.source],d=details?.[vehicle.source],shape=shapes?.[vehicle.source]?.shapes?.[vehicle.shapeId];
- if(!dateGTFSValid(db,now)||!Array.isArray(shape)||shape.length<2 || !d?.stops||!Array.isArray(d?.times?.[vehicle.tripId]))return null;
- const trip=db.trips?.[vehicle.tripId];if(!trip||trip[5]===false || String(trip[2])!==String(vehicle.shapeId))return null;
+ if(vehicle?.kind!=='train')return null;
+ const source=vehicle.source==='sta_direct'?'sta':vehicle.source;
+ const db=indexes?.[source],d=details?.[source] || (source==='sta' ? details?.sta_direct : null);
+ const tripId=resolveScheduleTripId(vehicle,indexes,details,now);
+ if(!tripId)return null;
+ const trip=db?.trips?.[tripId],shapeId=vehicle.shapeId||trip?.[2],shape=shapes?.[source]?.shapes?.[shapeId];
+ if(!dateGTFSValid(db,now)||!Array.isArray(shape)||shape.length<2 || !d?.stops||!Array.isArray(d?.times?.[tripId]))return null;
+ if(!trip||trip[5]===false || (vehicle.shapeId && String(trip[2])!==String(vehicle.shapeId)))return null;
  const serviceDay=romeDay(now).replaceAll('-','');
  if(vehicle.tripStartDate&&String(vehicle.tripStartDate).replaceAll('-','')!==serviceDay)return null;
  const lat=Number(vehicle.rawLat??vehicle.lat),lon=Number(vehicle.rawLon??vehicle.lon);
@@ -128,7 +132,7 @@ export function trainScheduledPosition(vehicle, indexes,details,shapes,now=new D
  const observed=shapeProject(shape,lat,lon);
  if(!observed||observed.distance>180)return null;
  const stops=[];
- for(const [stopId,arr,dep] of d.times[vehicle.tripId]){
+ for(const [stopId,arr,dep] of d.times[tripId]){
   const st=d.stops?.[stopId];if(!st)continue;
   const a=Number(st[1]),b=Number(st[2]);if(!Number.isFinite(a)||!Number.isFinite(b))continue;
   const projection=shapeProject(shape,a,b);
