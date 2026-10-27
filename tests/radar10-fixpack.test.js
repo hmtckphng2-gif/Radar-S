@@ -30,7 +30,7 @@ test('dash-only or empty vehicle detail fields show a truthful fallback', () => 
   assert.ok(app.includes('Keine bestätigten Verspätungsdaten'));
 });
 test('Service Worker cache matches app version and live APIs bypass caching', () => {
-  assert.ok(sw.includes("const CACHE='radar-shell-v" + version + "';"));
+  assert.ok(sw.includes("const CACHE='radar-shell-v" + version + "-scrollcraft';"));
   const apiGuard = sw.indexOf('if(isApi(url))return;');
   const assetCache = sw.indexOf('if(isAsset(url))');
   assert.ok(apiGuard >= 0 && assetCache > apiGuard, 'API bypass must occur before asset caching');
