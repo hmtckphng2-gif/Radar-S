@@ -398,3 +398,11 @@ test('configured train and bus GLB assets exist and use the glTF 2 binary format
     assert.equal(file.readUInt32LE(8), file.length, kind + ' declared GLB length must match the file');
   }
 });
+
+test('the 3D UI identifies the schematic fallback when a configured GLB cannot load', () => {
+  const map = read('public/radar83-map.mjs');
+  assert.match(map, /this\.modelKind='fallback'/);
+  assert.match(map, /3D · Ersatzmodell \(GLB nicht geladen\)/);
+  assert.match(map, /Ersatzmodell aktiv · echtes Modell nicht geladen/);
+  assert.match(map, /onModel\(\{kind:'real',credit:loaded\.credit\|\|null\}\)/);
+});
