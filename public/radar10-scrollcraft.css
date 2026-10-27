@@ -1,0 +1,30 @@
+/* Scroll-Craft-inspired interaction layer for the live map UI. Native scroll only. */
+:root { --sr-scrollbar: rgba(164,174,186,.42); --sr-scrollbar-hover: rgba(196,205,215,.62); }
+.sheet { min-height:0; overscroll-behavior-y:contain; -webkit-tap-highlight-color:transparent; }
+.sheet-scroll { min-height:0!important; flex:1 1 auto; overflow-x:hidden; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; touch-action:pan-y pinch-zoom; scrollbar-gutter:stable; scroll-padding-block:12px; padding-bottom:max(16px,env(safe-area-inset-bottom)); }
+.sheet-scroll > :last-child { margin-bottom:4px; }
+.sheet-scroll :is(button,a,input,select,textarea) { touch-action:manipulation; }
+#stationSheet { min-height:0; overflow:hidden; }
+#stationSheet .sheet-scroll { min-height:0; max-height:none; }
+#stationResults,.station-results,.station-board { overscroll-behavior:contain; }
+.station-results { overflow:visible; }
+.segments { overflow-x:auto; overflow-y:hidden; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; touch-action:pan-x; scrollbar-width:none; }
+.segments::-webkit-scrollbar { display:none; }
+.segments > * { flex-shrink:0; }
+.sheet,.sheet-heading,.sheet-scroll,.detail,.stop,.health-row,.lines-row,.sr50-card,.sr70-tile { min-width:0; }
+.sheet-scroll :is(table,.table-wrap,.schedule-table) { max-width:100%; }
+.sheet-scroll :is(.table-wrap,.schedule-table-wrap) { max-width:100%; overflow-x:auto; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; }
+@media(max-width:749px) {
+ .sheet { padding-bottom:max(12px,env(safe-area-inset-bottom)); }
+ .sheet-scroll { scroll-padding-block:16px; }
+ .sheet-heading .close,.sheet-heading button,.sheet .close { min-width:44px; min-height:44px; }
+ .segments .chip { min-height:40px; }
+ #stationSheet .sheet-scroll { padding-bottom:calc(20px + env(safe-area-inset-bottom)); }
+}
+@media(hover:hover) and (pointer:fine) {
+ .sheet-scroll { scrollbar-width:thin; scrollbar-color:var(--sr-scrollbar) transparent; }
+ .sheet-scroll::-webkit-scrollbar { width:7px; height:7px; }
+ .sheet-scroll::-webkit-scrollbar-thumb { background:var(--sr-scrollbar); border-radius:8px; }
+ .sheet-scroll::-webkit-scrollbar-thumb:hover { background:var(--sr-scrollbar-hover); }
+}
+@media(prefers-reduced-motion:reduce) { .sheet,.sheet-scroll,.segments { scroll-behavior:auto!important; } }
