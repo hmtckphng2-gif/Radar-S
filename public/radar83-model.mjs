@@ -159,6 +159,9 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
         ? /glass|window|wheel|tire|tyre|rubber|mirror|dash|interior|gauge|light|lamp|seat|screen|windshield/.test(label)
         : /glass|window|wheel|tire|tyre|rubber|mirror|interior|light|lamp|seat|screen|windshield/.test(label);
       if(protectedPart)return original;
+      // Keep the real FLIRT model original materials and textures intact.
+      // Global repainting erased cab/livery details and made the end cab look white.
+      if(kind==='train')return original;
       const material=original.clone();
       material.color.set(kind==='bus'?'#f1c928':'#d7dce0');
       material.map=null;
