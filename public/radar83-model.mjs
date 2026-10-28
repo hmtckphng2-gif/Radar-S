@@ -147,6 +147,38 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
   });
   const scene=gltf?.scene;
   if(!scene)return null;
+  // Recolour the embedded FLIRT palette at runtime; never rewrite the GLB binary.
+  // Blue livery pixels become charcoal and yellow/olive livery pixels become red.
+  // White, neutral greys and very dark window pixels are preserved.
+  let trainPaletteTexture=null;
+  if(kind==='train'){
+    const sourceTextures=[];
+    scene.traverse((node)=>{
+      if(!node.isMesh||!node.material)return;
+      for(const mat of (Array.isArray(node.material)?node.material:[node.material])){
+        if(mat?.map&&!sourceTextures.includes(mat.map))sourceTextures.push(mat.map);
+      }
+    });
+    const source=sourceTextures[0],image=source?.image;
+    if(source&&image&&typeof document!=='undefined')try{
+      const canvas=document.createElement('canvas');
+      canvas.width=image.naturalWidth||image.videoWidth||image.width;
+      canvas.height=image.naturalHeight||image.videoHeight||image.height;
+      const ctx=canvas.getContext('2d',{willReadFrequently:true});
+      if(ctx&&canvas.width&&canvas.height){
+        ctx.drawImage(image,0,0,canvas.width,canvas.height);
+        const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
+        for(let i=0;i<pixels.data.length;i+=4){
+          const r=pixels.data[i],g=pixels.data[i+1],b=pixels.data[i+2],max=Math.max(r,g,b),min=Math.min(r,g,b);
+          if(max<70||max-min<22)continue;
+          if(b>r*1.22&&b>g*1.08&&b>75){pixels.data[i]=25;pixels.data[i+1]=28;pixels.data[i+2]=32;}
+          else if(r>95&&g>65&&r>g*1.08&&g>b*1.22){pixels.data[i]=190;pixels.data[i+1]=25;pixels.data[i+2]=38;}
+        }
+        ctx.putImageData(pixels,0,0);
+        trainPaletteTexture=source.clone();trainPaletteTexture.image=canvas;trainPaletteTexture.needsUpdate=true;
+      }
+    }catch(error){console.warn('[Radar 3D] FLIRT palette recolour skipped; using original texture',error);}
+  }
   // Repaint eligible exterior materials per mesh. Assign clones directly to source slots; material names are not unique.
   // Remove source colour maps on painted panels so old livery textures cannot mask the repaint.
   scene.traverse((node)=>{
@@ -159,9 +191,10 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
         ? /glass|window|wheel|tire|tyre|rubber|mirror|dash|interior|gauge|light|lamp|seat|screen|windshield/.test(label)
         : /glass|window|wheel|tire|tyre|rubber|mirror|interior|light|lamp|seat|screen|windshield/.test(label);
       if(protectedPart)return original;
-      // Keep the real FLIRT model original materials and textures intact.
-      // Global repainting erased cab/livery details and made the end cab look white.
-      if(kind==='train')return original;
+      if(kind==='train'){
+        if(!trainPaletteTexture||!original.map)return original;
+        const material=original.clone();material.map=trainPaletteTexture;material.needsUpdate=true;return material;
+      }
       const material=original.clone();
       material.color.set(kind==='bus'?'#f1c928':'#d7dce0');
       material.map=null;
