@@ -28,6 +28,8 @@ self.addEventListener('install',event=>{
 self.addEventListener('activate',event=>{
   event.waitUntil(caches.keys()
     .then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key))))
+    .then(()=>caches.open(CACHE))
+    .then(cache=>cache.keys().then(keys=>Promise.all(keys.filter(request=>!['/index.html','/manifest.webmanifest'].some(path=>new URL(path,self.location.origin).href===request.url)).map(request=>cache.delete(request)))))
     .then(()=>self.clients.claim()));
 });
 

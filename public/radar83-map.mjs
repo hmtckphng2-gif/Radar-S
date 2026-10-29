@@ -2,7 +2,7 @@
  * The original Leaflet map stays intact underneath. Only selected cinematic
  * vehicles initialize MapLibre; errors or ?radar3d=off fall back to Radar 8.2.
  */
-import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.0';
+import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.2';
 import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion} from './radar83-logic.mjs?v=9.9.0';
 
 let libraryPromise=null;
@@ -125,7 +125,8 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
    // A real downloaded model replaces the schematic one as soon as it has
    // arrived. The 3D view never waits for it and never depends on it.
    loadVehicleModel(kind,T).then(loaded=>{
-    if(!loaded||this.disposed||!this.scene||!this.renderer)return;
+    if(!loaded){if(!this.disposed){this.modelKind='fallback';onModel({kind:'fallback'});this.map?.triggerRepaint()}return;}
+    if(this.disposed||!this.scene||!this.renderer)return;
     const previous=this.object;
     this.object=loaded.object;this.scene.add(this.object);
     this.modelKind='real';
@@ -133,7 +134,7 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
     this.map?.triggerRepaint();
     disposeObject(previous);
     onModel({kind:'real',credit:loaded.credit||null});
-   }).catch(()=>{});
+   }).catch(error=>{if(!this.disposed){const reason=String(error?.message||error||'unbekannter Fehler').replace(/\s+/g,' ').slice(0,100);console.error('[Radar 3D] real vehicle model failed',error);this.modelKind='fallback';onModel({kind:'fallback',error:reason});this.map?.triggerRepaint()}});
   },
   update(p,h){
    const lat=Number(p?.lat),lng=Number(p?.lng),head=Number(h);
@@ -279,14 +280,15 @@ export class Radar83Cinematic {
    if(use3DTerrain(location.search))enable3DTerrain(map);
    this.layer=make3DVehicleLayer(T,lib,map,vehicle,point,heading,info=>{
     this.onModel(info);
-    if(this.credit)this.credit.textContent=modelCreditText(info.credit,info.kind==='real');
+    if(this.credit)this.credit.textContent=info.kind==='real'?modelCreditText(info.credit,true):(info.error?'3D-Ladefehler: '+info.error:'Ersatzmodell aktiv · echtes Modell nicht geladen');
     if(this.info&&info.kind==='real')this.info.textContent='3D · '+(info.credit?.title||'Fahrzeug');
+    else if(this.info&&info.kind==='fallback')this.info.textContent=info.error?'3D · Ladefehler: '+info.error:'3D · Ersatzmodell (GLB nicht geladen)';
    });
    map.addLayer(this.layer);
    await waitFor3DModel(map,this.layer);
    if(seq!==this.sequence)return false;
    const kind=vehicleKind(vehicle);
-   this.info.textContent=kind==='train'?'3D · FLIRT-Stil':'3D · Linienbus';
+   this.info.textContent=this.layer?.modelKind==='fallback'?'3D · Ersatzmodell (GLB nicht geladen)':kind==='train'?'3D · FLIRT-Stil':'3D · Linienbus';
    this.overlay.classList.add('sr83-ready');
    this.ready=true;
    return true;

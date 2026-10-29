@@ -12,5 +12,5 @@ test('FLIRT cinematic loads real MapLibre 3D, never old floating 2D model',()=>{
  assert.match(index,/radar83\.css\?v=/);
  assert.match(read('radar83-map.mjs'),/class Radar83Cinematic/);
  assert.match(read('radar83-map.mjs'),/type:'custom',renderingMode:'3d'/);
- assert.match(read('radar83-model.mjs'),/FLIRT-inspiriertes 3D-Modell/);
+ assert.match(read('radar83-model.mjs'),/ETR-170-inspirierte schematische Darstellung/);
 });

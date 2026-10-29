@@ -144,7 +144,8 @@ test('the model configuration is valid and covers both vehicle kinds', () => {
   assert.ok(config.models.bus, 'a bus model must be configurable');
   for (const kind of ['train', 'bus']) {
     const entry = config.models[kind];
-    assert.ok(entry.file, kind + ' needs a file name');
+    if (kind === 'bus') assert.ok(entry.file, kind + ' needs a file name');
+    if (kind === 'train') assert.equal(entry.file, 'train.glb', 'the recoloured RABe GLB is intentionally enabled as the real 3D asset');
     assert.ok(Number.isFinite(entry.lengthMeters) && entry.lengthMeters > 0, kind + ' needs a real length');
     assert.ok(Number.isFinite(entry.heightMeters) && entry.heightMeters > 0, kind + ' needs a real height');
     assert.ok(['length', 'height'].includes(entry.scaleBy), kind + ' needs a valid scaleBy');
@@ -205,6 +206,18 @@ test('CC BY requires the author to be named, so a real model always shows a cred
   assert.match(withCredit, /Datenfeed/, 'the feed origin must stay visible');
   // A credit without author or license is not usable and must not be shown.
   assert.match(modelCreditText({title: 'RABe 523'}, true), /schematisch/);
+});
+
+test('the real train GLB is a clean white base before regional paint is applied', () => {
+  const model = read('public/radar83-model.mjs');
+  assert.match(model, /material\.color\.set\(kind==='bus'\?'#f1c928':'#ffffff'\)/,
+    'train exterior panels must be painted white');
+  assert.match(model, /if\(kind==='train'\)material\.map=null|material\.map=null/,
+    'original colour maps must not leak the donor livery');
+  assert.match(model, /Train accents are deliberately omitted/,
+    'South Tyrol paint accents are postponed until the base coat is clean');
+  assert.doesNotMatch(model, /band\(\.025,\.045,41\.8,side\*1\.385,1\.47,0,'#c62828'\)/,
+    'old automatic red train stripe must not be drawn');
 });
 
 test('the schematic model stays available as the fallback', () => {
@@ -377,4 +390,36 @@ test('the 3D transform still matches the direction reference', () => {
   assert.equal(modelYawRadians(90),-Math.PI/2,'die Drehung ist -heading');
   const up=modelWorldDirection([0,1,0],0);
   assert.ok(Math.abs(up.up-1)<1e-9,'die Hoehe bleibt oben');
+});
+
+test('configured GLB models use the instantiated GLTFLoader and fall back only on load failure', () => {
+  const model = read('public/radar83-model.mjs');
+  assert.match(model, /loader\.load\(url,\s*\(data\)=>/);
+  assert.doesNotMatch(model, /new\s+loader\s*\(\)\.load/);
+  assert.match(model, /loadModelConfig\(\)/);
+  assert.match(model, /catch\(error\)\{clearTimeout\(timer\);reject\(error\)\}/);
+});
+
+test('the bus and recoloured train GLBs are valid assets', () => {
+  const config = JSON.parse(read('public/models/models.json'));
+  assert.equal(config.models.train.file, 'train.glb', 'the recoloured RABe asset should be enabled for preview');
+  const trainFile = readFileSync(root + 'public/models/' + config.models.train.file);
+  assert.ok(trainFile.length > 20_000, 'train GLB should not be an empty placeholder');
+  assert.equal(trainFile.toString('ascii', 0, 4), 'glTF', 'train asset must have the binary glTF magic');
+  assert.equal(trainFile.readUInt32LE(4), 2, 'train asset must use glTF version 2');
+  assert.equal(trainFile.readUInt32LE(8), trainFile.length, 'train declared GLB length must match the file');
+  const entry = config.models.bus;
+  const file = readFileSync(root + 'public/models/' + entry.file);
+  assert.ok(file.length > 20_000, 'bus GLB should not be an empty placeholder');
+  assert.equal(file.toString('ascii', 0, 4), 'glTF', 'bus asset must have the binary glTF magic');
+  assert.equal(file.readUInt32LE(4), 2, 'bus asset must use glTF version 2');
+  assert.equal(file.readUInt32LE(8), file.length, 'bus declared GLB length must match the file');
+});
+
+test('the 3D UI identifies the schematic fallback when a configured GLB cannot load', () => {
+  const map = read('public/radar83-map.mjs');
+  assert.match(map, /this\.modelKind='fallback'/);
+  assert.match(map, /3D · Ersatzmodell \(GLB nicht geladen\)/);
+  assert.match(map, /Ersatzmodell aktiv · echtes Modell nicht geladen/);
+  assert.match(map, /onModel\(\{kind:'real',credit:loaded\.credit\|\|null\}\)/);
 });

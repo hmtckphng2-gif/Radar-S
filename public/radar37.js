@@ -43,7 +43,7 @@
     const age = v?.timestamp ? Date.now()/1000-v.timestamp : Infinity;
     return !v?.stale && Number.isFinite(age) && age>=-30 && age<=MAX_POSITION_AGE;
   }
-  const selected = () => bridge?.state.activeSheet === 'vehicle' && $('sheet')?.classList.contains('open')
+  const selected = () => bridge?.state.activeSheet === 'vehicle'
     ? bridge.state.vehicles.get(bridge.state.selectedKey) || null : null;
   const activeMapVehicle = () => selected() || (followKey && bridge?.state.vehicles.get(followKey)) || null;
   function idFor(entry) {

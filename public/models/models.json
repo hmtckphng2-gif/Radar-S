@@ -1,19 +1,19 @@
 {
   "schema": "radar.models.3d.v1",
-  "note": "Optionale echte Fahrzeugmodelle. Fehlt die Datei oder schlaegt der Download fehl, wird das schematische Modell aus radar83-model.mjs verwendet - die 3D-Ansicht geht nie kaputt. lengthMeters und heightMeters sind die echten Masse, scaleBy legt fest, welche davon die Referenz ist, yawOffset dreht das Modell um seine Hochachse in Grad.",
+  "note": "Optional real vehicle models. The RABe 523 GLB is reused with a white/silver body and narrow red-yellow-green South Tyrol-inspired bands; its geometry remains a Swiss RABe 523, not an authentic ETR 170. The schematic ETR-170-inspired model remains the fallback if loading fails.",
   "models": {
     "train": {
-      "file": "train.glb",
       "lengthMeters": 44.5,
       "heightMeters": 3.85,
       "scaleBy": "height",
       "yawOffset": 0,
       "frontAxis": "-z",
+      "file": "train.glb",
       "credit": {
-        "title": "RABe 523",
+        "title": "RABe 523 (Stadler FLIRT)",
         "author": "hotdoghans",
         "license": "CC BY 4.0",
-        "licenseUrl": "http://creativecommons.org/licenses/by/4.0/",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
         "source": "https://sketchfab.com/3d-models/3f45e0d560614aab98cee987cb7347e9"
       }
     },
