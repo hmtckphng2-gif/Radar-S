@@ -147,9 +147,9 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
   });
   const scene=gltf?.scene;
   if(!scene)return null;
-  // Adapt the embedded FLIRT palette to the South Tyrol ETR 170 livery.
-  // Keep the silver body, red and yellow palette colours; shift the blue accent
-  // palette to green. Near-black glazing and neutral greys remain untouched.
+  // Recolour the existing RABe 523 model using a restrained South Tyrol-inspired
+  // livery: white/silver body, narrow red-yellow-green side bands, dark glazing.
+  // This is a recoloured RABe geometry, not an authentic ETR 170 body model.
   // Never rewrite the GLB binary: only clone the texture at runtime.
   let trainPaletteTexture=null;
   if(kind==='train'){
@@ -172,7 +172,7 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
         for(let i=0;i<pixels.data.length;i+=4){
           const r=pixels.data[i],g=pixels.data[i+1],b=pixels.data[i+2],max=Math.max(r,g,b),min=Math.min(r,g,b);
           if(max<70||max-min<22)continue;
-          if(b>r*1.22&&b>g*1.08&&b>60){pixels.data[i]=0;pixels.data[i+1]=112;pixels.data[i+2]=72;}
+          if(b>r*1.22&&b>g*1.08&&b>60){pixels.data[i]=238;pixels.data[i+1]=241;pixels.data[i+2]=243;}
         }
         ctx.putImageData(pixels,0,0);
         trainPaletteTexture=source.clone();trainPaletteTexture.image=canvas;trainPaletteTexture.needsUpdate=true;
@@ -193,7 +193,11 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
       if(protectedPart)return original;
       if(kind==='train'){
         if(!trainPaletteTexture||!original.map)return original;
-        const material=original.clone();material.map=trainPaletteTexture;material.needsUpdate=true;return material;
+        const material=original.clone();
+        material.color.set('#ffffff');
+        material.map=trainPaletteTexture;
+        material.needsUpdate=true;
+        return material;
       }
       const material=original.clone();
       material.color.set(kind==='bus'?'#f1c928':'#d7dce0');
@@ -214,8 +218,15 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
     const mesh=new THREE.Mesh(new THREE.BoxGeometry(width*localUnits,height*localUnits,length*localUnits),new THREE.MeshBasicMaterial({color,roughness:.7}));
     mesh.position.set(x*localUnits,y*localUnits,z*localUnits);mesh.name='radar-livery-accent';accents.add(mesh);
   };
-  // Keep the real train body clean: the old 42 m decorative bars were
-  // visibly floating above the FLIRT instead of following its body panels.
+  // Slim, continuous South Tyrol colour bands sit close to the lower side
+  // panels of the RABe shell. They are deliberately narrow, not oversized bars.
+  if(kind==='train'){
+    for(const side of [-1,1]){
+      band(.025,.045,41.8,side*1.385,1.47,0,'#c62828');
+      band(.025,.035,41.8,side*1.39,1.405,0,'#f0c52a');
+      band(.025,.045,41.8,side*1.385,1.34,0,'#087848');
+    }
+  }
   // The bus keeps its compact silver accents over the yellow body.
   if(kind==='bus'){
     for(const side of [-1,1]){

@@ -1,13 +1,14 @@
 {
   "schema": "radar.models.3d.v1",
-  "note": "Optionale echte Fahrzeugmodelle. Fehlt die Datei oder schlaegt der Download fehl, wird das schematische Modell aus radar83-model.mjs verwendet - die 3D-Ansicht geht nie kaputt. lengthMeters und heightMeters sind die echten Masse, scaleBy legt fest, welche davon die Referenz ist, yawOffset dreht das Modell um seine Hochachse in Grad. Der Schweizer RABe-523-Download ist fuer den Zug deaktiviert, weil er nicht die Suedtiroler Lackierung zeigt; stattdessen wird die schematische ETR-170-inspirierte Darstellung verwendet.",
+  "note": "Optional real vehicle models. The RABe 523 GLB is reused with a white/silver body and narrow red-yellow-green South Tyrol-inspired bands; its geometry remains a Swiss RABe 523, not an authentic ETR 170. The schematic ETR-170-inspired model remains the fallback if loading fails.",
   "models": {
     "train": {
       "lengthMeters": 44.5,
       "heightMeters": 3.85,
       "scaleBy": "height",
       "yawOffset": 0,
-      "frontAxis": "-z"
+      "frontAxis": "-z",
+      "file": "train.glb"
     },
     "bus": {
       "file": "bus.glb",
