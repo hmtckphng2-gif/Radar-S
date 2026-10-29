@@ -156,10 +156,14 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=25000}={}){
     const sourceMats=Array.isArray(node.material)?node.material:[node.material];
     const painted=sourceMats.map((original)=>{
       if(!original||!original.color)return original;
-      const label=String((node.name||'')+' '+(original.name||'')).toLowerCase();
+      // Classify protection by material name, not the parent mesh name: some
+      // GLBs group an entire middle car under a node named 'interior' or similar,
+      // which must not exempt its exterior shell from the white base coat.
+      const materialLabel=String(original.name||'').toLowerCase();
+      const nodeLabel=String(node.name||'').toLowerCase();
       const protectedPart=kind==='bus'
-        ? /glass|window|wheel|tire|tyre|rubber|mirror|dash|interior|gauge|light|lamp|seat|screen|windshield/.test(label)
-        : /glass|window|wheel|tire|tyre|rubber|mirror|interior|light|lamp|seat|screen|windshield|bogie|pantograph|rail|brake/.test(label);
+        ? /glass|window|wheel|tire|tyre|rubber|mirror|dash|interior|gauge|light|lamp|seat|screen|windshield/.test(materialLabel) || /glass|window|wheel|tire|tyre|rubber|mirror|gauge|light|lamp|seat|screen|windshield/.test(nodeLabel)
+        : /glass|window|wheel|tire|tyre|rubber|mirror|interior|light|lamp|seat|screen|windshield|bogie|pantograph|rail|brake/.test(materialLabel) || /glass|window|wheel|tire|tyre|rubber|light|lamp|bogie|pantograph|rail|brake/.test(nodeLabel);
       if(protectedPart)return original;
       const material=original.clone();
       material.color.set(kind==='bus'?'#f1c928':'#ffffff');
