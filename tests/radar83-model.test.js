@@ -208,6 +208,18 @@ test('CC BY requires the author to be named, so a real model always shows a cred
   assert.match(modelCreditText({title: 'RABe 523'}, true), /schematisch/);
 });
 
+test('the real train GLB is a clean white base before regional paint is applied', () => {
+  const model = read('public/radar83-model.mjs');
+  assert.match(model, /material\.color\.set\(kind==='bus'\?'#f1c928':'#ffffff'\)/,
+    'train exterior panels must be painted white');
+  assert.match(model, /if\(kind==='train'\)material\.map=null|material\.map=null/,
+    'original colour maps must not leak the donor livery');
+  assert.match(model, /Train accents are deliberately omitted/,
+    'South Tyrol paint accents are postponed until the base coat is clean');
+  assert.doesNotMatch(model, /band\(\.025,\.045,41\.8,side\*1\.385,1\.47,0,'#c62828'\)/,
+    'old automatic red train stripe must not be drawn');
+});
+
 test('the schematic model stays available as the fallback', () => {
   const T = fakeThree();
   const train = makeVehicleMesh(T, 'train');

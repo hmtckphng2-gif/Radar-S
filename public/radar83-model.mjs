@@ -147,40 +147,10 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=25000}={}){
   });
   const scene=gltf?.scene;
   if(!scene)return null;
-  // Recolour the existing RABe 523 model using a restrained South Tyrol-inspired
-  // livery: white/silver body, narrow red-yellow-green side bands, dark glazing.
-  // This is a recoloured RABe geometry, not an authentic ETR 170 body model.
-  // Never rewrite the GLB binary: only clone the texture at runtime.
-  let trainPaletteTexture=null;
-  if(kind==='train'){
-    const sourceTextures=[];
-    scene.traverse((node)=>{
-      if(!node.isMesh||!node.material)return;
-      for(const mat of (Array.isArray(node.material)?node.material:[node.material])){
-        if(mat?.map&&!sourceTextures.includes(mat.map))sourceTextures.push(mat.map);
-      }
-    });
-    const source=sourceTextures[0],image=source?.image;
-    if(source&&image&&typeof document!=='undefined')try{
-      const canvas=document.createElement('canvas');
-      canvas.width=image.naturalWidth||image.videoWidth||image.width;
-      canvas.height=image.naturalHeight||image.videoHeight||image.height;
-      const ctx=canvas.getContext('2d',{willReadFrequently:true});
-      if(ctx&&canvas.width&&canvas.height){
-        ctx.drawImage(image,0,0,canvas.width,canvas.height);
-        const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
-        for(let i=0;i<pixels.data.length;i+=4){
-          const r=pixels.data[i],g=pixels.data[i+1],b=pixels.data[i+2],max=Math.max(r,g,b),min=Math.min(r,g,b);
-          if(max<70||max-min<22)continue;
-          if(b>r*1.22&&b>g*1.08&&b>60){pixels.data[i]=238;pixels.data[i+1]=241;pixels.data[i+2]=243;}
-        }
-        ctx.putImageData(pixels,0,0);
-        trainPaletteTexture=source.clone();trainPaletteTexture.image=canvas;trainPaletteTexture.needsUpdate=true;
-      }
-    }catch(error){console.warn('[Radar 3D] FLIRT palette recolour skipped; using original texture',error);}
-  }
-  // Repaint eligible exterior materials per mesh. Assign clones directly to source slots; material names are not unique.
-  // Remove source colour maps on painted panels so old livery textures cannot mask the repaint.
+  // Neutral base coat for the existing RABe 523 GLB. Strip its original
+  // painted colour maps from exterior panels so no donor livery bleeds through.
+  // Keep glazing, wheels, lights and interior materials untouched. South Tyrol
+  // graphics will be added as a separate, deliberate paint pass afterwards.
   scene.traverse((node)=>{
     if(!node.isMesh||!node.material)return;
     const sourceMats=Array.isArray(node.material)?node.material:[node.material];
@@ -189,18 +159,10 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=25000}={}){
       const label=String((node.name||'')+' '+(original.name||'')).toLowerCase();
       const protectedPart=kind==='bus'
         ? /glass|window|wheel|tire|tyre|rubber|mirror|dash|interior|gauge|light|lamp|seat|screen|windshield/.test(label)
-        : /glass|window|wheel|tire|tyre|rubber|mirror|interior|light|lamp|seat|screen|windshield/.test(label);
+        : /glass|window|wheel|tire|tyre|rubber|mirror|interior|light|lamp|seat|screen|windshield|bogie|pantograph|rail|brake/.test(label);
       if(protectedPart)return original;
-      if(kind==='train'){
-        if(!trainPaletteTexture||!original.map)return original;
-        const material=original.clone();
-        material.color.set('#ffffff');
-        material.map=trainPaletteTexture;
-        material.needsUpdate=true;
-        return material;
-      }
       const material=original.clone();
-      material.color.set(kind==='bus'?'#f1c928':'#d7dce0');
+      material.color.set(kind==='bus'?'#f1c928':'#ffffff');
       material.map=null;
       material.needsUpdate=true;
       return material;
@@ -220,13 +182,8 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=25000}={}){
   };
   // Slim, continuous South Tyrol colour bands sit close to the lower side
   // panels of the RABe shell. They are deliberately narrow, not oversized bars.
-  if(kind==='train'){
-    for(const side of [-1,1]){
-      band(.025,.045,41.8,side*1.385,1.47,0,'#c62828');
-      band(.025,.035,41.8,side*1.39,1.405,0,'#f0c52a');
-      band(.025,.045,41.8,side*1.385,1.34,0,'#087848');
-    }
-  }
+  // Train accents are deliberately omitted: the GLB now loads as a clean
+  // white base so the regional livery can be painted accurately in a later pass.
   // The bus keeps its compact silver accents over the yellow body.
   if(kind==='bus'){
     for(const side of [-1,1]){
