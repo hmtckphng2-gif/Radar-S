@@ -18,7 +18,7 @@
  * to the real dimensions from models.json and put on the ground.
  */
 export const VEHICLE_SPECS=Object.freeze({
-  train:{label:'Regionalzug · FLIRT-inspiriertes 3D-Modell',length:44.5,width:2.8,height:4.1},
+  train:{label:'Südtiroler Regionalzug · ETR-170-inspirierte schematische Darstellung',length:44.5,width:2.8,height:4.1},
   bus:{label:'Linienbus · schematisches 3D-Modell',length:12,width:2.55,height:3.25}
 });
 export function vehicleKind(vehicle){return vehicle?.kind==='bus'?'bus':'train'}
@@ -254,7 +254,7 @@ export function makeContactShadow(T,radius=1){
  *
  * The train follows the proportions of a modern regional EMU such as a FLIRT:
  * 44.5 m long, 2.80 m wide, 3.5 m high, three body segments, a continuous
- * window band with recessed doors, a blue band with a red accent line, a
+ * window band with recessed doors and a South Tyrol-inspired dark/red/yellow/green accent band, a
  * rounded cab at both ends and a raised pantograph on the middle segment.
  * All measures are physical metres: +y up, -z is the front, +x is right.
  */
@@ -268,7 +268,7 @@ export function frontAxisYaw(spec){
 export function makeVehicleMesh(T,kind){
   const bus=kind==='bus',root=new T.Group();
   const mat=(hex,metalness=.15,roughness=.67)=>new T.MeshStandardMaterial({color:hex,metalness,roughness});
-  const white=mat(0xf2f5f7,.24,.5), blue=mat(0x1c4f86,.3,.5),red=mat(0xc0392b,.18,.5);
+  const white=mat(0xf2f5f7,.24,.5), blue=mat(0x252a30,.3,.5),red=mat(0xc0392b,.18,.5),green=mat(0x007848,.12,.55),yellow=mat(0xf0c52a,.12,.55);
   const orange=mat(0xd8862c,.2,.55),glass=mat(0x16283a,.2,.28),black=mat(0x1b2129),rubber=mat(0x15191f);
   const silver=mat(0x9aa9b4,.45,.38),light=mat(0xfff6e0,.1,.4),door=mat(0x33404e,.16,.55);
   function box(w,h,d,x,y,z,material,parent=root,rx=0){
@@ -314,9 +314,11 @@ export function makeVehicleMesh(T,kind){
     // Karosserie
     box(2.80,2.64,l,0,2.10,c,white,coach);
     box(2.62,.14,l-.2,0,3.46,c,white,coach);
-    // Blaues Band mit rotem Zierstreifen, leicht vorstehend
+    // Südtirol-Farbgebung: dunkles Fenster-/Unterband mit roten, gelben und grünen Akzenten.
     box(2.84,.42,l-.1,0,1.78,c,blue,coach);
-    box(2.85,.10,l-.2,0,1.51,c,red,coach);
+    box(2.85,.075,l-.2,0,1.505,c,red,coach);
+    box(2.855,.045,l-.2,0,1.445,c,yellow,coach);
+    box(2.86,.045,l-.2,0,1.395,c,green,coach);
     // Fensterband in Abschnitten, Tueren dazwischen
     const winCount=seg.length>13?7:6;
     for(const side of [-1,1]){
@@ -328,7 +330,9 @@ export function makeVehicleMesh(T,kind){
       box(.08,1.98,1.28,side*1.41,1.74,c+dz,door,coach);
       box(.10,.80,.56,side*1.43,2.80,c+dz,glass,coach);
      }
-     box(.04,.12,l-.3,side*1.44,1.51,c,red,coach);
+     box(.04,.075,l-.3,side*1.44,1.505,c,red,coach);
+     box(.045,.045,l-.3,side*1.445,1.445,c,yellow,coach);
+     box(.045,.045,l-.3,side*1.45,1.395,c,green,coach);
     }
     // Dachgeraete
     box(1.26,.26,4.8,0,3.62,c-1.8,silver,coach);
@@ -346,9 +350,12 @@ export function makeVehicleMesh(T,kind){
     box(1.92,.86,.07,0,2.82,side*21.30,glass,root,side*-0.17);
     box(.045,.78,.035,0,2.82,side*21.345,black,root,side*-0.17);
     box(1.36,.18,.08,0,3.39,side*20.98,black,root);
-    // The lower blue mask and stainless lower skirt define the FLIRT nose.
+    // Dark lower mask with the South Tyrol red/yellow/green livery accents.
     box(2.34,.26,.14,0,1.34,side*21.34,blue,root);
     box(2.16,.13,.12,0,1.18,side*21.31,silver,root);
+    box(2.18,.045,.14,0,1.255,side*21.36,red,root);
+    box(2.18,.035,.14,0,1.205,side*21.365,yellow,root);
+    box(2.18,.035,.14,0,1.165,side*21.36,green,root);
     box(2.06,.20,.14,0,3.04,side*20.92,white,root);
     for(const x of [-.91,.91]){
      box(.30,.18,.12,x,1.66,side*21.32,light,root);
