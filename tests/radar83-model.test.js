@@ -388,9 +388,14 @@ test('configured GLB models use the instantiated GLTFLoader and fall back only o
   assert.match(model, /catch\(error\)\{clearTimeout\(timer\);reject\(error\)\}/);
 });
 
-test('the bus GLB is valid and the mismatched Swiss train GLB is disabled', () => {
+test('the bus and recoloured train GLBs are valid assets', () => {
   const config = JSON.parse(read('public/models/models.json'));
-  assert.ok(!config.models.train.file, 'do not show the Swiss RABe 523 as a South Tyrol train');
+  assert.equal(config.models.train.file, 'train.glb', 'the recoloured RABe asset should be enabled for preview');
+  const trainFile = readFileSync(root + 'public/models/' + config.models.train.file);
+  assert.ok(trainFile.length > 20_000, 'train GLB should not be an empty placeholder');
+  assert.equal(trainFile.toString('ascii', 0, 4), 'glTF', 'train asset must have the binary glTF magic');
+  assert.equal(trainFile.readUInt32LE(4), 2, 'train asset must use glTF version 2');
+  assert.equal(trainFile.readUInt32LE(8), trainFile.length, 'train declared GLB length must match the file');
   const entry = config.models.bus;
   const file = readFileSync(root + 'public/models/' + entry.file);
   assert.ok(file.length > 20_000, 'bus GLB should not be an empty placeholder');
