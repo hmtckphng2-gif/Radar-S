@@ -164,6 +164,7 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=25000}={}){
       const material=original.clone();
       material.color.set(kind==='bus'?'#f1c928':'#ffffff');
       material.map=null;
+      if(kind==='train')material.vertexColors=false;
       material.needsUpdate=true;
       return material;
     });
