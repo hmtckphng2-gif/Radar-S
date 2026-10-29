@@ -145,7 +145,7 @@ test('the model configuration is valid and covers both vehicle kinds', () => {
   for (const kind of ['train', 'bus']) {
     const entry = config.models[kind];
     if (kind === 'bus') assert.ok(entry.file, kind + ' needs a file name');
-    if (kind === 'train') assert.ok(!entry.file, 'the mismatched Swiss RABe GLB must stay disabled until a correct South Tyrol model is available');
+    if (kind === 'train') assert.equal(entry.file, 'train.glb', 'the recoloured RABe GLB is intentionally enabled as the real 3D asset');
     assert.ok(Number.isFinite(entry.lengthMeters) && entry.lengthMeters > 0, kind + ' needs a real length');
     assert.ok(Number.isFinite(entry.heightMeters) && entry.heightMeters > 0, kind + ' needs a real height');
     assert.ok(['length', 'height'].includes(entry.scaleBy), kind + ' needs a valid scaleBy');

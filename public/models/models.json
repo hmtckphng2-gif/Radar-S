@@ -8,7 +8,14 @@
       "scaleBy": "height",
       "yawOffset": 0,
       "frontAxis": "-z",
-      "file": "train.glb"
+      "file": "train.glb",
+      "credit": {
+        "title": "RABe 523 (Stadler FLIRT)",
+        "author": "hotdoghans",
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "source": "https://sketchfab.com/3d-models/3f45e0d560614aab98cee987cb7347e9"
+      }
     },
     "bus": {
       "file": "bus.glb",
