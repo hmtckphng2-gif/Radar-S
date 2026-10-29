@@ -129,7 +129,7 @@ export function modelCreditText(credit,isReal){
 
 // Load a real model. Resolves to null when there is none or when anything
 // goes wrong - the caller keeps the schematic model in that case.
-export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
+export async function loadVehicleModel(kind,THREE,{timeoutMs=25000}={}){
   let config=null;
   try{config=await loadModelConfig()}catch(error){console.error('[Radar 3D] model config load failed',error);throw error}
   const entry=config?.models?.[kind];

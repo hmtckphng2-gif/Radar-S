@@ -5,7 +5,7 @@ import {displayDelay,delayPill} from './radar53-logic.mjs?v=9.9.0';
 const $=id=>document.getElementById(id);
 const mk=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e};
 let booted=false,bridge=null,refreshTimer=0,menu=null,more=null;
-const selected=()=>bridge?.state?.activeSheet==='vehicle'?bridge.state.vehicles.get(bridge.state.selectedKey):null;
+const selected=()=>bridge?.state?.activeSheet==='vehicle'&&bridge.state.selectedKey?bridge.state.vehicles.get(bridge.state.selectedKey)||null:null;
 function setupTitle(){
  const h=$('sheetTitle');if(!h||$('sr53DelayPill'))return;
  const title=mk('div','sr53-title-line');h.parentNode.insertBefore(title,h);title.append(h);
