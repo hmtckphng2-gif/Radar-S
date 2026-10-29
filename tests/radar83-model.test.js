@@ -144,7 +144,8 @@ test('the model configuration is valid and covers both vehicle kinds', () => {
   assert.ok(config.models.bus, 'a bus model must be configurable');
   for (const kind of ['train', 'bus']) {
     const entry = config.models[kind];
-    assert.ok(entry.file, kind + ' needs a file name');
+    if (kind === 'bus') assert.ok(entry.file, kind + ' needs a file name');
+    if (kind === 'train') assert.ok(!entry.file, 'the mismatched Swiss RABe GLB must stay disabled until a correct South Tyrol model is available');
     assert.ok(Number.isFinite(entry.lengthMeters) && entry.lengthMeters > 0, kind + ' needs a real length');
     assert.ok(Number.isFinite(entry.heightMeters) && entry.heightMeters > 0, kind + ' needs a real height');
     assert.ok(['length', 'height'].includes(entry.scaleBy), kind + ' needs a valid scaleBy');
@@ -387,16 +388,15 @@ test('configured GLB models use the instantiated GLTFLoader and fall back only o
   assert.match(model, /catch\(error\)\{clearTimeout\(timer\);reject\(error\)\}/);
 });
 
-test('configured train and bus GLB assets exist and use the glTF 2 binary format', () => {
+test('the bus GLB is valid and the mismatched Swiss train GLB is disabled', () => {
   const config = JSON.parse(read('public/models/models.json'));
-  for (const kind of ['train', 'bus']) {
-    const entry = config.models[kind];
-    const file = readFileSync(root + 'public/models/' + entry.file);
-    assert.ok(file.length > 20_000, kind + ' GLB should not be an empty placeholder');
-    assert.equal(file.toString('ascii', 0, 4), 'glTF', kind + ' asset must have the binary glTF magic');
-    assert.equal(file.readUInt32LE(4), 2, kind + ' asset must use glTF version 2');
-    assert.equal(file.readUInt32LE(8), file.length, kind + ' declared GLB length must match the file');
-  }
+  assert.ok(!config.models.train.file, 'do not show the Swiss RABe 523 as a South Tyrol train');
+  const entry = config.models.bus;
+  const file = readFileSync(root + 'public/models/' + entry.file);
+  assert.ok(file.length > 20_000, 'bus GLB should not be an empty placeholder');
+  assert.equal(file.toString('ascii', 0, 4), 'glTF', 'bus asset must have the binary glTF magic');
+  assert.equal(file.readUInt32LE(4), 2, 'bus asset must use glTF version 2');
+  assert.equal(file.readUInt32LE(8), file.length, 'bus declared GLB length must match the file');
 });
 
 test('the 3D UI identifies the schematic fallback when a configured GLB cannot load', () => {
