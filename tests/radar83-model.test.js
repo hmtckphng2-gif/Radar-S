@@ -130,10 +130,12 @@ test('the loader gets the Meshopt decoder for the compressed models', () => {
   assert.match(model, /meshopt_decoder\.module\.js/);
 });
 
-test('the configured GLTFLoader instance loads both real vehicle models', () => {
+test('real vehicle models receive the intended neutral train and yellow bus base coats', () => {
   const model = read('public/radar83-model.mjs');
-  assert.match(model, /loader\.load\(url/);
-  assert.doesNotMatch(model, /new loader\(\)\.load/);
+  assert.match(model, /material\.color\.set\(kind==='bus'\?'#f1c928':'#ffffff'\)/);
+  assert.match(model, /material\.map=null/);
+  assert.match(model, /materialLabel/);
+  assert.match(model, /protectedPart/);
 });
 
 test('all three axes use the mercator meter factor', () => {

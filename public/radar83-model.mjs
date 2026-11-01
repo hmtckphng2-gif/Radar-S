@@ -129,14 +129,14 @@ export function modelCreditText(credit,isReal){
 
 // Load a real model. Resolves to null when there is none or when anything
 // goes wrong - the caller keeps the schematic model in that case.
-export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
+export async function loadVehicleModel(kind,THREE,{timeoutMs=25000}={}){
   let config=null;
-  try{config=await loadModelConfig()}catch{return null}
+  try{config=await loadModelConfig()}catch(error){console.error('[Radar 3D] model config load failed',error);throw error}
   const entry=config?.models?.[kind];
   if(!entry||!entry.file)return null;
   if(!THREE)return null;
   let loader=null;
-  try{loader=await loadGLTFLoader()}catch{return null}
+  try{loader=await loadGLTFLoader()}catch(error){console.error('[Radar 3D] GLTFLoader/decoder import failed',error);throw error}
   if(!loader)return null;
   const url='/models/'+String(entry.file).replace(/^\/+/,'');
   const gltf=await new Promise((resolve,reject)=>{
@@ -147,6 +147,33 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
   });
   const scene=gltf?.scene;
   if(!scene)return null;
+  // Neutral base coat for the existing RABe 523 GLB. Strip its original
+  // painted colour maps from exterior panels so no donor livery bleeds through.
+  // Keep glazing, wheels, lights and interior materials untouched. South Tyrol
+  // graphics will be added as a separate, deliberate paint pass afterwards.
+  scene.traverse((node)=>{
+    if(!node.isMesh||!node.material)return;
+    const sourceMats=Array.isArray(node.material)?node.material:[node.material];
+    const painted=sourceMats.map((original)=>{
+      if(!original||!original.color)return original;
+      // Classify protection by material name, not the parent mesh name: some
+      // GLBs group an entire middle car under a node named 'interior' or similar,
+      // which must not exempt its exterior shell from the white base coat.
+      const materialLabel=String(original.name||'').toLowerCase();
+      const nodeLabel=String(node.name||'').toLowerCase();
+      const protectedPart=kind==='bus'
+        ? /glass|window|wheel|tire|tyre|rubber|mirror|dash|interior|gauge|light|lamp|seat|screen|windshield/.test(materialLabel) || /glass|window|wheel|tire|tyre|rubber|mirror|gauge|light|lamp|seat|screen|windshield/.test(nodeLabel)
+        : /glass|window|wheel|tire|tyre|rubber|mirror|interior|light|lamp|seat|screen|windshield|bogie|pantograph|rail|brake/.test(materialLabel) || /glass|window|wheel|tire|tyre|rubber|light|lamp|bogie|pantograph|rail|brake/.test(nodeLabel);
+      if(protectedPart)return original;
+      const material=original.clone();
+      material.color.set(kind==='bus'?'#f1c928':'#ffffff');
+      material.map=null;
+      if(kind==='train')material.vertexColors=false;
+      material.needsUpdate=true;
+      return material;
+    });
+    node.material=Array.isArray(node.material)?painted:painted[0];
+  });
   const normalized=normalizeModel(scene,entry,THREE);
   if(!normalized)return null;
   return {object:normalized.object,scale:normalized.scale,credit:entry.credit||null,url};
