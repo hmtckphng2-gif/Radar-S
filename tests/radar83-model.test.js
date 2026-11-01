@@ -136,6 +136,8 @@ test('real vehicle models receive the intended neutral train and yellow bus base
   assert.match(model, /material\.map=null/);
   assert.match(model, /materialLabel/);
   assert.match(model, /protectedPart/);
+  assert.match(model, /rubber\|mirror\|light\|lamp\|seat\|screen\|windshield\|bogie/);
+  assert.doesNotMatch(model.match(/: \/([^\n]+)\.test\(materialLabel\)/)?.[1] || '', /interior/);
 });
 
 test('all three axes use the mercator meter factor', () => {

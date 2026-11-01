@@ -163,7 +163,7 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=25000}={}){
       const nodeLabel=String(node.name||'').toLowerCase();
       const protectedPart=kind==='bus'
         ? /glass|window|wheel|tire|tyre|rubber|mirror|dash|interior|gauge|light|lamp|seat|screen|windshield/.test(materialLabel) || /glass|window|wheel|tire|tyre|rubber|mirror|gauge|light|lamp|seat|screen|windshield/.test(nodeLabel)
-        : /glass|window|wheel|tire|tyre|rubber|mirror|interior|light|lamp|seat|screen|windshield|bogie|pantograph|rail|brake/.test(materialLabel) || /glass|window|wheel|tire|tyre|rubber|light|lamp|bogie|pantograph|rail|brake/.test(nodeLabel);
+        : /glass|window|wheel|tire|tyre|rubber|mirror|light|lamp|seat|screen|windshield|bogie|pantograph|rail|brake/.test(materialLabel) || /glass|window|wheel|tire|tyre|rubber|light|lamp|bogie|pantograph|rail|brake/.test(nodeLabel);
       if(protectedPart)return original;
       const material=original.clone();
       material.color.set(kind==='bus'?'#f1c928':'#ffffff');
