@@ -142,7 +142,7 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
   const gltf=await new Promise((resolve,reject)=>{
     const timer=setTimeout(()=>reject(Error('Modell-Download zu langsam')),Math.max(1000,Number(timeoutMs)||8000));
     try{
-      new loader().load(url,(data)=>{clearTimeout(timer);resolve(data)},undefined,(err)=>{clearTimeout(timer);reject(err||Error('Modell nicht ladbar'))});
+      loader.load(url,(data)=>{clearTimeout(timer);resolve(data)},undefined,(err)=>{clearTimeout(timer);reject(err||Error('Modell nicht ladbar'))});
     }catch(error){clearTimeout(timer);reject(error)}
   });
   const scene=gltf?.scene;

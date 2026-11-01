@@ -130,6 +130,12 @@ test('the loader gets the Meshopt decoder for the compressed models', () => {
   assert.match(model, /meshopt_decoder\.module\.js/);
 });
 
+test('the configured GLTFLoader instance loads both real vehicle models', () => {
+  const model = read('public/radar83-model.mjs');
+  assert.match(model, /loader\.load\(url/);
+  assert.doesNotMatch(model, /new loader\(\)\.load/);
+});
+
 test('all three axes use the mercator meter factor', () => {
   const src = read('public/radar83-map.mjs');
   assert.match(src, /\.scale\(new T\.Vector3\(scale,-scale,scale\)\)/,
