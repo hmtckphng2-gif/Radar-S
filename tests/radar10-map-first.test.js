@@ -9,3 +9,4 @@ test('disturbance sheet reuses the live alert ticker and supports close controls
 test('compact filters, stats and clear-map control exist',()=>{for(const s of ['mf-filter-toggle','mfStatsToggle','mfClearMap','Live-Daten verfügbar','Teilweise geschätzt / eingeschränkt','Datenstörung'])assert.ok(ui.includes(s),s);assert.match(css,/mf-overlays-hidden/);assert.match(css,/safe-area-inset-bottom/);});
 test('loading train animation gets a longer visible pass',()=>{assert.match(css,/animation-duration:4\.8s/);assert.match(css,/sr10-landscape\{height:clamp\(160px,32vh,236px\)\}/);});
 test('status observer does not rewrite an unchanged status label',()=>{assert.match(ui,/if\(statusText\.textContent!==nextText\)statusText\.textContent=nextText/);});
+test('disturbance count parses digits in alert badges and fallback summaries',()=>{assert.ok(ui.includes(".match(/\\d+/)"));assert.ok(ui.includes(".match(/(\\d+)\\s+(?:Störung|Meldung|Alert)/i)"));});
