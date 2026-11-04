@@ -140,10 +140,14 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
   if(!loader)return null;
   const url='/models/'+String(entry.file).replace(/^\/+/,'');
   const gltf=await new Promise((resolve,reject)=>{
-    const timer=setTimeout(()=>reject(Error('Modell-Download zu langsam')),Math.max(1000,Number(timeoutMs)||8000));
+    let settled=false;
+    const finish=(error,data)=>{if(settled)return;settled=true;clearTimeout(timer);error?reject(error):resolve(data)};
+    const timer=setTimeout(()=>finish(Error('Modell-Download zu langsam')),Math.max(1000,Number(timeoutMs)||8000));
     try{
-      new loader().load(url,(data)=>{clearTimeout(timer);resolve(data)},undefined,(err)=>{clearTimeout(timer);reject(err||Error('Modell nicht ladbar'))});
-    }catch(error){clearTimeout(timer);reject(error)}
+      // loadGLTFLoader() already returns a configured GLTFLoader instance.
+      // Constructing it again throws and silently leaves the schematic model.
+      loader.load(url,data=>finish(null,data),undefined,err=>finish(err||Error('Modell nicht ladbar')));
+    }catch(error){finish(error)}
   });
   const scene=gltf?.scene;
   if(!scene)return null;

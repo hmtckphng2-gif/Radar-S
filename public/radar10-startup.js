@@ -3,7 +3,7 @@
  'use strict';
  var root=document.getElementById('sr10Startup');if(!root)return;
  var loading=document.getElementById('sr10Loading'),kicker=document.getElementById('sr10StartupKicker'),title=document.getElementById('sr10LoadingTitle'),steps=document.getElementById('sr10StartupSteps');
- var start=Date.now(),introMs=4200,minimumMs=4900,timeoutMs=16000,shownLoading=false,finished=false,reduced=false;
+ var start=Date.now(),introMs=1900,minimumMs=2100,timeoutMs=14000,shownLoading=false,finished=false,reduced=false;
  try{reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(_){}
  if(reduced){introMs=700;minimumMs=1000;}
  root.classList.add('is-intro');
@@ -14,9 +14,9 @@
  function updateSteps(){var s=state(),tiles=tileCount(),feeds=feedCount(s);var done=[true,!!(window.L&&s&&s.map&&tiles>0),!!(s&&(Number(s.fetchedAt)>0||feeds>0))];var active=done[2]?-1:done[1]?2:done[0]?1:0;Array.prototype.forEach.call(steps.querySelectorAll('li'),function(li,i){li.classList.toggle('is-done',done[i]);li.classList.toggle('is-active',i===active)})}
  function beginLoading(){if(shownLoading||finished)return;shownLoading=true;root.classList.remove('is-intro');root.classList.add('is-raised');loading.hidden=false;kicker.textContent='LIVE-VERKEHR AUS SÜDTIROL';title.textContent='Live-Karte wird vorbereitet';updateSteps()}
  function close(){if(finished)return;finished=true;root.classList.add('is-leaving');window.setTimeout(function(){if(root.parentNode)root.parentNode.removeChild(root)},reduced?0:500)}
- function tick(){if(finished)return;var elapsed=Date.now()-start;if(elapsed>=introMs)beginLoading();if(shownLoading){updateSteps();if(elapsed>=minimumMs&&ready()){close();return}if(elapsed>=timeoutMs){close();return}}}
+ function tick(){if(finished)return;var elapsed=Date.now()-start;if(elapsed>=introMs)beginLoading();if(shownLoading){updateSteps();if(elapsed>=minimumMs&&ready()){close();return}if(elapsed>=timeoutMs){title.textContent='Karte startet im Hintergrund weiter';var live=steps&&steps.querySelector('li[data-step=live]');if(live)live.textContent='Live-Daten werden weiter geprüft';}}}
  var interval=window.setInterval(function(){tick();if(finished)window.clearInterval(interval)},200);
  // Let the logo resolve, lift the composition, then reveal the moving train and loader.
- window.setTimeout(function(){if(!finished)root.classList.add('is-raised')},1450);
+ window.setTimeout(function(){if(!finished)root.classList.add('is-raised')},850);
  window.addEventListener('load',function(){window.setTimeout(tick,introMs)},{once:true});tick();
 })();
