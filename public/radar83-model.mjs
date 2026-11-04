@@ -52,7 +52,11 @@ export function loadGLTFLoader(){
      if(!Loader)throw Error('GLTFLoader nicht verfuegbar');
      const loader=new Loader();
      const Meshopt=decoder.MeshoptDecoder||decoder.default?.MeshoptDecoder;
-     if(Meshopt&&typeof loader.setMeshoptDecoder==='function')loader.setMeshoptDecoder(Meshopt);
+     if(!Meshopt||Meshopt.supported!==true)throw Error('Meshopt-Decoder nicht verfügbar');
+     // Wait for the decoder's WASM module before GLTFLoader starts decoding
+     // the required EXT_meshopt_compression buffers (important on iOS Safari).
+     await Meshopt.ready;
+     loader.setMeshoptDecoder(Meshopt);
      return loader;
     })
     .catch(e=>{loaderPromise=null;throw e}));
@@ -131,12 +135,12 @@ export function modelCreditText(credit,isReal){
 // goes wrong - the caller keeps the schematic model in that case.
 export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
   let config=null;
-  try{config=await loadModelConfig()}catch{return null}
+  config=await loadModelConfig()
   const entry=config?.models?.[kind];
   if(!entry||!entry.file)return null;
   if(!THREE)return null;
   let loader=null;
-  try{loader=await loadGLTFLoader()}catch{return null}
+  loader=await loadGLTFLoader()
   if(!loader)return null;
   const url='/models/'+String(entry.file).replace(/^\/+/,'');
   const gltf=await new Promise((resolve,reject)=>{

@@ -133,7 +133,12 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
     this.map?.triggerRepaint();
     disposeObject(previous);
     onModel({kind:'real',credit:loaded.credit||null});
-   }).catch(()=>{});
+   }).catch(error=>{
+    if(this.disposed)return;
+    const message=String(error?.message||error||'Unbekannter Modellfehler').slice(0,180);
+    console.warn('Radar 8.3: echtes Fahrzeugmodell konnte nicht geladen werden',error);
+    onModel({kind:'error',error:message});
+   });
   },
   update(p,h){
    const lat=Number(p?.lat),lng=Number(p?.lng),head=Number(h);
@@ -279,8 +284,13 @@ export class Radar83Cinematic {
    if(use3DTerrain(location.search))enable3DTerrain(map);
    this.layer=make3DVehicleLayer(T,lib,map,vehicle,point,heading,info=>{
     this.onModel(info);
-    if(this.credit)this.credit.textContent=modelCreditText(info.credit,info.kind==='real');
+    if(this.credit){
+     this.credit.textContent=info.kind==='error'
+      ?'RABe-523-Modell nicht geladen · '+info.error
+      :modelCreditText(info.credit,info.kind==='real');
+    }
     if(this.info&&info.kind==='real')this.info.textContent='3D · '+(info.credit?.title||'Fahrzeug');
+    if(this.info&&info.kind==='error')this.info.textContent='3D · Modellfehler';
    });
    map.addLayer(this.layer);
    await waitFor3DModel(map,this.layer);
