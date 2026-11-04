@@ -1,0 +1,11 @@
+/* Südtirol Radar — silver v2 accent correction. */
+:root {
+  --radar-polish-train: #c4ced8;
+  --radar-polish-bus: #aeb8c3;
+}
+.toprow > .status.ok { border-color: rgba(190, 202, 216, .28) !important; }
+#statusBtn.ok::after { color: #c4ced8 !important; }
+.status.ok .status-dot {
+  background: #c4ced8 !important;
+  box-shadow: 0 0 0 3px rgba(196, 206, 216, .12) !important;
+}
