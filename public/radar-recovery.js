@@ -71,5 +71,16 @@ async function fetchVehicles(){
   var summary=document.querySelector('.stats');if(summary)summary.title='Recovery: '+trains+' Züge, '+buses+' Busse';
  }catch(e){console.error('Radar recovery feed error',e);var s=document.getElementById('statusText');if(s)s.textContent='NOTFALLKARTE · FEEDS OFFLINE'}
 }
-window.addEventListener('load',function(){setTimeout(start,6500)});
+function failedBootPhase(){
+ var phase=document.documentElement&&document.documentElement.dataset.radarBoot;
+ return phase==='map-error'||phase==='startup-error';
+}
+function checkForExplicitFailure(){if(failedBootPhase())start()}
+if(window.MutationObserver){
+ var observer=new MutationObserver(checkForExplicitFailure);
+ observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-radar-boot']});
+}
+window.addEventListener('DOMContentLoaded',checkForExplicitFailure,{once:true});
+window.addEventListener('load',checkForExplicitFailure,{once:true});
+checkForExplicitFailure();
 })();
