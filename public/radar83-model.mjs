@@ -47,7 +47,7 @@ const MESHOPT_URL='https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/libs/
 let loaderPromise;
 export function loadGLTFLoader(){
   return loaderPromise??=(Promise.all([import(GLTF_URL),import(MESHOPT_URL)])
-    .then(([mod,decoder])=>{
+    .then(async ([mod,decoder])=>{
      const Loader=mod.GLTFLoader||mod.default?.GLTFLoader;
      if(!Loader)throw Error('GLTFLoader nicht verfuegbar');
      const loader=new Loader();
