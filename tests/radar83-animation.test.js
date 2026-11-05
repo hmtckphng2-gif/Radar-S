@@ -23,8 +23,7 @@ function fakeMap(){
   emit:(name)=>m.get(name)?.(),isStyleLoaded:()=>true,
   getSource:(name)=>name==='openmaptiles'?{}:null,
   sourceLoaded:true,isSourceLoaded(){return this.sourceLoaded},areTilesLoaded:()=>true,
-  setSourceLoaded(value){this.sourceLoaded=value},
-  triggerRepaint(){}
+  setSourceLoaded(value){this.sourceLoaded=value},triggerRepaint(){}
  };
 }
 test('3D scene waits for its real vector source, not just the style shell',async()=>{
