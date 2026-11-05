@@ -4,6 +4,7 @@ import {readFileSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {makeVehicleMesh,makeContactShadow,modelCreditText,normalizeModel,VEHICLE_SPECS,frontAxisYaw,modelYawRadians} from '../public/radar83-model.mjs';
 import {modelWorldBearing,modelWorldDirection} from '../public/radar83-logic.mjs';
+import {disposeObject} from '../public/radar83-map.mjs';
 
 /* Radar 8.5 - the 3D model must be right in every respect.
  *
@@ -25,6 +26,21 @@ import {modelWorldBearing,modelWorldDirection} from '../public/radar83-logic.mjs
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const read = name => readFileSync(root + name, 'utf8');
+
+test('disposing a loaded GLB releases shared GPU resources exactly once', () => {
+  let geometryA=0,geometryB=0,materialA=0,materialB=0,textureDisposals=0;
+  const geometry1={dispose(){geometryA++}},geometry2={dispose(){geometryB++}};
+  const texture={isTexture:true,dispose(){textureDisposals++}};
+  const mat1={map:texture,normalMap:texture,dispose(){materialA++}};
+  const mat2={roughnessMap:texture,dispose(){materialB++}};
+  const nodes=[{geometry:geometry1,material:mat1},{geometry:geometry1,material:mat2},{geometry:geometry2,material:mat1}];
+  disposeObject({traverse(callback){nodes.forEach(callback)}});
+  assert.equal(geometryA,1,'shared geometry is disposed once');
+  assert.equal(geometryB,1,'every unique geometry is disposed');
+  assert.equal(materialA,1,'shared material is disposed once');
+  assert.equal(materialB,1,'every unique material is disposed');
+  assert.equal(textureDisposals,1,'shared GLB texture is released once');
+});
 
 function fakeThree() {
   class Vector3 {
