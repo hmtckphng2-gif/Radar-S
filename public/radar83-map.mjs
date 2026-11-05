@@ -98,24 +98,13 @@ export function enable3DTerrain(map){
   return true;
  }catch(error){console.info('Radar 8.3: terrain fallback to buildings-only',error);return false}
 }
-export function disposeObject(object){
+function disposeObject(object){
  if(!object)return;
- const geometries=new Set(),materialsUsed=new Set(),textures=new Set();
+ const used=new Set();
  object.traverse(node=>{
-  const geometry=node.geometry;
-  if(geometry&&!geometries.has(geometry)){geometries.add(geometry);geometry.dispose?.()}
+  node.geometry?.dispose?.();
   const materials=Array.isArray(node.material)?node.material:[node.material];
-  for(const material of materials){
-   if(!material||materialsUsed.has(material))continue;
-   materialsUsed.add(material);
-   // GLTFLoader creates GPU-backed textures separately from materials.
-   // Material.dispose() does NOT release those textures; close/reopen cycles
-   // would otherwise keep every model texture allocated on mobile Safari.
-   for(const value of Object.values(material)){
-    if(value?.isTexture&&!textures.has(value)){textures.add(value);value.dispose?.()}
-   }
-   material.dispose?.();
-  }
+  for(const material of materials)if(material&&!used.has(material)){used.add(material);material.dispose?.()}
  });
 }
 export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{}){
