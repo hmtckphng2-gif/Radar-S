@@ -46,8 +46,12 @@ export function waitFor3DScene(map,timeoutMs=7200){
   };
   const check=()=>{
    try{
+    // The style also contains an unrelated shaded-relief raster source.
+    // areTilesLoaded() waits for every visible source, so a slow/blocked DEM
+    // tile can hide an otherwise usable vector map and prevent the 3D view.
+    // Only gate on the actual vector source used by the 3D buildings.
     if(map.isStyleLoaded?.() && map.getSource('openmaptiles') &&
-       map.isSourceLoaded?.('openmaptiles') && map.areTilesLoaded?.())finish();
+       map.isSourceLoaded?.('openmaptiles'))finish();
    }catch(e){finish(e)}
   };
   const timeout=setTimeout(()=>finish(new Error('3D vector tiles not ready')),timeoutMs);

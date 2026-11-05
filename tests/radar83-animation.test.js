@@ -22,15 +22,20 @@ function fakeMap(){
   on:(name,fn)=>{m.set(name,fn)},off:(name)=>{m.delete(name)},
   emit:(name)=>m.get(name)?.(),isStyleLoaded:()=>true,
   getSource:(name)=>name==='openmaptiles'?{}:null,
-  isSourceLoaded:()=>true,areTilesLoaded:()=>true,
+  sourceLoaded:true,isSourceLoaded(){return this.sourceLoaded},areTilesLoaded:()=>true,
+  setSourceLoaded(value){this.sourceLoaded=value},
   triggerRepaint(){}
  };
 }
-test('3D scene only becomes ready after real vector tiles are loaded',async()=>{
- const map=fakeMap();await waitFor3DScene(map,30);
- let loaded=false;map.areTilesLoaded=()=>loaded;
- const pending=waitFor3DScene(map,150);
- loaded=true;map.emit('render');await pending;
+test('3D scene waits for its real vector source, not just the style shell',async()=>{
+ const map=fakeMap();map.setSourceLoaded(false);
+ let ready=false;const pending=waitFor3DScene(map,150).then(()=>{ready=true});
+ map.emit('render');await Promise.resolve();assert.equal(ready,false);
+ map.setSourceLoaded(true);map.emit('render');await pending;assert.equal(ready,true);
+});
+test('3D scene does not wait for unrelated shaded-relief raster tiles',async()=>{
+ const map=fakeMap();map.areTilesLoaded=()=>false;
+ await waitFor3DScene(map,30);
 });
 test('3D model render must be confirmed before revealing the map',async()=>{
  const map=fakeMap(),layer={didRender:false,renderError:false};
