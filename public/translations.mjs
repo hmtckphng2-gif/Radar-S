@@ -1,4 +1,4 @@
-// Südtirol Radar 9.9.0 — Übersetzungen (Deutsch / Italienisch)
+// Südtirol Radar 9.9.1 — Übersetzungen (Deutsch / Italienisch)
 // Zentrum für alle UI-Texte. Fehlende Schlüssel fallen auf den deutschen Originaltext zurück.
 
 export const LOCALES = ['de', 'it'];

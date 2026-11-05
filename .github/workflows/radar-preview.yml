@@ -37,12 +37,12 @@ jobs:
           set -euo pipefail
           BASE="https://suedtirol-radar-preview.j9fr2vg4vm.workers.dev"
           curl --fail --silent --show-error "$BASE/api/version" -o /tmp/version.json
-          node -e "const v=require('/tmp/version.json'); if(v.version!=='9.9.0') { console.error(v); process.exit(1) } console.log('Version endpoint OK:',v.version)"
+          node -e "const v=require('/tmp/version.json'); if(v.version!=='9.9.1') { console.error(v); process.exit(1) } console.log('Version endpoint OK:',v.version)"
           curl --fail --silent --show-error "$BASE/api/health" -o /tmp/health.json
           node -e "const h=require('/tmp/health.json'); if(h.ok!==true) { console.error(h); process.exit(1) } console.log('Health endpoint OK')"
-          curl --fail --silent --show-error "$BASE/radar-ui.css?v=9.9.0" -o /tmp/radar-ui.css
+          curl --fail --silent --show-error "$BASE/radar-ui.css?v=9.9.1" -o /tmp/radar-ui.css
           grep -q . /tmp/radar-ui.css
-          curl --fail --silent --show-error "$BASE/radar-ui-v10.css?v=9.9.0" -o /tmp/radar-ui-v10.css
+          curl --fail --silent --show-error "$BASE/radar-ui-v10.css?v=9.9.1" -o /tmp/radar-ui-v10.css
           grep -q 'prefers-reduced-motion' /tmp/radar-ui-v10.css
           grep -q -- '--radar10-silver' /tmp/radar-ui-v10.css
           grep -q '.sr50-tab-view' /tmp/radar-ui-v10.css
