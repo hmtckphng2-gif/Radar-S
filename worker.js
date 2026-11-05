@@ -131,8 +131,12 @@ export default {
         const upstream=await fetch(FEEDS[source],{
           headers:source==='sta_direct'?{'accept':'application/json'}:{'accept':'application/json','X-BusOne-Client':client,'X-BusOne-Use':'personal'},
           signal:AbortSignal.timeout(9000),cf:{cacheEverything:true,cacheTtl:15}});
-        if(!upstream.ok||!(upstream.headers.get('content-type')||'').includes('json'))throw Error('unavailable');
-        return {data:await upstream.json()};
+        const contentType=upstream.headers.get('content-type')||'';
+        if(!upstream.ok){const error=Error('HTTP '+upstream.status);error.httpStatus=upstream.status;error.contentType=contentType;throw error;}
+        if(!contentType.toLowerCase().includes('json')){const error=Error('Invalid JSON content type');error.httpStatus=upstream.status;error.contentType=contentType;throw error;}
+        let data;
+        try{data=await upstream.json();}catch{const error=Error('Invalid JSON response');error.httpStatus=upstream.status;error.contentType=contentType;throw error;}
+        return {data,httpStatus:upstream.status,contentType};
       });
       if(!Object.values(snapshot.sources).includes('ok'))return respond({error:'No current vehicle feeds available',sources:snapshot.sources},503,{'cache-control':'no-store'});
       const payload=name==='v1/vehicles'?snapshot:{schema:snapshot.schema,version:snapshot.version,generatedAt:snapshot.generatedAt,disclaimer:snapshot.positionDisclaimer,diagnostics:snapshot.diagnostics};
