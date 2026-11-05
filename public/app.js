@@ -34,6 +34,7 @@ const BUS_TRACK_MAX_GAP_MS = 140000;
 const MAX_INTERPOLATION_METERS = 3000;
 const snapMaxMeters = 350;
 const manualRefreshDelayMs=3000;
+let selectionRenderToken=0; // Invalidates stale async timetable renders after a new selection.
 let tileErrorCount=0;
 let tileLoadedCount=0;
 let fallbackTilesUsed=false;
@@ -804,6 +805,7 @@ function openSheet(which){
   $('scrim').classList.add('show');
 }
 function closeSheets(resetSelection=true){
+  if(resetSelection)selectionRenderToken++;
   for(const id of ['sheet','stationSheet']){$(id).classList.remove('open');$(id).setAttribute('aria-hidden','true');}
   // 9.5: Der Fokus geht zurueck auf die Karte.
   try{$('map')?.focus({preventScroll:true})}catch{}
@@ -949,6 +951,7 @@ function selectVehicle(key){
   if(window.SuedtirolRadar71?.enabled&&!document.hidden)document.body.classList.add('sr71-focusing');
   // Klick auf bereits ausgewähltes Fahrzeug schließt das Panel (Toggle).
   if(state.selectedKey===key&&state.activeSheet==='vehicle'){closeSheets();return;}
+  selectionRenderToken++;
   state.selectedKey=key;
   document.dispatchEvent(new Event('sr40:selection'));
   $('scheduleMatches').hidden=true;openSheet('vehicle');refreshMarkers();drawVehicleDetails(key,true);drawVehicleTrack(key);
@@ -1090,6 +1093,7 @@ async function selectScheduledTrain(tripId){
   const trip=state.indexes.trains?.trips?.[tripId];if(!trip)return;
   $('scheduleMatches').hidden=true;state.selectedKey=null;
   openSheet('vehicle');
+  const selectionToken=++selectionRenderToken;
   $('sheetKind').textContent=t('journey.noPositionTitle');
   $('sheetTitle').textContent='🚆 '+gtfsNumber('',trip[3]);
   $('sheetSub').textContent=trip[1]||t('journey.noDestination2');
@@ -1100,7 +1104,7 @@ async function selectScheduledTrain(tripId){
   $('sheetNote').textContent=t('journey.noPositionNote');
   $('scheduleSection').hidden=true;$('emptySchedule').hidden=false;$('emptySchedule').textContent=t('journey.loadingStops');
   const details=await loadDetails('trains');
-  if(state.activeSheet==='vehicle'&&state.selectedKey===null){
+  if(selectionToken===selectionRenderToken&&state.activeSheet==='vehicle'&&state.selectedKey===null){
     if(details)renderStops({source:'trains',tripId},details);
     else $('emptySchedule').textContent=t('journey.noSchedule');
   }
