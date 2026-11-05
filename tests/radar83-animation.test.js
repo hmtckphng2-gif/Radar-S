@@ -48,3 +48,10 @@ test('the replay button and real camera animation remain wired',()=>{
  assert.match(src,/await waitFor3DModel\(map,this\.layer\)/);
  assert.doesNotMatch(src,/new Vehicle3DOverlay\(/);
 });
+
+test('updated 3D entrypoint bypasses the previous service-worker asset cache',()=>{
+ const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+ const camera=readFileSync(new URL('../public/radar71-camera.mjs',import.meta.url),'utf8');
+ assert.match(html,/radar71-camera\.mjs\?v=9\.9\.1/);
+ assert.match(camera,/radar83-map\.mjs\?v=9\.9\.1/);
+});
