@@ -4,6 +4,7 @@ import {freshUpdate,stopDelay,tripCancelled,findConnections,feedQuality,spatialW
 import {romeDay,romeSeconds,findStations,nearbyStationGroup,buildDepartureRows,dateGTFSValid,trainScheduledPosition} from './radar51-logic.mjs?v=9.9.5';
 import {displayDelay} from './radar53-logic.mjs?v=9.9.5';
 import {isRailRoute,feedAgeSeconds} from './core.js?v=9.9.5';
+import {formatStationName,sameStationName,sourceLabel,formatRelativeAge} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
@@ -41,9 +42,9 @@ function positionQuality(){
  box.hidden=!v;if(!v)return;
  const q=feedQuality(v,status());box.className='sr56-quality '+q.level;box.replaceChildren();
  const top=mk('div','sr56-line');
- top.append(mk('span','sr56-quality-label',q.label),mk('strong','sr56-quality-age',q.age===null?'Alter unbekannt':Math.round(q.age)+' Sek.'));
+ top.append(mk('span','sr56-quality-label',q.label),mk('strong','sr56-quality-age',formatRelativeAge(q.age)));
  box.append(top);
- const note=mk('p','sr56-note',q.detail+(v.kind==='train'?' · Zugposition kann modelliert sein':'')+' · '+String(v.source||'').toUpperCase());
+ const note=mk('p','sr56-note',q.detail+(v.kind==='train'?' · Zugposition kann modelliert sein':'')+' · '+sourceLabel(v.source));
  box.append(note);
 }
 function ensureUI(){
@@ -66,7 +67,7 @@ function positionComparison(){
  card.hidden=false;
  card.append(mk('div','sr56-title-line','Ist-/Soll-Analyse 2.0'));
  card.append(mk('p','sr56-alert',warning));
- card.append(mk('p','sr56-note','Räumliche Abweichung und GTFS-RT-Verspätung sind unterschiedliche Informationen. Der Sollpunkt wird anhand des Fahrplans modelliert.'));
+ card.append(mk('p','sr56-note','Der Abstand der gemeldeten Position zum Fahrplanpunkt und die Verspätung aus der Echtzeitmeldung sind unterschiedliche Informationen.'));
 }
 function journey(){
  if(!journeyCard)return;
@@ -75,14 +76,18 @@ function journey(){
  const times=s.details[v.source].times[v.tripId];
  const progress=journeyProgress(times,romeSeconds());if(!progress)return;
  journeyCard.hidden=false;
- const heading=mk('div','sr56-line');heading.append(mk('strong','','Live Journey 3.0'),mk('span','sr56-kicker','Fahrplanfortschritt'));journeyCard.append(heading);
+ const heading=mk('div','sr56-line');heading.append(mk('strong','','Fahrtenübersicht'),mk('span','sr56-kicker','Fahrplanfortschritt'));journeyCard.append(heading);
  const ratio=progress.total?Math.max(0,Math.min(100,progress.plannedPassed/Math.max(1,progress.total-1)*100)):0;
  const track=mk('div','sr56-progress');const fill=mk('div','sr56-progress-fill');fill.style.width=ratio+'%';track.append(fill);journeyCard.append(track);
  const next=progress.next;
- const name=next?(s.details[v.source].stops?.[String(next[0])]?.[0]||'Halt unbekannt'):'Fahrplanende';
- const text=next?'Planmäßig als Nächstes: '+name+' · '+txtTime(next[1]??next[2]):'Alle Halte laut Fahrplan erreicht';
- journeyCard.append(mk('p','sr56-note',text+' · '+progress.plannedPassed+'/'+progress.total+' planmäßig vorherige Halte'));
- if(v.currentStopId){journeyCard.append(mk('p','sr56-note','Vom Feed gemeldeter nächster Halt: '+String(s.details[v.source].stops?.[v.currentStopId]?.[0]||v.currentStopId)))}
+  const name=next?formatStationName(s.details[v.source].stops?.[String(next[0])]?.[0]||'Unbekannt'):'Fahrplanende';
+  const feedName=v.currentStopId?formatStationName(s.details[v.source].stops?.[String(v.currentStopId)]?.[0]||'') : '';
+  const atStop=/^(STOPPED_AT|1)$/i.test(String(v.currentStatus||''));
+  if(next){
+   if(feedName&&!atStop&&sameStationName(feedName,name))journeyCard.append(mk('p','sr56-note','Planzeit am gleichen Halt: '+txtTime(next[1]??next[2])));
+   else journeyCard.append(mk('p','sr56-note',(feedName?'Laut Fahrplan als Nächstes: ':'Nächster Halt laut Fahrplan: ')+name+' · '+txtTime(next[1]??next[2])));
+  }else journeyCard.append(mk('p','sr56-note','Alle Halte laut Fahrplan erreicht'));
+  journeyCard.append(mk('p','sr56-note',progress.plannedPassed+'/'+progress.total+' Halte laut Fahrplan erreicht'));
 }
 function queueUI(){
  if(scheduled||document.hidden)return;scheduled=requestAnimationFrame(()=>{scheduled=0;const key=selected()?.key;if(!isVisible()){if(card)card.hidden=true;if(qualityCard)qualityCard.hidden=true;if(journeyCard)journeyCard.hidden=true;return}ensureUI();selectedKey=key;positionQuality();positionComparison();journey()});
@@ -118,11 +123,11 @@ async function stationPro(){
  for(const r of valid.slice(0,8)){
   const when=(r.forecast??r.sec),label=r.number+' · '+r.headsign;
   const platform=r.platform?.current?(' · '+(r.kind==='train'?'Gleis ':'Steig ')+r.platform.current+(r.platform.live?' gemeldet':' laut Plan')):' · Steig/Gleis nicht verfügbar';
-  const detail=r.cancelled?'Ausfall gemeldet':r.delaySec===null?'Nur Fahrplan':(r.delaySec>0?'+':'')+Math.round(r.delaySec/60)+' Min. GTFS-RT';
+  const detail=r.cancelled?'Ausfall gemeldet':r.delaySec===null?'Nur Fahrplan':(r.delaySec>0?'+':'')+Math.round(r.delaySec/60)+' Min. gemeldet';
   overlayBody.append(createRailRow(label,detail+platform,readableTime(when)));
  }
  if(!valid.length)overlayBody.append(mk('p','sr56-note','Keine verifizierbaren kommenden Abfahrten aus dem aktuellen GTFS-Import.'));
- overlayBody.append(mk('h3','sr56-small-head','Ankünfte · laut Fahrplan / GTFS-RT'));
+ overlayBody.append(mk('h3','sr56-small-head','Ankünfte · Fahrplan und Echtzeitmeldungen'));
  const arrivals=[],keys=new Set();
  for(const st of group){
   const db=s.indexes[st.source],details=s.details[st.source];
@@ -147,8 +152,8 @@ async function stationPro(){
  }
  arrivals.sort((a,b)=>a.arr-b.arr);
  for(const a of arrivals.slice(0,12))overlayBody.append(createRailRow(a.name,
-  (a.canceled?'Ausfall laut GTFS-RT':a.rt===null?'Nur Fahrplan':'GTFS-RT '+(a.rt>0?'+':'')+Math.round(a.rt/60)+' Min.')+
-  (a.platform?' · Gleis/Steig laut GTFS '+a.platform:'')+' · '+a.source.toUpperCase(),readableTime(a.arr)));
+  (a.canceled?'Ausfall laut Echtzeitmeldung':a.rt===null?'Nur Fahrplan':'Echtzeitmeldung '+(a.rt>0?'+':'')+Math.round(a.rt/60)+' Min.')+
+  (a.platform?' · Gleis/Steig laut Fahrplan '+a.platform:'')+' · '+sourceLabel(a.source),readableTime(a.arr)));
  if(!arrivals.length)overlayBody.append(mk('p','sr56-note','Heute keine passenden Ankünfte gefunden. Manche Quellen enthalten keine vollständigen Haltezeiten.'));
  overlayBody.append(mk('p','sr56-footnote','Kleine Datenbasis: nur die tatsächlich geladenen GTFS-Stationen. Live-Gleise nur bei explizit gemeldeter Quelle, nicht aus der Fahrplan-Spalte abgeleitet.'));
 }
@@ -159,16 +164,16 @@ function stationButton(){
 }
 function connections2(){
  const v=selected();
- if(!v?.tripId){openPanel('Anschluss-Radar 2.0','Bitte zuerst einen Zug oder Bus mit bestätigter Fahrt-ID auswählen.');return}
+ if(!v?.tripId){openPanel('Anschluss-Radar 2.0','Bitte zuerst einen Zug oder Bus mit eindeutig zugeordneter Fahrt auswählen.');return}
  const s=bridge.state,day=romeDay(),data=findConnections({
   source:v.source,tripId:v.tripId,db:s.indexes[v.source],details:s.details[v.source],updates:s.updates,
   statuses:s.statuses,serviceDay:day,nowSec:romeSeconds(),minTransfer:240
  });
  closeMoreMenu();
- openPanel('Anschluss-Radar 2.0','GTFS-RT-Prognosen werden nur bei frischen, haltgenau passenden Meldungen beider Fahrten berücksichtigt. Keine garantierte Anschlusssicherung.');
+ openPanel('Anschluss-Radar 2.0','Echtzeitprognosen werden nur bei aktuellen, eindeutig passenden Haltemeldungen beider Fahrten berücksichtigt. Keine garantierte Anschlusssicherung.');
  if(!data.station){overlayBody.append(mk('p','sr56-note',data.reason));return}
  const st=data.station;
- overlayBody.append(line('Nächster geprüfter Halt',st.name));
+ overlayBody.append(line('Nächster geprüfter Halt',formatStationName(st.name)));
  overlayBody.append(line('Ankunft laut Fahrplan',readableTime(st.arr)));
  overlayBody.append(mk('p','sr56-note','Mindestwechselzeit für die rechnerische Einschätzung: 4 Minuten (kein geprüfter Gleisweg).'));
  if(!data.rows.length){overlayBody.append(mk('p','sr56-note',data.reason));return}
@@ -176,7 +181,7 @@ function connections2(){
   const a=c.assessment,row=mk('div','sr56-connection '+a.kind);
   row.append(mk('div','sr56-connection-top',c.line+' → '+c.destination));
   const m=mk('div','sr56-connection-meta');m.append(mk('strong','',readableTime(c.departure+(a.live?(c.departureDelaySec??0):0))),mk('span','sr56-chip '+a.kind,a.label));row.append(m);
-  row.append(mk('small','',Math.round(a.margin/60)+' Min. '+(a.live?'prognostizierter':'planmäßiger')+' Übergang · '+c.source.toUpperCase()));
+  row.append(mk('small','',Math.round(a.margin/60)+' Min. '+(a.live?'prognostizierter':'planmäßiger')+' Übergang · '+sourceLabel(c.source)));
   overlayBody.append(row);
  }
  overlayBody.append(mk('p','sr56-footnote','Wichtig: Der Anschlussvergleich prüft nur eindeutige Stop-IDs innerhalb derselben Datenquelle. Verkehrsmittel aus anderen Feeds und tatsächliche Wege zwischen Gleisen sind nicht automatisch abgedeckt.'));
@@ -186,7 +191,7 @@ function disruptionsPro(){
  for(const [src,health] of Object.entries(s.statuses||{})){
   if(health==='ok')continue;
   const key='feed:'+src;if(seen.has(key))continue;seen.add(key);
-  issues.push({title:'Datenquelle '+src.toUpperCase(),detail:'Meldung: '+String(health)+' · Verfügbarkeit nicht bestätigt',level:'unknown'});
+  issues.push({title:'Datenquelle '+sourceLabel(src),detail:'Meldung: '+String(health)+' · Verfügbarkeit nicht bestätigt',level:'unknown'});
  }
  for(const [key,u] of s.updates||[]){
   const n=key.indexOf(':');if(n<0)continue;
@@ -195,8 +200,8 @@ function disruptionsPro(){
   const cancelled=tripCancelled(u,source,s.statuses,day), delay=u.delay===null||u.delay===undefined?null:Number(u.delay);
   if(!cancelled&&(!Number.isFinite(delay)||delay<600))continue;
   if(seen.has(key))continue;seen.add(key);
-  const label=String(trip[3]||db.routes?.[trip[0]]?.[0]||tripId);
-  issues.push({title:(cancelled?'Ausfall':'Größere Verspätung')+' · '+label,detail:cancelled?'Bestätigte GTFS-RT-Ausfallmeldung':Math.round(delay/60)+' Min. Fahrtwert laut GTFS-RT (nicht zwingend nächster Halt)',level:cancelled?'danger':'delay'});
+  const label=String(trip[3]||db.routes?.[trip[0]]?.[0]||'Zugfahrt');
+  issues.push({title:(cancelled?'Ausfall':'Größere Verspätung')+' · '+label,detail:cancelled?'Bestätigte Echtzeitmeldung zum Ausfall':Math.round(delay/60)+' Min. gemeldete Verspätung für die gesamte Fahrt (nicht zwingend für den nächsten Halt)',level:cancelled?'danger':'delay'});
  }
  issues.sort((a,b)=>({danger:0,delay:1,unknown:2}[a.level]??3)-({danger:0,delay:1,unknown:2}[b.level]??3));
  openPanel('Störungscenter Pro','Live-Meldungen aus den tatsächlich angeschlossenen Feeds – keine vollständige offizielle Betriebsstörungsliste.');

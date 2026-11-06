@@ -99,9 +99,9 @@ test('3D overlay identifies the selected vehicle, destination and vehicle ID',()
  assert.equal(selectedVehicleLabel({kind:'train',name:'REG 16685'}),'Zug · REG 16685');
  assert.equal(selectedVehicleLabel({kind:'bus',name:'5'}),'Bus · Linie 5');
  assert.equal(selectedVehicleLabel({kind:'train',name:'Zugnummer unbekannt'}),'Zug · Nummer unbekannt');
- assert.equal(selectedVehicleMeta({headsign:'Meran',vehicleId:'STA-17',tripId:'trip-16685',source:'sta_direct'}),'Ziel: Meran · ID: STA-17 · Fahrt: trip-16685 · Feed: STA_DIRECT');
+ assert.equal(selectedVehicleMeta({headsign:'MERAN',vehicleId:'STA-17',tripId:'trip-16685',source:'sta_direct'}),'Ziel: Meran · Fahrzeug: STA-17 · Datenquelle: STA direkt');
  assert.equal(selectedVehicleMeta({headsign:'Fahrtziel unbekannt',vehicleId:'—'}),'');
- assert.equal(selectedVehicleMeta({tripId:'trip-2',source:'trentino'}),'Fahrt: trip-2 · Feed: TRENTINO');
+ assert.equal(selectedVehicleMeta({tripId:'trip-2',source:'trentino'}),'Datenquelle: Trentino Trasporti');
 });
 
 test('3D scene updates and delayed model callbacks are scoped to the active vehicle',()=>{

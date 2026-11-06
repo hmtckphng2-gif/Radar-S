@@ -1,3 +1,4 @@
+import {formatStationName,sourceLabel,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 /* Südtirol Radar 7.0 – Horizon Home, search, journey and menu architecture.
  * Existing Leaflet, GTFS, Ist/Soll, favorites and analysis modules are not replaced. */
 import {findStations,romeDay,romeSeconds} from './radar51-logic.mjs?v=9.9.5';
@@ -54,10 +55,10 @@ function initHome(){home=E('section','sr70-home');home.id='sr70Home';home.setAtt
 function makeDock(){dock=E('nav','sr70-dock');dock.id='sr70Dock';dock.setAttribute('aria-label','Hauptnavigation');for(const [id,name,ico] of [['map','Karte','map'],['departures','Abfahrten','train'],['stats','Statistik','route'],['favorites','Favoriten','star'],['more','Menü','grid']]){const b=B('sr70-nav',undefined,()=>['departures','stats','favorites'].includes(id)?legacy(id):navigate(id));b.dataset.page=id;b.append(I(ico),E('span','',name));dock.append(b)}document.body.append(dock)}
 function message(txt){const x=$('sr70Message');if(x){x.textContent=txt;x.hidden=false}}
 function loadStations(){if(!stationPromise)stationPromise=bridge.getStationList().then(x=>{stations=Array.isArray(x)?x:[];return stations}).catch(e=>{stationPromise=null;throw e});return stationPromise}
-function choose(which,s){selected[which]=s;fields[which].input.value=s.name;fields[which].list.hidden=true;fields[which].list.replaceChildren()}
+function choose(which,s){selected[which]=s;fields[which].input.value=formatStationName(s.name);fields[which].list.hidden=true;fields[which].list.replaceChildren()}
 function stationField(which,label){const box=E('div','sr70-field'),lab=E('label','',label),input=E('input'),list=E('div','sr70-suggestions');input.id='sr70-'+which;lab.htmlFor=input.id;input.type='search';input.autocomplete='off';input.placeholder=which==='from'?'Startbahnhof oder Haltestelle':'Zielbahnhof oder Haltestelle';list.hidden=true;fields[which]={input,list};
  input.addEventListener('focus',()=>loadStations().then(()=>{if(input.value.length>1)input.dispatchEvent(new Event('input'))}).catch(()=>message('Haltestellen konnten nicht geladen werden.')));
- input.addEventListener('input',()=>{selected[which]=null;list.replaceChildren();if(input.value.trim().length<2){list.hidden=true;return}for(const s of findStations(stations,input.value.trim(),9)){const b=B('sr70-suggestion',s.name+' · '+s.source.toUpperCase(),()=>choose(which,s));list.append(b)}list.hidden=!list.children.length});
+ input.addEventListener('input',()=>{selected[which]=null;list.replaceChildren();if(input.value.trim().length<2){list.hidden=true;return}for(const s of findStations(stations,input.value.trim(),9)){const b=B('sr70-suggestion',formatStationName(s.name)+' · '+sourceLabel(s.source),()=>choose(which,s));list.append(b)}list.hidden=!list.children.length});
  box.append(lab,input,list);return box}
 function drawSearch(){
  pane='search';stage.replaceChildren();const head=E('div','sr70-title');head.append(E('p','sr70-overline',page==='journey'?'DEIN REISEPLANER · HORIZON':'PROJECT HORIZON · 7.0'),E('h1','',page==='journey'?'Reisen planen':"Wohin geht's?"),E('p','',page==='journey'?'Finde passende Fahrten, vergleiche Umstiege und prüfe den Fahrplan.':'Finde deine nächste Verbindung.'));stage.append(head);
@@ -129,7 +130,7 @@ function planChat(){
 }
 function drawResults(from,to,reason){
  pane='results';stage.replaceChildren(back('Verbindungen',drawSearch));
- const head=E('div','sr70-resulthead');head.append(E('h2','',from.name+' → '+to.name),E('p','','GTFS-Fahrplan · Umstiege nicht live garantiert'));stage.append(head);
+ const head=E('div','sr70-resulthead');head.append(E('h2','',formatStationName(from.name)+' → '+formatStationName(to.name)),E('p','','Fahrplan · Umstiege nicht live garantiert'));stage.append(head);
  if(!journeys.length){stage.append(E('p','sr70-msg',reason||'Keine passende Verbindung gefunden'));home.scrollTo?.({top:0});return}
  const ranked=assessJourneys(journeys),top=ranked[0];
  const advice=E('section','sr703-advice');advice.append(E('small','sr703-kicker','RADAR EMPFIEHLT · FAHRPLANBASIERTE AUSWERTUNG'),E('strong','',clock(top.trip.departure)+' → '+clock(top.trip.arrival)),E('p','',explainRecommendation(top)));
@@ -173,14 +174,14 @@ function freshDelay(leg,end){const state=bridge.state,upd=state.updates?.get?.(l
  return value?.delay==null||!Number.isFinite(+value.delay)?null:Number(value.delay);
 }
 function drawDetail(i){const trip=journeys[i];if(!trip)return;pane='detail';stage.replaceChildren(back('Reisedetails',()=>drawResults(selected.from,selected.to,'')));
- const head=E('section','sr70-detailhead');head.append(E('p','sr70-overline','DEINE REISE'),E('h2','',clock(trip.departure)+' → '+clock(trip.arrival)),E('p','',trip.legs.length+' Fahrt(en) · GTFS-Fahrplan, kein Ticketangebot'));stage.append(head,E('p','sr70-hint','Umsteigewege sind nur aus Luftlinie geschätzt. Prognosen stammen ausschließlich aus aktuellen GTFS-RT-Meldungen, wenn sie für beide Fahrten verfügbar sind.'));
+ const head=E('section','sr70-detailhead');head.append(E('p','sr70-overline','DEINE REISE'),E('h2','',clock(trip.departure)+' → '+clock(trip.arrival)),E('p','',trip.legs.length+' Fahrt(en) · Fahrplan, kein Ticketangebot'));stage.append(head,E('p','sr70-hint','Umsteigewege sind nur aus Luftlinie geschätzt. Prognosen stammen ausschließlich aus aktuellen Echtzeitmeldungen, wenn sie für beide Fahrten verfügbar sind.'));
   const favKey=selected.from.name+'→'+selected.to.name+':'+trip.departure;
   const favBtn=B('sr70-primary-fav',isJourneyFavorite(favKey)?'★ Aus Favoriten':'☆ Als Favorit',()=>{toggleJourneyFavorite(favKey);favBtn.textContent=isJourneyFavorite(favKey)?'★ Aus Favoriten':'☆ Als Favorit';drawDetail(i);});
   head.append(favBtn);
  const timeline=E('div','sr70-timeline');for(let j=0;j<trip.legs.length;j++){const leg=trip.legs[j];
-  const a=E('div','sr70-stop');a.append(E('time','',clock(leg.departure)),E('strong','',leg.fromStop.name),E('small','',leg.fromStop.platform?'Steig/Gleis '+leg.fromStop.platform:'Steig/Gleis unbekannt'));timeline.append(a);
-  const line=E('div','sr70-ride');line.append(E('span',leg.type==='train'?'sr70-train':'sr70-bus',leg.name),E('span','',leg.headsign));const delay=freshDelay(leg,false);if(delay!==null)line.append(E('small','sr70-delay','GTFS-RT '+(delay>=0?'+':'')+Math.round(delay/60)+' Min.'));timeline.append(line);
-  const b=E('div','sr70-stop');b.append(E('time','',clock(leg.arrival)),E('strong','',leg.toStop.name),E('small','',leg.toStop.platform?'Steig/Gleis '+leg.toStop.platform:'Steig/Gleis unbekannt'));timeline.append(b);
+  const a=E('div','sr70-stop');a.append(E('time','',clock(leg.departure)),E('strong','',formatStationName(leg.fromStop.name)),...(hasKnownPlatform(leg.fromStop.platform)?[E('small','','Steig/Gleis '+leg.fromStop.platform)]:[]));timeline.append(a);
+  const line=E('div','sr70-ride');line.append(E('span',leg.type==='train'?'sr70-train':'sr70-bus',leg.name),E('span','',formatStationName(leg.headsign)));const delay=freshDelay(leg,false);if(delay!==null)line.append(E('small','sr70-delay','Echtzeitmeldung '+(delay>=0?'+':'')+Math.round(delay/60)+' Min.'));timeline.append(line);
+  const b=E('div','sr70-stop');b.append(E('time','',clock(leg.arrival)),E('strong','',formatStationName(leg.toStop.name)),...(hasKnownPlatform(leg.toStop.platform)?[E('small','','Steig/Gleis '+leg.toStop.platform)]:[]));timeline.append(b);
   if(j<trip.transfers.length){const tr=trip.transfers[j],next=trip.legs[j+1],la=freshDelay(leg,true),lb=freshDelay(next,false);const assessment=transferAssessment({arrival:leg.arrival,departure:next.departure,walkSeconds:tr.meters<25?0:walkEstimate(tr.meters),liveArrival:la===null?null:leg.arrival+la,liveDeparture:lb===null?null:next.departure+lb});
    const t=E('section','sr70-transfer '+assessment.status);t.append(E('strong','',assessment.label),E('p','',Math.round(Math.max(0,assessment.margin)/60)+' Minuten geschätzter Restpuffer'),E('small','',Math.round(tr.meters)+' m Luftlinie · '+(assessment.live?'Aktuelle Prognosen beider Fahrten':'Nur Fahrplan, keine Echtzeitbestätigung')));timeline.append(t)}
  }

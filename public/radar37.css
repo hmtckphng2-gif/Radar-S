@@ -16,9 +16,14 @@
 }
 .radar37-smallbtn:active {background:var(--blue);color:#fff;}
 /* Keep the progress inside the scrollable body. No floating card over the red dot. */
-#stops .stop-current {background:linear-gradient(90deg,rgba(248,78,91,.10),transparent 90%);border-radius:6px;opacity:1;}
-#stops .stop-past {opacity:.70;}
-#stops .stop-position-note {color:#ff6e7c;font-size:10px;font-weight:800;}
+#stops .stop-current {background:linear-gradient(90deg,rgba(214,167,95,.14),transparent 90%);border-left:3px solid #d6a75f;border-radius:6px;opacity:1;}
+#stops .stop-past {opacity:.46;}
+#stops .stop-future {opacity:1;}
+#stops .stop-position-note {color:#d6a75f;font-size:10px;font-weight:800;}
+#stops .stop-time {display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:68px;}
+#stops .stop-time strong {font-size:17px;line-height:1.15;font-weight:820;color:var(--text);font-variant-numeric:tabular-nums;}
+#stops .stop-plan-time {font-size:10px;line-height:1.2;color:var(--muted);font-weight:500;}
+#stops .stop-plan-time.is-shifted {text-decoration:line-through;opacity:.72;}
 .radar37-follow {
   position:fixed;z-index:930;left:12px;bottom:calc(147px + env(safe-area-inset-bottom));
   background:#183451;color:#fff;max-width:min(275px,calc(100vw - 100px));
@@ -53,3 +58,8 @@
 .radar37-real {color:var(--good);}
 .radar37-cancelled {color:var(--bad);font-weight:800;}
 @media(min-width:750px){.radar37-favorites{bottom:305px;right:90px;width:360px;}.radar37-follow{bottom:130px;left:16px;}}
+
+#details .technical-details{margin:10px 0;padding:8px 11px;border:1px solid var(--edge);border-radius:12px;background:var(--panel2)}
+#details .technical-details summary{display:flex;align-items:center;min-height:44px;cursor:pointer;color:var(--text);font-size:12px;font-weight:750}
+#details .technical-details .detail{margin:6px 0}
+#details .detail strong{white-space:normal;overflow-wrap:anywhere}

@@ -13,8 +13,8 @@
 #sr51TrainCompare .sr51-cmp-line{font-size:10px;letter-spacing:.01em}
 #sr51TrainCompare .sr51-quiet,#sr51TrainCompare .sr51-caution{display:none!important}
 #sr51TrainCompare .sr51-gap{font-size:14px;color:#f3cf8a}
-.sr53-approx{display:inline-flex;align-self:flex-start;border-radius:999px;font:720 11px/1.35 -apple-system,Inter,system-ui,sans-serif;padding:6px 10px;background:#3b2d22;border:1px solid #85572e;color:#ffd194}
-.sr53-approx.missing{background:#1c3044;border-color:#304b65;color:#95b0c8}
+.sr53-approx{display:block;align-self:stretch;margin:7px 0 3px;border-radius:9px;font:720 12px/1.4 -apple-system,Inter,system-ui,sans-serif;padding:9px 11px;background:#3b2d22;border:1px solid #85572e;color:#ffd194}
+.sr53-approx.missing{background:#1c2632;border-color:#44505d;color:#c4ccd5}
 /* Keep basic route/progress and concise timetable on the default screen. Power-user panels expand on demand. */
 #sheet:not(.sr53-expanded) #details,#sheet:not(.sr53-expanded) #sheetNote,#sheet:not(.sr53-expanded) #sr46Quality,#sheet:not(.sr53-expanded) #sr47TrackNote,#sheet:not(.sr53-expanded) #sr52DelayCard,#sheet:not(.sr53-expanded) #sr52LineCard{display:none!important}
 #sheet:not(.sr53-expanded) #sr52RouteCard{border:0!important;background:transparent!important;padding:5px 0!important;margin:5px 0!important;box-shadow:none!important}

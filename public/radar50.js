@@ -2,7 +2,8 @@
 import {calculateNetworkStats,searchTrainStats,searchBusLineStats,vehicleAgeSeconds,HistoricalStorage,tidy} from './radar50-logic.mjs?v=9.9.5';
 import {findStations,nearbyStationGroup,buildDepartureRows,romeSeconds,busDelayLabel} from './radar51-logic.mjs?v=9.9.5';
 import {mergeStationDepartures} from './radar53-logic.mjs?v=9.9.5';
-import {enrichTrainPlatform} from './train-platforms.js?v=9.9.5';
+import {enrichTrainPlatform} from './train-platforms.js?v=9.9.5&rev=details-1';
+import {formatStationName,sourceLabel,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 (() => {
 'use strict';
 const $=id=>document.getElementById(id);
@@ -43,7 +44,7 @@ function makeRow(primary,secondary,meta){
  if(meta)row.append(el('span','sr50-badge',meta));return row;
 }
 function timeLabel(ms){return ms>0?new Date(ms).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}):'unbekannt'};
-function ageLabel(seconds){return seconds===null?'Zeit unbekannt':seconds<60?seconds+' s alt':Math.round(seconds/60)+' Min. alt'};
+function ageLabel(seconds){return seconds===null?'Zeit unbekannt':seconds<60?'vor weniger als 1 Min.':'vor '+Math.floor(seconds/60)+' Min.'};
 function statusText(status){return status==='ok'?'Antwort OK':status==='old'?'Feed veraltet':'Nicht erreichbar'};
 function createNavigation(){
  const nav=el('nav','sr50-bottom-nav');nav.id='sr50BottomNav';nav.setAttribute('aria-label','Hauptnavigation');
@@ -136,15 +137,15 @@ function renderTrain(){
  if(!result.valid){target.append(el('p','sr50-note','Bitte eine Zugnummer aus 2–6 Ziffern eingeben.'));return}
  const head=el('div','sr50-subtitle',result.live.length+' aktuelle/gespeicherte Fahrzeugpositionen · '+result.planned.length+' heutige Fahrplaneinträge');head.append(favButton('train',result.query));target.append(head);
  for(const v of result.live.slice(0,20)){
-  const row=makeRow(v.name,v.headsign+(v.estimated?' · berechnete Position':' · Feedposition'),v.delayMin===null?'Verspätung unbekannt':(v.delayMin>0?'+':'')+v.delayMin+' Min.');
-  const meta=el('small','sr50-tip',(v.fresh?'Frische Meldung · ':'Letzte/ungeprüfte Meldung · ')+ageLabel(v.age)+' · '+v.source.toUpperCase());
+  const row=makeRow(v.name,formatStationName(v.headsign)+(v.estimated?' · berechnete Position':' · gemeldete Position'),v.delayMin===null?'Verspätung unbekannt':(v.delayMin>0?'+':'')+v.delayMin+' Min.');
+  const meta=el('small','sr50-tip',(v.fresh?'Frische Meldung · ':'Letzte/ungeprüfte Meldung · ')+ageLabel(v.age)+' · '+sourceLabel(v.source));
   row.querySelector('.sr50-list-info').append(meta);row.classList.add('sr50-actionable');row.setAttribute('role','button');row.tabIndex=0;
   row.onclick=()=>window.SuedtirolRadar54?.openTrain({source:v.source,tripId:v.tripId,number:result.query,key:v.key});row.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();row.click()}};target.append(row)
  }
  if(result.planned.length){const title=el('p','sr50-tip','Heutiger GTFS-Fahrplan (keine bestätigte Live-Ortung):');target.append(title);
   for(const trip of result.planned.slice(0,8)){
    const row=button('sr50-list-row sr50-actionable', '',()=>window.SuedtirolRadar54?.openTrain({...trip,number:result.query}));
-   row.append(el('strong','',trip.source.toUpperCase()+' · '+result.query),el('span','',trip.headsign),el('small','','Fahrt & Verlauf ↗'));target.append(row);
+   row.append(el('strong','',sourceLabel(trip.source)+' · '+result.query),el('span','',formatStationName(trip.headsign)),el('small','','Fahrt & Verlauf ↗'));target.append(row);
   }
  }
  target.append(button('sr54-history-open','▥ Verspätungen · 7 / 30 Tage',()=>window.SuedtirolRadar54?.openTrain({number:result.query})));
@@ -159,7 +160,7 @@ function renderBus(){
  for(const v of result.vehicles.slice(0,35)){
   const age=vehicleAgeSeconds(v);
   const delay=busDelayLabel(s.vehicles.get(v.key),s.updates,s.statuses);
-  const row=makeRow(v.name,v.headsign||'Ziel unbekannt',delay?delay.label+' · '+ageLabel(age):ageLabel(age));
+  const row=makeRow(v.name,formatStationName(v.headsign||'Ziel unbekannt'),delay?delay.label+' · '+ageLabel(age):ageLabel(age));
   if(delay){const badge=row.querySelector('.sr50-badge');if(badge)badge.classList.add(delay.minutes>0?'sr51-delay-late':delay.minutes<0?'sr51-delay-early':'sr51-delay-zero');}
   row.classList.add('sr50-actionable');row.tabIndex=0;row.setAttribute('role','button');row.onclick=()=>openVehicle(v.key);row.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openVehicle(v.key)}};target.append(row)
  }
@@ -202,7 +203,7 @@ async function renderStations(){
    target.append(el('p','sr50-note','Keine passenden Haltestellen im geladenen GTFS-Index gefunden. Suche alternativ nach Bolzano/Bozen oder Salorno/Salurn. Prüfe ggf. den GTFS-Import.'));return;
   }
   for(const st of matches){
-   const row=makeRow(st.name,(st.source||'GTFS').toUpperCase());
+   const row=makeRow(formatStationName(st.name),sourceLabel(st.source||'GTFS'));
    row.classList.add('sr50-actionable');row.tabIndex=0;row.setAttribute('role','button');
    row.onclick=()=>openStation(st);row.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openStation(st)}};
    row.append(favButton('station',st.stopId,st.source,st.name));target.append(row);
@@ -226,7 +227,7 @@ async function renderInlineBoard(){
  const head=el('div','sr51-board-head');
  const title=el('div','');title.append(el('small','sr50-overline','ABFAHRTSMONITOR · 5.6'),el('h2','',stationSelected.name));
  const back=button('sr51-back','← Suche',()=>{stationSelected=null;boardRequest++;container.hidden=true;container.replaceChildren();if($('sr50DepResults'))$('sr50DepResults').hidden=false;renderStations()});
- head.append(title,back);container.append(head,el('p','sr50-tip','Lade Fahrplan und verfügbare GTFS-RT-Meldungen …'));
+ head.append(title,back);container.append(head,el('p','sr50-tip','Lade Fahrplan und verfügbare Echtzeitmeldungen …'));
  // No new network requests: getStationList already made all station details available.
  await Promise.resolve();
  if(seq!==boardRequest)return;
@@ -243,7 +244,7 @@ async function renderInlineBoard(){
  if(seq!==boardRequest)return;
  container.replaceChildren(head);
  const serviceDate=new Intl.DateTimeFormat('de-IT',{timeZone:'Europe/Rome',weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date());
-  const note=el('p','sr50-tip','Fahrplan für '+serviceDate+' · Zeitzone Europe/Rome · Livezeiten nur bei frischen, passenden GTFS-RT-Meldungen.');
+  const note=el('p','sr50-tip','Fahrplan für '+serviceDate+' · Zeitzone Europe/Rome · Livezeiten nur bei frischen, passenden Echtzeitmeldungen.');
  container.append(note);
  const controls=el('div','sr51-board-controls');
  controls.append(button('sr51-toggle',boardAllDay?'Nächste 4 Stunden':'Ganzer Fahrplantag',()=>{boardAllDay=!boardAllDay;renderInlineBoard()}));
@@ -266,9 +267,13 @@ async function renderInlineBoard(){
   const row=el('div','sr51-departure-row');
   const main=el('div','sr51-departure-main');
   const hasTrainNum=d.kind!=='train'||/^\d{2,6}$/.test(String(d.number||''));
-   main.append(el('strong','',(hasTrainNum?d.number:'REG · Zugnummer unbekannt')+' · '+d.headsign),el('small','',d.source.toUpperCase()+' · '+(d.cancelled?'Ausfall laut GTFS-RT':d.delaySec===null?'Nur Fahrplan · keine Livezeit':'GTFS-RT: '+(d.delaySec>0?'+':'')+Math.round(d.delaySec/60)+' Min.')));
+   main.append(el('strong','',(hasTrainNum?d.number:'REG · Zugnummer unbekannt')+' · '+formatStationName(d.headsign)),el('small','',sourceLabel(d.source)+' · '+(d.cancelled?'Ausfall laut Echtzeitmeldung':d.delaySec===null?'Nur Fahrplan · keine Livezeit':'Echtzeitmeldung: '+(d.delaySec>0?'+':'')+Math.round(d.delaySec/60)+' Min.')));
   const platform=d.platform;
-  const track=el('small','sr54-platform',(d.kind==='train'?'Gleis ':'Steig ')+(platform?.current||'unbekannt')+(platform?.changed?' · geändert':platform?.live?' · gemeldet':platform?.current?' · Plan':''));main.append(track);
+  const track=el('small','sr54-platform');
+  const knownPlatform=hasKnownPlatform(platform?.current);
+  track.hidden=!knownPlatform;
+  if(knownPlatform)track.textContent=(d.kind==='train'?'Gleis ':'Steig ')+platform.current+(platform?.changed?' · geändert':platform?.live?' · gemeldet':' · Plan');
+  if(knownPlatform||d.kind==='train')main.append(track);
   if(platform?.changed)track.classList.add('sr54-platform-changed');
   if(d.kind==='train'){
    const det=bridge.state.details[d.source],timing=det?.times?.[d.tripId]?.find(t=>String(t[0])===String(d.stopId)&&Number(t[2]??t[1])===d.sec);

@@ -28,10 +28,10 @@ export function timetablePositionTiming(calc,vehicle={},options={}){
    'Aus dem linearen Haltestellen-Fahrplan modelliert; keine gemessene Verspätung.'};
 }
 export function timeDifferenceLabel(v){
- if(!v)return 'Zeitlicher Sollvergleich nicht berechenbar';
- if(v.status==='outside')return 'Zeitlicher Sollvergleich außerhalb des aktuellen Abschnitts';
- if(v.status!=='model'||!Number.isFinite(v.minutes))return 'Zeitlicher Sollvergleich nicht berechenbar';
- if(Math.abs(v.minutes)<.05)return 'Modelliert: ungefähr auf Sollhöhe';
+ if(!v)return 'Zeitabweichung nicht berechenbar';
+ if(v.status==='outside')return 'Zeitabweichung für diesen Streckenabschnitt nicht berechenbar';
+ if(v.status!=='model'||!Number.isFinite(v.minutes))return 'Zeitabweichung nicht berechenbar';
+ if(Math.abs(v.minutes)<.05)return 'Modelliert: ungefähr im Zeitplan';
  const text=Math.abs(v.minutes).toLocaleString('de-DE',{maximumFractionDigits:1,minimumFractionDigits:1});
- return 'Modelliert: ca. '+text+' Min. '+(v.minutes>0?'hinter':'vor')+' dem Soll';
+ return 'Modelliert: etwa '+text+' Min. '+(v.minutes>0?'hinter':'vor')+' dem Zeitplan';
 }

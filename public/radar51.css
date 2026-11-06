@@ -57,3 +57,7 @@
 }
 
 #sr50DepResults[hidden]{display:none!important}.sr51-board{scroll-margin-top:90px}
+
+.sr51-explanation{display:block!important;margin:8px 0 0;color:#aeb8c4;font-size:10px;line-height:1.5;overflow-wrap:anywhere}
+
+.sr51-unknown,.sr51-caption{display:block!important;margin:7px 0;color:#aeb8c4;font-size:10px;line-height:1.45;overflow-wrap:anywhere}

@@ -50,7 +50,7 @@
    node.style.display=hide?'none':'';
   }
   renderTrail();renderDelayDetail();updateStatus();
-  const cover=$('radar41Coverage');if(cover){const s=bridge.state;const buses=[...s.vehicles.values()].filter(v=>v.kind==='bus');const n=bridge.verifiedRouteCount?.()||0;const approx=bridge.routeOnlyCount?.()||0;cover.textContent='Busstrecken: '+n+' mit exakter Fahrt-ID, '+approx+' mit eindeutiger GTFS-Linienform und geprüfter Position/Richtung (nicht exakte Fahrt), '+buses.length+' Busse im Feed. Andere Busse bleiben auf ihrer Feedposition.';}
+  const cover=$('radar41Coverage');if(cover){const s=bridge.state;const buses=[...s.vehicles.values()].filter(v=>v.kind==='bus');const n=bridge.verifiedRouteCount?.()||0;const approx=bridge.routeOnlyCount?.()||0;cover.textContent='Busstrecken: '+n+' mit eindeutig zugeordneter Fahrt, '+approx+' mit eindeutiger Linienform und geprüfter Position/Richtung, '+buses.length+' Busse mit gemeldeter Position. Andere Busse bleiben an ihrer letzten Feedposition.';}
  }
  function renderTrail(){if(!trailLayer||!bridge)return;const s=bridge.state;const key=s.selectedKey;
   if(key===lastKey&&trailLayer.getLayers().length&&!settings.trails)return;

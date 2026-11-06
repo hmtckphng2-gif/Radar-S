@@ -124,8 +124,8 @@
   const p=typeof bridge.confirmedStopFor==='function'?bridge.confirmedStopFor(v):null;
   const progress=U.confirmedProgress(p);
   if(!progress){
-   progressEl.append(make('p','sr47-subtle','Kein sicher bestätigter aktueller Halt. Ohne passende, frische GTFS-RT-Haltmeldung wird kein Fortschritt geschätzt.'));
-   if(!v.tripId)progressEl.append(make('small','sr47-muted','Für diese Position fehlt eine passende Fahrt-ID.'));
+   progressEl.append(make('p','sr47-subtle','Kein sicher bestätigter aktueller Halt. Ohne passende, frische Echtzeitmeldung zum Halt wird kein Fortschritt geschätzt.'));
+   if(!v.tripId)progressEl.append(make('small','sr47-muted','Für diese Position fehlt eine passende Fahrtzuordnung.'));
    return;
   }
   const labels=make('div','sr47-progress-meta');
@@ -155,12 +155,12 @@
   const key=st.source+':'+st.stopId;
   if(key!==boardKey){boardKey=key;boardOnlyRealtime=false;}
   const rows=stationRows(),c=U.boardCounts(rows);
-  if(boardInfo){boardInfo.textContent=U.todayRome().split('-').reverse().join('.')+' · '+c.all+' einzelne Fahrten in 4 Std. · '+c.realtime+' mit GTFS-RT · '+c.planned+' nur Fahrplan';}
+  if(boardInfo){boardInfo.textContent=U.todayRome().split('-').reverse().join('.')+' · '+c.all+' einzelne Fahrten in 4 Std. · '+c.realtime+' mit Echtzeitmeldung · '+c.planned+' nur Fahrplan';}
   if(boardOnlyBtn){boardOnlyBtn.setAttribute('aria-pressed',String(boardOnlyRealtime));
-   boardOnlyBtn.textContent=boardOnlyRealtime?'✓ Nur GTFS-RT':'Alle / nur GTFS-RT';}
+   boardOnlyBtn.textContent=boardOnlyRealtime?'✓ Nur Echtzeitdaten':'Alle / nur Echtzeitmeldungen';}
   for(const row of rows)row.el.hidden=boardOnlyRealtime&&!row.realtime&&!row.cancelled;
   if(boardEmpty){boardEmpty.hidden=!(boardOnlyRealtime&&c.realtime===0);
-   boardEmpty.textContent='Keine Abfahrt mit passender GTFS-RT-Meldung. Geplante Fahrten sind über „Alle“ sichtbar.';}
+   boardEmpty.textContent='Keine Abfahrt mit passender Echtzeitmeldung. Geplante Fahrten sind über „Alle“ sichtbar.';}
  }
  function queueBoard(){clearTimeout(boardTimer);boardTimer=setTimeout(syncBoard,145);}
  function initBoard(){
@@ -203,7 +203,7 @@
   content.append(overview);
   const feedsSection=make('section','sr47-diagnostic-group');feedsSection.append(make('h3','','Datenquellen'));
   for(const source of feeds){
-   const type=s.statuses[source],label=source.replace('_updates',' · TripUpdates');
+   const type=s.statuses[source],label=source.replace('_updates',' · Echtzeitmeldungen');
    const first=make('div','sr47-diagnostic-source');
    const left=make('div','');left.append(make('strong','',label));
    const last=make('small','', 'Letzte gültige Antwort '+U.elapsed(s.lastSuccess[source]));left.append(last);

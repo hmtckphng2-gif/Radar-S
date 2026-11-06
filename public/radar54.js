@@ -1,3 +1,4 @@
+import {sourceLabel} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 /* Radar 5.4 — openable timetable journeys and honest device-local delay history. */
 import {aggregateDays,recordObservation,trainNumber,platformInfo} from './radar54-logic.mjs?v=9.9.5';
 import {enrichTrainPlatform} from './train-platforms.js?v=9.9.5';
@@ -90,7 +91,7 @@ function render(){
   for(const [source,db] of Object.entries(s.indexes))if(dateGTFSValid(db))for(const [tripId,t] of Object.entries(db.trips||{})){
    if(String(t[3])===selection.number&&t[5]!==false&&isRailRoute(db.routes?.[t[0]]?.[2]))candidates.push({source,tripId,number:selection.number,title:t[1]});
   }
-  for(const c of candidates.slice(0,8))body.append(btn(c.source.toUpperCase()+' · '+c.title,()=>openTrain(c),'sr54-journey-choice'));
+  for(const c of candidates.slice(0,8))body.append(btn(sourceLabel(c.source)+' · '+c.title,()=>openTrain(c),'sr54-journey-choice'));
  }
  body.append(historyCard());
 }

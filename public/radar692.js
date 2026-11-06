@@ -1,9 +1,10 @@
+import {formatStationName,sourceLabel} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 import {findStations,romeDay,romeSeconds} from './radar51-logic.mjs?v=9.9.5';
 import {findItineraries} from './radar692-journey.mjs?v=9.9.5';
 (()=>{'use strict';const $=id=>document.getElementById(id),el=(t,c,s)=>{const x=document.createElement(t);if(c)x.className=c;if(s!==undefined)x.textContent=s;return x};
 let bridge,stations=[],chosen={a:null,b:null},fields={},out;const fmt=v=>String(Math.floor(v/3600)%24).padStart(2,'0')+':'+String(Math.floor(v%3600/60)).padStart(2,'0');
 function field(k,title){const box=el('label','sr692-field'),input=el('input'),items=el('div','sr692-options');input.type='search';input.autocomplete='off';input.placeholder=title+' wählen';items.hidden=true;fields[k]={input,items};box.append(el('span','',title),input,items);
-input.oninput=()=>{chosen[k]=null;items.replaceChildren();const q=input.value.trim();if(q.length<2){items.hidden=true;return;}for(const s of findStations(stations,q,7)){const btn=el('button','',s.name+' · '+s.source.toUpperCase());btn.type='button';btn.onclick=()=>{chosen[k]=s;input.value=s.name;items.hidden=true;input.blur()};items.append(btn)}items.hidden=!items.children.length;};return box;}
+input.oninput=()=>{chosen[k]=null;items.replaceChildren();const q=input.value.trim();if(q.length<2){items.hidden=true;return;}for(const s of findStations(stations,q,7)){const btn=el('button','',formatStationName(s.name)+' · '+sourceLabel(s.source));btn.type='button';btn.onclick=()=>{chosen[k]=s;input.value=s.name;items.hidden=true;input.blur()};items.append(btn)}items.hidden=!items.children.length;};return box;}
 function run(){out.replaceChildren();const a=chosen.a,b=chosen.b;if(!a||!b){out.append(el('p','sr692-note','Bitte Start und Ziel aus den Vorschlägen auswählen.'));return;}
 if(a.source!==b.source){out.append(el('p','sr692-note','Quellenübergreifende Verbindungssuche ist noch nicht zuverlässig verfügbar. Wähle Haltestellen derselben GTFS-Quelle.'));return;}
 const state=bridge.state,db=state.indexes[a.source],details=state.details[a.source];

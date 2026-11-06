@@ -1,3 +1,4 @@
+import {formatStationName} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 /* Südtirol Radar 4.3 — pure, testable screen/data helpers.
    No location is predicted, invented, or converted into an exact ETA. */
 export function clusterGrid(points,cell=72,selectedKey=null){
@@ -43,13 +44,13 @@ function clock(sec){if(!Number.isFinite(Number(sec)))return '';
  const n=Number(sec);return String(Math.floor(n/3600)%24).padStart(2,'0')+':'+String(Math.floor(n/60)%60).padStart(2,'0')+(n>=86400?' +1':'');}
 export function stopSummary(p,update){
  if(!p)return {title:'Nächster Halt nicht verifiziert',meta:'Keine bestätigte Fahrt/Haltestelle'};
- const title=(p.atStop?'Am Halt: ':'Nächster Halt: ')+p.name;
+ const title=(p.atStop?'Am Halt laut Feed: ':'Nächster Halt laut Feed: ')+formatStationName(p.name);
  const details=[];
  if(p.time!=null&&Number.isFinite(Number(p.time)))details.push('Plan '+clock(p.time));
- if(update?.cancelled)details.push('Fahrt entfällt laut Feed');
+ if(update?.cancelled)details.push('Fahrt entfällt laut Echtzeitmeldung');
  else if(update?.delay!=null&&Number.isFinite(Number(update.delay))){
   const n=Math.round(Number(update.delay)/60);
-  details.push('RT '+(n>0?'+':'')+n+' Min.');
+  details.push('Echtzeitmeldung '+(n>0?'+':'')+n+' Min.');
  }else details.push('keine bestätigte Verspätung');
  return {title,meta:details.join(' · ')};
 }

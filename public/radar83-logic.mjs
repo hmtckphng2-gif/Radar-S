@@ -1,4 +1,5 @@
 /* Pure 3D cinematic decisions; keep the fallback independently testable. */
+import {formatStationName,sourceLabel} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 export const MAPLIBRE_VERSION='4.7.1';
 export const VECTOR_STYLE='https://tiles.openfreemap.org/styles/dark';
 export const TERRAIN_TILES='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
@@ -17,13 +18,11 @@ export function selectedVehicleLabel(vehicle){
 export function selectedVehicleMeta(vehicle){
  const destination=usableVehicleText(vehicle?.headsign);
  const id=usableVehicleText(vehicle?.vehicleId);
- const trip=usableVehicleText(vehicle?.tripId);
  const source=usableVehicleText(vehicle?.source);
  const parts=[];
- if(destination)parts.push('Ziel: '+destination);
- if(id)parts.push('ID: '+id);
- if(trip)parts.push('Fahrt: '+trip);
- if(source)parts.push('Feed: '+source.toUpperCase());
+ if(destination)parts.push('Ziel: '+formatStationName(destination));
+ if(id)parts.push('Fahrzeug: '+id);
+ if(source)parts.push('Datenquelle: '+sourceLabel(source));
  return parts.join(' · ');
 }
 

@@ -32,15 +32,15 @@ function refresh(){
  const v=selected();const pill=$('sr53DelayPill');if(!pill)return;
  pill.hidden=!v;if(!v)return;
  const min=displayDelay(v,bridge.state);
- pill.textContent=min===null?'◷ Kein Live-Delay':min>0?'◷ '+delayPill(min):min<0?'◷ '+delayPill(min):'✓ Pünktlich';
+ pill.textContent=min===null?'◷ Verspätung unbekannt':min>0?'◷ '+delayPill(min):min<0?'◷ '+delayPill(min):'✓ Pünktlich';
  pill.className='sr53-delay-pill '+(min===null?'unknown':min>0?'late':min<0?'early':'ontime');
- pill.title=min===null?'Keine frische, passend zugeordnete GTFS-RT-Verspätung':'Frische, zur Fahrt passende GTFS-RT-Verspätung';
+ pill.title=min===null?'Keine bestätigte Verspätungsmeldung':'Gemeldete Verspätung aus einer passenden Echtzeitmeldung';
  const cmp=$('sr51TrainCompare');if(cmp&&!cmp.hidden){
-  const km=cmp.querySelector('.sr51-gap');let approx=$('sr53ApproxDelay');
-  if(km&&!approx){approx=mk('span','sr53-approx');approx.id='sr53ApproxDelay';km.after(approx)}
-  if(approx){approx.textContent=min===null?'Zeitverspätung: keine bestätigte Meldung':`${delayPill(min)} gemeldet`;
-   approx.className='sr53-approx '+(min===null?'missing':'known');
-   approx.title='Nicht aus den Kilometern berechnet. Diese Zahl stammt aus einer passenden Echtzeitmeldung.'}
+  const legend=cmp.querySelector('.sr51-cmp-line');let approx=$('sr53ApproxDelay');
+   if(legend&&!approx){approx=mk('div','sr53-approx');approx.id='sr53ApproxDelay';legend.insertAdjacentElement('afterend',approx)}
+   if(approx){approx.textContent=min===null?'Gemeldete Verspätung: unbekannt':`Gemeldete Verspätung: ${delayPill(min)}`;
+    approx.className='sr53-approx '+(min===null?'missing':'known');
+    approx.title='Diese Zeitangabe stammt aus einer passenden Echtzeitmeldung und wird nicht aus dem Kilometerabstand berechnet.'}
   const labels=cmp.querySelector('.sr51-cmp-line');if(labels&&!labels.querySelector('.sr51-legend-feed'))labels.textContent='Feedposition · Soll laut Fahrplan (Modell)';
  }
 }

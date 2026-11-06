@@ -37,7 +37,7 @@ const IT={
 'Fahrt auswählen':'Seleziona corsa','Quelle':'Fonte',
 'Haltestelle oder Bahnhof':'Fermata o stazione',
 'Abfahrten · nächste 4 Stunden':'Partenze · prossime 4 ore',
- 'Fahrtverlauf 3.0':'Percorso in tempo reale 3.0',
+ 'Fahrtenübersicht':'Percorso in tempo reale',
  'NETZWERKANALYSE':'ANALISI DELLA RETE',
  'DATEN OK':'DATI OK'
 };
@@ -115,7 +115,7 @@ const pairs=[
  ['corse','Fahrten'],['segnalazioni','Meldungen'],['linee interessate','betroffene Linien'],
  ['fonte dati','Datenquelle'],['Dettagli','Details'],['Cerca','Suche'],
  ['Cancellato','Ausfall'],['Sconosciuto','Unbekannt'],
- ['Live Journey 3.0','Fahrtverlauf 3.0'],['NETWORK INTELLIGENCE','NETZWERKANALYSE'],
+ ['Live Journey 3.0','Fahrtenübersicht'],['NETWORK INTELLIGENCE','NETZWERKANALYSE'],
  ['FEEDS OK','DATEN OK'],['Position vs. Fahrplan','Position und Fahrplan']
 ];
 const phrases=[
@@ -139,7 +139,7 @@ const phrases=[
  ['Gesamte Strecke zeigen','Mostra percorso completo'],
  ['Fahrplanfortschritt','Avanzamento orario'],
  ['Nächster gemeldeter Halt','Prossima fermata segnalata'],
- ['Fahrtverlauf 3.0','Percorso 3.0'],
+ ['Fahrtenübersicht','Percorso'],
  ['Position und Fahrplan','Posizione e orario'],
  ['Streckenverfolgung 2.0','Monitoraggio percorso 2.0'],
  ['DATEN OK','DATI OK'],

@@ -6,7 +6,7 @@ test('the scheduled position stays separate from the reported delay', () => {
   // 9.0: Die Soll-Position ist eine Ortsangabe, die Verspaetung eine Zeitangabe.
   // Beide duerfen nie ineinander gerechnet werden.
   const src = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
-  assert.match(src, /detail\('Abweichung Fahrplan'/);
-  assert.match(src, /detail\('Verspätung \(GTFS-RT\)'/);
+  assert.match(src, /detail\('Abstand zum Fahrplanpunkt'/);
+  assert.match(src, /detail\('Gemeldete Verspätung'/);
   assert.match(src, /trainScheduledPosition\(v,state\.indexes,state\.details,state\.shapes\)/);
 });
