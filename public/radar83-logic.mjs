@@ -38,9 +38,10 @@ export function target3DCamera(point,zoom,heading=null,duration=4300){
  return {
   center:[lng,lat],
   zoom:Math.max(18.6,Math.min(20.4,Number(zoom)||19.0)),
-  pitch:38,
-  bearing:Number.isFinite(heading)?(heading+58)%360:58,
-  duration:Math.max(0,Math.min(5000,Number(duration)||0))
+  pitch:54,
+  // Rear-follow: camera bearing tracks the vehicle's actual travel heading.
+  bearing:Number.isFinite(heading)?((heading%360)+360)%360:0,
+  duration:Math.max(0,Math.min(8000,Number(duration)||0))
  };
 }
 export function readProjectionMatrix(input){
@@ -53,15 +54,15 @@ export function readProjectionMatrix(input){
 export function start3DCamera(point, heading=null, finalZoom=17){
  const lat=Number(point?.lat),lng=Number(point?.lng??point?.lon);
  if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -85||lat > 85)return null;
- const finalBearing=Number.isFinite(heading)?(heading+36)%360:36;
+ const finalBearing=Number.isFinite(heading)?((heading%360)+360)%360:0;
  const direction=finalBearing*Math.PI/180;
- const meters=680,latOffset=meters/111320;
+ const meters=1150,latOffset=meters/111320;
  const lngOffset=latOffset/Math.max(.2,Math.cos(lat*Math.PI/180));
  return {
   center:[lng-Math.sin(direction)*lngOffset,lat-Math.cos(direction)*latOffset],
-  zoom:Math.max(12,Math.min(16,Number(finalZoom)-3.2)),
-  pitch:60,
-  bearing:(finalBearing+232)%360
+  zoom:Math.max(11.5,Math.min(15.5,Number(finalZoom)-4.0)),
+  pitch:64,
+  bearing:finalBearing
  };
 }
 // DEM tiles consume substantial GPU memory on mobile Safari. The real pitched
@@ -86,15 +87,13 @@ export function followDecision({touched=false,center=null,point=null,thresholdMe
   return {center:[lng,lat],meters:Math.round(meters)};
 }
 // The 3D cinematic is a camera move, not a page transition. It has to feel
-// immediate: it starts on the tap and is done in about two seconds, while
-// the 3D scene is still being built up in the background. The old flow
-// waited for the tiles and for the model first, which felt like a dead
-// second on every single tap.
+// A deliberate cinematic approach: begin well behind the vehicle and ease
+// into a rear-follow composition. Scene/model loading continues in parallel.
 export function cinematicDuration(distanceKm=0,base=4300){
   const d=Number(distanceKm);
   const extra=Number.isFinite(d)&&d>2?400:0;
-  const duration=Math.max(3800,Math.min(4600,Number(base)||4300));
-  return Math.min(5000,Math.round(duration+extra));
+  const duration=Math.max(6800,Math.min(7600,Number(base)||7100));
+  return Math.min(8000,Math.round(duration+extra));
 }
 // If the system asks for less motion, the cinematic camera must not fly.
 // It jumps straight to the vehicle instead.

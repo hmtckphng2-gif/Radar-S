@@ -80,13 +80,15 @@ export function build3DBuildings(map){
  map.addLayer({
   id:'sr83-buildings',type:'fill-extrusion',source:'openmaptiles', 'source-layer':'building',
   minzoom:14,
-  // Most OSM buildings lack measured heights; a modest illustration is better
-  // than a missing 3D city. Unknown heights remain schematic, not claimed real.
+  // Match the provider's working OpenMapTiles 3D layer, but retain safe
+  // fallbacks for incomplete OSM height tags. The old near-black blue-grey
+  // blended into the dark building footprints and made extrusions look absent.
+  filter:['!', ['has','hide_3d']],
   paint:{
-   'fill-extrusion-color':'#263848',
-   'fill-extrusion-opacity':.88,
-   'fill-extrusion-height':['to-number',['get','render_height'],8],
-   'fill-extrusion-base':['to-number',['get','render_min_height'],0]
+   'fill-extrusion-color':'hsl(215, 12%, 66%)',
+   'fill-extrusion-opacity':.86,
+   'fill-extrusion-height':['max',3,['to-number',['coalesce',['get','render_height'],['get','height'],['*',['to-number',['get','building:levels'],3],3],8]]],
+   'fill-extrusion-base':['to-number',['coalesce',['get','render_min_height'],['get','min_height'],0]]
   }
  },firstLabel);
  return true;

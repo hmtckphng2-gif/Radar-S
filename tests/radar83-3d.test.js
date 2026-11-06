@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {VEHICLE_SPECS,vehicleKind,validHeading,modelYawRadians,makeVehicleMesh} from '../public/radar83-model.mjs';
-import {enabled3D,FEATURE_FLAGS,target3DCamera,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta} from '../public/radar83-logic.mjs';
+import {enabled3D,FEATURE_FLAGS,target3DCamera,start3DCamera,cinematicDuration,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta} from '../public/radar83-logic.mjs';
 import {build3DBuildings,enable3DTerrain,make3DVehicleLayer} from '../public/radar83-map.mjs';
 
 const NOW=1760900000000;
@@ -15,11 +15,20 @@ test('cinematic 3D is enabled by default and supports an explicit URL opt-out',(
  assert.equal(MAPLIBRE_VERSION,'4.7.1');
  assert.ok(VECTOR_STYLE.includes('/styles/dark'));
 });
+test('cinematic approaches from behind over a longer, smooth flight',()=>{
+ const start=start3DCamera({lat:46.5,lng:11.35},90,19);
+ assert.equal(start.pitch,64);
+ assert.equal(start.bearing,90);
+ assert.ok(start.zoom<15.5);
+ assert.ok(start.center[0]<11.35);
+ assert.ok(cinematicDuration(0,4300)>=6800);
+ assert.ok(cinematicDuration(0,4300)<=8000);
+});
 test('camera rotates the MAP and tilts terrain, no arbitrary model spin',()=>{
  const camera=target3DCamera({lat:46.498,lng:11.353},17.4,90,4500);
  assert.deepEqual(camera.center,[11.353,46.498]);
- assert.equal(camera.pitch,38);
- assert.equal(camera.bearing,148);
+ assert.equal(camera.pitch,54);
+ assert.equal(camera.bearing,90);
  assert.equal(camera.duration,4500);
  assert.equal(target3DCamera({lat:92,lng:11},17,90,3000),null);
  assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,20.4);
@@ -55,6 +64,10 @@ test('vector buildings are extruded and terrain falls back when DEM unsupported'
  assert.equal(build3DBuildings(map),true);
  assert.equal(building.v.type,'fill-extrusion');
  assert.equal(building.v['source-layer'],'building');
+ assert.equal(building.v.filter[1][1],'hide_3d');
+ assert.equal(building.v.paint['fill-extrusion-color'],'hsl(215, 12%, 66%)');
+ assert.equal(building.v.paint['fill-extrusion-opacity'],.86);
+ assert.equal(building.v.paint['fill-extrusion-height'][0],'max');
  assert.equal(building.before,'labels');
  let dem,terrain;
  const terrainMap={getSource:()=>null,addSource:(id,s)=>{dem=s},setTerrain:x=>{terrain=x}};

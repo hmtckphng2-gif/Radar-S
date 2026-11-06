@@ -51,12 +51,11 @@ test('replay works before the model is ready', () => {
   assert.match(src, /replay\(\)\{\s*\n\s*if\(!this\.map\|\|!this\.flight\)return;/);
 });
 
-test('the camera move is short enough to feel immediate', () => {
-  assert.ok(cinematicDuration(0.2) >= 3800 && cinematicDuration(0.2) <= 4600);
+test('the camera flight is long and smooth without becoming excessive', () => {
+  assert.ok(cinematicDuration(0.2) >= 6800 && cinematicDuration(0.2) <= 7600);
   assert.ok(cinematicDuration(0.2) < cinematicDuration(30), 'a distant vehicle may take a little longer');
-  // A very long base value is still clamped.
-  assert.ok(cinematicDuration(0.2, 9000) <= 4600);
-  assert.ok(cinematicDuration(0.2, 100) >= 3800);
+  assert.ok(cinematicDuration(0.2, 9000) <= 8000);
+  assert.ok(cinematicDuration(0.2, 100) >= 6800);
 });
 
 test('the default live camera flight uses the slower cinematic timing', () => {
@@ -70,7 +69,8 @@ test('the flight still ends on the vehicle', () => {
   const start = start3DCamera(p, 90, end.zoom);
   assert.deepEqual(end.center, [p.lng, p.lat]);
   assert.equal(end.zoom, 19);
-  assert.equal(end.pitch, 38);
+  assert.equal(end.pitch, 54);
+  assert.equal(end.bearing, 90);
   assert.ok(start.zoom < end.zoom);
   assert.ok(start.pitch > end.pitch, 'the camera descends to the train');
 });
