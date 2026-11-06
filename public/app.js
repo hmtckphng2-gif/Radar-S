@@ -505,6 +505,11 @@ function visible(v){
     const lineKey=v.routeId?(v.source+':'+v.routeId):'';
     if(!lineKey||!isLineFavorite(lineKey))return false;
   }
+  if(state.filter==='favorites'&&!isFavorite(v.key))return false;
+  if(state.filter==='delayed'){
+    const delay=currentVehicleDelay(v);
+    if(!delay||!Number.isFinite(delay.delay)||delay.delay<=0)return false;
+  }
   if(state.query&&!`${v.name} ${v.headsign} ${v.vehicleId} ${v.tripId} ${v.routeLongName}`.toLocaleLowerCase('de').includes(state.query))return false;
   return true;
 }
@@ -1208,8 +1213,56 @@ function applyTranslations(){
     if(key)el.setAttribute('aria-label',t(key));
   });
 }
+function setupNearbyStations(){
+  const host=$('sr50MapTab');if(!host||$('sr86LocationBtn'))return;
+  const button=document.createElement('button');button.id='sr86LocationBtn';button.type='button';
+  button.className='sr86-location-btn';button.textContent='◎';button.title='Standort und nahe Haltestellen';
+  button.setAttribute('aria-label','Meinen Standort und nahe Haltestellen anzeigen');
+  const panel=document.createElement('section');panel.id='sr86NearbyPanel';panel.className='sr86-nearby-panel';panel.hidden=true;
+  panel.setAttribute('aria-live','polite');
+  const heading=document.createElement('div');heading.className='sr86-nearby-heading';
+  const title=document.createElement('strong');title.textContent='Haltestellen in der Nähe';
+  const close=document.createElement('button');close.type='button';close.textContent='×';close.setAttribute('aria-label','Schließen');
+  close.onclick=()=>{panel.hidden=true;};heading.append(title,close);
+  const list=document.createElement('div');list.className='sr86-nearby-list';panel.append(heading,list);
+  host.append(button,panel);
+  let locationLayer=null;
+  const distance=(a,b)=>{const factor=Math.PI/180,R=6371000,dLat=(b.lat-a.lat)*factor,dLon=(b.lon-a.lon)*factor,latA=a.lat*factor,latB=b.lat*factor;const q=Math.sin(dLat/2)**2+Math.cos(latA)*Math.cos(latB)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(q));};
+  button.addEventListener('click',()=>{
+    if(!navigator.geolocation){panel.hidden=false;list.textContent='Standort wird von diesem Gerät nicht unterstützt.';return;}
+    button.disabled=true;button.textContent='…';panel.hidden=false;list.textContent='Standort wird ermittelt …';
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const here={lat:pos.coords.latitude,lon:pos.coords.longitude};
+      const map=state.map;if(!map){list.textContent='Karte ist noch nicht bereit.';button.disabled=false;button.textContent='◎';return;}
+      if(locationLayer)locationLayer.remove();
+      locationLayer=L.layerGroup().addTo(map);
+      L.circle([here.lat,here.lon],{radius:Math.max(20,Math.min(pos.coords.accuracy||40,250)),color:'#dce4ed',weight:1,fillColor:'#9fb8d3',fillOpacity:.13}).addTo(locationLayer);
+      L.circleMarker([here.lat,here.lon],{radius:7,color:'#fff',weight:2,fillColor:'#4d9cff',fillOpacity:1}).addTo(locationLayer);
+      map.setView([here.lat,here.lon],Math.max(map.getZoom(),14),{animate:true});
+      list.textContent='Haltestellen werden geladen …';
+      try{
+        const stops=await getStationList();
+        const nearest=stops.map(st=>({...st,distance:distance(here,st)})).sort((a,b)=>a.distance-b.distance).slice(0,4);
+        list.replaceChildren();
+        if(!nearest.length){list.textContent='Keine Haltestellen in den geladenen Fahrplandaten gefunden.';}
+        for(const st of nearest){
+          const row=document.createElement('button');row.type='button';row.className='sr86-nearby-stop';
+          const name=document.createElement('strong');name.textContent=st.name;
+          const meta=document.createElement('small');meta.textContent=(st.distance<1000?Math.round(st.distance)+' m':(st.distance/1000).toFixed(1)+' km')+' · '+st.source.toUpperCase();
+          row.append(name,meta);row.onclick=()=>openStationFromMap(st);list.append(row);
+        }
+      }catch(error){console.warn('Nearby stations unavailable',error);list.textContent='Haltestellen konnten gerade nicht geladen werden.';}
+      button.disabled=false;button.textContent='◎';
+    },err=>{
+      list.textContent=err.code===1?'Standortzugriff abgelehnt. Du kannst ihn in den iPhone-Einstellungen erlauben.':'Standort gerade nicht verfügbar. Bitte erneut versuchen.';
+      button.disabled=false;button.textContent='◎';
+    },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+  });
+}
+
 function setupControls(){
   setupSheetTouchGuards();
+  setupNearbyStations();
   offlineState();
   window.addEventListener('offline',()=>offlineState(false));
   window.addEventListener('online',()=>offlineState(true));
