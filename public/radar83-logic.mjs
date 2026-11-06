@@ -2,6 +2,31 @@
 export const MAPLIBRE_VERSION='4.7.1';
 export const VECTOR_STYLE='https://tiles.openfreemap.org/styles/dark';
 export const TERRAIN_TILES='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+
+// Display the selected feed identity, never the generic reference-model name.
+function usableVehicleText(value){
+ const text=value==null?'':String(value).trim();
+ return text&&!/^(?:[-–—]+|n\/?a|null|undefined|unbekannt|nicht verfügbar|fahrtziel unbekannt)$/i.test(text)?text:'';
+}
+export function selectedVehicleLabel(vehicle){
+ const name=usableVehicleText(vehicle?.name);
+ if(vehicle?.kind==='bus')return name&&name!=='Linie unbekannt'?'Bus · Linie '+name:'Bus · Linie unbekannt';
+ if(vehicle?.kind==='train')return name&&name!=='Zugnummer unbekannt'?'Zug · '+name:'Zug · Nummer unbekannt';
+ return 'Fahrzeug';
+}
+export function selectedVehicleMeta(vehicle){
+ const destination=usableVehicleText(vehicle?.headsign);
+ const id=usableVehicleText(vehicle?.vehicleId);
+ const trip=usableVehicleText(vehicle?.tripId);
+ const source=usableVehicleText(vehicle?.source);
+ const parts=[];
+ if(destination)parts.push('Ziel: '+destination);
+ if(id)parts.push('ID: '+id);
+ if(trip)parts.push('Fahrt: '+trip);
+ if(source)parts.push('Feed: '+source.toUpperCase());
+ return parts.join(' · ');
+}
+
 export function enabled3D(search=''){
  try{return new URLSearchParams(search).get('radar3d')!=='off'}catch{return true}
 }
