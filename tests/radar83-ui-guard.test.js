@@ -45,8 +45,8 @@ test('the 3D layer only asks for a new frame when something moved', () => {
   const tryAt = block.indexOf('try{');
   const to = block.indexOf('this.renderer.render(this.scene,this.camera)');
   assert.ok(tryAt > 0 && to > tryAt, 'render() muss zeichnen');
-  assert.ok(!block.slice(tryAt, to).includes('return;'),
-    'nach der Pufferpruefung darf nicht zurueckgekehrt werden, sonst fehlt die Szene');
+  assert.ok(!block.slice(tryAt, to).replace('if(document.hidden)return;','').includes('return;'),
+    'nur im Hintergrund darf der Layer das Zeichnen auslassen');
   // Ungueltige Werte duerfen die Modellrotation nicht zerstoeren.
   assert.match(src, /Number\.isFinite\(lat\)\?lat:origin\.lat/);
 });
@@ -69,4 +69,25 @@ test('a lost WebGL context ends the 3D view at once', () => {
   assert.match(src, /event\.preventDefault\(\)/, 'ohne preventDefault gibt es keine Wiederherstellung');
   assert.match(src, /this\.contextLostCancel\?\.\(\)/, 'das Warten muss sofort enden');
   assert.match(src, /removeEventListener\('webglcontextlost'/, 'der Listener muss wieder entfernt werden');
+});
+
+test('3D stays lazy and is not preloaded at app startup',()=>{
+  const src=get('radar83-map.mjs');
+  assert.match(src,/loadMapLibre\(\),loadThree\(\)/,'libraries are requested by open()');
+  assert.doesNotMatch(get('radar71-camera.mjs'),/preload3DLibraries\(/);
+});
+
+test('3D failure restores the 2D focus and announces the fallback',()=>{
+  const src=get('radar71-camera.mjs');
+  assert.match(src,/onFailure:error=>/);
+  assert.match(src,/emergencyFallback\(\)/);
+  assert.match(src,/3D nicht verfügbar · zurück zur 2D-Karte/);
+});
+
+
+test('a failed downloaded 3D model returns to the stable 2D camera',()=>{
+  const src=get('radar83-map.mjs');
+  assert.match(src,/if\(info\.kind==='error'\)/);
+  assert.match(src,/3D-Fahrzeugmodell konnte nicht geladen werden/);
+  assert.match(src,/this\.close\(\{sync:false\}\)/);
 });

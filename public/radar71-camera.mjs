@@ -10,7 +10,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
  let bridge=null,map=null,initialized=false,token=0,timer=0,rotationFrame=0,active=false;
- let hud=null,previousBearing=null,visibleKey=null,animatingTurn=false,model3d=null,cinema3d=null,emergencyFallback=null;
+ let hud=null,previousBearing=null,visibleKey=null,animatingTurn=false,model3d=null,cinema3d=null,emergencyFallback=null,fallbackStarted=false,noticeTimer=0;
  const mapVisible=()=>!$('sr50MapTab')?.classList.contains('sr50-map-inactive') && !document.hidden && location.hash!=='#home' && location.hash!=='#journey' && location.hash!=='#more';
  function setupHud(){
   if(hud)return;
@@ -45,7 +45,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
  }
  function cancel({restore=false}={}){
   const interrupted=active;
-  token++;clearTimeout(timer);cancelAnimationFrame(rotationFrame);active=false;animatingTurn=false;
+  token++;clearTimeout(timer);clearTimeout(noticeTimer);cancelAnimationFrame(rotationFrame);active=false;animatingTurn=false;
   if(interrupted)try{map?.stop?.()}catch{}
   document.body.classList.remove('sr71-focusing','sr71-focused');
   hud?.classList.remove('sr71-is-running','sr71-is-done');
@@ -64,7 +64,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
    cancel();document.body.classList.remove('sr71-focusing');return;
   }
   const seq=++token;clearTimeout(timer);cancelAnimationFrame(rotationFrame);
-  active=true;visibleKey=key;document.body.classList.add('sr71-focusing');
+  active=true;visibleKey=key;fallbackStarted=false;document.body.classList.add('sr71-focusing');
   document.body.classList.remove('sr71-focused');
   setupHud();
   if(hud){hud.classList.remove('sr71-is-done');hud.classList.add('sr71-is-running');}
@@ -81,7 +81,8 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
   // The camera move is short and starts on the tap. A long flight felt sluggish.
   const duration=cinematicDuration(distanceKm,focusDuration(motion.matches,map.getZoom(),toZoom,distanceKm)*0.62);
   const classic=()=>{
-   if(seq!==token)return;
+   if(seq!==token||fallbackStarted)return;
+   fallbackStarted=true;
    try{
     map.stop();
     if(motion.matches)map.setView([pos.lat,pos.lng],toZoom,{animate:false});
@@ -128,7 +129,13 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
     window.SuedtirolRadar42?.setVehicleSnap?.('peek');
    },
    onManual:()=>{if(active)reveal(token)},
-   onFailure:()=>{if(active&&emergencyFallback){clearTimeout(timer);emergencyFallback()}}
+   onFailure:error=>{
+    if(emergencyFallback&&!fallbackStarted){
+     clearTimeout(timer);emergencyFallback();
+     const notice=document.createElement('div');notice.className='sr83-fallback-notice';notice.setAttribute('role','status');notice.textContent='3D nicht verfügbar · zurück zur 2D-Karte';
+     document.getElementById('map')?.append(notice);clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>notice.remove(),2600);
+    }
+   }
   });
   window.SuedtirolRadar71={enabled:cinema3d.enabled,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
   setupHud();

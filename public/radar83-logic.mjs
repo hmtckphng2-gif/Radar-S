@@ -3,18 +3,18 @@ import {formatStationName,sourceLabel} from './radar92-details.mjs?v=9.9.5&rev=d
 export const MAPLIBRE_VERSION='4.7.1';
 export const VECTOR_STYLE='https://tiles.openfreemap.org/styles/dark';
 export const TERRAIN_TILES='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
-// Cinematic 3D is enabled by default; ?radar3d=off remains the safe opt-out.
-export const FEATURE_FLAGS=Object.freeze({cinematic3D:true});
+// Keep cinematic 3D disabled until the iPhone/WebGL reliability work is proven.
+export const FEATURE_FLAGS=Object.freeze({cinematic3D:false});
 
 // Display the selected feed identity, never the generic reference-model name.
 function usableVehicleText(value){
  const text=value==null?'':String(value).trim();
- return text&&!/^(?:[-ââ]+|n\/?a|null|undefined|unbekannt|nicht verfÃ¼gbar|fahrtziel unbekannt)$/i.test(text)?text:'';
+ return text&&!/^(?:[-–—]+|n\/?a|null|undefined|unbekannt|nicht verfügbar|fahrtziel unbekannt)$/i.test(text)?text:'';
 }
 export function selectedVehicleLabel(vehicle){
  const name=usableVehicleText(vehicle?.name);
- if(vehicle?.kind==='bus')return name&&name!=='Linie unbekannt'?'Bus Â· Linie '+name:'Bus Â· Linie unbekannt';
- if(vehicle?.kind==='train')return name&&name!=='Zugnummer unbekannt'?'Zug Â· '+name:'Zug Â· Nummer unbekannt';
+ if(vehicle?.kind==='bus')return name&&name!=='Linie unbekannt'?'Bus · Linie '+name:'Bus · Linie unbekannt';
+ if(vehicle?.kind==='train')return name&&name!=='Zugnummer unbekannt'?'Zug · '+name:'Zug · Nummer unbekannt';
  return 'Fahrzeug';
 }
 export function selectedVehicleMeta(vehicle){
@@ -25,7 +25,7 @@ export function selectedVehicleMeta(vehicle){
  if(destination)parts.push('Ziel: '+formatStationName(destination));
  if(id)parts.push('Fahrzeug: '+id);
  if(source)parts.push('Datenquelle: '+sourceLabel(source));
- return parts.join(' Â· ');
+ return parts.join(' · ');
 }
 
 export function enabled3D(search=''){
@@ -38,10 +38,9 @@ export function target3DCamera(point,zoom,heading=null,duration=4300){
  return {
   center:[lng,lat],
   zoom:Math.max(18.6,Math.min(20.4,Number(zoom)||19.0)),
-  pitch:48,
-   // Finish in a steeper rear-quarter view, without a near half-turn.
-   bearing:Number.isFinite(heading)?((heading+38)%360+360)%360:38,
-  duration:Math.max(0,Math.min(8000,Number(duration)||0))
+  pitch:38,
+  bearing:Number.isFinite(heading)?(heading+58)%360:58,
+  duration:Math.max(0,Math.min(5000,Number(duration)||0))
  };
 }
 export function readProjectionMatrix(input){
@@ -56,13 +55,13 @@ export function start3DCamera(point, heading=null, finalZoom=17){
  if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -85||lat > 85)return null;
  const finalBearing=Number.isFinite(heading)?((heading%360)+360)%360:0;
  const direction=finalBearing*Math.PI/180;
- const meters=450,latOffset=meters/111320;
+ const meters=680,latOffset=meters/111320;
  const lngOffset=latOffset/Math.max(.2,Math.cos(lat*Math.PI/180));
  return {
   center:[lng-Math.sin(direction)*lngOffset,lat-Math.cos(direction)*latOffset],
-   zoom:Math.max(13.2,Math.min(16.8,Number(finalZoom)-2.2)),
-   pitch:68,
-   bearing:(finalBearing+112)%360
+  zoom:Math.max(12,Math.min(16,Number(finalZoom)-3.2)),
+  pitch:60,
+  bearing:(finalBearing+232)%360
  };
 }
 // DEM tiles consume substantial GPU memory on mobile Safari. The real pitched
@@ -86,14 +85,21 @@ export function followDecision({touched=false,center=null,point=null,thresholdMe
   if(!Number.isFinite(meters)||meters<thresholdMeters)return null;
   return {center:[lng,lat],meters:Math.round(meters)};
 }
-// The 3D cinematic is a camera move, not a page transition. It has to feel
-// A deliberate cinematic approach: begin well behind the vehicle and ease
-// into a rear-follow composition. Scene/model loading continues in parallel.
+// Preserve the original Main camera pacing: short, calm and predictable.
 export function cinematicDuration(distanceKm=0,base=4300){
   const d=Number(distanceKm);
   const extra=Number.isFinite(d)&&d>2?400:0;
-  const duration=Math.max(6800,Math.min(7600,Number(base)||7100));
-  return Math.min(8000,Math.round(duration+extra));
+  const duration=Math.max(3800,Math.min(4600,Number(base)||4300));
+  return Math.min(5000,Math.round(duration+extra));
+}
+
+// Feed timestamps are seconds since epoch. Never advance a stale position.
+export function positionFreshness(vehicle,now=Date.now(),maxAgeSeconds=180){
+ const timestamp=Number(vehicle?.timestamp);
+ const ageSeconds=Number.isFinite(timestamp)&&timestamp>1e9?Math.max(0,Math.round(now/1000-timestamp)):null;
+ const fresh=!vehicle?.stale&&ageSeconds!==null&&ageSeconds<=maxAgeSeconds&&now/1000-timestamp>=-30;
+ const estimated=vehicle?.estimated===true||vehicle?.positionEstimated===true||vehicle?.positionType==='estimated';
+ return {fresh,ageSeconds,estimated,label:ageSeconds===null?'Zeit unbekannt':ageSeconds<60?ageSeconds+' s alt':Math.round(ageSeconds/60)+' min alt'};
 }
 // If the system asks for less motion, the cinematic camera must not fly.
 // It jumps straight to the vehicle instead.

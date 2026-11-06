@@ -2,33 +2,33 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {VEHICLE_SPECS,vehicleKind,validHeading,modelYawRadians,makeVehicleMesh} from '../public/radar83-model.mjs';
-import {enabled3D,FEATURE_FLAGS,target3DCamera,start3DCamera,cinematicDuration,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta} from '../public/radar83-logic.mjs';
+import {enabled3D,FEATURE_FLAGS,target3DCamera,start3DCamera,cinematicDuration,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta,positionFreshness} from '../public/radar83-logic.mjs';
 import {build3DBuildings,enable3DTerrain,make3DVehicleLayer} from '../public/radar83-map.mjs';
 
 const NOW=1760900000000;
-test('cinematic 3D is enabled by default and supports an explicit URL opt-out',()=>{
- assert.equal(FEATURE_FLAGS.cinematic3D,true);
+test('cinematic 3D stays disabled behind its feature flag until stability is proven',()=>{
+ assert.equal(FEATURE_FLAGS.cinematic3D,false);
  assert.equal(enabled3D('?radar3d=off'),false);
- assert.equal(enabled3D('?radar3d=on'),true);
- assert.equal(enabled3D('?language=de'),true);
- assert.equal(enabled3D(''),true);
+ assert.equal(enabled3D('?radar3d=on'),false);
+ assert.equal(enabled3D('?language=de'),false);
+ assert.equal(enabled3D(''),false);
  assert.equal(MAPLIBRE_VERSION,'4.7.1');
  assert.ok(VECTOR_STYLE.includes('/styles/dark'));
 });
 test('cinematic approaches from behind over a longer, smooth flight',()=>{
  const start=start3DCamera({lat:46.5,lng:11.35},90,19);
- assert.equal(start.pitch,68);
- assert.equal(start.bearing,202);
+ assert.equal(start.pitch,60);
+ assert.equal(start.bearing,322);
  assert.ok(start.zoom>15, 'closer starting zoom than the old distant shot');
  assert.ok(start.center[0]<11.35);
- assert.ok(cinematicDuration(0,4300)>=6800);
- assert.ok(cinematicDuration(0,4300)<=8000);
+ assert.ok(cinematicDuration(0,4300)>=3800);
+ assert.ok(cinematicDuration(0,4300)<=4600);
 });
 test('camera rotates the MAP and tilts terrain, no arbitrary model spin',()=>{
  const camera=target3DCamera({lat:46.498,lng:11.353},17.4,90,4500);
  assert.deepEqual(camera.center,[11.353,46.498]);
- assert.equal(camera.pitch,48);
- assert.equal(camera.bearing,128);
+ assert.equal(camera.pitch,38);
+ assert.equal(camera.bearing,148);
  assert.equal(camera.duration,4500);
  assert.equal(target3DCamera({lat:92,lng:11},17,90,3000),null);
  assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,20.4);
@@ -110,11 +110,11 @@ test('FLIRT-inspired train has detailed multipart 3D mesh and bus is separate',(
 });
 
 test('3D overlay identifies the selected vehicle, destination and vehicle ID',()=>{
- assert.equal(selectedVehicleLabel({kind:'train',name:'REG 16685'}),'Zug Â· REG 16685');
- assert.equal(selectedVehicleLabel({kind:'bus',name:'5'}),'Bus Â· Linie 5');
- assert.equal(selectedVehicleLabel({kind:'train',name:'Zugnummer unbekannt'}),'Zug Â· Nummer unbekannt');
- assert.equal(selectedVehicleMeta({headsign:'MERAN',vehicleId:'STA-17',tripId:'trip-16685',source:'sta_direct'}),'Ziel: Meran Â· Fahrzeug: STA-17 Â· Datenquelle: STA direkt');
- assert.equal(selectedVehicleMeta({headsign:'Fahrtziel unbekannt',vehicleId:'â'}),'');
+ assert.equal(selectedVehicleLabel({kind:'train',name:'REG 16685'}),'Zug · REG 16685');
+ assert.equal(selectedVehicleLabel({kind:'bus',name:'5'}),'Bus · Linie 5');
+ assert.equal(selectedVehicleLabel({kind:'train',name:'Zugnummer unbekannt'}),'Zug · Nummer unbekannt');
+ assert.equal(selectedVehicleMeta({headsign:'MERAN',vehicleId:'STA-17',tripId:'trip-16685',source:'sta_direct'}),'Ziel: Meran · Fahrzeug: STA-17 · Datenquelle: STA direkt');
+ assert.equal(selectedVehicleMeta({headsign:'Fahrtziel unbekannt',vehicleId:'—'}),'');
  assert.equal(selectedVehicleMeta({tripId:'trip-2',source:'trentino'}),'Datenquelle: Trentino Trasporti');
 });
 
@@ -125,7 +125,38 @@ test('3D scene updates and delayed model callbacks are scoped to the active vehi
  assert.match(src,/this\.layer!==layer\|\|this\.map!==map/);
  assert.match(src,/vehicle\?\.key!==this\.vehicleKey/);
  assert.match(src,/this\.vehicleKey=null/);
- assert.doesNotMatch(src,/3D Â· FLIRT-Stil/);
+ assert.doesNotMatch(src,/3D · FLIRT-Stil/);
  assert.match(src,/modelCreditText\(info\.credit,info\.kind==='real',vehicle\?\.kind\)/);
- assert.match(src,/this\.vehicleMeta\.textContent=selectedVehicleMeta\(vehicle\)/);
+ assert.match(src,/this\.vehicleMeta\.textContent=\(selectedVehicleMeta\(vehicle\)\|\|''\)/);
+});
+
+
+test('stale positions freeze while feed and explicitly estimated positions stay distinguishable',()=>{
+ const now=1760900000000;
+ const fresh=positionFreshness({timestamp:now/1000-25},now);
+ assert.equal(fresh.fresh,true);assert.equal(fresh.estimated,false);assert.equal(fresh.label,'25 s alt');
+ const estimated=positionFreshness({timestamp:now/1000-10,positionType:'estimated'},now);
+ assert.equal(estimated.fresh,true);assert.equal(estimated.estimated,true);
+ const stale=positionFreshness({timestamp:now/1000-181},now);
+ assert.equal(stale.fresh,false);assert.equal(stale.label,'3 min alt');
+ assert.equal(positionFreshness({timestamp:now/1000,stale:true},now).fresh,false);
+ assert.equal(positionFreshness({},now).fresh,false);
+});
+
+test('the 3D scene has a bounded loading fallback, iPhone pixel ratio cap and cleanup hooks',()=>{
+ const src=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
+ assert.match(src,/},8000\)/,'8-second watchdog');
+ assert.match(src,/pixelRatio:Math\.min\(2,/,'DPR is capped at 2');
+ assert.match(src,/visibilitychange/,'background tab pauses the map');
+ assert.match(src,/removeEventListener\('visibilitychange'/,'visibility listener is removed');
+ assert.match(src,/oldMap\.remove\(\)/,'closing disposes MapLibre and its WebGL resources');
+ assert.match(src,/sr83-loading-state/,'a visible loading state exists');
+});
+
+test('3D does not extrapolate or invent coordinates when the feed position ages out',()=>{
+ const src=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
+ assert.match(src,/if\(quality\.fresh\)\{this\.lastPoint=/);
+ assert.match(src,/Position veraltet/);
+ assert.match(src,/if\(!quality\.fresh\|\|this\.touched/);
+ assert.doesNotMatch(src,/pointAtDistance|interpolat/i);
 });

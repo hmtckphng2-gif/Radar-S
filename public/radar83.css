@@ -89,3 +89,16 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
 /* 9.9.1 Block 5: identify the actual selected feed vehicle in the 3D view. */
 #map .sr83-vehicle-meta{position:absolute;z-index:10;left:15px;top:calc(max(136px,env(safe-area-inset-top,0px)) + 54px);max-width:min(300px,calc(100% - 30px));padding:8px 11px;border:1px solid #34495dba;border-radius:10px;background:#101c29e8;color:#cbd7e2;font:550 11px/1.4 Inter,-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 5px 16px #0007;overflow-wrap:anywhere;pointer-events:none}
 @media(max-width:390px){#map .sr83-vehicle-meta{top:calc(max(130px,env(safe-area-inset-top,0px)) + 52px);font-size:10px;max-width:calc(100% - 30px)}}
+
+/* Stable, compact controls and a real loading state. */
+#map .sr83-toolbar{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:nowrap}
+#map .sr83-control,#map .sr83-replay,#map .sr83-back{min-width:44px;min-height:44px;padding:9px 10px;touch-action:manipulation;white-space:nowrap}
+#map .sr83-loading-state{position:absolute;z-index:8;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:linear-gradient(180deg,#0b1119e8,#111923d9);color:#d8e0e8;font:600 13px/1.4 Inter,-apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:.02em}
+#map .sr83-spinner{width:25px;height:25px;border:2px solid #71808d66;border-top-color:#c4cbd2;border-radius:50%;animation:sr83-spin .8s linear infinite}
+@keyframes sr83-spin{to{transform:rotate(360deg)}}
+#map .sr83-viewport.sr83-ready .sr83-loading-state{display:none}
+#map .sr83-viewport .sr83-info-card,#map .sr83-viewport .sr83-sources{display:none}
+@media(max-width:430px){#map .sr83-toolbar{left:8px;right:8px;top:max(118px,env(safe-area-inset-top,0px));gap:4px}#map .sr83-control,#map .sr83-replay,#map .sr83-back{min-width:44px;min-height:44px;padding:8px 9px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){#map .sr83-spinner{animation:none}}
+
+#map .sr83-fallback-notice{position:absolute;z-index:1200;left:50%;bottom:calc(30dvh + 18px);transform:translateX(-50%);max-width:calc(100% - 28px);padding:9px 13px;border:1px solid #526170;border-radius:11px;background:#111a24f2;color:#e5ebf0;font:600 12px/1.35 Inter,-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 6px 20px #0008;text-align:center;pointer-events:none}

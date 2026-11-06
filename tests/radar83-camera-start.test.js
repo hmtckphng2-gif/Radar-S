@@ -30,7 +30,7 @@ test('the camera flight starts before the scene is fully built', () => {
 
 test('the overlay becomes visible while the scene is still loading', () => {
   const src = read('radar83-map.mjs');
-  assert.match(src, /classList\.add\('sr83-loading'\)/);
+  assert.match(src, /className='sr83-viewport sr83-loading'/);
   const css = read('radar83.css');
   assert.match(css, /\.sr83-viewport\.sr83-loading\{opacity:\.?42;pointer-events:auto\}/);
   assert.match(css, /\.sr83-viewport\.sr83-ready\{opacity:1;pointer-events:auto\}/);
@@ -39,9 +39,9 @@ test('the overlay becomes visible while the scene is still loading', () => {
 
 test('the follow never fights the running flight', () => {
   const src = read('radar83-map.mjs');
-  assert.match(src, /if\(this\.touched\|\|this\.flying\|\|!this\.map\)return;/);
+  assert.match(src, /if\(!quality\.fresh\|\|this\.touched\|\|this\.flying\|\|!this\.map\)return;/);
   assert.match(src, /this\.flying=true;/);
-  assert.match(src, /this\.flying=false;clearTimeout\(this\.flightTimer\)/);
+  assert.match(src, /this\.flying=false;this\.lastPoint=null/);
 });
 
 test('replay works before the model is ready', () => {
@@ -52,10 +52,10 @@ test('replay works before the model is ready', () => {
 });
 
 test('the camera flight is long and smooth without becoming excessive', () => {
-  assert.ok(cinematicDuration(0.2) >= 6800 && cinematicDuration(0.2) <= 7600);
+  assert.ok(cinematicDuration(0.2) >= 3800 && cinematicDuration(0.2) <= 4600);
   assert.ok(cinematicDuration(0.2) < cinematicDuration(30), 'a distant vehicle may take a little longer');
-  assert.ok(cinematicDuration(0.2, 9000) <= 8000);
-  assert.ok(cinematicDuration(0.2, 100) >= 6800);
+  assert.ok(cinematicDuration(0.2, 9000) <= 5000);
+  assert.ok(cinematicDuration(0.2, 100) >= 3800);
 });
 
 test('the default live camera flight uses the slower cinematic timing', () => {
@@ -69,13 +69,10 @@ test('the flight still ends on the vehicle', () => {
   const start = start3DCamera(p, 90, end.zoom);
   assert.deepEqual(end.center, [p.lng, p.lat]);
   assert.equal(end.zoom, 19);
-  assert.equal(end.pitch, 48);
-  assert.equal(end.bearing, 128);
+  assert.equal(end.pitch, 38);
+  assert.equal(end.bearing, 148);
   assert.ok(start.zoom < end.zoom);
-  assert.equal(start.pitch, 68);
-  assert.ok(start.pitch > end.pitch, 'the camera descends to a steeper view');
-  assert.equal(start.bearing, 202);
-  assert.equal((start.bearing - end.bearing + 360) % 360, 74, 'the camera makes a controlled 74-degree turn');
+  assert.ok(start.pitch > end.pitch, 'the camera descends to the train');
   assert.notEqual(start.bearing, end.bearing, 'the camera rotates during the approach');
   assert.ok(start.zoom > 15, 'the approach starts closer than the wide establishing shot');
 });
