@@ -7,7 +7,7 @@ const [html,css,sw]=await Promise.all([
  readFile(new URL("../public/sw.js",import.meta.url),"utf8")
 ]);
 test("Scroll-Craft stylesheet referenced by the app exists",()=>{
- assert.match(html,/radar10-scrollcraft\.css\?v=9\.9\.0/);
+ assert.match(html,/radar10-scrollcraft\.css\?v=9\.9\.5/);
  assert.match(css,/overflow-y:auto/);
 });
 test("sheet scroll is native, momentum-enabled, and isolated",()=>{
@@ -21,6 +21,6 @@ test("mobile targets and safe-area padding remain accessible",()=>{
  assert.match(css,/env\(safe-area-inset-bottom\)/);
 });
 test("new shell cache is activated and API bypass remains unchanged",()=>{
- assert.match(sw,/radar-shell-v9\.9\.0-scrollcraft/);
+ assert.match(sw,/radar-shell-v9\.9\.5-scrollcraft/);
  assert.ok(sw.indexOf("if(isApi(url))return;") < sw.indexOf("if(isAsset(url))"));
 });

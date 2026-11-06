@@ -8,8 +8,8 @@ const [html, css] = await Promise.all([
 ]);
 
 test('final visual layer loads last with the current cache key', () => {
-  assert.match(html, /radar10-polish\.css\?v=9\.9\.0/);
-  assert.ok(html.indexOf('radar10-polish.css?v=9.9.0') > html.indexOf('radar10-shell.css?v=9.9.0'));
+  assert.match(html, /radar10-polish\.css\?v=9\.9\.5/);
+  assert.ok(html.indexOf('radar10-polish.css?v=9.9.5') > html.indexOf('radar10-shell.css?v=9.9.5'));
   assert.doesNotMatch(html, /radar10-menu\.css/);
 });
 
