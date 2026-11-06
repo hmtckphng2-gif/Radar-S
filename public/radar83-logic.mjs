@@ -4,7 +4,7 @@ export const MAPLIBRE_VERSION='4.7.1';
 export const VECTOR_STYLE='https://tiles.openfreemap.org/styles/dark';
 export const TERRAIN_TILES='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 // Keep cinematic 3D disabled until the iPhone/WebGL reliability work is proven.
-export const FEATURE_FLAGS=Object.freeze({cinematic3D:false});
+export const FEATURE_FLAGS=Object.freeze({cinematic3D:true});
 
 // Display the selected feed identity, never the generic reference-model name.
 function usableVehicleText(value){

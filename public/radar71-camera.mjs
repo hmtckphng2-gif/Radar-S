@@ -1,16 +1,16 @@
-import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5';
+import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.6&launch=cinematic-enabled';
 /* Radar 7.1 – Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate
  * map panes with CSS and corrupt touch coordinates or marker hit testing.
  */
 import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from './radar71-camera-logic.mjs?v=9.9.5';
-import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-default';
+import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5';
 (()=>{'use strict';
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
  let bridge=null,map=null,initialized=false,token=0,timer=0,rotationFrame=0,active=false;
- let hud=null,previousBearing=null,visibleKey=null,animatingTurn=false,model3d=null,cinema3d=null,emergencyFallback=null,fallbackStarted=false,noticeTimer=0;
+ let hud=null,previousBearing=null,visibleKey=null,animatingTurn=false,model3d=null,cinema3d=null,emergencyFallback=null;
  const mapVisible=()=>!$('sr50MapTab')?.classList.contains('sr50-map-inactive') && !document.hidden && location.hash!=='#home' && location.hash!=='#journey' && location.hash!=='#more';
  function setupHud(){
   if(hud)return;
@@ -45,8 +45,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
  }
  function cancel({restore=false}={}){
   const interrupted=active;
-  token++;clearTimeout(timer);clearTimeout(noticeTimer);cancelAnimationFrame(rotationFrame);active=false;animatingTurn=false;
-  $('sr71Open3D')?.remove();
+  token++;clearTimeout(timer);cancelAnimationFrame(rotationFrame);active=false;animatingTurn=false;
   if(interrupted)try{map?.stop?.()}catch{}
   document.body.classList.remove('sr71-focusing','sr71-focused');
   hud?.classList.remove('sr71-is-running','sr71-is-done');
@@ -58,7 +57,6 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
   model3d?.hide();document.body.classList.remove('sr82-3d-active');
  }
  function onSelection(){
-  $('sr71Open3D')?.remove();
   const key=bridge?.state?.selectedKey,vehicle=bridge?.state?.vehicles?.get(key);
   const marker=bridge?.state?.markers?.get(key)?.marker;
   const pos=validFocusPoint(vehicle,marker?.getLatLng?.());
@@ -66,7 +64,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
    cancel();document.body.classList.remove('sr71-focusing');return;
   }
   const seq=++token;clearTimeout(timer);cancelAnimationFrame(rotationFrame);
-  active=true;visibleKey=key;fallbackStarted=false;document.body.classList.add('sr71-focusing');
+  active=true;visibleKey=key;document.body.classList.add('sr71-focusing');
   document.body.classList.remove('sr71-focused');
   setupHud();
   if(hud){hud.classList.remove('sr71-is-done');hud.classList.add('sr71-is-running');}
@@ -82,21 +80,8 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
   const distanceKm=focusDistanceKm(map.getCenter(),pos);
   // The camera move is short and starts on the tap. A long flight felt sluggish.
   const duration=cinematicDuration(distanceKm,focusDuration(motion.matches,map.getZoom(),toZoom,distanceKm)*0.62);
-  const launch3D=()=>{
-   if(seq!==token||!cinema3d?.enabled)return;
-   clearTimeout(timer);cancelAnimationFrame(rotationFrame);map.stop();
-   active=true;fallbackStarted=false;
-   cinema3d.open(vehicle,pos,heading,duration,cinematicZoom).then(ok=>{
-    if(seq!==token){if(ok)cinema3d?.close({sync:false});return}
-    if(!ok)return;
-    model3d?.hide();document.body.classList.remove('sr82-3d-active');
-    hud?.classList.remove('sr71-is-running');
-    timer=setTimeout(()=>{if(seq===token)reveal(seq)},duration+95);
-   }).catch(error=>{console.info('Radar 8.3 initialization fallback',error);if(!fallbackStarted)classic()});
-  };
   const classic=()=>{
-   if(seq!==token||fallbackStarted)return;
-   fallbackStarted=true;
+   if(seq!==token)return;
    try{
     map.stop();
     if(motion.matches)map.setView([pos.lat,pos.lng],toZoom,{animate:false});
@@ -113,15 +98,16 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
    },duration+95);
   };
   emergencyFallback=classic;
-  const details=$('details');
-  if(details&&cinema3d?.enabled){
-   const launch=document.createElement('button');launch.id='sr71Open3D';launch.type='button';launch.className='sr71-3d-launch';launch.textContent='3D ansehen';
-   launch.setAttribute('aria-label','3D-Ansicht für dieses Fahrzeug öffnen');
-   launch.addEventListener('click',launch3D);details.append(launch);
-  }
-  // Keep the normal 2D focus as the default. Three.js and MapLibre are only
-  // requested after the user explicitly taps the 3D button in the sheet.
-  classic();
+  if(cinema3d?.enabled){
+   cinema3d.open(vehicle,pos,heading,duration,cinematicZoom).then(ok=>{
+    if(seq!==token){if(ok)cinema3d?.close({sync:false});return}
+    if(!ok){classic();return}
+    model3d?.hide();document.body.classList.remove('sr82-3d-active');
+    hud?.classList.remove('sr71-is-running');
+    // The 3D camera runs in MapLibre; do NOT also fly or rotate the 2D Leaflet map.
+    timer=setTimeout(()=>{if(seq===token)reveal(seq)},duration+95);
+   }).catch(error=>{console.info('Radar 8.3 initialization fallback',error);classic()});
+  }else classic();
  }
  function manualInterrupt(){
   if(!active)return;
@@ -142,17 +128,11 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
     window.SuedtirolRadar42?.setVehicleSnap?.('peek');
    },
    onManual:()=>{if(active)reveal(token)},
-   onFailure:error=>{
-    if(emergencyFallback){
-     clearTimeout(timer);if(!fallbackStarted)emergencyFallback();
-     const notice=document.createElement('div');notice.className='sr83-fallback-notice';notice.setAttribute('role','status');notice.textContent='3D nicht verfügbar · zurück zur 2D-Karte';
-     document.getElementById('map')?.append(notice);clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>notice.remove(),2600);
-    }
-   }
+   onFailure:()=>{if(active&&emergencyFallback){clearTimeout(timer);emergencyFallback()}}
   });
-  window.SuedtirolRadar71={enabled:cinema3d.enabled,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
+  window.SuedtirolRadar71={enabled:true,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
   setupHud();
-  // Load MapLibre and Three.js only after the explicit 3D button tap.
+  // Load MapLibre and Three.js only when a vehicle is selected; don't slow down the main live map.
   document.addEventListener('sr37:selection',onSelection);
   document.addEventListener('sr37:feeds',()=>{
    if(!visibleKey)return;
