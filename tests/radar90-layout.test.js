@@ -48,10 +48,10 @@ test('3D info is inside the detail sheet and model credit is under Quellen',()=>
   assert.doesNotMatch(map3d,/overlay\.append\(credit\)/);
 });
 
-test('cinematic 3D remains disabled by default until the feature is stable',()=>{
-  assert.equal(enabled3D(''),false);
+test('cinematic 3D is enabled by default and can be explicitly disabled',()=>{
+  assert.equal(enabled3D(''),true);
   assert.equal(enabled3D('?radar3d=off'),false);
-  assert.equal(enabled3D('?radar3d=on'),false);
+  assert.equal(enabled3D('?radar3d=on'),true);
 });
 
 test('empty timetable placeholder is hidden after a confirmed empty result',()=>{
