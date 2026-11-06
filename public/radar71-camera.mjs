@@ -58,6 +58,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
   model3d?.hide();document.body.classList.remove('sr82-3d-active');
  }
  function onSelection(){
+  $('sr71Open3D')?.remove();
   const key=bridge?.state?.selectedKey,vehicle=bridge?.state?.vehicles?.get(key);
   const marker=bridge?.state?.markers?.get(key)?.marker;
   const pos=validFocusPoint(vehicle,marker?.getLatLng?.());

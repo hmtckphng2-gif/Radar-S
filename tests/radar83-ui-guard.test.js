@@ -100,4 +100,5 @@ test('the real 3D model is requested only after the explicit 3D button tap',()=>
   assert.match(src,/cinema3d\.open\(vehicle,pos,heading,duration,cinematicZoom\)/);
   assert.match(src,/Keep the normal 2D focus as the default/);
   assert.match(src,/classic\(\);/);
+  assert.ok(get('radar83.css').includes('#details .sr71-3d-launch'),'the 3D button is styled in the sheet, not the map');
 });
