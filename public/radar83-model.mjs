@@ -203,7 +203,7 @@ export function makeVehicleMesh(T,kind){
   const bus=kind==='bus',root=new T.Group();
   const mat=(hex,metalness=.15,roughness=.67)=>new T.MeshStandardMaterial({color:hex,metalness,roughness});
   const white=mat(0xf2f5f7,.24,.5), blue=mat(0x1c4f86,.3,.5),red=mat(0xc0392b,.18,.5);
-  const orange=mat(0xd8862c,.2,.55),glass=mat(0x16283a,.2,.28),black=mat(0x1b2129),rubber=mat(0x15191f);
+  const glass=mat(0x16283a,.2,.28),black=mat(0x1b2129),rubber=mat(0x15191f);
   const silver=mat(0x9aa9b4,.45,.38),light=mat(0xfff6e0,.1,.4),door=mat(0x33404e,.16,.55);
   function box(w,h,d,x,y,z,material,parent=root,rx=0){
    const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),material);
@@ -221,7 +221,7 @@ export function makeVehicleMesh(T,kind){
    /* 12 m low floor city bus, 2.55 m wide, 3.15 m high. */
    box(2.55,2.06,11.6,0,1.62,0,white);
    box(2.46,.26,11.4,0,2.74,0,white);
-   box(2.58,.40,11.5,0,1.30,0,orange);
+   box(2.58,.40,11.5,0,1.30,0,silver);
    box(2.60,.09,11.4,0,1.10,0,red);
    for(const side of [-1,1]){
     for(let z=-4.9;z<=4.9;z+=1.28)box(.06,.92,1.08,side*1.285,2.20,z,glass);
