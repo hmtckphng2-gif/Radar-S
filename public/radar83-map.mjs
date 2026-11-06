@@ -2,8 +2,8 @@
  * The original Leaflet map stays intact underneath. Only selected cinematic
  * vehicles initialize MapLibre; errors or ?radar3d=off fall back to Radar 8.2.
  */
-import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.0';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion} from './radar83-logic.mjs?v=9.9.0';
+import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.5';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -46,8 +46,12 @@ export function waitFor3DScene(map,timeoutMs=7200){
   };
   const check=()=>{
    try{
+    // The style also contains an unrelated shaded-relief raster source.
+    // areTilesLoaded() waits for every visible source, so a slow/blocked DEM
+    // tile can hide an otherwise usable vector map and prevent the 3D view.
+    // Only gate on the actual vector source used by the 3D buildings.
     if(map.isStyleLoaded?.() && map.getSource('openmaptiles') &&
-       map.isSourceLoaded?.('openmaptiles') && map.areTilesLoaded?.())finish();
+       map.isSourceLoaded?.('openmaptiles'))finish();
    }catch(e){finish(e)}
   };
   const timeout=setTimeout(()=>finish(new Error('3D vector tiles not ready')),timeoutMs);
@@ -133,7 +137,12 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
     this.map?.triggerRepaint();
     disposeObject(previous);
     onModel({kind:'real',credit:loaded.credit||null});
-   }).catch(()=>{});
+   }).catch(error=>{
+    if(this.disposed)return;
+    const message=String(error?.message||error||'Unbekannter Modellfehler').slice(0,180);
+    console.warn('Radar 8.3: echtes Fahrzeugmodell konnte nicht geladen werden',error);
+    onModel({kind:'error',error:message});
+   });
   },
   update(p,h){
    const lat=Number(p?.lat),lng=Number(p?.lng),head=Number(h);
@@ -187,11 +196,11 @@ export class Radar83Cinematic {
   this.ready=false;this.touched=false;this.active=false;this.flight=null;this.flying=false;this.flightTimer=0;
  }
  get enabled(){return enabled3D(location.search)}
- makeOverlay(){
+ makeOverlay(vehicle){
   const overlay=document.createElement('div');overlay.className='sr83-viewport';overlay.id='sr83Viewport';
   const surface=document.createElement('div');surface.className='sr83-map';overlay.append(surface);
   const toolbar=document.createElement('div');toolbar.className='sr83-toolbar';
-  const info=document.createElement('span');info.className='sr83-label';info.textContent='3D · FLIRT';
+  const info=document.createElement('span');info.className='sr83-label';info.textContent='3D · '+selectedVehicleLabel(vehicle);
   const replay=document.createElement('button');replay.className='sr83-replay';
   replay.type='button';replay.textContent='↻ Flug';
   replay.setAttribute('aria-label','3D-Kameraflug wiederholen');
@@ -200,6 +209,9 @@ export class Radar83Cinematic {
   back.setAttribute('aria-label','Zur normalen 2D-Karte zurückkehren');
   back.addEventListener('click',e=>{e.stopPropagation();this.close();this.onExit()});
   toolbar.append(info,replay,back);overlay.append(toolbar);
+  const meta=document.createElement('div');meta.className='sr83-vehicle-meta';
+  meta.textContent=selectedVehicleMeta(vehicle)||'Keine weiteren Fahrzeugdaten verfügbar';
+  overlay.append(meta);this.vehicleMeta=meta;
   const credit=document.createElement('div');credit.className='sr83-credit';
   credit.textContent='3D-Modell schematisch · Position aus dem Datenfeed · Ziehen zum Schwenken';
   overlay.append(credit);
@@ -214,7 +226,8 @@ export class Radar83Cinematic {
   const target=target3DCamera(point,zoom,heading,duration);
   const start=start3DCamera(point,heading,target?.zoom);
   if(!target||!start){this.close({sync:false});return false}
-  this.makeOverlay();
+  this.vehicleKey=vehicle?.key||null;
+  this.makeOverlay(vehicle);
   try{
    const [lib,T]=await Promise.all([loadMapLibre(),loadThree()]);
    if(seq!==this.sequence)return false;
@@ -277,16 +290,21 @@ export class Radar83Cinematic {
    // iPhone/iPad default: pitched vector buildings, no heavy remote DEM tiles.
    // Terrain is optional via ?terrain=on after successful device testing.
    if(use3DTerrain(location.search))enable3DTerrain(map);
-   this.layer=make3DVehicleLayer(T,lib,map,vehicle,point,heading,info=>{
+   const layer=make3DVehicleLayer(T,lib,map,vehicle,point,heading,info=>{
+    if(seq!==this.sequence||this.layer!==layer||this.map!==map||this.vehicleKey!==(vehicle?.key||null))return;
     this.onModel(info);
-    if(this.credit)this.credit.textContent=modelCreditText(info.credit,info.kind==='real');
-    if(this.info&&info.kind==='real')this.info.textContent='3D · '+(info.credit?.title||'Fahrzeug');
+    if(this.credit){
+     this.credit.textContent=info.kind==='error'
+      ?'Referenzmodell nicht geladen · '+info.error
+      :modelCreditText(info.credit,info.kind==='real',vehicle?.kind);
+    }
+    if(this.info)this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
    });
-   map.addLayer(this.layer);
+   this.layer=layer;
+   map.addLayer(layer);
    await waitFor3DModel(map,this.layer);
    if(seq!==this.sequence)return false;
-   const kind=vehicleKind(vehicle);
-   this.info.textContent=kind==='train'?'3D · FLIRT-Stil':'3D · Linienbus';
+   this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
    this.overlay.classList.add('sr83-ready');
    this.ready=true;
    return true;
@@ -315,8 +333,10 @@ export class Radar83Cinematic {
   this.onManual();
  }
  update(vehicle,point,heading){
-  if(!this.ready||!this.layer||!point)return;
+  if(!this.ready||!this.layer||!point||(this.vehicleKey&&vehicle?.key!==this.vehicleKey))return;
   this.layer.update(point,heading);
+  if(this.info)this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
+  if(this.vehicleMeta)this.vehicleMeta.textContent=selectedVehicleMeta(vehicle)||'Keine weiteren Fahrzeugdaten verfügbar';
   // The camera follows the vehicle while the user has not taken over. A
   // deliberate gesture always wins; the model keeps its real feed position.
   if(this.touched||this.flying||!this.map)return;
@@ -332,7 +352,7 @@ export class Radar83Cinematic {
     this.leaflet.setView([center.lat,center.lng],Math.min(18,Math.max(3,zoom)),{animate:false});
    }catch{}
   }
-  this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);
+  this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);
   if(oldMap)try{oldMap.stop();oldMap.remove()}catch(error){console.info('3D map cleanup',error)}
   this.overlay?.remove();this.overlay=null;this.surface=null;
   document.body.classList.remove('sr83-cinematic');

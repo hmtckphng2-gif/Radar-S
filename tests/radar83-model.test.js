@@ -199,10 +199,15 @@ test('a model that cannot be measured is rejected instead of being shown wrong',
 test('CC BY requires the author to be named, so a real model always shows a credit', () => {
   const without = modelCreditText(null, false);
   assert.match(without, /schematisch/, 'without a model the view stays labelled as schematic');
-  const withCredit = modelCreditText({title: 'RABe 523', author: 'hotdoghans', license: 'CC BY 4.0'}, true);
+  const withCredit = modelCreditText({title: 'RABe 523', author: 'hotdoghans', license: 'CC BY 4.0'}, true, 'train');
   assert.match(withCredit, /hotdoghans/, 'the author must be visible');
   assert.match(withCredit, /CC BY 4\.0/, 'the license must be visible');
   assert.match(withCredit, /Datenfeed/, 'the feed origin must stay visible');
+  assert.match(withCredit, /Zug-Referenzmodell/, 'the shared train asset must be identified as a reference model');
+  assert.match(withCredit, /Fahrzeugtyp nicht bestätigt/, 'a shared model must not claim the selected train type');
+  const busCredit = modelCreditText({title: 'Mercedes-Benz Citaro', author: 'author', license: 'CC BY 4.0'}, true, 'bus');
+  assert.match(busCredit, /Bus-Referenzmodell/);
+  assert.match(busCredit, /Fahrzeugtyp nicht bestätigt/);
   // A credit without author or license is not usable and must not be shown.
   assert.match(modelCreditText({title: 'RABe 523'}, true), /schematisch/);
 });

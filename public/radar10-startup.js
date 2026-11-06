@@ -3,7 +3,7 @@
  'use strict';
  var root=document.getElementById('sr10Startup');if(!root)return;
  var loading=document.getElementById('sr10Loading'),kicker=document.getElementById('sr10StartupKicker'),title=document.getElementById('sr10LoadingTitle'),steps=document.getElementById('sr10StartupSteps');
- var start=Date.now(),introMs=4200,minimumMs=4900,timeoutMs=16000,shownLoading=false,finished=false,reduced=false;
+ var start=Date.now(),introMs=1800,minimumMs=2300,timeoutMs=16000,shownLoading=false,finished=false,reduced=false;
  try{reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(_){}
  if(reduced){introMs=700;minimumMs=1000;}
  root.classList.add('is-intro');
@@ -17,6 +17,6 @@
  function tick(){if(finished)return;var elapsed=Date.now()-start;if(elapsed>=introMs)beginLoading();if(shownLoading){updateSteps();if(elapsed>=minimumMs&&ready()){close();return}if(elapsed>=timeoutMs){close();return}}}
  var interval=window.setInterval(function(){tick();if(finished)window.clearInterval(interval)},200);
  // Let the logo resolve, lift the composition, then reveal the moving train and loader.
- window.setTimeout(function(){if(!finished)root.classList.add('is-raised')},1450);
+ window.setTimeout(function(){if(!finished)root.classList.add('is-raised')},850);
  window.addEventListener('load',function(){window.setTimeout(tick,introMs)},{once:true});tick();
 })();

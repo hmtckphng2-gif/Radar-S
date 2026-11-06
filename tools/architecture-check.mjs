@@ -3,7 +3,7 @@ import {spawnSync} from 'node:child_process';
 import path from 'node:path';
 const root=process.cwd(),failures=[];
 const walk=async dir=>{let out=[];for(const e of await readdir(dir,{withFileTypes:true})){if(['node_modules','.git','.wrangler'].includes(e.name))continue;const p=path.join(dir,e.name);if(e.isDirectory())out.push(...await walk(p));else out.push(p)}return out};
-const all=await walk(root),code=all.filter(f=>/\.(m?js)$/.test(f)&&!f.endsWith('.min.js'));
+const all=await walk(root),code=all.filter(f=>/\.(m?js)$/.test(f)&&!f.endsWith('.min.js')&&!f.includes(path.sep+'mobile'+path.sep)); // Expo/React Native JSX is validated separately by mobile-config-check.mjs.
 const publicFiles=new Set(all.filter(f=>f.startsWith(path.join(root,'public')+path.sep)).map(f=>path.relative(path.join(root,'public'),f).replaceAll('\\','/')));
 for(const f of code){
  const result=spawnSync(process.execPath,['--check',f],{encoding:'utf8',timeout:18000});

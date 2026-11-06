@@ -16,9 +16,20 @@ const vehicle=(source,lat=46.5,ts=timestamp)=>({source,key:source+':102',kind:'b
 test('matching fleet requires exact allowed provider pair and vehicle kind',()=>{assert.equal(sameStaFleet(vehicle('sta'),vehicle('sta_direct')),true);assert.equal(sameStaFleet(vehicle('sta'),vehicle('trentino')),false);});
 test('recent conflicting locations are reported, not merged',()=>{const d=sourceConflicts([vehicle('sta'),vehicle('sta_direct',46.51)],now);assert.equal(d.length,1);assert.ok(d[0].differenceMeters>200);});
 test('identical STA observations are not a conflict',()=>assert.equal(sourceConflicts([vehicle('sta'),vehicle('sta_direct')],now).length,0));
+test('asynchronous STA observations over 20 seconds apart are not classified as a position conflict',()=>assert.equal(sourceConflicts([vehicle('sta',46.5,timestamp),vehicle('sta_direct',46.51,timestamp-61)],now).length,0));
+test('closely timed STA observations with materially different positions remain a conflict',()=>assert.equal(sourceConflicts([vehicle('sta',46.5,timestamp),vehicle('sta_direct',46.51,timestamp-10)],now).length,1));
 test('expired observations never produce false current conflict',()=>assert.equal(sourceConflicts([vehicle('sta',46.5,timestamp-500),vehicle('sta_direct',46.51,timestamp-500)],now).length,0));
 test('diagnostics distinguish duplicated IDs, unknown lines and stale reports',()=>{const d=feedDiagnostics([vehicle('sta'),vehicle('sta_direct'),{...vehicle('trentino'),vehicleId:'200',lineVerified:false}],{sta:'ok',trentino:'old'},now);assert.ok(d.duplicates>=1);assert.equal(d.unknownBuses,1);assert.ok(d.sources.some(x=>x.name==='trentino'&&x.status==='old'));});
 test('adaptive interpolation stays bounded and never returns invalid overshoot',()=>{assert.equal(boundedMotionDuration(0,'train'),1200);assert.equal(boundedMotionDuration(10000,'train'),4700);assert.equal(boundedMotionDuration(10000,'bus'),2000);assert.equal(boundedMotionDuration(NaN,'train'),0);});
+
+
+test('snapshot diagnostics expose per-feed request timing and failure reason without breaking healthy feeds',async()=>{
+ const v=await buildSnapshot(async source=>{if(source==='trains'){const error=Error('HTTP 503');error.httpStatus=503;throw error;}return {data:feed(item(source)),httpStatus:200,contentType:'application/json'}},now);
+ const sta=v.diagnostics.sources.find(x=>x.name==='sta');
+ const trains=v.diagnostics.sources.find(x=>x.name==='trains');
+ assert.equal(sta.requestStatus,'ok');assert.equal(sta.httpStatus,200);assert.equal(sta.contentType,'application/json');assert.ok(Number.isFinite(sta.elapsedMs));assert.ok(sta.fetchedAt);
+ assert.equal(trains.requestStatus,'error');assert.equal(trains.httpStatus,503);assert.equal(trains.reason,'upstream-http');assert.equal(v.sources.trains,'error');assert.ok(v.vehicles.length>0);
+});
 
 test('the delay of one departure prefers the stop over the trip', () => {
   const update = {

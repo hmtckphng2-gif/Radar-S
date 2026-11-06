@@ -1,0 +1,201 @@
+/* Radar 9.9.1 — Block 1: iPhone map chrome and status layout. */
+@media (max-width: 749px) {
+  #sr50MapTab .topbar {
+    top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+    left: 8px !important;
+    right: 66px !important;
+    width: auto !important;
+    max-width: none !important;
+    padding: 9px 10px !important;
+    border-radius: 16px !important;
+    box-sizing: border-box !important;
+  }
+  #sr50MapTab .toprow {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    height: 38px !important;
+  }
+  #sr50MapTab .brand { min-width: 0 !important; flex: 1 1 auto !important; }
+  #sr50MapTab .brand-title {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 15px !important;
+    line-height: 1.1 !important;
+  }
+  #sr50MapTab .brand-title em { display: none !important; }
+  #sr50MapTab .brand-sub {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 8px !important;
+    letter-spacing: .045em !important;
+  }
+  #sr50MapTab #healthBtn,
+  #sr50MapTab #favBtnTop,
+  #sr50MapTab #linesBtn,
+  #sr50MapTab #themeToggle { display: none !important; }
+  #sr50MapTab #statusBtn {
+    display: grid !important;
+    place-items: center !important;
+    flex: 0 0 28px !important;
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+  #sr50MapTab #statusText { display: none !important; }
+  #sr50MapTab #statusBtn .status-dot { width: 9px !important; height: 9px !important; margin: 0 !important; }
+  #sr50MapTab #langBtn {
+    display: grid !important;
+    place-items: center !important;
+    flex: 0 0 36px !important;
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 !important;
+    font-size: 11px !important;
+  }
+  #sr50MapTab .controls {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-top: 8px !important;
+    min-width: 0 !important;
+  }
+  #sr50MapTab .segments { display: flex !important; flex: 0 1 auto !important; min-width: 0 !important; gap: 4px !important; }
+  #sr50MapTab .segments .chip { min-height: 34px !important; padding: 7px 8px !important; font-size: 9px !important; white-space: nowrap !important; }
+  #sr50MapTab .search-wrap { flex: 1 1 88px !important; min-width: 62px !important; height: 34px !important; }
+
+  /* The dedicated Mehr button occupies the header's reserved right-hand slot. */
+  body.sr60 .sr60-launch {
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top, 0px) + 9px) !important;
+    right: 8px !important;
+    bottom: auto !important;
+    width: 50px !important;
+    min-width: 50px !important;
+    height: 38px !important;
+    padding: 0 6px !important;
+    display: grid !important;
+    place-items: center !important;
+    z-index: 10040 !important;
+    font-size: 11px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Map tools sit below the header, never behind the language control. */
+  body.sr60.rh-ready #sr50MapTab .rhToolsTrigger,
+  body.sr60.rh-ready #sr50MapTab #rhToolsTrigger {
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top, 0px) + 112px) !important;
+    right: 10px !important;
+    z-index: 10020 !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+  }
+  body.sr60.rh-ready #sr50MapTab .rh-tools-panel {
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top, 0px) + 160px) !important;
+    right: 10px !important;
+    z-index: 10019 !important;
+    width: 42px !important;
+    max-width: 42px !important;
+    padding: 5px !important;
+    box-sizing: border-box !important;
+  }
+  body.sr60.rh-ready #sr50MapTab .rh-tools-panel .round-action {
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    margin: 0 0 5px !important;
+  }
+
+  /* Counts stay together; source diagnostics expand only when requested. */
+  body.sr60.rh-ready #sr50MapTab .stats {
+    left: 10px !important;
+    right: 10px !important;
+    bottom: calc(var(--sr611-dock-space, 92px) + 8px) !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 3px !important;
+    padding: 8px 11px !important;
+    box-sizing: border-box !important;
+  }
+  body.sr60.rh-ready #sr50MapTab .stats-counts {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  body.sr60.rh-ready #sr50MapTab .stat {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    align-items: baseline !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    white-space: nowrap !important;
+  }
+  body.sr60.rh-ready #sr50MapTab .stat b { font-size: 16px !important; }
+  body.sr60.rh-ready #sr50MapTab .stat span { font-size: 10px !important; }
+  body.sr60.rh-ready #sr50MapTab #lastUpdate,
+  body.sr60.rh-ready #sr50MapTab #sr78SourceQuality { display: none !important; }
+  body.sr60.rh-ready #sr50MapTab #sr79HealthToggle {
+    align-self: flex-start !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    min-height: 28px !important;
+    margin: 1px 0 0 !important;
+    padding: 3px 7px !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+  }
+  body.sr60.rh-ready #sr50MapTab #sr79HealthPanel { max-width: 100% !important; }
+
+  /* Clusters have a single count; type labels are descriptive, not duplicated numbers. */
+  #map .sr43-cluster-circle.sr80-group-chip {
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    min-height: 34px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    padding: 4px 6px !important;
+    overflow: visible !important;
+  }
+  #map .sr43-cluster-circle.sr80-group-chip strong { flex: 0 0 auto !important; font-size: 14px !important; line-height: 1 !important; }
+  #map .sr43-cluster-circle.sr80-group-chip small {
+    display: block !important;
+    min-width: 0 !important;
+    max-width: 43px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 8px !important;
+    line-height: 1.1 !important;
+  }
+  #map .sr43-cluster-circle.sr80-group-chip .sr431-cluster-stale { right: -3px !important; top: -5px !important; }
+}
+@media (min-width: 750px) {
+  #map .sr43-cluster-circle.sr80-group-chip { min-width: 72px; }
+}

@@ -1,5 +1,5 @@
 /* Radar 6.6: pure, conservative source quality and conflict diagnostics. */
-import {distanceMeters,selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.9.0';
+import {distanceMeters,selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.9.5';
 const fleetId=v=>String(v?.vehicleId||'');
 export function sameStaFleet(a,b){const pair=new Set([a?.source,b?.source]);return pair.size===2&&pair.has('sta')&&pair.has('sta_direct')&&a?.kind==='bus'&&b?.kind==='bus'&&/^\d{2,6}$/.test(fleetId(a))&&fleetId(a)===fleetId(b)}
 export function sourceConflicts(vehicles,now=Date.now()){
@@ -7,7 +7,7 @@ export function sourceConflicts(vehicles,now=Date.now()){
  const direct=new Map(all.filter(v=>v.source==='sta_direct').map(v=>[fleetId(v),v]));const conflicts=[];
  for(const v of all){if(v.source!=='sta')continue;const match=direct.get(fleetId(v));if(!sameStaFleet(v,match))continue;
   const seconds=Math.abs(Number(v.timestamp)-Number(match.timestamp)),meters=distanceMeters(v,match);
-  if(seconds<=90&&meters>200)conflicts.push({sources:['sta','sta_direct'],vehicleId:fleetId(v),differenceMeters:Math.round(meters),secondsApart:Math.round(seconds),reason:'abweichende Positionen'});
+  if(seconds<=20&&meters>200)conflicts.push({sources:['sta','sta_direct'],vehicleId:fleetId(v),differenceMeters:Math.round(meters),secondsApart:Math.round(seconds),reason:'abweichende Positionen'});
  }
  return conflicts.slice(0,100);
 }

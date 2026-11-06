@@ -22,15 +22,19 @@ function fakeMap(){
   on:(name,fn)=>{m.set(name,fn)},off:(name)=>{m.delete(name)},
   emit:(name)=>m.get(name)?.(),isStyleLoaded:()=>true,
   getSource:(name)=>name==='openmaptiles'?{}:null,
-  isSourceLoaded:()=>true,areTilesLoaded:()=>true,
-  triggerRepaint(){}
+  sourceLoaded:true,isSourceLoaded(){return this.sourceLoaded},areTilesLoaded:()=>true,
+  setSourceLoaded(value){this.sourceLoaded=value},triggerRepaint(){}
  };
 }
-test('3D scene only becomes ready after real vector tiles are loaded',async()=>{
- const map=fakeMap();await waitFor3DScene(map,30);
- let loaded=false;map.areTilesLoaded=()=>loaded;
- const pending=waitFor3DScene(map,150);
- loaded=true;map.emit('render');await pending;
+test('3D scene waits for its real vector source, not just the style shell',async()=>{
+ const map=fakeMap();map.setSourceLoaded(false);
+ let ready=false;const pending=waitFor3DScene(map,150).then(()=>{ready=true});
+ map.emit('render');await Promise.resolve();assert.equal(ready,false);
+ map.setSourceLoaded(true);map.emit('render');await pending;assert.equal(ready,true);
+});
+test('3D scene does not wait for unrelated shaded-relief raster tiles',async()=>{
+ const map=fakeMap();map.areTilesLoaded=()=>false;
+ await waitFor3DScene(map,30);
 });
 test('3D model render must be confirmed before revealing the map',async()=>{
  const map=fakeMap(),layer={didRender:false,renderError:false};
@@ -43,4 +47,11 @@ test('the replay button and real camera animation remain wired',()=>{
  assert.match(src,/await waitFor3DScene\(map\)/);
  assert.match(src,/await waitFor3DModel\(map,this\.layer\)/);
  assert.doesNotMatch(src,/new Vehicle3DOverlay\(/);
+});
+
+test('updated 3D entrypoint bypasses the previous service-worker asset cache',()=>{
+ const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+ const camera=readFileSync(new URL('../public/radar71-camera.mjs',import.meta.url),'utf8');
+ assert.ok(html.includes('radar71-camera.mjs?v=9.9.5'));
+ assert.ok(camera.includes('radar83-map.mjs?v=9.9.5'));
 });

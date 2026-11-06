@@ -2,20 +2,20 @@
 .sr10-startup{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;overflow:hidden;background:#090e15;color:#eef2f5;font-family:Inter,system-ui,-apple-system,sans-serif;opacity:1;visibility:visible;transition:opacity .48s cubic-bezier(.2,.72,.2,1),visibility .48s; padding:calc(22px + env(safe-area-inset-top)) 22px calc(22px + env(safe-area-inset-bottom));}
 .sr10-startup.is-leaving{opacity:0;visibility:hidden;pointer-events:none}
 .sr10-startup__inner{width:min(100%,460px);display:flex;flex-direction:column;align-items:center;text-align:center;gap:15px;transform:translateY(0);transition:transform 1s cubic-bezier(.2,.7,.15,1)}
-.sr10-startup.is-intro .sr10-brand-mark{animation:sr10-logo-zoom 1.35s cubic-bezier(.16,.8,.2,1) both}
-.sr10-startup.is-intro .sr10-wordmark{animation:sr10-wordmark-zoom 1.35s cubic-bezier(.16,.8,.2,1) both}
+.sr10-startup.is-intro .sr10-brand-mark{animation:sr10-logo-zoom .85s cubic-bezier(.16,.8,.2,1) both}
+.sr10-startup.is-intro .sr10-wordmark{animation:sr10-wordmark-zoom .85s cubic-bezier(.16,.8,.2,1) both}
 .sr10-startup.is-intro .sr10-brand-mark,.sr10-startup.is-intro .sr10-wordmark{transform-origin:center}
 .sr10-startup.is-raised .sr10-startup__inner{transform:translateY(-24px)}
-.sr10-startup.is-intro .sr10-landscape{opacity:0;transform:scale(.94);animation:sr10-landscape-reveal 1.5s cubic-bezier(.2,.72,.18,1) 1.25s both}
-.sr10-startup.is-intro .sr10-train{animation-delay:2.15s}
-.sr10-startup.is-intro .sr10-loading{opacity:0;animation:sr10-appear .5s ease 3.25s both}
+.sr10-startup.is-intro .sr10-landscape{opacity:0;transform:scale(.94);animation:sr10-landscape-reveal .9s cubic-bezier(.2,.72,.18,1) .45s both}
+.sr10-startup.is-intro .sr10-train{animation-delay:.9s}
+.sr10-startup.is-intro .sr10-loading{opacity:0;animation:sr10-appear .35s ease 1.45s both}
 .sr10-brand-mark{display:grid;place-items:center;width:43px;height:43px;border:1px solid #58636e;border-radius:13px;color:#c4cbd1;background:linear-gradient(145deg,#202a35,#10161e);box-shadow:0 10px 30px #0005}
 .sr10-brand-mark svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .sr10-brand-mark circle{fill:currentColor;stroke:none}
 .sr10-wordmark{font-size:clamp(19px,5vw,24px);font-weight:800;letter-spacing:.16em;color:#e9edf0}.sr10-wordmark span{font-weight:500;color:#98a4ae}
 .sr10-landscape{position:relative;width:calc(100% + 44px);height:clamp(142px,29vh,220px);overflow:hidden;margin:0 -22px;background:#0d141d;mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
 .sr10-landscape svg{width:100%;height:100%;display:block}
-.sr10-train{animation:sr10-train-pass 2.5s cubic-bezier(.2,.62,.35,1) .15s both}
+.sr10-train{animation:sr10-train-pass 1.55s cubic-bezier(.2,.62,.35,1) .1s both}
 .sr10-landscape__vignette{position:absolute;inset:0;background:linear-gradient(0deg,#090e15 0%,transparent 35%,transparent 70%,#090e15 100%);pointer-events:none}
 .sr10-kicker,.sr10-footer{font-size:10px;letter-spacing:.19em;font-weight:700;color:#85919b}
 .sr10-loading{width:100%;max-width:340px;margin-top:3px;animation:sr10-appear .35s ease both}
