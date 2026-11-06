@@ -145,9 +145,10 @@ function updateFavPanel(){
     const delay=document.createElement('div');
     delay.className='fav-delay';
     const info2=currentVehicleDelay(v);
-    const d=info2?Math.abs(info2.delay||0):0;
-    delay.textContent=d>0?'+'+Math.round(d/60)+' '+t('misc.minutes'):t('lines.onTimeShort');
-    delay.className='fav-delay '+(d>=900?'bad':d>=120?'warn':'ok');
+    const d=info2?Number(info2.delay):null;
+    const dMinutes=d===null?null:Math.round(d/60);
+    delay.textContent=dMinutes===null?'Keine Daten':dMinutes>0?'+'+dMinutes+' '+t('misc.minutes'):dMinutes<0?Math.abs(dMinutes)+' Min. früher':t('lines.onTimeShort');
+    delay.className='fav-delay '+(dMinutes===null?'unknown':dMinutes>=15?'bad':dMinutes>=1?'warn':'ok');
     info.append(name,sub,delay);
     const remove=document.createElement('button');
     remove.className='fav-remove';
@@ -168,9 +169,9 @@ function buildLineStatus(){
     const l=lines.get(key);
     l.vehicles.push(v);
     const info=currentVehicleDelay(v);
-    const d=info?Math.abs(info.delay||0):0;
+    const d=info?Math.max(0,Math.round(Number(info.delay)/60)):0;
     l.maxDelay=Math.max(l.maxDelay,d);
-    if(d>=120)l.delayed++;
+    if(d>=1)l.delayed++;
   }
   // Störungs-Alerts pro Linie einbeziehen
   for(const source of Object.keys(state.alerts||{})){
@@ -179,14 +180,14 @@ function buildLineStatus(){
         const key=source+':'+a.routeId;
         if(!lines.has(key))lines.set(key,{routeId:a.routeId,source,name:a.routeId,vehicles:[],maxDelay:0,delayed:0});
         const l=lines.get(key);
-        if(a.cause===3||a.cause===4||a.effect===2||a.effect===4)l.maxDelay=Math.max(l.maxDelay,900);
+        if(a.cause===3||a.cause===4||a.effect===2||a.effect===4)l.maxDelay=Math.max(l.maxDelay,15);
       }
     }
   }
   return [...lines.values()].map(l=>{
     let status='unknown';
-    if(l.maxDelay>=900||l.delayed>0)status='disturbed';
-    else if(l.maxDelay>=120)status='delayed';
+    if(l.maxDelay>=15)status='disturbed';
+    else if(l.maxDelay>=1)status='delayed';
     else if(l.maxDelay>0)status='delayed';
     else if(l.vehicles.length>0)status='ok';
     return {...l,status};
@@ -516,12 +517,13 @@ function visible(v){
 function markerIcon(v){
   const train=v.kind==='train',label=v.name.startsWith('Linie unbekannt')||v.name==='Zugnummer unbekannt'?'':v.name;
   const isOld=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
+  const isEstimated=/simuliert|geschätzt|interpoliert|berechnet/i.test(v.positionType||'');
   const isFav=isFavorite(v.key);
   const lineKey=v.routeId?(v.source+':'+v.routeId):'';
   const lineFav=lineKey&&isLineFavorite(lineKey);
   const zoom=state.map?state.map.getZoom():0;
   const showSpeed=zoom>=13 && v.speed!==null;
-  const cls='marker-wrap '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'')+(isFav?' favorite':'')+(lineFav?' line-favorite':'');
+  const cls='marker-wrap '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'')+(isEstimated?' sr86-estimated':' sr86-feed-position')+(isFav?' favorite':'')+(lineFav?' line-favorite':'');
   const speedText=showSpeed?'<div class="marker-speed">'+v.speed+' km/h</div>':'';
   const icon=`<div class="${cls}">${speedText}<div class="marker-label">${escapeHtml(label)}</div><div class="marker-circle">${train?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="17" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 19.5l-2 2m10-2 2 2"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="16" rx="3"/><path d="M3 11h18M7 15h2m6 0h2M7 19l-2 2m14-2 2 2"/></svg>'}${isFav?'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22l-5-4.87L2 9.27l6.91-1.02L12 2z"/></svg>':''}</div></div>`;
   return L.divIcon({className:'radar-custom',html:icon,iconSize:[30,48],iconAnchor:[15,38]});
@@ -688,7 +690,7 @@ function refreshMarkers(){
     const target=motionDuration(v,null)?mapTarget(v):rawTarget;
     const aged=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
     const lineKey=v.routeId?(v.source+':'+v.routeId):'';
-    const iconKey=`${v.kind}|${v.name}|${state.selectedKey===key}|${aged}|${lineKey}`;
+    const iconKey=`${v.kind}|${v.name}|${state.selectedKey===key}|${aged}|${v.positionType||''}|${lineKey}`;
     let entry=state.markers.get(key);
     if(!entry){
       const marker=L.marker([target.lat,target.lon],{icon:markerIcon(v),keyboard:true,title:v.name}).addTo(state.layer);
@@ -844,7 +846,8 @@ function drawVehicleDetails(key,fetchSchedule){
   const badges=$('sheetBadges');badges.replaceChildren();
   badges.append(badge(v.kind==='train'?'Zug':'Bus'));
   badges.append(badge(v.stale?'Letzte bekannte Position':'Aktueller Feed',v.stale?'warn':'ok'));
-  badges.append(badge(v.positionType,'warn'));
+  const estimatedPosition=/simuliert|geschätzt|interpoliert|berechnet/i.test(v.positionType||'');
+  badges.append(badge(estimatedPosition?'Geschätzte Position':'Feedposition · GPS nicht bestätigt',estimatedPosition?'sr86-position-estimated':'sr86-position-feed'));
   if(v.kind==='bus') badges.append(badge(v.lineVerified?'GTFS-Linie geprüft':'Linie unbekannt',v.lineVerified?'ok':'warn'));
   const favBtn=document.createElement('button');
   favBtn.className='badge fav-badge';
@@ -859,19 +862,18 @@ function drawVehicleDetails(key,fetchSchedule){
   const cancelled=/^(?:CANCELED|CANCELLED|3)$/i.test(update?.scheduleRelationship||'');
   detail('Status',cancelled?'Fahrt entfällt':update?'RT-Fahrtdaten vorhanden':'Keine Fahrtstatusdaten');
   const info=currentVehicleDelay(v);
-  let delayCls='delay-none';
-  if(info){
-    const d=Math.abs(info.delay||0);
-    delayCls=d>=900?'delay-severe':d>=120?'delay-warn':'delay-ok';
-  }
-  detail('Verspätung (GTFS-RT)',cancelled?'Entfällt':info?formatDelay(info.delay)+(info.basis==='fahrt'?' · Fahrtwert':/^(STOPPED_AT|1)$/i.test(v.currentStatus)?' · am Halt':' · nächster Halt'):'Keine bestätigten Verspätungsdaten',delayCls);
+  // Keine bestätigten Verspätungsdaten werden in der UI kompakt als 'Keine Daten' dargestellt.
+  const delayMinutes=info?Math.round(info.delay/60):null;
+  const delayCls=delayMinutes===null?'delay-none':delayMinutes>=15?'delay-severe':delayMinutes>=1?'delay-warn':'delay-ok';
+  const delayText=cancelled?'Entfällt':delayMinutes===null?'Keine Daten':delayMinutes>0?'+'+delayMinutes+' Min.':delayMinutes<0?Math.abs(delayMinutes)+' Min. früher':'Pünktlich';
+  detail('Verspätung (GTFS-RT)',delayText+(info?(info.basis==='fahrt'?' · Fahrtwert':/^(STOPPED_AT|1)$/i.test(v.currentStatus)?' · am Halt':' · nächster Halt'):''),delayCls);
   detail('Fahrtziel',v.headsign);
   detail('Fahrzeug-ID',v.vehicleId);
   detail('Fahrt-ID',v.tripId||'Nicht verfügbar');
   // Zwei getrennte Werte: die gemeldete Verspaetung und die Abweichung vom Fahrplan.
   // Die eine ist eine Zeitangabe, die andere eine Ortsangabe.
   const schedule=trainScheduledPosition(v,state.indexes,state.details,state.shapes);
-  if(schedule)detail('Abweichung Fahrplan','~'+schedule.differenceKm.toFixed(1)+' km '+schedule.relative+' ('+schedule.from+' - '+schedule.to+')');
+  if(schedule)detail('Abweichung Fahrplan','Positionsbasiert berechnet: ~'+schedule.differenceKm.toFixed(1)+' km '+schedule.relative+' ('+schedule.from+' - '+schedule.to+')');
   detail('Positionsalter',feedAgeSeconds(v)===null?'Unbekannt':duration(feedAgeSeconds(v)*1000)+' Sek.');
   detail('Geschwindigkeit',v.speed===null?'Nicht verfügbar':v.speed+' km/h (Feed)');
   detail('Quelle',v.source.toUpperCase()+' / GTFS-RT');
@@ -896,7 +898,8 @@ function drawVehicleDetails(key,fetchSchedule){
       const btn=B('badge line-item',lv.name,()=>{selectVehicle(lv.key);});
       btn.title=lv.headsign||'Ziel unbekannt';
       const delay=currentVehicleDelay(lv);
-      const dCls=delay? (Math.abs(delay.delay||0)>=120?'delay-severe':Math.abs(delay.delay||0)>=30?'delay-warn':'delay-ok') : 'delay-none';
+      const delayMinutes=delay?Math.round(delay.delay/60):null;
+      const dCls=delayMinutes===null?'delay-none':delayMinutes>=15?'delay-severe':delayMinutes>=1?'delay-warn':'delay-ok';
       btn.append(E('small',formatDelay(delay?.delay||0)+(delay?.basis==='fahrt'?'·Fahrt':''),dCls));
       list.append(btn);
     }
@@ -1064,8 +1067,8 @@ function showStationBoard(st){
       sub.appendChild(chip);
     }
     sub.classList.toggle('sr-dep-live',live);
-    sub.classList.toggle('dep-delay-severe',live&&delay>=900);
-    sub.classList.toggle('dep-delay-warn',live&&delay>=120&&delay<900);
+    sub.classList.toggle('dep-delay-severe',live&&Math.round(delay/60)>=15);
+    sub.classList.toggle('dep-delay-warn',live&&Math.round(delay/60)>=1&&Math.round(delay/60)<15);
     clock.textContent=formatClock(d.sec);
     body.append(title,sub);btn.append(body,clock);list.append(btn);
   }
