@@ -5,7 +5,7 @@ import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5';
  * map panes with CSS and corrupt touch coordinates or marker hit testing.
  */
 import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from './radar71-camera-logic.mjs?v=9.9.5';
-import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5';
+import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=opt-in';
 (()=>{'use strict';
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -130,7 +130,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5';
    onManual:()=>{if(active)reveal(token)},
    onFailure:()=>{if(active&&emergencyFallback){clearTimeout(timer);emergencyFallback()}}
   });
-  window.SuedtirolRadar71={enabled:true,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
+  window.SuedtirolRadar71={enabled:cinema3d.enabled,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
   setupHud();
   // Load MapLibre and Three.js only when a vehicle is selected; don't slow down the main live map.
   document.addEventListener('sr37:selection',onSelection);

@@ -28,7 +28,7 @@ export function selectedVehicleMeta(vehicle){
 }
 
 export function enabled3D(search=''){
- try{return new URLSearchParams(search).get('radar3d')!=='off'}catch{return true}
+ try{return new URLSearchParams(search).get('radar3d')==='on'}catch{return false}
 }
 export function target3DCamera(point,zoom,heading=null,duration=4300){
  const lng=Number(point?.lng??point?.lon),lat=Number(point?.lat);

@@ -1,9 +1,9 @@
 /* Radar 8.3 — actual pitched vector/terrain 3D map with a shared WebGL vehicle layer.
  * The original Leaflet map stays intact underneath. Only selected cinematic
- * vehicles initialize MapLibre; errors or ?radar3d=off fall back to Radar 8.2.
+ * vehicles initialize MapLibre; errors or ?radar3d=on fall back to Radar 8.2.
  */
 import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.5&rev=neutral-bus';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&flag=opt-in';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -208,14 +208,21 @@ export class Radar83Cinematic {
   const back=document.createElement('button');back.className='sr83-back';back.type='button';back.textContent='↩ 2D';
   back.setAttribute('aria-label','Zur normalen 2D-Karte zurückkehren');
   back.addEventListener('click',e=>{e.stopPropagation();this.close();this.onExit()});
-  toolbar.append(info,replay,back);overlay.append(toolbar);
+  toolbar.append(replay,back);overlay.append(toolbar);
+  const infoCard=document.createElement('section');infoCard.className='sr83-info-card';
+  infoCard.append(info);
   const meta=document.createElement('div');meta.className='sr83-vehicle-meta';
   meta.textContent=selectedVehicleMeta(vehicle)||'Keine weiteren Fahrzeugdaten verfügbar';
-  overlay.append(meta);this.vehicleMeta=meta;
+  infoCard.append(meta);this.vehicleMeta=meta;
+  const sources=document.createElement('details');sources.className='sr83-sources';
+  const summary=document.createElement('summary');summary.textContent='Quellen';sources.append(summary);
   const credit=document.createElement('div');credit.className='sr83-credit';
-  credit.textContent='3D-Modell schematisch · Position aus dem Datenfeed · Ziehen zum Schwenken';
-  overlay.append(credit);
-   this.credit=credit;
+  credit.textContent='3D-Modell schematisch · Position aus dem Datenfeed';
+  sources.append(credit);this.credit=credit;
+  const detailsHost=document.getElementById('details');
+  const sheetScroll=document.querySelector('#sheet .sheet-scroll');
+  if(detailsHost?.parentNode){detailsHost.insertAdjacentElement('afterend',infoCard);infoCard.insertAdjacentElement('afterend',sources)}
+  else if(sheetScroll)sheetScroll.append(infoCard,sources);
   document.getElementById('map')?.append(overlay);
   this.overlay=overlay;this.surface=surface;this.info=info;
  }
@@ -355,6 +362,7 @@ export class Radar83Cinematic {
   this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);
   if(oldMap)try{oldMap.stop();oldMap.remove()}catch(error){console.info('3D map cleanup',error)}
   this.overlay?.remove();this.overlay=null;this.surface=null;
+  document.querySelectorAll('#sheet .sr83-info-card,#sheet .sr83-sources').forEach(node=>node.remove());
   document.body.classList.remove('sr83-cinematic');
    if(this.contextCanvas&&this.contextLostHandler){
     try{this.contextCanvas.removeEventListener('webglcontextlost',this.contextLostHandler)}catch{}

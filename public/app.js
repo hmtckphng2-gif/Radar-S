@@ -831,6 +831,7 @@ function openSheet(which){
   if(scroller)scroller.scrollTop=0;
   sheet.classList.add('open');
   sheet.setAttribute('aria-hidden','false');
+  document.dispatchEvent(new Event('sr37:sheet-opened'));
   // 9.5: Der Fokus wandert in das Panel und kommt beim Schliessen zurueck.
   try{sheet.focus({preventScroll:true})}catch{}
   $('scrim').classList.add('show');
@@ -947,7 +948,7 @@ function drawVehicleDetails(key,fetchSchedule){
 function renderStops(v,details){
   const rows=stopRows(details,v.tripId);
   const section=$('scheduleSection'),list=$('stops'),empty=$('emptySchedule');
-  list.replaceChildren();section.hidden=!rows.length;empty.hidden=!!rows.length;
+  list.replaceChildren();section.hidden=!rows.length;empty.hidden=true;
   if(!rows.length)return;
   const update=state.updates.get(v.source+':'+v.tripId);
   $('scheduleSource').textContent=t('board.source')+(update?.stops?.length?t('board.tripUpdate'):'');
@@ -1150,6 +1151,31 @@ function setupSheetTouchGuards(){
   for(const sheet of document.querySelectorAll('.sheet')){
     const scroller=sheet.querySelector('.sheet-scroll');
     if(!scroller)continue;
+    const handle=sheet.querySelector('.handle');
+    if(handle){
+      let drag=null;
+      handle.style.touchAction='none';
+      handle.addEventListener('pointerdown',event=>{
+        if(event.pointerType==='mouse'&&event.button!==0)return;
+        if(!sheet.classList.contains('open'))return;
+        drag={id:event.pointerId,startY:event.clientY};
+        try{handle.setPointerCapture(event.pointerId)}catch{}
+        sheet.style.transition='none';
+      });
+      handle.addEventListener('pointermove',event=>{
+        if(!drag||drag.id!==event.pointerId)return;
+        const delta=Math.max(0,event.clientY-drag.startY);
+        sheet.style.transform=`translate3d(0,${delta}px,0)`;
+      });
+      const finishDrag=event=>{
+        if(!drag||drag.id!==event.pointerId)return;
+        const delta=event.clientY-drag.startY;drag=null;
+        sheet.style.transition='';sheet.style.transform='';
+        if(delta>78)closeSheets();
+      };
+      handle.addEventListener('pointerup',finishDrag);
+      handle.addEventListener('pointercancel',event=>{if(drag){drag=null;sheet.style.transition='';sheet.style.transform=''}});
+    }
     let touchY=null;
     scroller.addEventListener('touchstart',event=>{
       if(event.touches.length===1)touchY=event.touches[0].clientY;

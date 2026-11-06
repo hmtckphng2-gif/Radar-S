@@ -9,7 +9,8 @@ const NOW=1760900000000;
 test('explicit switch can return users to intact Leaflet 2D map',()=>{
  assert.equal(enabled3D('?radar3d=off'),false);
  assert.equal(enabled3D('?radar3d=on'),true);
- assert.equal(enabled3D('?language=de'),true);
+ assert.equal(enabled3D('?language=de'),false);
+ assert.equal(enabled3D(''),false);
  assert.equal(MAPLIBRE_VERSION,'4.7.1');
  assert.ok(VECTOR_STYLE.includes('/styles/dark'));
 });

@@ -56,7 +56,7 @@ test('the version in the imports is the version in package.json', () => {
   for(const rel of appGraph()){
     for(const m of read(rel).matchAll(SPEC)){
       if(!m[3]||!m[3].includes('?v='))continue;
-      const benutzt=m[3].replace('?v=','');
+      const benutzt=new URLSearchParams(m[3].slice(1)).get('v');
       assert.equal(benutzt,version,rel+' nutzt die falsche Version: '+benutzt);
     }
   }
