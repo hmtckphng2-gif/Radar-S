@@ -69,10 +69,13 @@ test('the flight still ends on the vehicle', () => {
   const start = start3DCamera(p, 90, end.zoom);
   assert.deepEqual(end.center, [p.lng, p.lat]);
   assert.equal(end.zoom, 19);
-  assert.equal(end.pitch, 54);
-  assert.equal(end.bearing, 148);
+  assert.equal(end.pitch, 48);
+  assert.equal(end.bearing, 128);
   assert.ok(start.zoom < end.zoom);
-  assert.ok(start.pitch > end.pitch, 'the camera descends to the train');
+  assert.equal(start.pitch, 68);
+  assert.ok(start.pitch > end.pitch, 'the camera descends to a steeper view');
+  assert.equal(start.bearing, 202);
+  assert.equal((start.bearing - end.bearing + 360) % 360, 74, 'the camera makes a controlled 74-degree turn');
   assert.notEqual(start.bearing, end.bearing, 'the camera rotates during the approach');
   assert.ok(start.zoom > 15, 'the approach starts closer than the wide establishing shot');
 });
