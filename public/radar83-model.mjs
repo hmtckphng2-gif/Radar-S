@@ -47,12 +47,16 @@ const MESHOPT_URL='https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/libs/
 let loaderPromise;
 export function loadGLTFLoader(){
   return loaderPromise??=(Promise.all([import(GLTF_URL),import(MESHOPT_URL)])
-    .then(([mod,decoder])=>{
+    .then(async ([mod,decoder])=>{
      const Loader=mod.GLTFLoader||mod.default?.GLTFLoader;
      if(!Loader)throw Error('GLTFLoader nicht verfuegbar');
      const loader=new Loader();
      const Meshopt=decoder.MeshoptDecoder||decoder.default?.MeshoptDecoder;
-     if(Meshopt&&typeof loader.setMeshoptDecoder==='function')loader.setMeshoptDecoder(Meshopt);
+     if(!Meshopt||Meshopt.supported!==true)throw Error('Meshopt-Decoder nicht verfügbar');
+     // Wait for the decoder's WASM module before GLTFLoader starts decoding
+     // the required EXT_meshopt_compression buffers (important on iOS Safari).
+     await Meshopt.ready;
+     loader.setMeshoptDecoder(Meshopt);
      return loader;
     })
     .catch(e=>{loaderPromise=null;throw e}));
@@ -120,30 +124,35 @@ export function normalizeModel(object3D,spec,THREE){
 // The visible credit line under the map. CC BY requires the author to be
 // named, so a real model always names it. The schematic model is our own
 // work and is labelled as schematic.
-export function modelCreditText(credit,isReal){
+export function modelCreditText(credit,isReal,kind='train'){
   const c=isReal?credit:null;
-  if(!c||!c.author||!c.license)return '3D-Modell schematisch · Position aus dem Datenfeed · Ziehen zum Schwenken';
+  if(!c||!c.author||!c.license)return '3D-Modell schematisch · Fahrzeugtyp nicht bestätigt · Position aus dem Datenfeed · Ziehen zum Schwenken';
   const title=c.title?c.title+' ':'';
-  return '3D: '+title+'· '+c.author+' · '+c.license+' · Position aus dem Datenfeed · Ziehen zum Schwenken';
+  const reference=kind==='bus'?'Bus-Referenzmodell':'Zug-Referenzmodell';
+  return reference+' (Fahrzeugtyp nicht bestätigt): '+title+'· '+c.author+' · '+c.license+' · Position aus dem Datenfeed · Ziehen zum Schwenken';
 }
 
 // Load a real model. Resolves to null when there is none or when anything
 // goes wrong - the caller keeps the schematic model in that case.
 export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
   let config=null;
-  try{config=await loadModelConfig()}catch{return null}
+  config=await loadModelConfig()
   const entry=config?.models?.[kind];
   if(!entry||!entry.file)return null;
   if(!THREE)return null;
   let loader=null;
-  try{loader=await loadGLTFLoader()}catch{return null}
+  loader=await loadGLTFLoader()
   if(!loader)return null;
   const url='/models/'+String(entry.file).replace(/^\/+/,'');
   const gltf=await new Promise((resolve,reject)=>{
-    const timer=setTimeout(()=>reject(Error('Modell-Download zu langsam')),Math.max(1000,Number(timeoutMs)||8000));
+    let settled=false;
+    const finish=(error,data)=>{if(settled)return;settled=true;clearTimeout(timer);error?reject(error):resolve(data)};
+    const timer=setTimeout(()=>finish(Error('Modell-Download zu langsam')),Math.max(1000,Number(timeoutMs)||8000));
     try{
-      new loader().load(url,(data)=>{clearTimeout(timer);resolve(data)},undefined,(err)=>{clearTimeout(timer);reject(err||Error('Modell nicht ladbar'))});
-    }catch(error){clearTimeout(timer);reject(error)}
+      // loadGLTFLoader() already returns a configured GLTFLoader instance.
+      // Constructing it again throws and silently leaves the schematic model.
+      loader.load(url,data=>finish(null,data),undefined,err=>finish(err||Error('Modell nicht ladbar')));
+    }catch(error){finish(error)}
   });
   const scene=gltf?.scene;
   if(!scene)return null;
