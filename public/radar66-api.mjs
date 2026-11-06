@@ -20,7 +20,24 @@ export function normalizeSnapshot(feeds,now=Date.now()){
  return {schema:'radar.snapshot.v1',version:'6.6',generatedAt:new Date(now).toISOString(),positionDisclaimer:'Nur empfangene Feedpositionen, keine extrapolierten GPS-Positionen. Linienbezeichnungen ohne statischen GTFS-Abgleich nicht verifiziert.',sources:status,diagnostics,vehicles:visible.map(v=>({id:v.key,kind:v.kind,lat:v.lat,lon:v.lon,observedAt:v.timestamp?new Date(v.timestamp*1000).toISOString():null,routeId:v.routeId||null,tripId:v.tripId||null,tripStartDate:v.tripStartDate||null,vehicleId:v.vehicleId||null,source:v.source,sourceCount:fusion.sources.get(v.key)?.length||1,positionType:v.positionType,quality:observationQuality(v,now).status,trainNumber:v.kind==='train'&&v.nameVerified?v.name:null,verifiedLine:null}))};
 }
 export async function buildSnapshot(fetchFeed,now=Date.now()){
- const response=await Promise.allSettled(SOURCES.map(async source=>({source,data:await fetchFeed(source)})));const feeds={};
- for(let i=0;i<SOURCES.length;i++){const source=SOURCES[i],entry=response[i];feeds[source]=entry.status==='fulfilled'?entry.value.data:{status:'error'}}
- return normalizeSnapshot(feeds,now);
+ const response=await Promise.allSettled(SOURCES.map(async source=>{
+  const started=Date.now();
+  try{
+   const result=await fetchFeed(source);
+   return {source,data:result?.data,diagnostic:{name:source,requestStatus:'ok',httpStatus:Number.isFinite(result?.httpStatus)?result.httpStatus:null,elapsedMs:Math.max(0,Date.now()-started),fetchedAt:new Date().toISOString(),contentType:result?.contentType||null,reason:null}};
+  }catch(error){
+   const reason=error?.name==='TimeoutError'?'timeout':error?.name==='AbortError'?'aborted':String(error?.message||'').includes('HTTP ')?'upstream-http':String(error?.message||'').includes('JSON')?'invalid-json':'network';
+   return {source,error,diagnostic:{name:source,requestStatus:'error',httpStatus:Number.isFinite(error?.httpStatus)?error.httpStatus:null,elapsedMs:Math.max(0,Date.now()-started),fetchedAt:null,contentType:error?.contentType||null,reason}};
+  }
+ }));
+ const feeds={},details=[];
+ for(let i=0;i<SOURCES.length;i++){
+  const source=SOURCES[i],entry=response[i];
+  if(entry.status==='fulfilled'){
+   const value=entry.value;feeds[source]=value.error?{status:'error'}:{data:value.data};details.push(value.diagnostic);
+  }else{feeds[source]={status:'error'};details.push({name:source,requestStatus:'error',httpStatus:null,elapsedMs:null,fetchedAt:null,contentType:null,reason:'network'});}
+ }
+ const snapshot=normalizeSnapshot(feeds,now);
+ snapshot.diagnostics.sources=snapshot.diagnostics.sources.map(source=>({...source,...(details.find(item=>item.name===source.name)||{})}));
+ return snapshot;
 }
