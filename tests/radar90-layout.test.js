@@ -27,7 +27,7 @@ test('disturbance chip is outside the header row and status colors encode live, 
 });
 
 test('sheet close controls are 44px X buttons and the handle supports drag dismissal',()=>{
-  assert.match(html,/id="closeSheet" class="close" type="button" aria-label="Details schließen"[^>]*>×<\/button>/);
+  assert.match(html,/id="closeSheet" class="close" type="button" aria-label="Details schließen"[^>]*><\/button>/);
   assert.match(css,/#closeSheet,#sr50MapTab #closeStations[^}]*44px/s);
   assert.match(app,/handle\.addEventListener\('pointerdown'/);
   assert.match(app,/handle\.addEventListener\('pointermove'/);
@@ -48,10 +48,10 @@ test('3D info is inside the detail sheet and model credit is under Quellen',()=>
   assert.doesNotMatch(map3d,/overlay\.append\(credit\)/);
 });
 
-test('3D is disabled unless the user explicitly opts in',()=>{
+test('3D stays disabled by default and cannot be activated by a query parameter',()=>{
   assert.equal(enabled3D(''),false);
   assert.equal(enabled3D('?radar3d=off'),false);
-  assert.equal(enabled3D('?radar3d=on'),true);
+  assert.equal(enabled3D('?radar3d=on'),false);
 });
 
 test('empty timetable placeholder is hidden after a confirmed empty result',()=>{

@@ -90,7 +90,7 @@
   <header class="topbar">
     <div class="toprow">
       <div class="brand-badge" aria-hidden="true"><svg viewBox="0 0 48 48" width="30" height="30"><path d="M12 35L35 12M13 13h22v22" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="24" r="5" fill="currentColor"/></svg></div>
-      <div class="brand"><div class="brand-title">RADAR <em>9.9.5</em></div><div class="brand-sub" data-t="radar.subtitle">SÜDTIROL · TRENTINO</div></div>
+      <div class="brand"><div class="brand-title">RADAR</div><div class="brand-sub" data-t="radar.subtitle">SÜDTIROL · TRENTINO</div></div>
       <button id="statusBtn" class="status" aria-label="Status und Datenquellen" data-t-aria-label="statusBtn.aria" title="Datenquellen ansehen" data-t-title="statusBtn.title"><span class="status-dot"></span><span id="statusText" data-t="status.connecting">VERBINDE</span></button>
       <button id="healthBtn" class="status" aria-label="Betriebsstatus" data-t-aria-label="healthBtn.aria" title="Betriebsstatus ansehen" data-t-title="healthBtn.title"><span class="status-dot"></span><span id="healthText" data-t="health.feedsOk">STATUS</span></button>
       <button id="favBtnTop" class="status" aria-label="Fahrzeug-Favoriten" data-t-aria-label="favBtn.aria" title="Meine favorisierten Fahrzeuge" data-t-title="favBtn.title"><span class="status-dot"></span><span id="favText" data-t="fav.status">★ FAV</span></button>
@@ -164,7 +164,7 @@
   <div class="scrim" id="scrim"></div>
   <section id="sheet" class="sheet" tabindex="-1" aria-labelledby="sheetTitle" role="dialog" aria-modal="false" aria-hidden="true">
     <div class="handle"></div>
-    <div class="sheet-heading"><div class="sheet-heading-main"><div id="sheetKind" class="eyebrow" data-t="detail.train">Fahrtinformation</div><h2 id="sheetTitle" class="sheet-title">–</h2><div id="sheetSub" class="sheet-subtitle">–</div></div><button id="closeSheet" class="close" type="button" aria-label="Details schließen" title="Schließen">×</button></div>
+    <div class="sheet-heading"><div class="sheet-heading-main"><div id="sheetKind" class="eyebrow" data-t="detail.train">Fahrtinformation</div><h2 id="sheetTitle" class="sheet-title">–</h2><div id="sheetSub" class="sheet-subtitle">–</div></div><button id="closeSheet" class="close" type="button" aria-label="Details schließen" title="Schließen"></button></div>
     <div class="sheet-scroll" tabindex="0" aria-label="Fahrzeugdetails scrollen" data-t-aria-label="sheet.scroll">
     <div class="badge-row" id="sheetBadges"></div>
     <div class="model-card" id="modelCard" hidden><img id="modelImage" alt="Baureihenfoto" loading="lazy" referrerpolicy="no-referrer" data-t-aria-label="detail.modelImage"><div class="model-text"><strong id="modelTitle"></strong><small id="modelCaption"></small></div></div>
@@ -175,7 +175,7 @@
     </div>
   </section>
   <section id="stationSheet" class="sheet" aria-hidden="true" aria-label="Haltestellensuche" role="dialog" aria-modal="false" data-t-aria-label="stationSheet.aria">
-    <div class="handle"></div><div class="sheet-heading"><div class="sheet-heading-main"><div class="eyebrow" data-t="station.title">Fahrplan-Suche</div><h2 class="sheet-title" data-t="station.title">Haltestellen</h2><div class="sheet-subtitle" data-t="station.subtitle">GTFS-Fahrplandaten, keine amtliche RFI-Anzeigetafel</div></div><button id="closeStations" class="close" aria-label="Haltestellensuche schließen" data-t-aria-label="stationSheet.close">✕</button></div>
+    <div class="handle"></div><div class="sheet-heading"><div class="sheet-heading-main"><div class="eyebrow" data-t="station.title">Fahrplan-Suche</div><h2 class="sheet-title" data-t="station.title">Haltestellen</h2><div class="sheet-subtitle" data-t="station.subtitle">GTFS-Fahrplandaten, keine amtliche RFI-Anzeigetafel</div></div><button id="closeStations" class="close" aria-label="Haltestellensuche schließen" data-t-aria-label="stationSheet.close"></button></div>
     <div class="sheet-scroll" tabindex="0" aria-label="Haltestellenliste scrollen" data-t-aria-label="stationSheet.scroll">
     <div id="stationSearchWrap" class="search-wrap" style="margin:14px 0"><span>⌕</span><input id="stationSearch" type="search" data-t-placeholder="station.search" placeholder="Bahnhof oder Haltestelle suchen" aria-label="Haltestelle suchen" data-t-aria-label="station.search">
     <div class="station-results" id="stationResults"></div>
@@ -187,27 +187,27 @@
 <script src="/vendor/leaflet-1.9.4.js?v=9.9.5" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script>
 <script src="/radar-recovery.js?v=9.9.5" defer></script>
 <script src="/radar431-stop.js?v=9.9.5"></script>
-<script src="/radar37.js?v=9.9.5"></script>
+<script src="/radar37.js?v=9.9.5&rev=train-details-2"></script>
 <script src="/radar40.js?v=9.9.5"></script>
 <script src="/radar42.js?v=9.9.5"></script>
-<script type="module" src="/radar43.js?v=9.9.5"></script>
+<script type="module" src="/radar43.js?v=9.9.5&rev=collision-2"></script>
 <script type="module" src="/radar44.js?v=9.9.5"></script>
 <script type="module" src="/radar45.js?v=9.9.5"></script>
-<script type="module" src="/app.js?v=9.9.5&fix=station-structure-3&rev=layout-1"></script>
+<script type="module" src="/app.js?v=9.9.5&fix=station-structure-3&rev=train-details-2"></script>
 <script src="/radar46.js?v=9.9.5" defer></script>
-<script src="/radar47.js?v=9.9.5&palette=1" defer></script>
-<script type="module" src="/radar50.js?v=9.9.5"></script>
+<script src="/radar47.js?v=9.9.5&rev=train-details-2&palette=1" defer></script>
+<script type="module" src="/radar50.js?v=9.9.5&rev=connections-tab-1"></script>
 <script type="module" src="/radar51.js?v=9.9.5&palette=1"></script>
 <script type="module" src="/radar52.js?v=9.9.5"></script>
 <script type="module" src="/radar53.js?v=9.9.5&palette=1"></script>
-<script type="module" src="/radar54.js?v=9.9.5"></script>
+<script type="module" src="/radar54.js?v=9.9.5&rev=train-details-2"></script>
 <script type="module" src="/radar55.js?v=9.9.5"></script>
-<script type="module" src="/radar56.js?v=9.9.5"></script>
+<script type="module" src="/radar56.js?v=9.9.5&rev=train-details-2"></script>
 <script type="module" src="/radar57.js?v=9.9.5"></script>
 <script type="module" src="/radar58.js?v=9.9.5"></script>
 <script defer src="/radar58-i18n.js?v=9.9.5"></script>
 <script src="/radar60-intelligence.js?v=9.9.5" defer></script>
-<script src="/radar60.js?v=9.9.5" defer></script>
+<script src="/radar60.js?v=9.9.5&rev=connections-tab-3" defer></script>
 <link rel="stylesheet" href="/radar62.css?v=9.9.5&palette=1">
 <script type="module" src="/radar62.js?v=9.9.5"></script>
 <link rel="stylesheet" href="/radar63.css?v=9.9.5&palette=1">
@@ -224,10 +224,10 @@
 <script src="/radar68.js?v=9.9.5" defer></script>
 <link rel="stylesheet" href="/radar69.css?v=9.9.5">
 <script src="/radar69.js?v=9.9.5" defer></script>
-<link rel="stylesheet" href="/radar692.css?v=9.9.5">
-<script type="module" src="/radar692.js?v=9.9.5"></script>
+<link rel="stylesheet" href="/radar692.css?v=9.9.5&rev=scroll-bottom-1">
+<script type="module" src="/radar692.js?v=9.9.5&rev=grouped-stations-1"></script>
 <link rel="stylesheet" href="/radar70.css?v=9.9.5&palette=1">
-<script type="module" src="/radar70-redesign.mjs"></script>
+<script type="module" src="/radar70-redesign.mjs?v=9.9.5&rev=connections-tab-1"></script>
 <link rel="stylesheet" href="/radar705.css?v=9.9.5">
 <link rel="stylesheet" href="/radar71.css?v=9.9.5">
 <script type="module" src="/radar71-camera.mjs?v=9.9.5&flag=opt-in"></script>
@@ -261,7 +261,9 @@
   <link rel="stylesheet" href="/radar86-preview-block2.css?v=9.9.5&nearby=departures-1">
   <link rel="stylesheet" href="/radar87-preview-block3.css?v=9.9.5">
   <link rel="stylesheet" href="/radar88-preview-block4.css?v=9.9.5">
-<link rel="stylesheet" href="/radar90-preview-block1.css?v=9.9.5&rev=layout-1">
+<link rel="stylesheet" href="/radar90-preview-block1.css?v=9.9.5&rev=block1-fixes-2">
+<link rel="stylesheet" href="/radar91-preview-block2.css?v=9.9.5&rev=clusters-controls-1">
+<link rel="stylesheet" href="/radar92-preview-block4.css?v=9.9.5&rev=train-details-2">
 <script defer src="/radar10-startup.js?v=9.9.5"></script>
 <script defer src="/radar10-map-first.js?v=9.9.5&rev=mapfirst"></script>
 </body>

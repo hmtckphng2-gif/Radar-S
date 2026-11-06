@@ -18,7 +18,7 @@ export function sameStationName(a,b){
 }
 export function sourceLabel(source){
  const key=String(source??'').trim().toLowerCase();
- if(key==='trains'||key==='train')return 'Zugdaten';
+ if(key==='trains'||key==='train')return 'Zug';
  if(key==='sta')return 'STA';
  if(key==='sta_direct')return 'STA direkt';
  if(key==='trentino')return 'Trentino Trasporti';

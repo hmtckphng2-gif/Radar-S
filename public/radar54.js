@@ -1,9 +1,9 @@
-import {sourceLabel} from './radar92-details.mjs?v=9.9.5&rev=details-1';
+import {sourceLabel,formatStationName} from './radar92-details.mjs?v=9.9.5&rev=station-labels-2';
 /* Radar 5.4 — openable timetable journeys and honest device-local delay history. */
 import {aggregateDays,recordObservation,trainNumber,platformInfo} from './radar54-logic.mjs?v=9.9.5';
 import {enrichTrainPlatform} from './train-platforms.js?v=9.9.5';
 import {romeDay,dateGTFSValid} from './radar51-logic.mjs?v=9.9.5';
-import {isRailRoute,formatClock,vehicleDelayInfo} from './core.js?v=9.9.5';
+import {isRailRoute,formatClock,vehicleDelayInfo,delayPresentation} from './core.js?v=9.9.5&rev=delay-copy-2';
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),mk=(tag,cls,text)=>{const e=document.createElement(tag);e.className=cls||'';if(text!==undefined)e.textContent=text;return e};
@@ -60,10 +60,10 @@ function historyCard(){
 function platformText(platform){return 'Gleis '+(platform.current||'unbekannt')+(platform.changed?' · geändert':platform.live?' · gemeldet':platform.current?' · Plan':'')}
 function render(){
  if(!selection||!body)return;body.replaceChildren();const s=bridge.state;
- const head=mk('div','sr54-dialog-head');head.append(mk('small','sr54-kicker','FAHRT & VERLAUF · '+romeDay()),mk('h2','','Zug '+selection.number));
+ const head=mk('div','sr54-dialog-head');head.append(mk('small','sr54-kicker','FAHRTVERLAUF · '+romeDay()),mk('h2','','Zug '+selection.number));
  head.append(btn('✕',()=>dialog.close(),'sr54-close'));body.append(head);
  const trip=s.indexes[selection.source]?.trips?.[selection.tripId];
- if(trip){body.append(mk('p','sr54-destination','→ '+(trip[1]||'Ziel unbekannt')));
+ if(trip){body.append(mk('p','sr54-destination','→ '+formatStationName(trip[1]||'Ziel unbekannt')));
   const v=[...s.vehicles.values()].find(v=>v.source===selection.source&&v.tripId===selection.tripId);
   if(v&&s.markers.has(v.key))body.append(btn('⌖ Auf Karte öffnen',()=>{dialog.close();document.querySelector('.sr50-nav-btn[data-tab="map"]')?.click();s.markers.get(v.key)?.marker.fire('click')}));
   const det=s.details[selection.source],times=det?.times?.[selection.tripId];
@@ -76,12 +76,12 @@ function render(){
    for(const [stopId,arrival,departure,seq] of times){const st=det.stops?.[stopId];const rt=useRT?(u.stops||[]).find(x=>String(x.stopId??x.stop_id)===String(stopId)||(!(x.stopId??x.stop_id)&&Number(x.stopSequence??x.stop_sequence)===Number(seq))):null;
     const li=mk('li','sr54-stop'),left=mk('div','');
     const platform=platformInfo(st,rt,det.stops),track=mk('small','',platformText(platform));
-    left.append(mk('strong','',st?.[0]||'Haltestelle unbekannt'),track);
+    left.append(mk('strong','',formatStationName(st?.[0]||'Haltestelle unbekannt')),track);
     enrichTrainPlatform(track,{number:selection.number,serviceDay:romeDay(),source:selection.source,stopId,stopName:st?.[0],arrival,departure,terminal:times.at(-1)?.[0]===stopId&&times.at(-1)?.[3]===seq},platform);
     const skipped=/^(SKIPPED|1)$/i.test(String(rt?.scheduleRelationship??rt?.schedule_relationship??''));
     const time=departure??arrival;const delay=rt?.departure?.delay??rt?.arrival?.delay;
     const clock=mk('div','sr54-stop-clock');clock.append(mk('strong','',cancelled||skipped?'Entfällt':formatClock(time)));
-    if(!cancelled&&!skipped&&delay!==null&&delay!==undefined&&Number.isFinite(Number(delay))){clock.append(mk('small','',`Prognose ${formatClock(Number(time)+Number(delay))} · ${Number(delay)>0?'+':''}${Math.round(Number(delay)/60)}′`));}
+    if(!cancelled&&!skipped&&delay!==null&&delay!==undefined&&Number.isFinite(Number(delay))){clock.append(mk('small','',`Prognose ${formatClock(Number(time)+Number(delay))} · ${delayPresentation(delay).label}`));}
     li.append(left,clock);list.append(li);
    }route.append(list);body.append(route);
   }else body.append(mk('p','sr54-empty','Kein gültiger Fahrtverlauf für heute verfügbar.'));

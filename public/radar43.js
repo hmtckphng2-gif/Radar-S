@@ -2,7 +2,7 @@
  * No map remount, no outside tile API, no fabricated GPS or ETAs.
  */
 import {classifyPosition,nearbyStations,followNeedsPan,stopSummary} from './radar43-logic.mjs?v=9.9.5';
-import {groupNearby} from './radar44-logic.mjs?v=9.9.5';
+import {groupNearby,resolveClusterCollisions} from './radar44-logic.mjs?v=9.9.5&rev=collision-2';
 (() => {
  'use strict';
  const $=id=>document.getElementById(id);
@@ -54,17 +54,20 @@ import {groupNearby} from './radar44-logic.mjs?v=9.9.5';
    const pt=map.latLngToContainerPoint(entry.marker.getLatLng());
    points.push({key,x:pt.x,y:pt.y,kind:v.kind,stale:status(v).kind!=='current'});
   }
-  const clusterRadius=zoom<=6?58:zoom<=7?52:zoom<=8?44:zoom<=9?36:30;
+  const clusterRadius=zoom<=6?76:zoom<=7?68:zoom<=8?60:zoom<=9?52:44;
   const grouped=groupNearby(points,clusterRadius,active,zoom>=9?'kind':'all');
-  for(const group of grouped.clusters){
+  const compact=window.innerWidth<750,iconWidth=compact?58:78,size=map.getSize?.()||{x:window.innerWidth,y:window.innerHeight};
+  const placed=resolveClusterCollisions(grouped.clusters,{width:size.x,height:size.y},{markerWidth:iconWidth,markerHeight:34,gap:8,padding:iconWidth/2+8});
+  for(const group of placed){
    const pt=map.containerPointToLatLng([group.x,group.y]);
    const dominant=group.trains&&!group.buses?'train':group.buses&&!group.trains?'bus':'mixed';
-   const detail=group.trains&&group.buses?'Züge · Busse':group.trains?'Züge':'Busse';
+   const typeIcon=group.trains&&group.buses?'🚆🚌':group.trains?'🚆':'🚌';
+   const detail=group.trains&&group.buses?'Gemischt':group.trains?'Züge':'Busse';
    const tier=group.count>=24?'xl':group.count>=12?'lg':group.count>=6?'md':'sm';
    const icon=L.divIcon({className:'sr43-cluster-icon',html:
-    '<div class="sr43-cluster-circle sr80-group-chip '+dominant+' '+tier+'" aria-hidden="true"><strong>'+group.count+'</strong><small>'+detail+'</small>'+
+    '<div class="sr43-cluster-circle sr80-group-chip '+dominant+' '+tier+'" aria-hidden="true"><strong>'+group.count+'</strong><small class="sr43-cluster-kind-icon">'+typeIcon+'</small><span class="sr43-cluster-kind-label">'+detail+'</span>'+
     (group.staleCount?'<span class="sr431-cluster-stale" title="Letzte bekannte Positionen">◷</span>':'')+'</div>',
-    iconSize:[72,34],iconAnchor:[36,17]});
+     iconSize:[iconWidth,34],iconAnchor:[iconWidth/2,17]});
    const marker=L.marker(pt,{icon,title:group.count+' Fahrzeuge'+(group.staleCount?', davon '+group.staleCount+' NICHT LIVE':'')+' – zum Vergrößern tippen',keyboard:true});
    marker.on('click',()=>{
       // Zoom to actual member positions rather than an arbitrary fixed zoom ceiling.

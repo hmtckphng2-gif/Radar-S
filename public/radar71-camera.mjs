@@ -5,7 +5,7 @@ import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5';
  * map panes with CSS and corrupt touch coordinates or marker hit testing.
  */
 import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from './radar71-camera-logic.mjs?v=9.9.5';
-import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=opt-in';
+import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=disabled-default';
 (()=>{'use strict';
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');

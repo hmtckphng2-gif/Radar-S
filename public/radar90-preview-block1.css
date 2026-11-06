@@ -25,14 +25,18 @@
   #sr50MapTab .sheet { max-height:min(78dvh,700px)!important; padding:10px 15px calc(18px + env(safe-area-inset-bottom,0px))!important; overflow:hidden!important; display:flex!important; flex-direction:column!important; }
   #sr50MapTab .sheet .handle { width:44px!important; height:22px!important; min-height:22px!important; padding:8px 0!important; background-clip:content-box!important; touch-action:none!important; cursor:grab!important; }
   #sr50MapTab .sheet .sheet-scroll { flex:1 1 auto!important; min-height:0!important; overflow-y:auto!important; overflow-x:hidden!important; -webkit-overflow-scrolling:touch!important; }
-  #sr50MapTab #closeSheet,#sr50MapTab #closeStations { display:grid!important; flex:0 0 44px!important; width:44px!important; min-width:44px!important; max-width:44px!important; height:44px!important; min-height:44px!important; place-items:center!important; padding:0!important; font-size:24px!important; line-height:1!important; white-space:nowrap!important; }
+  #sr50MapTab #closeSheet,#sr50MapTab #closeStations { display:grid!important; flex:0 0 44px!important; width:44px!important; min-width:44px!important; max-width:44px!important; height:44px!important; min-height:44px!important; place-items:center!important; padding:0!important; font-size:0!important; line-height:1!important; white-space:nowrap!important; }
+  #sr50MapTab #closeSheet::after,#sr50MapTab #closeStations::after { content:"×"; font-size:22px; line-height:1; font-weight:400; }
+  #sr50MapTab .model-card[hidden] { display:none!important; }
+  #sr50MapTab #sheet .sr83-info-card,#sr50MapTab #sheet .sr83-sources { position:static!important; inset:auto!important; max-width:100%!important; }
+  body:not(.sr83-cinematic) #sr50MapTab #sheet .sr83-info-card,body:not(.sr83-cinematic) #sr50MapTab #sheet .sr83-sources { display:none!important; }
   #sr50MapTab #emptySchedule[hidden] { display:none!important; }
   #sr50MapTab .sr83-info-card { display:block; margin:10px 0; padding:10px 12px; border:1px solid rgba(180,195,212,.2); border-radius:12px; background:#151d27; }
   #sr50MapTab .sr83-info-card .sr83-label { display:block; position:static; margin:0 0 5px; }
   #sr50MapTab .sr83-vehicle-meta { position:static; max-width:none; margin:0; font-size:10px; line-height:1.4; color:#aeb8c4; overflow-wrap:anywhere; }
   #sr50MapTab .sr83-sources { margin:7px 0 12px; padding:8px 10px; border:1px solid rgba(180,195,212,.16); border-radius:10px; color:#b7c1cc; font-size:11px; }
   #sr50MapTab .sr83-sources summary { cursor:pointer; font-weight:700; color:#d5dde6; }
-  #sr50MapTab .sr83-credit { position:static; margin-top:7px; max-width:none; font-size:10px; line-height:1.4; color:#aeb8c4; }
+  #sr50MapTab .sr83-credit { position:static!important; inset:auto!important; left:auto!important; bottom:auto!important; transform:none!important; display:block; margin:7px 0 0; max-width:none; font-size:10px; line-height:1.4; color:#aeb8c4; }
   body.sr83-cinematic #rhToolsTrigger,body.sr83-cinematic .sr86-location-btn { display:none!important; }
 }
 #sr50MapTab #statusBtn.mf-good .status-dot,#sr50MapTab #statusBtn.ok .status-dot { background:#6fae86!important; box-shadow:0 0 0 3px #6fae8620!important; }
@@ -41,3 +45,9 @@
 .sr83-toolbar { display:flex!important; gap:8px!important; }
 .sr83-toolbar .sr83-replay,.sr83-toolbar .sr83-back { min-width:44px!important; min-height:44px!important; }
 @media(prefers-reduced-motion:reduce) { #sr50MapTab .sheet .handle { transition:none!important; } }
+
+/* 9.9.5 Block 1: keep map attribution at the lower edge, away from the vehicle. */
+@media (max-width:749px) {
+  #map .sr83-viewport .maplibregl-ctrl-bottom-right { top:auto!important; bottom:calc(env(safe-area-inset-bottom,0px) + 88px)!important; right:8px!important; left:auto!important; }
+  #map .sr83-viewport .maplibregl-ctrl-attrib { max-width:min(46vw,170px)!important; }
+}

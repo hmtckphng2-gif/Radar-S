@@ -28,7 +28,7 @@ test('dash-only or empty vehicle detail fields show a truthful fallback', () => 
   assert.ok(app.includes('strong.textContent=displayField(value)'));
   assert.ok(app.includes("displayField(v.headsign,'Ziel nicht verfügbar')"));
   assert.ok(app.includes("detail('Gemeldete Verspätung',delayText"));
-  assert.ok(app.includes("delayMinutes===null?'Unbekannt'"));
+  assert.ok(app.includes("info?delayView.label:'Unbekannt'"));
 });
 test('Service Worker cache matches app version and live APIs bypass caching', () => {
   assert.ok(sw.includes("const CACHE='radar-shell-v" + version + "-scrollcraft';"));

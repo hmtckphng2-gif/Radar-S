@@ -18,6 +18,17 @@
    return {done,total:rows.length-1,percent:Math.round(done/(rows.length-1)*100),
      next:confirmation.name||'Haltestelle',atStop:!!confirmation.atStop};
   },
+  locationSummary(confirmation,stops={}){
+   const stationTitle=value=>{const raw=String(value??'').trim();if(!raw)return 'Haltestelle';const letters=raw.replace(/[^\p{L}]/gu,'');if(!letters||letters!==letters.toLocaleUpperCase('it-IT'))return raw;return raw.split(/([\s-]+)/u).map(part=>/^[\s-]+$/u.test(part)?part:/^[A-Z0-9]{1,3}$/u.test(part)?part:part.toLocaleLowerCase('it-IT').replace(/^\p{L}/u,c=>c.toLocaleUpperCase('it-IT'))).join('');};
+   const timeLabel=value=>{const n=Number(value);if(!Number.isFinite(n))return '';const m=Math.floor(n/60);return String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+(m>=1440?' +1':'');};
+   if(!confirmation)return '';
+   if(confirmation.atStop){
+    const next=confirmation.rows?.[Number(confirmation.index)+1],nextName=next?stationTitle(stops?.[String(next[0])]?.[0]||'Haltestelle'):'';
+    const nextTime=next?timeLabel(next[1]??next[2]):'';
+    return 'Aktuell: am Halt '+stationTitle(confirmation.name)+(nextName?' · nächster Halt '+nextName+(nextTime?' '+nextTime:''):'');
+   }
+   return 'Nächster gemeldeter Halt: '+stationTitle(confirmation.name||'Haltestelle');
+  },
   qualityCounts(vehicles,nowMs=Date.now()){
    const out={current:0,stale:0,unknown:0};
    for(const v of vehicles){if(U.recentPosition(v,nowMs))out.current++;
@@ -118,7 +129,7 @@
   progressEl.hidden=!v;
   if(!v)return;
   progressEl.replaceChildren();
-  const h=make('div','sr47-card-head');h.append(make('strong','', 'Fahrt-Fortschritt'));
+  const h=make('div','sr47-card-head');h.append(make('strong','', 'Fahrtverlauf'));
   h.append(make('small','','Nach bestätigten Halten, nicht nach Kilometern'));
   progressEl.append(h);
   const p=typeof bridge.confirmedStopFor==='function'?bridge.confirmedStopFor(v):null;
@@ -137,8 +148,7 @@
   bar.setAttribute('aria-valuemax','100');bar.setAttribute('aria-valuenow',String(progress.percent));
   const fill=make('div','sr47-progress-fill');fill.style.width=progress.percent+'%';bar.append(fill);
   progressEl.append(bar);
-  progressEl.append(make('p','sr47-progress-next',
-   (progress.atStop?'● Am Halt: ':'→ Nächster gemeldeter Halt: ')+progress.next));
+  progressEl.append(make('p','sr47-progress-next',U.locationSummary(p,bridge.state.details?.[v.source]?.stops)));
  }
  function stationRows(){
   return [...($('stationDepartures')?.querySelectorAll('.radar37-departure')||[])].map(el=>({

@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {VEHICLE_SPECS,vehicleKind,validHeading,modelYawRadians,makeVehicleMesh} from '../public/radar83-model.mjs';
-import {enabled3D,target3DCamera,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta} from '../public/radar83-logic.mjs';
+import {enabled3D,FEATURE_FLAGS,target3DCamera,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta} from '../public/radar83-logic.mjs';
 import {build3DBuildings,enable3DTerrain,make3DVehicleLayer} from '../public/radar83-map.mjs';
 
 const NOW=1760900000000;
-test('explicit switch can return users to intact Leaflet 2D map',()=>{
+test('cinematic 3D is disabled by the project feature flag, even with a URL opt-in',()=>{
+ assert.equal(FEATURE_FLAGS.cinematic3D,false);
  assert.equal(enabled3D('?radar3d=off'),false);
- assert.equal(enabled3D('?radar3d=on'),true);
+ assert.equal(enabled3D('?radar3d=on'),false);
  assert.equal(enabled3D('?language=de'),false);
  assert.equal(enabled3D(''),false);
  assert.equal(MAPLIBRE_VERSION,'4.7.1');

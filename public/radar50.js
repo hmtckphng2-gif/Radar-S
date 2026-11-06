@@ -48,7 +48,7 @@ function ageLabel(seconds){return seconds===null?'Zeit unbekannt':seconds<60?'vo
 function statusText(status){return status==='ok'?'Antwort OK':status==='old'?'Feed veraltet':'Nicht erreichbar'};
 function createNavigation(){
  const nav=el('nav','sr50-bottom-nav');nav.id='sr50BottomNav';nav.setAttribute('aria-label','Hauptnavigation');
- for(const [id,icon,label] of [['map','⌖','Karte'],['departures','▤','Abfahrten'],['stats','▥','Statistik'],['favorites','☆','Favoriten']]){
+ for(const [id,icon,label] of [['map','⌖','Karte'],['departures','▤','Abfahrten'],['stats','↔','Verbindungen'],['favorites','☆','Favoriten']]){
   const b=button('sr50-nav-btn', '',()=>switchTab(id));b.dataset.tab=id;
   b.append(el('span','sr50-icon',icon),el('span','',label));nav.append(b);
  }

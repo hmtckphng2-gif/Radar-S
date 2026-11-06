@@ -126,10 +126,9 @@ export function normalizeModel(object3D,spec,THREE){
 // work and is labelled as schematic.
 export function modelCreditText(credit,isReal,kind='train'){
   const c=isReal?credit:null;
-  if(!c||!c.author||!c.license)return '3D-Modell schematisch · Fahrzeugtyp nicht bestätigt · Position aus dem Datenfeed · Ziehen zum Schwenken';
-  const title=c.title?c.title+' ':'';
-  const reference=kind==='bus'?'Bus-Referenzmodell':'Zug-Referenzmodell';
-  return reference+' (Fahrzeugtyp nicht bestätigt): '+title+'· '+c.author+' · '+c.license+' · Position aus dem Datenfeed · Ziehen zum Schwenken';
+  if(!c||!c.author||!c.license)return '3D-Modell schematisch · '+(kind==='bus'?'Busmodell':'Zugmodell')+' · Fahrzeugtyp nicht bestätigt';
+  const title=c.title?c.title+' · ':'';
+  return title+'© '+c.author+' · '+c.license;
 }
 
 // Load a real model. Resolves to null when there is none or when anything

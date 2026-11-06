@@ -16,11 +16,11 @@ test('stop list styles passed, current and upcoming stops with plan time seconda
  assert.match(app,/expectedStopTime\(plannedSeconds,event\)/);
  assert.match(app,/stop-plan-time/);
 });
-test('feed and timetable next stops are source-labelled and duplicate same-stop claims are suppressed',()=>{
- const feed=read('radar37.js'),schedule=read('radar56.js');
- assert.match(feed,/Nächster Halt laut Feed/);
- assert.match(schedule,/Laut Fahrplan als Nächstes/);
- assert.match(schedule,/sameStationName\(feedName,name\)/);
+test('confirmed current and next stop are combined and the timetable duplicate is suppressed',()=>{
+ const feed=read('radar37.js'),progress=read('radar47.js'),schedule=read('radar56.js');
+ assert.match(feed,/Fahrtstatus/);
+ assert.match(progress,/Aktuell: am Halt/);
+ assert.match(schedule,/!document.querySelector\('.sr47-progress-next'\)/);
 });
 test('raw trip IDs are not displayed in 3D metadata',()=>{
  const logic=read('radar83-logic.mjs');

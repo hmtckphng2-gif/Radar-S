@@ -7,7 +7,7 @@ test('station names use normal case without changing accents or hyphens',()=>{
  assert.equal(sameStationName("MAGRÈ'-CORTACCIA",'Magrè-Cortaccia'),true);
 });
 test('data sources use German labels',()=>{
- assert.equal(sourceLabel('trains'),'Zugdaten');
+ assert.equal(sourceLabel('trains'),'Zug');
  assert.equal(sourceLabel('sta_direct'),'STA direkt');
  assert.equal(sourceLabel('trentino'),'Trentino Trasporti');
 });

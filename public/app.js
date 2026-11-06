@@ -4,17 +4,17 @@ import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.9.5
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.9.5';
 import {enrichTrainPlatform} from './train-platforms.js?v=9.9.5';
 import {
-  SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
+  SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, delayPresentation,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
   vehicleDelayInfo, bufferedAlong, departureDelay, isLiveUpdate, normalizeStopId
-} from './core.js?v=9.9.5';
+} from './core.js?v=9.9.5&rev=delay-copy-2';
 import {playbackLag} from './radar45-logic.mjs?v=9.9.5';
 import {trainReplayDuration} from './radar705-motion.mjs?v=9.9.5';
 import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.9.5';
 import {trainScheduledPosition,buildDepartureRows,romeSeconds} from './radar51-logic.mjs?v=9.9.5';
 import {mergeStationDepartures} from './radar53-logic.mjs?v=9.9.5';
 import {groupNearbyStops,nextNearbyDepartures} from './radar93-nearby.mjs?v=9.9.5';
-import {formatStationName,formatRelativeAge,sourceLabel,expectedStopTime,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=details-1';
+import {formatStationName,formatRelativeAge,sourceLabel,expectedStopTime,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=station-labels-2';
 import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.5';
 import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.9.5';
 
@@ -893,9 +893,9 @@ function drawVehicleDetails(key,fetchSchedule){
   detail('Status',cancelled?'Fahrt entfällt':update?'Echtzeitdaten vorhanden':'Keine Echtzeitdaten zur Fahrt');
   const info=currentVehicleDelay(v);
   // Fehlende Verspätungsdaten bleiben ausdrücklich unbekannt.
-  const delayMinutes=info?Math.round(info.delay/60):null;
-  const delayCls=delayMinutes===null?'delay-none':delayMinutes>=15?'delay-severe':delayMinutes>=1?'delay-warn':'delay-ok';
-  const delayText=cancelled?'Entfällt':delayMinutes===null?'Unbekannt':delayMinutes>0?'+'+delayMinutes+' Min.':delayMinutes<0?Math.abs(delayMinutes)+' Min. früher':'Pünktlich';
+  const delayView=delayPresentation(info?.delay??null);
+  const delayCls=delayView.className;
+  const delayText=cancelled?'Entfällt':info?delayView.label:'Unbekannt';
   detail('Gemeldete Verspätung',delayText+(info?(info.basis==='fahrt'?' · ganze Fahrt':/^(STOPPED_AT|1)$/i.test(v.currentStatus)?' · am Halt':' · nächster Halt'):''),delayCls);
    detail('Fahrtziel',formatStationName(v.headsign));
   if(v.plannedComposition?.confidence==='planned'){
@@ -932,9 +932,8 @@ function drawVehicleDetails(key,fetchSchedule){
       const btn=B('badge line-item',lv.name,()=>{selectVehicle(lv.key);});
       btn.title=lv.headsign||'Ziel unbekannt';
       const delay=currentVehicleDelay(lv);
-      const delayMinutes=delay?Math.round(delay.delay/60):null;
-      const dCls=delayMinutes===null?'delay-none':delayMinutes>=15?'delay-severe':delayMinutes>=1?'delay-warn':'delay-ok';
-      btn.append(E('small',formatDelay(delay?.delay||0)+(delay?.basis==='fahrt'?'·Fahrt':''),dCls));
+      const delayView=delayPresentation(delay?.delay??null);
+      btn.append(E('small',(delay?delayView.label:'Keine Daten')+(delay?.basis==='fahrt'?' · Fahrt':''),delayView.className));
       list.append(btn);
     }
     sec.append(list);
@@ -978,7 +977,7 @@ function renderStops(v,details){
     const plannedSeconds=useDeparture?timing?.[2]:timing?.[1];
     const d=event?.delay;
     const skipped=/^(?:SKIPPED|1)$/i.test(txt(upd?.scheduleRelationship??upd?.schedule_relationship));
-    const info=document.createElement('small');info.textContent=skipped?'Laut Echtzeitmeldung ausgelassen':d!=null&&Number.isFinite(Number(d))?'Echtzeit: '+formatDelay(Number(d)):'Nur Fahrplan';left.append(info);
+    const info=document.createElement('small');info.textContent=skipped?'Laut Echtzeitmeldung ausgelassen':d!=null&&Number.isFinite(Number(d))?'Echtzeit: '+delayPresentation(Number(d)).label:'Nur Fahrplan';left.append(info);
     const time=document.createElement('div');time.className='stop-time';
     const expected=document.createElement('strong');expected.textContent=skipped?'Ausgelassen':expectedStopTime(plannedSeconds,event)||'Unbekannt';
     const planned=document.createElement('small');planned.className='stop-plan-time';planned.textContent='Plan '+(useDeparture?row.departure:row.arrival);

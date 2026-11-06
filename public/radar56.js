@@ -1,6 +1,6 @@
 /* Südtirol Radar 5.6 — additive intelligence, mobile UI, no map renderer changes.
    All "live" labels require fresh matching GTFS-RT. No fabricated GPS or delay. */
-import {freshUpdate,stopDelay,tripCancelled,findConnections,feedQuality,spatialWarning,journeyProgress,aggregateHistory,readableTime} from './radar56-logic.mjs?v=9.9.5';
+import {freshUpdate,stopDelay,tripCancelled,findConnections,feedQuality,spatialWarning,journeyProgress,aggregateHistory,readableTime} from './radar56-logic.mjs?v=9.9.5&rev=position-language-2';
 import {romeDay,romeSeconds,findStations,nearbyStationGroup,buildDepartureRows,dateGTFSValid,trainScheduledPosition} from './radar51-logic.mjs?v=9.9.5';
 import {displayDelay} from './radar53-logic.mjs?v=9.9.5';
 import {isRailRoute,feedAgeSeconds} from './core.js?v=9.9.5';
@@ -36,7 +36,7 @@ function openPanel(title,description=''){
 function closePanel(){if(overlay){overlay.hidden=true;overlayBody?.replaceChildren()}}
 function closeMoreMenu(){const menu=$('sr53ActionMenu');if(menu)menu.hidden=true;const more=$('sr53More');more?.setAttribute('aria-expanded','false')}
 function isVisible(){return $('sheet')?.classList.contains('open')&&selected()}
-function delayLabel(min){return min===null?'Zeit unbekannt':min===0?'0 Min.':(min>0?'+':'')+min+' Min.'}
+function delayLabel(min){return min===null?'Zeit unbekannt':min===0?'pünktlich':min>0?min+' Min. verspätet':Math.abs(min)+' Min. früher'}
 function positionQuality(){
  const v=selected(),box=qualityCard;if(!box)return;
  box.hidden=!v;if(!v)return;
@@ -44,7 +44,7 @@ function positionQuality(){
  const top=mk('div','sr56-line');
  top.append(mk('span','sr56-quality-label',q.label),mk('strong','sr56-quality-age',formatRelativeAge(q.age)));
  box.append(top);
- const note=mk('p','sr56-note',q.detail+(v.kind==='train'?' · Zugposition kann modelliert sein':'')+' · '+sourceLabel(v.source));
+ const note=mk('p','sr56-note',q.detail+' · '+sourceLabel(v.source));
  box.append(note);
 }
 function ensureUI(){
@@ -76,18 +76,14 @@ function journey(){
  const times=s.details[v.source].times[v.tripId];
  const progress=journeyProgress(times,romeSeconds());if(!progress)return;
  journeyCard.hidden=false;
- const heading=mk('div','sr56-line');heading.append(mk('strong','','Fahrtenübersicht'),mk('span','sr56-kicker','Fahrplanfortschritt'));journeyCard.append(heading);
+ const heading=mk('div','sr56-line');heading.append(mk('strong','','Fahrtverlauf'));journeyCard.append(heading);
  const ratio=progress.total?Math.max(0,Math.min(100,progress.plannedPassed/Math.max(1,progress.total-1)*100)):0;
  const track=mk('div','sr56-progress');const fill=mk('div','sr56-progress-fill');fill.style.width=ratio+'%';track.append(fill);journeyCard.append(track);
  const next=progress.next;
-  const name=next?formatStationName(s.details[v.source].stops?.[String(next[0])]?.[0]||'Unbekannt'):'Fahrplanende';
-  const feedName=v.currentStopId?formatStationName(s.details[v.source].stops?.[String(v.currentStopId)]?.[0]||'') : '';
-  const atStop=/^(STOPPED_AT|1)$/i.test(String(v.currentStatus||''));
-  if(next){
-   if(feedName&&!atStop&&sameStationName(feedName,name))journeyCard.append(mk('p','sr56-note','Planzeit am gleichen Halt: '+txtTime(next[1]??next[2])));
-   else journeyCard.append(mk('p','sr56-note',(feedName?'Laut Fahrplan als Nächstes: ':'Nächster Halt laut Fahrplan: ')+name+' · '+txtTime(next[1]??next[2])));
-  }else journeyCard.append(mk('p','sr56-note','Alle Halte laut Fahrplan erreicht'));
-  journeyCard.append(mk('p','sr56-note',progress.plannedPassed+'/'+progress.total+' Halte laut Fahrplan erreicht'));
+ const name=next?formatStationName(s.details[v.source].stops?.[String(next[0])]?.[0]||'Unbekannt'):'Fahrplanende';
+ if(next&&!document.querySelector('.sr47-progress-next'))journeyCard.append(mk('p','sr56-note','Nächster Halt laut Fahrplan: '+name+' · '+txtTime(next[1]??next[2])));
+ else if(!next)journeyCard.append(mk('p','sr56-note','Alle Halte laut Fahrplan erreicht'));
+ journeyCard.append(mk('p','sr56-note',progress.plannedPassed+' von '+progress.total+' Halten laut Fahrplan erreicht'));
 }
 function queueUI(){
  if(scheduled||document.hidden)return;scheduled=requestAnimationFrame(()=>{scheduled=0;const key=selected()?.key;if(!isVisible()){if(card)card.hidden=true;if(qualityCard)qualityCard.hidden=true;if(journeyCard)journeyCard.hidden=true;return}ensureUI();selectedKey=key;positionQuality();positionComparison();journey()});
@@ -123,7 +119,7 @@ async function stationPro(){
  for(const r of valid.slice(0,8)){
   const when=(r.forecast??r.sec),label=r.number+' · '+r.headsign;
   const platform=r.platform?.current?(' · '+(r.kind==='train'?'Gleis ':'Steig ')+r.platform.current+(r.platform.live?' gemeldet':' laut Plan')):' · Steig/Gleis nicht verfügbar';
-  const detail=r.cancelled?'Ausfall gemeldet':r.delaySec===null?'Nur Fahrplan':(r.delaySec>0?'+':'')+Math.round(r.delaySec/60)+' Min. gemeldet';
+  const minutes=r.delaySec===null?null:Math.round(r.delaySec/60);const detail=r.cancelled?'Ausfall gemeldet':minutes===null?'Nur Fahrplan':minutes>0?minutes+' Min. verspätet':minutes<0?Math.abs(minutes)+' Min. früher':'pünktlich';
   overlayBody.append(createRailRow(label,detail+platform,readableTime(when)));
  }
  if(!valid.length)overlayBody.append(mk('p','sr56-note','Keine verifizierbaren kommenden Abfahrten aus dem aktuellen GTFS-Import.'));
