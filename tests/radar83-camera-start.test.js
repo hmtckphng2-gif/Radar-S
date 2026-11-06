@@ -70,9 +70,11 @@ test('the flight still ends on the vehicle', () => {
   assert.deepEqual(end.center, [p.lng, p.lat]);
   assert.equal(end.zoom, 19);
   assert.equal(end.pitch, 54);
-  assert.equal(end.bearing, 90);
+  assert.equal(end.bearing, 148);
   assert.ok(start.zoom < end.zoom);
   assert.ok(start.pitch > end.pitch, 'the camera descends to the train');
+  assert.notEqual(start.bearing, end.bearing, 'the camera rotates during the approach');
+  assert.ok(start.zoom > 15, 'the approach starts closer than the wide establishing shot');
 });
 
 test('the 3D camera respects prefers-reduced-motion', () => {

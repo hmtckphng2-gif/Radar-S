@@ -39,8 +39,8 @@ export function target3DCamera(point,zoom,heading=null,duration=4300){
   center:[lng,lat],
   zoom:Math.max(18.6,Math.min(20.4,Number(zoom)||19.0)),
   pitch:54,
-  // Rear-follow: camera bearing tracks the vehicle's actual travel heading.
-  bearing:Number.isFinite(heading)?((heading%360)+360)%360:0,
+   // Finish with the familiar cinematic rear-quarter view.
+   bearing:Number.isFinite(heading)?((heading+58)%360+360)%360:58,
   duration:Math.max(0,Math.min(8000,Number(duration)||0))
  };
 }
@@ -56,13 +56,13 @@ export function start3DCamera(point, heading=null, finalZoom=17){
  if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -85||lat > 85)return null;
  const finalBearing=Number.isFinite(heading)?((heading%360)+360)%360:0;
  const direction=finalBearing*Math.PI/180;
- const meters=1150,latOffset=meters/111320;
+ const meters=600,latOffset=meters/111320;
  const lngOffset=latOffset/Math.max(.2,Math.cos(lat*Math.PI/180));
  return {
   center:[lng-Math.sin(direction)*lngOffset,lat-Math.cos(direction)*latOffset],
-  zoom:Math.max(11.5,Math.min(15.5,Number(finalZoom)-4.0)),
-  pitch:64,
-  bearing:finalBearing
+   zoom:Math.max(13.2,Math.min(16.8,Number(finalZoom)-2.7)),
+   pitch:66,
+   bearing:(finalBearing+232)%360
  };
 }
 // DEM tiles consume substantial GPU memory on mobile Safari. The real pitched
