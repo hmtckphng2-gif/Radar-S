@@ -223,10 +223,15 @@ function renderLinesPanel(){
     const status=document.createElement('div');
     status.className='line-status '+l.status;
     status.textContent=l.status==='ok'?t('lines.onTimeShort'):l.status==='delayed'?t('lines.delayedBy'):l.status==='disturbed'?t('lines.status.disturbed'):t('lines.status.unknown');
+    const favorite=document.createElement('button');
+    favorite.type='button';favorite.className='sr88-line-favorite'+(isLineFavorite(l.source+':'+l.routeId)?' active':'');
+    favorite.textContent=isLineFavorite(l.source+':'+l.routeId)?'★':'☆';
+    favorite.setAttribute('aria-label',isLineFavorite(l.source+':'+l.routeId)?'Linien-Favorit entfernen':'Linie zu Favoriten hinzufügen');
+    favorite.title=favorite.getAttribute('aria-label');
+    favorite.onclick=(e)=>{e.stopPropagation();toggleLineFavorite(l.source+':'+l.routeId);refreshMarkers();renderLinesPanel();};
     const chevron=document.createElement('div');
-    chevron.className='line-chevron';
-    chevron.textContent='›';
-    item.append(name,info,status,chevron);
+    chevron.className='line-chevron';chevron.textContent='›';
+    item.append(name,info,status,favorite,chevron);
     item.onclick=()=>{highlightLine(l.routeId);$('linesPanel').hidden=true;};
     body.appendChild(item);
   }
@@ -492,7 +497,7 @@ function initMap(){
   state.trackLayer=L.layerGroup().addTo(map);
   L.control.zoom({position:'bottomleft'}).addTo(map);
   map.on('moveend',()=>{
-    updateViewportBadge();
+    updateViewportBadge();updateMapEmptyState();
     clearTimeout(state.shapeViewportTimer);
     state.shapeViewportTimer=setTimeout(()=>loadBusShapesForVehicles().catch(console.warn),650);
   });
@@ -679,6 +684,24 @@ function updateBusMotion(key,entry,target,v){
   previous.samples=previous.samples.slice(-5);
   requestMotionFrame();
 }
+function updateMapEmptyState(){
+  const panel=$('sr88MapState');if(!panel)return;
+  const title=$('sr88MapStateTitle'),message=$('sr88MapStateText'),action=$('sr88MapStateAction');
+  const keys=state.fusion?.keys||selectRepresentatives(state.vehicles.values(),state.selectedKey).keys;
+  const candidates=[...state.vehicles.values()].filter(v=>keys.has(v.key));
+  const filtered=candidates.filter(visible);
+  const bounds=state.map?.getBounds?.();
+  const inView=filtered.filter(v=>!bounds||bounds.contains([v.lat,v.lon]));
+  if(inView.length){panel.hidden=true;return;}
+  panel.hidden=false;let mode='refresh';
+  if(candidates.length&&filtered.length===0){title.textContent='Keine Fahrzeuge für diesen Filter';message.textContent='Ändere den Filter oder setze die Suche zurück.';action.textContent='Filter zurücksetzen';mode='filters';}
+  else if(filtered.length&&bounds&&inView.length===0){title.textContent='Keine Fahrzeuge in diesem Ausschnitt';message.textContent='Im restlichen Gebiet können weiterhin Fahrzeuge unterwegs sein.';action.textContent='Alle Fahrzeuge zeigen';mode='fit';}
+  else if(!candidates.length&&state.busy){title.textContent='Live-Daten werden geladen';message.textContent='Die Positionsfeeds werden gerade geprüft.';action.textContent='Bitte warten';mode='loading';}
+  else if(!candidates.length&&POSITION_SOURCES.every(s=>state.statuses[s]!=='ok'&&state.statuses[s]!=='old')){title.textContent='Live-Feed gerade nicht erreichbar';message.textContent='Es liegen momentan keine verlässlichen Live-Positionen vor.';action.textContent='Erneut versuchen';mode='refresh';}
+  else{title.textContent='Noch keine Live-Fahrzeuge verfügbar';message.textContent='Die Karte zeigt neue Positionen, sobald ein Feed sie liefert.';action.textContent='Daten aktualisieren';mode='refresh';}
+  action.disabled=mode==='loading';
+  action.onclick=()=>{if(mode==='filters'){$('search').value='';state.query='';setFilter('all');renderSearchResults();}else if(mode==='fit')fitMap();else refreshFeeds();};
+}
 function refreshMarkers(){
   if(!state.map)return;
   const fusion=selectRepresentatives(state.vehicles.values(),state.selectedKey);state.fusion={sources:fusion.sources,keys:fusion.keys,duplicates:fusion.duplicates};
@@ -731,6 +754,7 @@ function refreshMarkers(){
   for(const [key,entry] of state.markers)if(!active.has(key)){
     stopJob(key);state.busTracks.delete(key);state.layer.removeLayer(entry.marker);state.markers.delete(key);
   }
+  updateMapEmptyState();
 }
 function displayStats(){
   const keys=state.fusion?.keys||selectRepresentatives(state.vehicles.values(),state.selectedKey).keys;
@@ -795,7 +819,7 @@ async function refreshFeeds(){
   }catch(e){
     console.error('Unexpected refresh error',e);
     $('statusText').textContent=t('status.error');$('statusBtn').classList.add('error');
-  }finally{state.busy=false;}
+  }finally{state.busy=false;updateMapEmptyState();}
 }
 function setFilter(which){state.filter=which;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter===which));refreshMarkers();refreshScheduleMatches();updateViewportBadge();}
 function openSheet(which){
