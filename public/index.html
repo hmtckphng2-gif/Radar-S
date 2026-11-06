@@ -51,7 +51,7 @@
 <link rel="stylesheet" href="/radar601.css?v=9.9.5">
 <link rel="stylesheet" href="/radar10-startup.css?v=9.9.5">
 <link rel="stylesheet" href="/radar10-map-first.css?v=9.9.5&rev=mapfirst">
-  <link rel="stylesheet" href="/radar89-mobile-sheet-fix.css?v=9.9.5">
+  <link rel="stylesheet" href="/radar89-mobile-sheet-fix.css?v=9.9.5&fix=station-structure-2">
 </head>
 <body>
 <div id="sr10Startup" class="sr10-startup" role="status" aria-live="polite" aria-label="Südtirol Radar wird gestartet">
@@ -164,7 +164,7 @@
   <div class="scrim" id="scrim"></div>
   <section id="sheet" class="sheet" tabindex="-1" aria-labelledby="sheetTitle" role="dialog" aria-modal="false" aria-hidden="true">
     <div class="handle"></div>
-    <div class="sheet-heading"><div class="sheet-heading-main"><div id="sheetKind" class="eyebrow" data-t="detail.train">Fahrtinformation</div><h2 id="sheetTitle" class="sheet-title">–</h2><div id="sheetSub" class="sheet-subtitle">–</div></div><button id="closeSheet" class="close" data-t="misc.close" aria-label="Details schließen" data-t-aria-label="sheet.close">✕</button></div>
+    <div class="sheet-heading"><div class="sheet-heading-main"><div id="sheetKind" class="eyebrow" data-t="detail.train">Fahrtinformation</div><h2 id="sheetTitle" class="sheet-title">–</h2><div id="sheetSub" class="sheet-subtitle">–</div></div><button id="closeSheet" class="close" data-t="misc.close" aria-label="Details schließen" data-t-aria-label="sheet.close">×</button></div>
     <div class="sheet-scroll" tabindex="0" aria-label="Fahrzeugdetails scrollen" data-t-aria-label="sheet.scroll">
     <div class="badge-row" id="sheetBadges"></div>
     <div class="model-card" id="modelCard" hidden><img id="modelImage" alt="Baureihenfoto" loading="lazy" referrerpolicy="no-referrer" data-t-aria-label="detail.modelImage"><div class="model-text"><strong id="modelTitle"></strong><small id="modelCaption"></small></div></div>
@@ -175,9 +175,9 @@
     </div>
   </section>
   <section id="stationSheet" class="sheet" aria-hidden="true" aria-label="Haltestellensuche" role="dialog" aria-modal="false" data-t-aria-label="stationSheet.aria">
-    <div class="handle"></div><div class="sheet-heading"><div class="sheet-heading-main"><div class="eyebrow" data-t="station.title">Fahrplan-Suche</div><h2 class="sheet-title" data-t="station.title">Haltestellen</h2><div class="sheet-subtitle" data-t="station.subtitle">GTFS-Fahrplandaten, keine amtliche RFI-Anzeigetafel</div></div><button id="closeStations" class="close" data-t="misc.close" aria-label="Haltestellensuche schließen" data-t-aria-label="stationSheet.close">✕</button></div>
+    <div class="handle"></div><div class="sheet-heading"><div class="sheet-heading-main"><div class="eyebrow" data-t="station.title">Fahrplan-Suche</div><h2 class="sheet-title" data-t="station.title">Haltestellen</h2><div class="sheet-subtitle" data-t="station.subtitle">GTFS-Fahrplandaten, keine amtliche RFI-Anzeigetafel</div></div><button id="closeStations" class="close" aria-label="Haltestellensuche schließen" data-t-aria-label="stationSheet.close">✕</button></div>
     <div class="sheet-scroll" tabindex="0" aria-label="Haltestellenliste scrollen" data-t-aria-label="stationSheet.scroll">
-    <div class="search-wrap" style="margin:14px 0"><span>⌕</span><input id="stationSearch" type="search" data-t-placeholder="station.search" placeholder="Bahnhof oder Haltestelle suchen" aria-label="Haltestelle suchen" data-t-aria-label="station.search">
+    <div id="stationSearchWrap" class="search-wrap" style="margin:14px 0"><span>⌕</span><input id="stationSearch" type="search" data-t-placeholder="station.search" placeholder="Bahnhof oder Haltestelle suchen" aria-label="Haltestelle suchen" data-t-aria-label="station.search">
     <div class="station-results" id="stationResults"></div>
     <div id="stationBoard" hidden><div class="section-title" id="stationName" data-t="board.title">Abfahrten</div><div class="section-sub" data-t="board.subtitle">Geplante Zeiten aus GTFS, nicht mit RFI abgeglichen</div><div class="station-results" id="stationDepartures" style="margin-top:10px"></div><button id="backStations" class="chip" style="margin-top:12px" data-t="misc.back">← Andere Haltestelle</button></div>
     </div>
@@ -193,7 +193,7 @@
 <script type="module" src="/radar43.js?v=9.9.5"></script>
 <script type="module" src="/radar44.js?v=9.9.5"></script>
 <script type="module" src="/radar45.js?v=9.9.5"></script>
-<script type="module" src="/app.js?v=9.9.5"></script>
+<script type="module" src="/app.js?v=9.9.5&fix=station-structure-2"></script>
 <script src="/radar46.js?v=9.9.5" defer></script>
 <script src="/radar47.js?v=9.9.5" defer></script>
 <script type="module" src="/radar50.js?v=9.9.5"></script>
