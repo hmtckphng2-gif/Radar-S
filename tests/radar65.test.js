@@ -11,7 +11,7 @@ test('STA fleet match rejects different coordinates',()=>assert.equal(samePhysic
 test('STA fleet match rejects different timestamps',()=>assert.equal(samePhysicalTrip(a,{...b,timestamp:stamp-50}),false));
 test('source identity does not merge Trentino with STA fleet numbers',()=>assert.equal(samePhysicalTrip(a,{...b,source:'trentino'}),false));
 test('official verified bus label wins within genuinely duplicate source observations',()=>{const v=selectRepresentatives([a,b]);assert.deepEqual([...v.keys],[b.key]);assert.equal(v.duplicates,1)});
-test('fresh rail position gets bounded smooth animation',()=>assert.equal(motionDuration({kind:'train',timestamp:stamp},null,now),2400));
+test('fresh rail position gets bounded smooth animation',()=>assert.equal(motionDuration({kind:'train',timestamp:stamp},null,now),200));
 test('stale rail position stays still',()=>assert.equal(motionDuration({kind:'train',timestamp:stamp,stale:true},null,now),0));
-test('road observation gets smooth transition only if fresh',()=>{assert.equal(motionDuration({kind:'bus',timestamp:stamp},null,now),900);assert.equal(motionDuration({kind:'bus',timestamp:stamp-400},null,now),0)});
+test('road observation gets smooth transition only if fresh',()=>{assert.equal(motionDuration({kind:'bus',timestamp:stamp},null,now),200);assert.equal(motionDuration({kind:'bus',timestamp:stamp-400},null,now),0)});
 test('feed-position quality never labels GPS independently verified',()=>{assert.equal(observationQuality(b,now).gpsVerified,false)});
