@@ -1,0 +1,37 @@
+/* Südtirol Radar — graphite / silver final polish (preview only) */
+:root {
+  --blue: #b9c5d2;
+  --good: #9eabb8;
+  --edge: rgba(190, 202, 216, .20);
+  --glass: rgba(13, 17, 23, .94);
+  --panel: #171d25;
+  --panel2: #202833;
+  --text: #f1f4f7;
+  --muted: #a0aab6;
+}
+:root[data-theme=light] {
+  --blue: #586879;
+  --good: #687b8c;
+  --edge: rgba(65, 78, 94, .18);
+}
+:where(button, .iconbtn, .tab, .nav-item, .chip, .filter-chip):focus-visible {
+  outline: 2px solid #c5d0dc !important;
+  outline-offset: 3px;
+}
+:where(.topbar, .panel, .sheet, .bottom-nav, .station-panel, .vehicle-panel) {
+  border-color: var(--edge);
+}
+:where(.topbar, .panel, .sheet, .bottom-nav) {
+  -webkit-backdrop-filter: blur(22px) saturate(125%);
+  backdrop-filter: blur(22px) saturate(125%);
+}
+:where(.brand-title em, .active, .is-active, [aria-current=page]) {
+  color: #d1dae4;
+}
+:where(.brand-badge, .primary, .btn-primary, .active-tab) {
+  background-image: linear-gradient(145deg, #657383, #35414e) !important;
+  box-shadow: 0 5px 18px rgba(0,0,0,.24);
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
