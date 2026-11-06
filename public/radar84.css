@@ -158,7 +158,7 @@
 
 /* 8.8 - a departure that comes from a fresh GTFS-RT update is marked as live
    and shows the reported delay. The plan stays unmarked. */
-.sr50-deps .station-result small.sr-dep-live{color:#7fd6a8}
+.sr50-deps .station-result small.sr-dep-live{color:#6fae86}
 .sr50-deps .station-result small.sr-dep-live::before{content:'● ';font-size:9px}
 /* 9.4 - Wenn keine Verbindung da ist, wird das klar gesagt, statt still
    alte Positionen zu zeigen. */
@@ -181,7 +181,7 @@
 }
 .feed-health-banner .banner-retry{
   margin-left:10px;padding:4px 10px;border:none;border-radius:8px;
-  background:#7fd6a8;color:#0b1220;font-weight:bold;cursor:pointer
+  background:#6fae86;color:#0b1220;font-weight:bold;cursor:pointer
 }
 @media (max-width:420px){.feed-health-banner{left:8px;right:8px;top:calc(150px + env(safe-area-inset-top,0px));font-size:11px}}
 /* 9.7 - Update-Toast: erscheint, wenn der Service Worker eine neuere
@@ -195,10 +195,10 @@
 }
 .sr-update-toast button{
   margin-left:10px;padding:4px 10px;border:none;border-radius:8px;
-  background:#7fd6a8;color:#0b1220;font-weight:bold;cursor:pointer
+  background:#6fae86;color:#0b1220;font-weight:bold;cursor:pointer
 }
 /* 9.7 - Farbkodierte Verspätungsanzeige im Fahrzeug-Detail */
-.detail.delay-ok   strong{color:#7fd6a8}
+.detail.delay-ok   strong{color:#6fae86}
 .detail.delay-warn strong{color:#ffd166}
 .detail.delay-severe strong{color:#ef476f}
 .detail.delay-none strong{color:var(--radar84-muted)}
@@ -219,8 +219,8 @@
 .health-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--radar84-line)}
 .health-row:last-child{border-bottom:none}
 .health-val{font-weight:600}
-.health-val.ok{color:#7fd6a8}.health-val.warn{color:#ffd166}.health-val.bad{color:#ef476f}
-#healthBtn .status-dot{background:#7fd6a8;box-shadow:0 0 8px rgba(127,214,168,.4)}
+.health-val.ok{color:#6fae86}.health-val.warn{color:#ffd166}.health-val.bad{color:#ef476f}
+#healthBtn .status-dot{background:#6fae86;box-shadow:0 0 8px rgba(111,174,134,.32)}
 /* 9.8 - Favoriten-Panel */
 .fav-panel{
   position:fixed;top:60px;right:10px;width:340px;max-width:92vw;
@@ -241,11 +241,11 @@
 .fav-info .fav-name{font-weight:600;color:#f3f7fc}
 .fav-info .fav-sub{font-size:11px;color:#a4b2c5}
 .fav-info .fav-delay{font-size:11px;margin-top:2px}
-.fav-delay.ok{color:#7fd6a8}.fav-delay.warn{color:#ffd166}.fav-delay.bad{color:#ef476f}
+.fav-delay.ok{color:#6fae86}.fav-delay.warn{color:#ffd166}.fav-delay.bad{color:#ef476f}
 .fav-remove{background:none;border:1px solid var(--radar84-line);color:#a4b2c5;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer}
 .fav-remove:hover{background:#ef476f;color:#fff;border-color:#ef476f}
 #favBtnTop .status-dot{background:#ffd166;box-shadow:0 0 8px rgba(255,209,102,.4)}
-#favBtnTop .status-dot.fav-active{background:#7fd6a8}
+#favBtnTop .status-dot.fav-active{background:#6fae86}
 /* 9.8 - Störungs-Ticker */
 .alert-ticker{
   position:fixed;top:190px;left:10px;right:10px;z-index:1002;
@@ -259,7 +259,7 @@
 .alert-sev{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:bold;margin-right:4px}
 .alert-sev-high{background:#ef476f;color:#fff}
 .alert-sev-medium{background:#ffd166;color:#0b1220}
-.alert-sev-low{background:#7fd6a8;color:#0b1220}
+.alert-sev-low{background:#6fae86;color:#0b1220}
 .alert-age{font-size:9px;opacity:.6;margin-left:4px}
 .fav-badge{background:#ffd700!important;color:#000!important;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:bold;border:none}
 .badge.fav-badge{background:#ffd700!important;color:#000!important;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:bold;border:none}
@@ -274,7 +274,7 @@
   background:var(--radar84-glass);font-size:12px;cursor:pointer;transition:background 0.2s;
 }
 .line-item:hover{background:rgba(120,184,255,.15)}
-.line-item .delay-ok{color:#7fd6a8;font-weight:bold}
+.line-item .delay-ok{color:#6fae86;font-weight:bold}
 .line-item .delay-warn{color:#ffd166;font-weight:bold}
 .line-item .delay-severe{color:#ef476f;font-weight:bold}
 /* 9.7 - Live-Suche: Trefferliste unter dem Suchfeld. Klick springt zum Fahrzeug. */
@@ -293,7 +293,7 @@
 }
 #searchResults .search-hit:last-child{border-bottom:none}
 #searchResults .search-hit:hover{background:rgba(120,184,255,.15)}
-#searchResults .search-hit strong{color:#7fd6a8}
+#searchResults .search-hit strong{color:#6fae86}
 #searchResults .search-hit small{color:var(--radar84-muted)}
 #searchResults .search-hit .kind{font-size:10px;text-transform:uppercase;opacity:.7}
 /* 9.8 - Fahrzeug-Trajektur: rote Linie auf der Karte zeigt die letzte Fahrspur */
@@ -319,7 +319,7 @@
   min-width:24px;height:20px;padding:0 6px;border-radius:10px;
   font-size:11px;font-weight:bold;letter-spacing:0.05em;
 }
-.platform-chip.live{background:#7fd6a8;color:#0b1220}
+.platform-chip.live{background:#6fae86;color:#0b1220}
 .platform-chip.plan{background:rgba(120,184,255,.2);color:#9fc5ff}
 .station-result small{display:flex;align-items:center;gap:6px}
 /* 9.8 - Geschwindigkeit auf Markern (ab Zoom 13) */
@@ -354,18 +354,18 @@
 .lines-item .line-name{font-weight:600;color:#f3f7fc}
 .lines-item .line-info{font-size:11px;color:#a4b2c5}
 .lines-item .line-status{font-size:10px;font-weight:bold;padding:2px 6px;border-radius:10px;text-transform:uppercase}
-.lines-item .line-status.ok{background:rgba(127,214,168,.2);color:#7fd6a8}
+.lines-item .line-status.ok{background:rgba(111,174,134,.18);color:#6fae86}
 .lines-item .line-status.delayed{background:rgba(255,209,102,.2);color:#ffd166}
 .lines-item .line-status.disturbed{background:rgba(239,71,111,.2);color:#ef476f}
 .lines-item .line-status.unknown{background:rgba(164,181,197,.2);color:#a4b2c5}
 .lines-item .line-chevron{color:#a4b2c5;font-size:10px}
 .lines-item.line-highlight{background:rgba(127,214,168,.15)!important}
-.lines-item.line-highlight .line-name{color:#7fd6a8}
-.marker-line-highlight{filter:drop-shadow(0 0 6px #7fd6a8)!important;outline:2px solid #7fd6a8;outline-offset:2px}
+.lines-item.line-highlight .line-name{color:#6fae86}
+.marker-line-highlight{filter:drop-shadow(0 0 6px #6fae86)!important;outline:2px solid #6fae86;outline-offset:2px}
 .alert-item{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;font-size:12px;padding:6px 8px;border-bottom:1px solid var(--radar84-line)}
 .alert-item:last-child{border-bottom:none}
 .alert-chip{display:inline-block;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap}
-.alert-sev-low{background:rgba(127,214,168,.2);color:#7fd6a8}
+.alert-sev-low{background:rgba(111,174,134,.18);color:#6fae86}
 .alert-sev-medium{background:rgba(255,209,102,.2);color:#ffd166}
 .alert-sev-high{background:rgba(239,71,111,.2);color:#ef476f}
 .alert-close-all{

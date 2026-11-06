@@ -41,7 +41,7 @@ function refresh(){
   if(approx){approx.textContent=min===null?'Zeitverspätung: keine bestätigte Meldung':`${delayPill(min)} gemeldet`;
    approx.className='sr53-approx '+(min===null?'missing':'known');
    approx.title='Nicht aus den Kilometern berechnet. Diese Zahl stammt aus einer passenden Echtzeitmeldung.'}
-  const labels=cmp.querySelector('.sr51-cmp-line');if(labels)labels.textContent='● Feedposition     ● Soll laut Fahrplan (Modell)';
+  const labels=cmp.querySelector('.sr51-cmp-line');if(labels&&!labels.querySelector('.sr51-legend-feed'))labels.textContent='Feedposition · Soll laut Fahrplan (Modell)';
  }
 }
 function queueRefresh(){clearTimeout(refreshTimer);refreshTimer=setTimeout(refresh,140)}

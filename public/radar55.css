@@ -39,7 +39,7 @@ body.sr55-ready .sr50-icon{font-size:19px!important}
 body.sr55-ready #sr50DeparturesView .sr50-card{padding:10px!important}
 body.sr55-ready .sr51-departure-row{padding:8px 1px!important}
 .sr55-action{display:inline-flex;align-items:center;justify-content:center;min-height:36px;gap:6px;background:#193856;border:1px solid #41648b;border-radius:10px;color:#dbecff;font:650 11px Inter,system-ui;padding:6px 9px}
-.sr55-action[aria-pressed=true]{background:#145a59;border-color:#36ac9c;color:#bcfff4}
+.sr55-action[aria-pressed=true]{background:#29343e;border-color:#c4ccd5;color:#d6dde4}
 .sr55-action:disabled{opacity:.5}
 .sr55-tools{display:flex;gap:6px;flex-wrap:wrap;margin:5px 0}
 .sr55-popover{position:fixed;z-index:12000;inset:auto 10px calc(66px + env(safe-area-inset-bottom)) 10px;max-height:70dvh;overflow:auto;border:1px solid #456483;border-radius:18px;background:#102238;color:#edf4ff;box-shadow:0 15px 55px #000b;padding:15px;font:13px/1.5 Inter,system-ui}

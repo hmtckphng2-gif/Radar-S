@@ -107,7 +107,7 @@
    const p=points[i];
    L.circleMarker([p.lat,p.lon],{
     pane:'sr47-observations',radius:i===points.length-1?4.5:2.7,
-    color:'#74edd4',weight:1.5,opacity:.92,fillColor:'#105f68',fillOpacity:.9,
+    color:'#c4ccd5',weight:1.5,opacity:.92,fillColor:'#35414d',fillOpacity:.9,
     interactive:false
    }).addTo(trailLayer);
   }

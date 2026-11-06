@@ -69,7 +69,7 @@ function progressGraphic(value){
   svg.append(mk('circle',{cx:String(34+f/100*272),cy:'37',r:'9',fill:col,stroke:'#e8f3ff','stroke-width':'2'}));
   svg.append(mk('text',{x:String(34+f/100*272),y:String(y),'text-anchor':'middle',fill:col,'font-size':'11','font-weight':'700'},label));
  };
- marker(planned,20,'#e8bd72','SOLL');marker(actual,67,'#50e6c6','FEED');
+ marker(planned,20,'#d6a75f','SOLL');marker(actual,67,'#c4ccd5','FEED');
  return svg;
 }
 function renderComparison(){
@@ -84,7 +84,9 @@ function renderComparison(){
   return;
  }
  const visual=progressGraphic({vehicle:v,calculated:calc});if(visual)card.append(visual);
- card.append(node('div','sr51-cmp-line','● Grün: gemeldete Feedposition · ● Gold: fahrplanmäßige Soll-Position (Modell)'));
+ const legend=node('div','sr51-cmp-line');
+  legend.append(node('span','sr51-legend-feed','● Feedposition'),node('span','sr51-legend-soll','● Soll laut Fahrplan'));
+  card.append(legend);
  const gap=calc.differenceKm;
  card.append(node('strong','sr51-gap',gap===0?'Positionen nahezu gleich':`Rund ${gap.toLocaleString('de-DE')} km ${calc.relative}`));
  const timing=timetablePositionTiming(calc,v);
@@ -98,7 +100,7 @@ function renderComparison(){
  card.append(node('p','sr51-quiet','Die modellierte Zeitabweichung ersetzt niemals die gemeldete GTFS-RT-Verspätung. Sie setzt vereinfachte gleichmäßige Fahrt zwischen zwei Haltestellen voraus.')); 
  if(!comparisonLayer || !window.L)return;
  const mk=(pos,color,text)=>L.circleMarker([pos.lat,pos.lon],{radius:7,color:'#f0f7ff',weight:2,fillColor:color,fillOpacity:1,interactive:false}).bindTooltip(text,{permanent:true,direction:'top',className:'sr51-map-tooltip'}).addTo(comparisonLayer);
- mk(calc.scheduled,'#e8b668','Soll laut Fahrplan');mk(calc.observed,'#50e6c6','Feedposition');
+ mk(calc.scheduled,'#d6a75f','Soll laut Fahrplan');mk(calc.observed,'#c4ccd5','Feedposition');
 }
 function refresh(){
  if(refreshPending)return;refreshPending=true;
