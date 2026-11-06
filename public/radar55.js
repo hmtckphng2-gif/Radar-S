@@ -1,6 +1,6 @@
 /* Radar 5.5 Mobile Experience: additive enhancement on top of 5.4.
    Source positions and timetable remain the source of truth; no synthetic GPS or delays. */
-import {isRailRoute,formatClock} from './core.js?v=9.9.3';
+import {isRailRoute,formatClock} from './core.js?v=9.9.4';
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);

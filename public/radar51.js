@@ -1,8 +1,8 @@
 /* Südtirol Radar 5.1 — marker delays, train schedule-position comparison and clean map tools.
  * Additive only: original GTFS feeds, MapLibre/Leaflet synchronization and marker movement stay untouched.
  */
-import {busDelayLabel,trainScheduledPosition} from './radar51-logic.mjs?v=9.9.3';
-import {timetablePositionTiming,timeDifferenceLabel} from './radar74-time.mjs?v=9.9.3';
+import {busDelayLabel,trainScheduledPosition} from './radar51-logic.mjs?v=9.9.4';
+import {timetablePositionTiming,timeDifferenceLabel} from './radar74-time.mjs?v=9.9.4';
 (function(){
 'use strict';
 let bridge=null,started=false,comparisonLayer=null,card=null,tools=null,moreBtn=null,noticeExpanded=false,refreshPending=false;

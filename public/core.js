@@ -19,6 +19,26 @@ export function gtfsNumber(label, shortName) {
   if (/^\d{2,6}$/.test(officialShortName)) return 'Zug ' + officialShortName;
   return 'Zugnummer unbekannt';
 }
+// Planned rolling stock from Trenitalia's official 2026 Trentino service programme.
+// These are timetable-level compositions, not proof of the physical unit actually operating.
+const PLANNED_TRAIN_COMPOSITIONS_2026 = Object.freeze({
+  '16039': { type:'FLIRT', composition:'ETR170 · 6 casse' },
+  '16053': { type:'JAZZ', composition:'ETR350 · 6 casse' },
+  '16054': { type:'JAZZ', composition:'ETR350 · 6 casse' },
+  '16062': { type:'FLIRT', composition:'ETR170 · 6 casse' },
+  '16063': { type:'FLIRT', composition:'ETR170 · 6 casse' },
+  '16070': { type:'POP', composition:'ETR204 · 6 casse' },
+  '16071': { type:'JAZZ', composition:'ETR350 · 6 casse' },
+  '16072': { type:'JAZZ', composition:'ETR350 · 6 casse' },
+  '16073': { type:'JAZZ', composition:'ETR350 · 6 casse' }
+});
+export const PLANNED_TRAIN_COMPOSITION_SOURCE = 'Trenitalia · Programma di esercizio Trento 2026';
+export const PLANNED_TRAIN_COMPOSITION_URL = 'https://www.trenitalia.com/content/dam/trenitalia/regionale/trentino/allegati/info-utili/contratto-di-servizio/Trento-programma_d_esercizio_2026.pdf';
+export function plannedTrainComposition(shortName, source, serviceDay) {
+  if (source !== 'trains' || !/^2026-\d{2}-\d{2}$/.test(txt(serviceDay))) return null;
+  const entry = PLANNED_TRAIN_COMPOSITIONS_2026[txt(shortName)];
+  return entry ? { ...entry, confidence:'planned', year:2026, source:PLANNED_TRAIN_COMPOSITION_SOURCE, sourceUrl:PLANNED_TRAIN_COMPOSITION_URL } : null;
+}
 export function tripLookup(staticData, source, tripId, routeId) {
   const db = staticData[source] || {};
   const t = db.trips?.[tripId];
@@ -73,6 +93,7 @@ export function parseVehicles(feed, source, staticData = {}, nowMs = Date.now())
       name, headsign, shapeId:mapped.shapeId, routeShapeId, directionId, routeLongName:mapped.route?.[1] || '',
       lineVerified:!isTrain && Boolean(mappedLine), nameVerified:isTrain && name !== 'Zugnummer unbekannt',
       modelKey:isTrain && name !== 'Zugnummer unbekannt' ? name : '',
+      plannedComposition:isTrain ? plannedTrainComposition(mapped.tripShortName,source,serviceDay) : null,
       bearing:Number.isFinite(Number(p.bearing)) ? Number(p.bearing) : null,
       timestamp, currentStopSequence: Number(v.currentStopSequence ?? v.current_stop_sequence) || null,
       currentStopId:txt(v.stopId ?? v.stop_id), currentStatus:txt(v.currentStatus ?? v.current_status),
