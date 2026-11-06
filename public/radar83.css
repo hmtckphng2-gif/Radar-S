@@ -85,3 +85,7 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
 #map .sr83-map .maplibregl-canvas{transition:filter 1.32s cubic-bezier(.22,.72,.18,1)}
 #map .sr83-viewport.sr83-loading .maplibregl-canvas{filter:saturate(.94) brightness(.96) blur(1.2px)}
 #map .sr83-viewport.sr83-ready .maplibregl-canvas{filter:saturate(1) brightness(1) blur(0)}
+
+/* 9.9.1 Block 5: identify the actual selected feed vehicle in the 3D view. */
+#map .sr83-vehicle-meta{position:absolute;z-index:10;left:15px;top:calc(max(136px,env(safe-area-inset-top,0px)) + 54px);max-width:min(300px,calc(100% - 30px));padding:8px 11px;border:1px solid #34495dba;border-radius:10px;background:#101c29e8;color:#cbd7e2;font:550 11px/1.4 Inter,-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 5px 16px #0007;overflow-wrap:anywhere;pointer-events:none}
+@media(max-width:390px){#map .sr83-vehicle-meta{top:calc(max(130px,env(safe-area-inset-top,0px)) + 52px);font-size:10px;max-width:calc(100% - 30px)}}

@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {VEHICLE_SPECS,vehicleKind,validHeading,modelYawRadians,makeVehicleMesh} from '../public/radar83-model.mjs';
-import {enabled3D,target3DCamera,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE} from '../public/radar83-logic.mjs';
+import {enabled3D,target3DCamera,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta} from '../public/radar83-logic.mjs';
 import {build3DBuildings,enable3DTerrain,make3DVehicleLayer} from '../public/radar83-map.mjs';
 
 const NOW=1760900000000;
@@ -91,4 +92,22 @@ test('FLIRT-inspired train has detailed multipart 3D mesh and bus is separate',(
  assert.ok(train.children.length>30);
  assert.ok(bus.children.length>20);
  assert.equal(train.children.filter(n=>n instanceof Group).length,3);
+});
+
+test('3D overlay identifies the selected vehicle, destination and vehicle ID',()=>{
+ assert.equal(selectedVehicleLabel({kind:'train',name:'REG 16685'}),'Zug · REG 16685');
+ assert.equal(selectedVehicleLabel({kind:'bus',name:'5'}),'Bus · Linie 5');
+ assert.equal(selectedVehicleLabel({kind:'train',name:'Zugnummer unbekannt'}),'Zug · Nummer unbekannt');
+ assert.equal(selectedVehicleMeta({headsign:'Meran',vehicleId:'STA-17'}),'Ziel: Meran · ID: STA-17');
+ assert.equal(selectedVehicleMeta({headsign:'Fahrtziel unbekannt',vehicleId:'—'}),'');
+});
+
+test('3D scene updates and delayed model callbacks are scoped to the active vehicle',()=>{
+ const src=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
+ assert.match(src,/this\.makeOverlay\(vehicle\)/);
+ assert.match(src,/this\.vehicleKey=vehicle\?\.key\|\|null/);
+ assert.match(src,/this\.layer!==layer\|\|this\.map!==map/);
+ assert.match(src,/vehicle\?\.key!==this\.vehicleKey/);
+ assert.match(src,/this\.vehicleKey=null/);
+ assert.doesNotMatch(src,/3D · FLIRT-Stil/);
 });

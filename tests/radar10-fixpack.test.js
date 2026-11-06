@@ -11,7 +11,7 @@ const [html, css, app, sw, pkg, startupCss] = await Promise.all([
 ]);
 const version = JSON.parse(pkg).version;
 test('map SR badge uses a silver mark on graphite', () => {
-  assert.match(html, /radar10-fixpack\.css\?v=9\.9\.1/);
+  assert.match(html, /radar10-fixpack\.css\?v=9\.9\.2/);
   assert.ok(css.includes('color: #e5e9ed !important'));
   assert.ok(css.includes('background: linear-gradient(145deg, #282f37, #11161c) !important'));
   assert.ok(css.includes('.topbar .brand-badge svg path { fill: none !important; stroke: #e5e9ed !important; }'));
