@@ -1024,7 +1024,7 @@ async function getStationList(){
   return all;
 }
 async function showStations(){
-  openSheet('station');$('stationBoard').hidden=true;$('stationResults').hidden=false;
+  openSheet('station');$('stationSearchWrap').hidden=false;$('stationBoard').hidden=true;$('stationResults').hidden=false;
   $('stationResults').textContent=t('station.loadingStops');
   await getStationList();
   if(state.activeSheet!=='station')return;
@@ -1051,7 +1051,7 @@ function italySeconds(){
   const o=Object.fromEntries(parts.map(x=>[x.type,x.value]));return Number(o.hour)*3600+Number(o.minute)*60+Number(o.second);
 }
 function showStationBoard(st){
-  state.stationChoice=st;$('stationResults').hidden=true;$('stationBoard').hidden=false;
+  state.stationChoice=st;$('stationSearchWrap').hidden=true;$('stationResults').hidden=true;$('stationBoard').hidden=false;
   document.dispatchEvent(new CustomEvent('sr75:station-selected',{detail:{stopId:st.stopId,name:st.name}}));
   const scroller=$('stationSheet').querySelector('.sheet-scroll');if(scroller)scroller.scrollTop=0;
   $('stationName').textContent=t('station.boardTitle')+st.name;
@@ -1369,7 +1369,7 @@ function setupControls(){
   $('viewportBadge').onclick=fitMap;
   $('areaBtn').onclick=()=>{ $('areaPicker').hidden=!$('areaPicker').hidden; };
   for(const btn of document.querySelectorAll('[data-place]'))btn.onclick=()=>moveToPlace(btn.dataset.place);
-  $('stationSearch').oninput=renderStationResults;$('backStations').onclick=()=>{$('stationBoard').hidden=true;$('stationResults').hidden=false};
+  $('stationSearch').oninput=renderStationResults;$('backStations').onclick=()=>{$('stationBoard').hidden=true;$('stationSearchWrap').hidden=false;$('stationResults').hidden=false};
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){closeSheets();$('healthPanel').hidden=true;$('favPanel').hidden=true;}
     // Tastatur-Shortcuts (nur außerhalb von Eingabefeldern):
