@@ -22,15 +22,12 @@ export function gtfsNumber(label, shortName) {
 // Planned rolling stock from Trenitalia's official 2026 Trentino service programme.
 // These are timetable-level compositions, not proof of the physical unit actually operating.
 const PLANNED_TRAIN_COMPOSITIONS_2026 = Object.freeze({
-  '16039': { type:'FLIRT', composition:'ETR170 · 6 casse' },
-  '16053': { type:'JAZZ', composition:'ETR350 · 6 casse' },
-  '16054': { type:'JAZZ', composition:'ETR350 · 6 casse' },
-  '16062': { type:'FLIRT', composition:'ETR170 · 6 casse' },
-  '16063': { type:'FLIRT', composition:'ETR170 · 6 casse' },
-  '16070': { type:'POP', composition:'ETR204 · 6 casse' },
-  '16071': { type:'JAZZ', composition:'ETR350 · 6 casse' },
-  '16072': { type:'JAZZ', composition:'ETR350 · 6 casse' },
-  '16073': { type:'JAZZ', composition:'ETR350 · 6 casse' }
+  // Only rows marked "Circola sempre" in the official 2026 programme are
+  // mapped here. Number 16039 is intentionally excluded: the PDF lists it
+  // with different planned stock on different operating days.
+  '16673': { type:'JAZZ', composition:'ETR526 · 6 casse' },
+  '16685': { type:'FLIRT', composition:'ETR170 · 6 casse' },
+  '16701': { type:'JAZZ', composition:'ETR526 · 6 casse' }
 });
 export const PLANNED_TRAIN_COMPOSITION_SOURCE = 'Trenitalia · Programma di esercizio Trento 2026';
 export const PLANNED_TRAIN_COMPOSITION_URL = 'https://www.trenitalia.com/content/dam/trenitalia/regionale/trentino/allegati/info-utili/contratto-di-servizio/Trento-programma_d_esercizio_2026.pdf';

@@ -52,6 +52,6 @@ test('the replay button and real camera animation remain wired',()=>{
 test('updated 3D entrypoint bypasses the previous service-worker asset cache',()=>{
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
  const camera=readFileSync(new URL('../public/radar71-camera.mjs',import.meta.url),'utf8');
- assert.ok(html.includes('radar71-camera.mjs?v=9.9.4'));
- assert.ok(camera.includes('radar83-map.mjs?v=9.9.4'));
+ assert.ok(html.includes('radar71-camera.mjs?v=9.9.5'));
+ assert.ok(camera.includes('radar83-map.mjs?v=9.9.5'));
 });
