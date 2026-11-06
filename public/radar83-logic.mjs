@@ -3,8 +3,8 @@ import {formatStationName,sourceLabel} from './radar92-details.mjs?v=9.9.5&rev=d
 export const MAPLIBRE_VERSION='4.7.1';
 export const VECTOR_STYLE='https://tiles.openfreemap.org/styles/dark';
 export const TERRAIN_TILES='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
-// Project rule: cinematic 3D remains disabled until an explicit release decision.
-export const FEATURE_FLAGS=Object.freeze({cinematic3D:false});
+// Cinematic 3D is enabled by default; ?radar3d=off remains the safe opt-out.
+export const FEATURE_FLAGS=Object.freeze({cinematic3D:true});
 
 // Display the selected feed identity, never the generic reference-model name.
 function usableVehicleText(value){
@@ -30,7 +30,7 @@ export function selectedVehicleMeta(vehicle){
 
 export function enabled3D(search=''){
  if(!FEATURE_FLAGS.cinematic3D)return false;
- try{return new URLSearchParams(search).get('radar3d')==='on'}catch{return false}
+ try{return new URLSearchParams(search).get('radar3d')!=='off'}catch{return false}
 }
 export function target3DCamera(point,zoom,heading=null,duration=4300){
  const lng=Number(point?.lng??point?.lon),lat=Number(point?.lat);

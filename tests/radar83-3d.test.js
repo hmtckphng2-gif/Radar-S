@@ -6,12 +6,12 @@ import {enabled3D,FEATURE_FLAGS,target3DCamera,readProjectionMatrix,MAPLIBRE_VER
 import {build3DBuildings,enable3DTerrain,make3DVehicleLayer} from '../public/radar83-map.mjs';
 
 const NOW=1760900000000;
-test('cinematic 3D is disabled by the project feature flag, even with a URL opt-in',()=>{
- assert.equal(FEATURE_FLAGS.cinematic3D,false);
+test('cinematic 3D is enabled by default and supports an explicit URL opt-out',()=>{
+ assert.equal(FEATURE_FLAGS.cinematic3D,true);
  assert.equal(enabled3D('?radar3d=off'),false);
- assert.equal(enabled3D('?radar3d=on'),false);
- assert.equal(enabled3D('?language=de'),false);
- assert.equal(enabled3D(''),false);
+ assert.equal(enabled3D('?radar3d=on'),true);
+ assert.equal(enabled3D('?language=de'),true);
+ assert.equal(enabled3D(''),true);
  assert.equal(MAPLIBRE_VERSION,'4.7.1');
  assert.ok(VECTOR_STYLE.includes('/styles/dark'));
 });
