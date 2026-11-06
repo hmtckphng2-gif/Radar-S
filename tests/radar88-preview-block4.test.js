@@ -20,6 +20,6 @@ test('line favorites can be toggled directly from the line list',()=>{
   assert.ok(css.includes('.sr88-line-favorite.active'));
 });
 test('block 4 stylesheet is linked and reduced-motion is respected',()=>{
-  assert.ok(html.includes('radar88-preview-block4.css?v=9.9.2'));
+  assert.ok(html.includes('radar88-preview-block4.css?v=9.9.3'));
   assert.ok(css.includes('prefers-reduced-motion:reduce'));
 });

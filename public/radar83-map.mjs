@@ -2,8 +2,8 @@
  * The original Leaflet map stays intact underneath. Only selected cinematic
  * vehicles initialize MapLibre; errors or ?radar3d=off fall back to Radar 8.2.
  */
-import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.2';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.2';
+import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.3';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.3';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -296,7 +296,7 @@ export class Radar83Cinematic {
     if(this.credit){
      this.credit.textContent=info.kind==='error'
       ?'Referenzmodell nicht geladen · '+info.error
-      :modelCreditText(info.credit,info.kind==='real');
+      :modelCreditText(info.credit,info.kind==='real',vehicle?.kind);
     }
     if(this.info)this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
    });
@@ -335,6 +335,8 @@ export class Radar83Cinematic {
  update(vehicle,point,heading){
   if(!this.ready||!this.layer||!point||(this.vehicleKey&&vehicle?.key!==this.vehicleKey))return;
   this.layer.update(point,heading);
+  if(this.info)this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
+  if(this.vehicleMeta)this.vehicleMeta.textContent=selectedVehicleMeta(vehicle)||'Keine weiteren Fahrzeugdaten verfügbar';
   // The camera follows the vehicle while the user has not taken over. A
   // deliberate gesture always wins; the model keeps its real feed position.
   if(this.touched||this.flying||!this.map)return;

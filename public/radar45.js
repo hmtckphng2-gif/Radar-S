@@ -4,8 +4,8 @@
  * Unlike the previous maplibre-leaflet tile layer this is NOT in a Leaflet
  * transformed pane and therefore cannot remain frozen during a Leaflet pan.
  */
-import {styleUrl, shouldTryDarkMap, motionState} from './radar45-logic.mjs?v=9.9.2';
-import {buildMatchingDiagnostic} from './radar451-logic.mjs?v=9.9.2';
+import {styleUrl, shouldTryDarkMap, motionState} from './radar45-logic.mjs?v=9.9.3';
+import {buildMatchingDiagnostic} from './radar451-logic.mjs?v=9.9.3';
 (() => {
  'use strict';
  const $=id=>document.getElementById(id);

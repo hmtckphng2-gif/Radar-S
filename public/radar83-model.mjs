@@ -124,11 +124,12 @@ export function normalizeModel(object3D,spec,THREE){
 // The visible credit line under the map. CC BY requires the author to be
 // named, so a real model always names it. The schematic model is our own
 // work and is labelled as schematic.
-export function modelCreditText(credit,isReal){
+export function modelCreditText(credit,isReal,kind='train'){
   const c=isReal?credit:null;
-  if(!c||!c.author||!c.license)return '3D-Modell schematisch · Position aus dem Datenfeed · Ziehen zum Schwenken';
+  if(!c||!c.author||!c.license)return '3D-Modell schematisch · Fahrzeugtyp nicht bestätigt · Position aus dem Datenfeed · Ziehen zum Schwenken';
   const title=c.title?c.title+' ':'';
-  return '3D: '+title+'· '+c.author+' · '+c.license+' · Position aus dem Datenfeed · Ziehen zum Schwenken';
+  const reference=kind==='bus'?'Bus-Referenzmodell':'Zug-Referenzmodell';
+  return reference+' (Fahrzeugtyp nicht bestätigt): '+title+'· '+c.author+' · '+c.license+' · Position aus dem Datenfeed · Ziehen zum Schwenken';
 }
 
 // Load a real model. Resolves to null when there is none or when anything

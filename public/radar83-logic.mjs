@@ -17,9 +17,13 @@ export function selectedVehicleLabel(vehicle){
 export function selectedVehicleMeta(vehicle){
  const destination=usableVehicleText(vehicle?.headsign);
  const id=usableVehicleText(vehicle?.vehicleId);
+ const trip=usableVehicleText(vehicle?.tripId);
+ const source=usableVehicleText(vehicle?.source);
  const parts=[];
  if(destination)parts.push('Ziel: '+destination);
  if(id)parts.push('ID: '+id);
+ if(trip)parts.push('Fahrt: '+trip);
+ if(source)parts.push('Feed: '+source.toUpperCase());
  return parts.join(' · ');
 }
 
