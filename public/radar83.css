@@ -102,3 +102,6 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
 @media(prefers-reduced-motion:reduce){#map .sr83-spinner{animation:none}}
 
 #map .sr83-fallback-notice{position:absolute;z-index:1200;left:50%;bottom:calc(30dvh + 18px);transform:translateX(-50%);max-width:calc(100% - 28px);padding:9px 13px;border:1px solid #526170;border-radius:11px;background:#111a24f2;color:#e5ebf0;font:600 12px/1.35 Inter,-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 6px 20px #0008;text-align:center;pointer-events:none}
+
+#map .sr71-3d-launch{display:block;width:100%;min-height:46px;margin:12px 0;padding:11px 14px;border:1px solid #71808c;border-radius:12px;background:linear-gradient(180deg,#27313b,#171f27);color:#eef2f5;font:650 13px/1.2 Inter,-apple-system,BlinkMacSystemFont,sans-serif;touch-action:manipulation}
+#map .sr71-3d-launch:active{background:#34404b}

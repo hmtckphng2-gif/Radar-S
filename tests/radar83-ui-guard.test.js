@@ -91,3 +91,13 @@ test('a failed downloaded 3D model returns to the stable 2D camera',()=>{
   assert.match(src,/3D-Fahrzeugmodell konnte nicht geladen werden/);
   assert.match(src,/this\.close\(\{sync:false\}\)/);
 });
+
+
+test('the real 3D model is requested only after the explicit 3D button tap',()=>{
+  const src=get('radar71-camera.mjs');
+  assert.match(src,/launch\.id='sr71Open3D'/);
+  assert.match(src,/launch\.addEventListener\('click',launch3D\)/);
+  assert.match(src,/cinema3d\.open\(vehicle,pos,heading,duration,cinematicZoom\)/);
+  assert.match(src,/Keep the normal 2D focus as the default/);
+  assert.match(src,/classic\(\);/);
+});

@@ -46,6 +46,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
  function cancel({restore=false}={}){
   const interrupted=active;
   token++;clearTimeout(timer);clearTimeout(noticeTimer);cancelAnimationFrame(rotationFrame);active=false;animatingTurn=false;
+  $('sr71Open3D')?.remove();
   if(interrupted)try{map?.stop?.()}catch{}
   document.body.classList.remove('sr71-focusing','sr71-focused');
   hud?.classList.remove('sr71-is-running','sr71-is-done');
@@ -80,6 +81,18 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
   const distanceKm=focusDistanceKm(map.getCenter(),pos);
   // The camera move is short and starts on the tap. A long flight felt sluggish.
   const duration=cinematicDuration(distanceKm,focusDuration(motion.matches,map.getZoom(),toZoom,distanceKm)*0.62);
+  const launch3D=()=>{
+   if(seq!==token||!cinema3d?.enabled)return;
+   clearTimeout(timer);cancelAnimationFrame(rotationFrame);map.stop();
+   active=true;fallbackStarted=false;
+   cinema3d.open(vehicle,pos,heading,duration,cinematicZoom).then(ok=>{
+    if(seq!==token){if(ok)cinema3d?.close({sync:false});return}
+    if(!ok)return;
+    model3d?.hide();document.body.classList.remove('sr82-3d-active');
+    hud?.classList.remove('sr71-is-running');
+    timer=setTimeout(()=>{if(seq===token)reveal(seq)},duration+95);
+   }).catch(error=>{console.info('Radar 8.3 initialization fallback',error);if(!fallbackStarted)classic()});
+  };
   const classic=()=>{
    if(seq!==token||fallbackStarted)return;
    fallbackStarted=true;
@@ -99,16 +112,15 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
    },duration+95);
   };
   emergencyFallback=classic;
-  if(cinema3d?.enabled){
-   cinema3d.open(vehicle,pos,heading,duration,cinematicZoom).then(ok=>{
-    if(seq!==token){if(ok)cinema3d?.close({sync:false});return}
-    if(!ok){classic();return}
-    model3d?.hide();document.body.classList.remove('sr82-3d-active');
-    hud?.classList.remove('sr71-is-running');
-    // The 3D camera runs in MapLibre; do NOT also fly or rotate the 2D Leaflet map.
-    timer=setTimeout(()=>{if(seq===token)reveal(seq)},duration+95);
-   }).catch(error=>{console.info('Radar 8.3 initialization fallback',error);classic()});
-  }else classic();
+  const details=$('details');
+  if(details&&cinema3d?.enabled){
+   const launch=document.createElement('button');launch.id='sr71Open3D';launch.type='button';launch.className='sr71-3d-launch';launch.textContent='3D ansehen';
+   launch.setAttribute('aria-label','3D-Ansicht für dieses Fahrzeug öffnen');
+   launch.addEventListener('click',launch3D);details.append(launch);
+  }
+  // Keep the normal 2D focus as the default. Three.js and MapLibre are only
+  // requested after the user explicitly taps the 3D button in the sheet.
+  classic();
  }
  function manualInterrupt(){
   if(!active)return;
@@ -130,8 +142,8 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
    },
    onManual:()=>{if(active)reveal(token)},
    onFailure:error=>{
-    if(emergencyFallback&&!fallbackStarted){
-     clearTimeout(timer);emergencyFallback();
+    if(emergencyFallback){
+     clearTimeout(timer);if(!fallbackStarted)emergencyFallback();
      const notice=document.createElement('div');notice.className='sr83-fallback-notice';notice.setAttribute('role','status');notice.textContent='3D nicht verfügbar · zurück zur 2D-Karte';
      document.getElementById('map')?.append(notice);clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>notice.remove(),2600);
     }
@@ -139,7 +151,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
   });
   window.SuedtirolRadar71={enabled:cinema3d.enabled,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
   setupHud();
-  // Load MapLibre and Three.js only when a vehicle is selected; don't slow down the main live map.
+  // Load MapLibre and Three.js only after the explicit 3D button tap.
   document.addEventListener('sr37:selection',onSelection);
   document.addEventListener('sr37:feeds',()=>{
    if(!visibleKey)return;
