@@ -38,3 +38,6 @@ body:has(#sheet.open) #sr60Launch,body:has(#stationSheet.open) #sr60Launch{displ
 #sheet.sr73-compact #sr46Actions,#sheet.sr73-compact .sr46-actions{gap:5px;margin-top:5px}
 #sheet.sr73-compact #sr46Actions button,#sheet.sr73-compact .sr46-actions button{min-height:30px;padding:6px 8px;font-size:10px}
 @media(prefers-reduced-motion:reduce){#sheet .sheet-heading,#sheet .sheet-heading-main,#sheet .sheet-title,#sheet .sheet-subtitle,#sheet .eyebrow,#sheet #closeSheet{transition:none}}
+
+/* The stop-by-stop timetable below is the single trip route view; suppress duplicate progress strip. */
+#sheet #sr56Journey{display:none!important}

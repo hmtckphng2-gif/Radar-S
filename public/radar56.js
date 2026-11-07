@@ -11,7 +11,7 @@ const $=id=>document.getElementById(id);
 const mk=(tag,cls='',txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=String(txt);return e};
 const btn=(text,fn,cls='sr56-btn')=>{const b=mk('button',cls,text);b.type='button';b.addEventListener('click',fn);return b};
 const line=(name,value,cls='')=>{const r=mk('div','sr56-line '+cls);r.append(mk('span','',name),mk('strong','',value));return r};
-let bridge,started=false,card=null,qualityCard=null,overlay=null,overlayBody=null,stationList=null;
+let bridge,started=false,card=null,qualityCard=null,journeyCard=null,overlay=null,overlayBody=null,stationList=null;
 let selectedKey=null,scheduled=0,boardObserver=null,analyticsRows=[],analyticsStorage=true,lastObservationAt=0,viewsReady=false;
 const HISTORY_KEY='sr56_network_delay_history_v1';
 const selected=()=>bridge?.state?.activeSheet==='vehicle'?bridge.state.vehicles.get(bridge.state.selectedKey):null;
@@ -52,6 +52,7 @@ function ensureUI(){
  if(!scroll||!badges)return false;
  if(!qualityCard){qualityCard=mk('section','sr56-quality');qualityCard.id='sr56Quality';qualityCard.hidden=true;badges.insertAdjacentElement('afterend',qualityCard)}
  if(!card){card=mk('section','sr56-compare');card.id='sr56Compare';card.hidden=true;const legacy=$('sr51TrainCompare');if(legacy)legacy.insertAdjacentElement('afterend',card);else qualityCard.after(card)}
+ if(!journeyCard){journeyCard=mk('section','sr56-journey');journeyCard.id='sr56Journey';journeyCard.hidden=true;const progress=$('sr47Progress');if(progress)progress.insertAdjacentElement('afterend',journeyCard);else $('scheduleSection')?.insertAdjacentElement('beforebegin',journeyCard)}
  return true;
 }
 function positionComparison(){
@@ -68,8 +69,24 @@ function positionComparison(){
  card.append(mk('p','sr56-alert',warning));
  card.append(mk('p','sr56-note','Der Abstand der gemeldeten Position zum Fahrplanpunkt und die Verspätung aus der Echtzeitmeldung sind unterschiedliche Informationen.'));
 }
+function journey(){
+ if(!journeyCard)return;
+ const v=selected(),s=bridge.state;journeyCard.replaceChildren();journeyCard.hidden=true;
+ if(!v?.tripId||!s.details?.[v.source]?.times?.[v.tripId]||!dateGTFSValid(s.indexes?.[v.source]))return;
+ const times=s.details[v.source].times[v.tripId];
+ const progress=journeyProgress(times,romeSeconds());if(!progress)return;
+ journeyCard.hidden=false;
+ const heading=mk('div','sr56-line');heading.append(mk('strong','','Fahrtverlauf'));journeyCard.append(heading);
+ const ratio=progress.total?Math.max(0,Math.min(100,progress.plannedPassed/Math.max(1,progress.total-1)*100)):0;
+ const track=mk('div','sr56-progress');const fill=mk('div','sr56-progress-fill');fill.style.width=ratio+'%';track.append(fill);journeyCard.append(track);
+ const next=progress.next;
+ const name=next?formatStationName(s.details[v.source].stops?.[String(next[0])]?.[0]||'Unbekannt'):'Fahrplanende';
+ if(next&&!document.querySelector('.sr47-progress-next'))journeyCard.append(mk('p','sr56-note','Nächster Halt laut Fahrplan: '+name+' · '+txtTime(next[1]??next[2])));
+ else if(!next)journeyCard.append(mk('p','sr56-note','Alle Halte laut Fahrplan erreicht'));
+ journeyCard.append(mk('p','sr56-note',progress.plannedPassed+' von '+progress.total+' Halten laut Fahrplan erreicht'));
+}
 function queueUI(){
- if(scheduled||document.hidden)return;scheduled=requestAnimationFrame(()=>{scheduled=0;const key=selected()?.key;if(!isVisible()){if(card)card.hidden=true;if(qualityCard)qualityCard.hidden=true;return}ensureUI();selectedKey=key;positionQuality();positionComparison()});
+ if(scheduled||document.hidden)return;scheduled=requestAnimationFrame(()=>{scheduled=0;const key=selected()?.key;if(!isVisible()){if(card)card.hidden=true;if(qualityCard)qualityCard.hidden=true;if(journeyCard)journeyCard.hidden=true;return}ensureUI();selectedKey=key;positionQuality();positionComparison();journey()});
 }
 
 function createRailRow(title,detail,secondary=''){
