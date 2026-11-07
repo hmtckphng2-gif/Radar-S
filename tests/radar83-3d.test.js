@@ -145,7 +145,7 @@ test('stale positions freeze while feed and explicitly estimated positions stay 
 
 test('the 3D scene has a bounded loading fallback, iPhone pixel ratio cap and cleanup hooks',()=>{
  const src=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
- assert.match(src,/},8000\)/,'8-second watchdog');
+ assert.match(src,/},35000\)/,'35-second startup watchdog');
  assert.match(src,/pixelRatio:Math\.min\(2,/,'DPR is capped at 2');
  assert.match(src,/visibilitychange/,'background tab pauses the map');
  assert.match(src,/removeEventListener\('visibilitychange'/,'visibility listener is removed');
