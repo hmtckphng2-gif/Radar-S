@@ -126,15 +126,16 @@ test('3D overlay identifies the selected vehicle, destination and vehicle ID',()
  assert.equal(selectedVehicleMeta({tripId:'trip-2',source:'trentino'}),'Datenquelle: Trentino Trasporti');
 });
 
-test('tap starts the 2D flight and 3D continues it from the live camera',()=>{
+test('tap starts the direct 3D camera flight from the current map scale',()=>{
  const src=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
- const start=src.indexOf('this.leaflet.flyTo([point.lat,point.lng]');
  const style=src.indexOf("map.on('load',loaded);map.on('error',failed);");
- const flight=src.indexOf('this.flight={start:handoff,target:continuedTarget};');
+ const flight=src.indexOf('this.flight={start:tapCamera,target};');
+ const reveal=src.indexOf("this.overlay.classList.add('sr83-ready')");
+ const replay=src.indexOf('this.replay();',flight);
  const scene=src.indexOf('await waitFor3DScene(map);');
- assert.ok(start>=0&&style>start&&flight>style&&flight<scene);
- assert.ok(src.includes('const liveCenter=this.leaflet.getCenter?.(),liveZoom=this.leaflet.getZoom?.()'));
- assert.ok(src.includes("this.overlay.classList.add('sr83-ready')"));
+ assert.ok(style>=0&&flight>style&&reveal>flight&&replay>reveal&&scene>replay);
+ assert.ok(src.includes('const tapCamera=handoff3DCamera(this.leaflet.getCenter?.(),this.leaflet.getZoom?.())'));
+ assert.doesNotMatch(src,/this\.leaflet\.flyTo\(\[point\.lat,point\.lng\]/);
 });
 
 test('3D scene updates and delayed model callbacks are scoped to the active vehicle',()=>{

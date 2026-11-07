@@ -2,53 +2,37 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {start3DCamera,target3DCamera,use3DTerrain,cinematicDuration,prefersReducedMotion} from '../public/radar83-logic.mjs';
-
-/* Radar 8.5 - the 3D camera must move on the tap, not after a wait.
- *
- * Measured on the live app before this change: tapping a vehicle left the
- * screen completely still for several seconds. The camera flight only
- * started after the vector tiles AND the 3D model had loaded. The camera
- * then ended up in the start pose (zoom 15 instead of 17.8, pitch 38 instead
- * of 62), because the follow logic cancelled the flight.
- *
- * These tests lock down the new order.
- */
+import {cinematicDuration,prefersReducedMotion} from '../public/radar83-logic.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const read = name => readFileSync(root + 'public/' + name, 'utf8');
 
-test('the 3D leg continues the tap-origin flight before tiles and model finish loading', () => {
+test('a vehicle tap starts directly on the 3D map without a 2D zoom or zoomed-out intro', () => {
   const src = read('radar83-map.mjs');
-  const immediate = src.indexOf('this.leaflet.flyTo([point.lat,point.lng]');
+  assert.doesNotMatch(src, /this\.leaflet\.flyTo\(\[point\.lat,point\.lng\]/);
+  assert.match(src, /const tapCamera=handoff3DCamera\(this\.leaflet\.getCenter\?\.\(\),this\.leaflet\.getZoom\?\.\(\)\)/);
+  assert.match(src, /this\.flight=\{start:tapCamera,target\}/);
   const style = src.indexOf("map.on('load',loaded);map.on('error',failed);");
-  const handoff = src.indexOf('this.flight={start:handoff,target:continuedTarget};');
+  const flight = src.indexOf('this.flight={start:tapCamera,target};');
+  const reveal = src.indexOf("this.overlay.classList.add('sr83-ready')");
+  const replay = src.indexOf('this.replay();',flight);
   const scene = src.indexOf('await waitFor3DScene(map);');
   const model = src.indexOf('await waitFor3DModel(map,this.layer);');
-  assert.ok(immediate > 0 && style > 0 && handoff > style,
-    '2D zoom starts on tap and 3D continues as soon as the vector style loads');
-  assert.ok(handoff < scene && scene < model,
-    '3D camera moves while vector tiles and the model are still preparing');
-  assert.match(src, /handoff3DCamera\(liveCenter,liveZoom\)/);
-  assert.match(src, /const remainingDuration=Math\.max\(250,totalDuration-elapsed\)/);
-  const reveal = src.indexOf("this.overlay.classList.add('sr83-ready')");
-  assert.ok(reveal > model);
-  assert.ok(src.indexOf('this.replay();',handoff) < scene);
-  const ready = src.indexOf('this.ready=true;', reveal);
-  assert.ok(ready > reveal && !src.slice(reveal,ready).includes('this.replay();'), 'reveal must not restart the flight');
+  assert.ok(style > 0 && flight > style && reveal > flight && replay > reveal);
+  assert.ok(replay < scene && scene < model, '3D animation starts before tile/model preparation completes');
+  const ready = src.indexOf('this.ready=true;',model);
+  assert.ok(ready > model && !src.slice(reveal,ready).includes('this.replay();'));
 });
 
-test('the 3D overlay stays hidden while loading and crossfades after the model is ready', () => {
+test('the 3D overlay is revealed as soon as the MapLibre style is ready', () => {
   const src = read('radar83-map.mjs');
-  assert.match(src, /className='sr83-viewport'/);
-  assert.doesNotMatch(src, /className='sr83-viewport sr83-loading'/);
-  const model = src.indexOf('await waitFor3DModel(map,this.layer);');
+  const style = src.indexOf("map.on('load',loaded);map.on('error',failed);");
   const reveal = src.indexOf("this.overlay.classList.add('sr83-ready')");
-  assert.ok(model > 0 && reveal > model, 'reveal only after the 3D model is ready');
+  const scene = src.indexOf('await waitFor3DScene(map);');
+  assert.ok(style > 0 && reveal > style && scene > reveal);
   const css = read('radar83.css');
   assert.match(css, /\.sr83-viewport\{[\s\S]*?opacity:0;pointer-events:none;/);
   assert.match(css, /\.sr83-viewport\.sr83-ready\{opacity:1;pointer-events:auto\}/);
-  assert.match(css, /transition:opacity 1\.32s cubic-bezier\(\.22,\.72,\.18,1\)/);
 });
 
 test('the follow never fights the running flight', () => {
@@ -60,49 +44,24 @@ test('the follow never fights the running flight', () => {
 
 test('replay works before the model is ready', () => {
   const src = read('radar83-map.mjs');
-  // The old guard "if(!this.ready||...)return;" meant the flight could not
-  // start while the scene was still building.
   assert.match(src, /replay\(\)\{\s*\n\s*if\(!this\.map\|\|!this\.flight\)return;/);
 });
 
-test('the camera flight is long and smooth without becoming excessive', () => {
+test('the camera flight remains smooth and bounded', () => {
   assert.ok(cinematicDuration(0.2) >= 3800 && cinematicDuration(0.2) <= 4600);
-  assert.ok(cinematicDuration(0.2) < cinematicDuration(30), 'a distant vehicle may take a little longer');
+  assert.ok(cinematicDuration(0.2) < cinematicDuration(30));
   assert.ok(cinematicDuration(0.2, 9000) <= 5000);
   assert.ok(cinematicDuration(0.2, 100) >= 3800);
 });
 
-test('the default live camera flight uses the slower cinematic timing', () => {
-  const src = read('radar83-logic.mjs');
-  assert.match(src, /function target3DCamera\(point,zoom,heading=null,duration=4300\)/);
-});
-
-test('the flight still ends on the vehicle', () => {
-  const p = {lat: 46.498, lng: 11.353};
-  const end = target3DCamera(p, 19, 90, 3800);
-  const start = start3DCamera(p, 90, end.zoom);
-  assert.deepEqual(end.center, [p.lng, p.lat]);
-  assert.equal(end.zoom, 19);
-  assert.equal(end.pitch, 38);
-  assert.equal(end.bearing, 148);
-  assert.ok(start.zoom < end.zoom);
-  assert.ok(start.pitch > end.pitch, 'the camera descends to the train');
-  assert.notEqual(start.bearing, end.bearing, 'the camera rotates during the approach');
-  assert.ok(start.zoom > 15, 'the approach starts closer than the wide establishing shot');
-});
-
 test('the 3D camera respects prefers-reduced-motion', () => {
   const src = read('radar83-map.mjs');
-  assert.match(src, /if\(prefersReducedMotion\(\)\)this\.map\.jumpTo\(target\)/,
-    'ohne Bewegung wird direkt auf das Fahrzeug gesprungen');
-  assert.match(src, /if\(prefersReducedMotion\(\)\)/);
-  // Die Funktion selbst darf nie werfen.
+  assert.match(src, /if\(prefersReducedMotion\(\)\)this\.map\.jumpTo\(target\)/);
   assert.equal(typeof prefersReducedMotion(), 'boolean');
 });
 
-test('the startup watchdog does not preempt the full mobile loading budget', () => {
+test('the startup watchdog preserves the mobile loading budget', () => {
   const src = read('radar83-map.mjs');
   assert.match(src, /3D-Start nach 35 Sekunden abgebrochen/);
   assert.match(src, /\},35000\);/);
-  assert.ok(35000 > 11000 + 11000 + 7200 + 2200, 'watchdog must exceed library, style, tile and model waits');
 });

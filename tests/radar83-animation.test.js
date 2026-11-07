@@ -40,12 +40,14 @@ test('3D model render must be confirmed before revealing the map',async()=>{
  const map=fakeMap(),layer={didRender:false,renderError:false};
  const ready=waitFor3DModel(map,layer,150);layer.didRender=true;map.emit('render');await ready;
 });
-test('the replay button and real camera animation remain wired',()=>{
+test('the 3D camera animation starts before tiles and the model finish loading',()=>{
  const src=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
- assert.match(src,/this\.replay\(\)/);
+ const reveal=src.indexOf("this.overlay.classList.add('sr83-ready')");
+ const replay=src.indexOf('this.replay();',reveal);
+ const scene=src.indexOf('await waitFor3DScene(map);');
+ const model=src.indexOf('await waitFor3DModel(map,this.layer);');
+ assert.ok(reveal>0&&replay>reveal&&scene>replay&&model>scene);
  assert.match(src,/map\.easeTo\(/);
- assert.match(src,/await waitFor3DScene\(map\)/);
- assert.match(src,/await waitFor3DModel\(map,this\.layer\)/);
  assert.doesNotMatch(src,/new Vehicle3DOverlay\(/);
 });
 
