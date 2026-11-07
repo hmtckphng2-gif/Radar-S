@@ -105,3 +105,14 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
 
 #details .sr71-3d-launch{display:block;width:100%;min-height:46px;margin:12px 0;padding:11px 14px;border:1px solid #71808c;border-radius:12px;background:linear-gradient(180deg,#27313b,#171f27);color:#eef2f5;font:650 13px/1.2 Inter,-apple-system,BlinkMacSystemFont,sans-serif;touch-action:manipulation}
 #details .sr71-3d-launch:active{background:#34404b}
+
+
+/* 9.9.6: explicit two-layer map stack. The complete Leaflet 2D scene is
+   kept in layer 2; the cinematic MapLibre/Three.js scene is layer 3.
+   These are direct children of #map, so Leaflet's internal pane z-indexes
+   cannot outrank the 3D viewport through a nested stacking context. */
+#map{isolation:isolate}
+#map>.leaflet-map-pane{z-index:2!important}
+#map>.leaflet-control-container{z-index:2!important}
+#map>.sr83-viewport{z-index:3!important}
+body.sr83-cinematic #map>.leaflet-control-container{opacity:0!important;pointer-events:none!important}
