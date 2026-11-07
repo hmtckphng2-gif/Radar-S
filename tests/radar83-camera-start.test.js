@@ -18,21 +18,29 @@ import {start3DCamera,target3DCamera,use3DTerrain,cinematicDuration,prefersReduc
 const root = fileURLToPath(new URL('../', import.meta.url));
 const read = name => readFileSync(root + 'public/' + name, 'utf8');
 
-test('the camera flight starts before the scene is fully built', () => {
+test('the clicked vehicle starts zooming immediately and 3D inherits the live camera', () => {
   const src = read('radar83-map.mjs');
-  const flight = src.indexOf('this.replay();');
+  const immediate = src.indexOf('this.leaflet.flyTo([point.lat,point.lng]');
+  const asyncLoad = src.indexOf('await Promise.all([loadMapLibre(),loadThree()])');
   const scene = src.indexOf('await waitFor3DScene(map);');
   const model = src.indexOf('await waitFor3DModel(map,this.layer);');
-  assert.ok(flight > 0 && scene > 0 && model > 0, 'the three steps must exist');
-  assert.ok(flight < scene, 'the flight must start BEFORE waiting for the scene');
-  assert.ok(flight < model, 'the flight must start BEFORE waiting for the model');
+  const handoff = src.indexOf('this.flight={start:handoff,target};');
+  assert.ok(immediate > 0 && asyncLoad > 0 && immediate < asyncLoad,
+    'the 2D zoom must start on the tap before asynchronous 3D loading');
+  assert.ok(scene > 0 && model > scene && handoff > model,
+    'the live 2D camera is handed to 3D after the scene and model are ready');
+  assert.match(src, /handoff3DCamera\(liveCenter,liveZoom\)/);
 });
 
-test('the overlay becomes visible while the scene is still loading', () => {
+test('the 3D overlay stays hidden while loading and crossfades after the model is ready', () => {
   const src = read('radar83-map.mjs');
-  assert.match(src, /className='sr83-viewport sr83-loading'/);
+  assert.match(src, /className='sr83-viewport'/);
+  assert.doesNotMatch(src, /className='sr83-viewport sr83-loading'/);
+  const model = src.indexOf('await waitFor3DModel(map,this.layer);');
+  const reveal = src.indexOf("this.overlay.classList.add('sr83-ready')");
+  assert.ok(model > 0 && reveal > model, 'reveal only after the 3D model is ready');
   const css = read('radar83.css');
-  assert.match(css, /\.sr83-viewport\.sr83-loading\{opacity:\.?42;pointer-events:auto\}/);
+  assert.match(css, /\.sr83-viewport\{[\s\S]*?opacity:0;pointer-events:none;/);
   assert.match(css, /\.sr83-viewport\.sr83-ready\{opacity:1;pointer-events:auto\}/);
   assert.match(css, /transition:opacity 1\.32s cubic-bezier\(\.22,\.72,\.18,1\)/);
 });
