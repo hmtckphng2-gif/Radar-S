@@ -88,11 +88,17 @@ export function build3DBuildings(map){
   // blended into the dark building footprints and made extrusions look absent.
   filter:['!', ['has','hide_3d']],
   paint:{
-   'fill-extrusion-color':'hsl(215, 12%, 66%)',
-   'fill-extrusion-opacity':.86,
+   'fill-extrusion-color':'hsl(215, 10%, 72%)',
+   'fill-extrusion-opacity':.9,
    'fill-extrusion-height':['max',3,['to-number',['coalesce',['get','render_height'],['get','height'],['*',['to-number',['get','building:levels'],3],3],8]]],
    'fill-extrusion-base':['to-number',['coalesce',['get','render_min_height'],['get','min_height'],0]]
   }
+ },firstLabel);
+ // Fine silver edges add depth at city zoom without turning the map neon.
+ if(!map.getLayer('sr83-building-edges'))map.addLayer({
+  id:'sr83-building-edges',type:'line',source:'openmaptiles','source-layer':'building',
+  minzoom:15,filter:['!', ['has','hide_3d']],
+  paint:{'line-color':'rgba(238,244,250,0.52)','line-width':['interpolate',['linear'],['zoom'],15,0.35,18,0.8],'line-opacity':0.58}
  },firstLabel);
  return true;
 }

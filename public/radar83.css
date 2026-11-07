@@ -116,3 +116,14 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
 #map>.leaflet-control-container{z-index:2!important}
 #map>.sr83-viewport{z-index:3!important}
 body.sr83-cinematic #map>.leaflet-control-container{opacity:0!important;pointer-events:none!important}
+
+/* 10.1 — restrained white/silver accents for the cinematic 3D view. */
+#map .sr83-viewport{background:#0b1119;box-shadow:inset 0 0 0 1px rgba(245,249,255,.08)}
+#map .sr83-label{color:#f7f9fc;border-color:rgba(235,243,252,.27);box-shadow:0 6px 20px #0009,inset 0 1px 0 rgba(255,255,255,.08)}
+#map .sr83-vehicle-meta{border-color:rgba(230,239,249,.24);box-shadow:0 5px 18px #0008,inset 0 1px 0 rgba(255,255,255,.045)}
+#map .sr83-control,#map .sr83-replay,#map .sr83-back{color:#f7f9fc;border-color:rgba(235,243,252,.36);background:linear-gradient(180deg,rgba(46,58,72,.97),rgba(19,28,39,.97));box-shadow:0 5px 18px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.13)}
+#map .sr83-control:active,#map .sr83-replay:active,#map .sr83-back:active{border-color:rgba(255,255,255,.72);background:#354455}
+#map .sr83-control:focus-visible,#map .sr83-replay:focus-visible,#map .sr83-back:focus-visible{outline:2px solid rgba(255,255,255,.9);outline-offset:3px}
+#map .sr83-credit{border-color:rgba(226,237,248,.2);color:#e0e7ef}
+#map .sr83-spinner{border-color:rgba(238,244,250,.22);border-top-color:#f5f8fc}
+#map .sr83-fallback-notice{border-color:rgba(238,244,250,.32)}
