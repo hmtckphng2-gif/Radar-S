@@ -71,10 +71,14 @@ test('a lost WebGL context ends the 3D view at once', () => {
   assert.match(src, /removeEventListener\('webglcontextlost'/, 'der Listener muss wieder entfernt werden');
 });
 
-test('3D stays lazy and is not preloaded at app startup',()=>{
+test('3D libraries preload at startup without allocating a map or WebGL context',()=>{
   const src=get('radar83-map.mjs');
-  assert.match(src,/loadMapLibre\(\),loadThree\(\)/,'libraries are requested by open()');
-  assert.doesNotMatch(get('radar71-camera.mjs'),/preload3DLibraries\(/);
+  const preload=src.slice(src.indexOf('export function preload3DLibraries'),src.indexOf('// Wait for real vector tiles'));
+  assert.match(preload,/loadMapLibre\(\)\.catch/);
+  assert.match(preload,/loadThree\(\)\.catch/);
+  assert.match(preload,/fetch\(VECTOR_STYLE/);
+  assert.doesNotMatch(preload,/new lib\.Map|WebGLRenderer/);
+  assert.match(get('radar71-camera.mjs'),/preload3DLibraries\(\);/);
 });
 
 test('3D failure restores the 2D focus and announces the fallback',()=>{
