@@ -81,7 +81,8 @@ test('3D failure restores the 2D focus and announces the fallback',()=>{
   const src=get('radar71-camera.mjs');
   assert.match(src,/onFailure:error=>/);
   assert.match(src,/emergencyFallback\(\)/);
-  assert.match(src,/3D nicht verfügbar · zurück zur 2D-Karte/);
+  assert.match(src,/3D-Fehler: /);
+  assert.match(src,/2D-Fallback/);
 });
 
 
@@ -96,7 +97,8 @@ test('a failed downloaded 3D model returns to the stable 2D camera',()=>{
 test('the real 3D model is requested only after the explicit 3D button tap',()=>{
   const src=get('radar71-camera.mjs');
   assert.match(src,/launch\.id='sr71Open3D'/);
-  assert.match(src,/launch\.addEventListener\('click',launch3D\)/);
+  assert.match(src,/launch\.addEventListener\('click',event=>/);
+  assert.match(src,/event\.preventDefault\(\);event\.stopPropagation\(\);launch3D\(\)/);
   assert.match(src,/cinema3d\.open\(vehicle,pos,heading,duration,cinematicZoom\)/);
   assert.match(src,/Keep the normal 2D focus as the default/);
   assert.match(src,/classic\(\);/);
