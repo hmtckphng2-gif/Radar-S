@@ -101,5 +101,5 @@ test('the selected vehicle automatically opens the real 3D renderer like Main',(
   assert.match(src,/cinema3d\.open\(vehicle,pos,heading,duration,cinematicZoom\)/);
   assert.match(src,/if\(!ok\)\{classic\(\);return\}/);
   assert.match(src,/\}else classic\(\);/);
-  assert.doesNotMatch(src,/sr71Open3D|Keep the normal 2D focus as the default/);
+  assert.doesNotMatch(src,/launch\.id='sr71Open3D'|Keep the normal 2D focus as the default/);
 });

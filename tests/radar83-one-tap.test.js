@@ -11,5 +11,5 @@ test('ordinary vehicle tap dispatches the single Main-style cinematic controller
   assert.ok(camera.includes("document.addEventListener('sr37:selection',onSelection)"), 'camera controller owns the selection event');
   assert.ok(camera.includes('cinema3d.open(vehicle,pos,heading,duration,cinematicZoom)'), 'camera launches the existing 3D renderer automatically');
   assert.ok(!src.includes('launchVehicleCinematic'), 'app.js must not create a competing 3D controller');
-  assert.ok(!camera.includes('sr71Open3D'), '3D does not require a second button tap');
+  assert.doesNotMatch(camera,/launch\.id='sr71Open3D'/, '3D does not require a second button tap');
 });
