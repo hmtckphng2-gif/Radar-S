@@ -369,7 +369,6 @@ export class Radar83Cinematic {
    map.resize();map.triggerRepaint();
    this.overlay.classList.add('sr83-ready');
    this.loading?.remove();this.loading=null;
-   this.replay();
    clearTimeout(this.openTimeout);this.openTimeout=0;
    this.ready=true;
    return true;
