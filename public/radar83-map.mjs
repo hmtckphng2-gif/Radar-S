@@ -3,7 +3,7 @@
  * vehicles initialize MapLibre; errors or ?radar3d=on fall back to Radar 8.2.
  */
 import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.5&rev=credits-2';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,handoff3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,positionFreshness,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&flag=enabled-default&launch=direct-3d-zoom-2';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,handoff3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,positionFreshness,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&flag=enabled-default&launch=tap-origin-continuous-3';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -249,10 +249,15 @@ export class Radar83Cinematic {
   this.openTimedOut=false;
   this.makeOverlay(vehicle);
   document.body.classList.add('sr83-cinematic');
-  // The user asked for one simple sequence: switch straight to the 3D map,
-  // show its wide establishing view, then zoom once toward the selected vehicle.
-  // Do not animate the underlying Leaflet map; it remains stationary underneath.
-  try{this.leaflet.stop()}catch{}
+  // Start the real map flight on the tap, while the 3D scene loads invisibly.
+  // The later WebGL handoff reads the live Leaflet camera, so there is no
+  // repeated stock intro or jump back to a fixed 680 m starting point.
+  try{
+   this.leaflet.stop();
+   const twoDZoom=Math.max(3,Math.min(18,Number(zoom)||18));
+   if(prefersReducedMotion())this.leaflet.setView([point.lat,point.lng],twoDZoom,{animate:false});
+   else this.leaflet.flyTo([point.lat,point.lng],twoDZoom,{animate:true,duration:Math.max(0.1,Number(duration)||4300)/1000,easeLinearity:.22});
+  }catch(error){console.info('Radar 8.3 immediate 2D camera fallback',error)}
   // Full startup can include up to 11s for MapLibre, 11s for the style,
   // 7.2s for vector tiles and 2.2s for the first model frame. The old 8s
   // watchdog always raced those legitimate loading stages on slower phones.
@@ -268,8 +273,8 @@ export class Radar83Cinematic {
    const [lib,T]=await Promise.all([loadMapLibre(),loadThree()]);
    if(seq!==this.sequence)return false;
    if(typeof lib.supported==='function'&&!lib.supported())throw Error('WebGL not supported by this browser');
-   const initialCamera=start3DCamera(point,heading,target.zoom);
-   if(!initialCamera)throw Error('Initial 3D camera position invalid');
+   const initialCamera=handoff3DCamera(this.leaflet.getCenter?.(),this.leaflet.getZoom?.());
+   if(!initialCamera)throw Error('Initial live camera position invalid');
    const map=new lib.Map({
     container:this.surface,style:VECTOR_STYLE,center:initialCamera.center,zoom:initialCamera.zoom,
     bearing:initialCamera.bearing,pitch:initialCamera.pitch,maxZoom:20.4,maxPitch:80,minZoom:3,
@@ -314,19 +319,26 @@ export class Radar83Cinematic {
     if(map.loaded?.())end();
    });
    if(seq!==this.sequence)return false;
-   // Keep the 3D camera at its single wide starting pose until the 3D map
-   // and schematic vehicle have rendered. The one and only zoom starts after
-   // the 3D view is revealed; there is no hidden 2D leg or camera handoff.
-   this.flight={start:initialCamera,target};
-   map.jumpTo(initialCamera);
+   // Continue the SAME tap-origin flight as soon as the vector style exists.
+   // Start from the current Leaflet camera and use only the remaining time.
+   const liveCenter=this.leaflet.getCenter?.(),liveZoom=this.leaflet.getZoom?.();
+   const handoff=handoff3DCamera(liveCenter,liveZoom);
+   if(!handoff)throw Error('Live camera handoff position invalid');
+   const elapsed=Math.max(0,performance.now()-(this.tapStartedAt||performance.now()));
+   const totalDuration=Number(target.duration)||Number(duration)||4300;
+   const remainingDuration=Math.max(250,totalDuration-elapsed);
+   const continuedTarget={...target,duration:remainingDuration};
+   this.flight={start:handoff,target:continuedTarget};
+   map.jumpTo(handoff);this.replay();
    // Interrupt handlers first, so a gesture can stop the flight right away.
    map.on('dragstart',()=>this.interrupt());
    map.getCanvas().addEventListener('touchstart',()=>this.interrupt(),{passive:true});
    map.getCanvas().addEventListener('wheel',()=>this.interrupt(),{passive:true});
-   // Do not wait for every vector tile: that was hiding the 3D view and
-   // producing the delayed second/third scene. Add buildings as soon as the
-   // style exposes their source; remaining tiles stream in behind the map.
+   // Keep the 3D map hidden while tiles and the real model are prepared.
+   // The visible Leaflet camera has already been zooming since the tap.
    map.resize();map.triggerRepaint();
+   await waitFor3DScene(map);
+   if(seq!==this.sequence)return false;
    try{build3DBuildings(map)}catch(error){console.info('3D building fallback',error)}
    // iPhone/iPad default: pitched vector buildings, no heavy remote DEM tiles.
    // Terrain is optional via ?terrain=on after successful device testing.
@@ -351,15 +363,14 @@ export class Radar83Cinematic {
    await waitFor3DModel(map,this.layer);
    if(seq!==this.sequence)return false;
    this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
-   // Reveal the 3D map at its wide starting pose, then perform exactly one
-   // camera flight toward the selected vehicle. The real model can replace
-   // the schematic asynchronously without restarting or replaying the flight.
+   // The 3D camera has already continued the tap-origin timeline while
+   // tiles and the model loaded. Stop the 2D leg and reveal—never replay.
+   this.leaflet.stop();
    map.resize();map.triggerRepaint();
    this.overlay.classList.add('sr83-ready');
    this.loading?.remove();this.loading=null;
    clearTimeout(this.openTimeout);this.openTimeout=0;
    this.ready=true;
-   this.replay();
    return true;
   }catch(error){
    if(seq===this.sequence){

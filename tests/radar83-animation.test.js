@@ -44,7 +44,7 @@ test('the replay button and real camera animation remain wired',()=>{
  const src=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
  assert.match(src,/this\.replay\(\)/);
  assert.match(src,/map\.easeTo\(/);
- assert.doesNotMatch(src,/await waitFor3DScene\(map\)/,'3D reveal must not wait for all vector tiles');
+ assert.match(src,/await waitFor3DScene\(map\)/);
  assert.match(src,/await waitFor3DModel\(map,this\.layer\)/);
  assert.doesNotMatch(src,/new Vehicle3DOverlay\(/);
 });

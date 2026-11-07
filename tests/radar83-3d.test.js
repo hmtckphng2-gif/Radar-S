@@ -126,16 +126,15 @@ test('3D overlay identifies the selected vehicle, destination and vehicle ID',()
  assert.equal(selectedVehicleMeta({tripId:'trip-2',source:'trentino'}),'Datenquelle: Trentino Trasporti');
 });
 
-test('tap opens the 3D map directly and performs one zoom toward the vehicle',()=>{
+test('tap starts the 2D flight and 3D continues it from the live camera',()=>{
  const src=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
- assert.ok(!src.includes('this.leaflet.flyTo([point.lat,point.lng]'),'no competing 2D flight');
- assert.ok(src.includes('const initialCamera=start3DCamera(point,heading,target.zoom)'));
- assert.ok(src.includes('this.flight={start:initialCamera,target}'));
- const model=src.indexOf('await waitFor3DModel(map,this.layer);');
- const reveal=src.indexOf("this.overlay.classList.add('sr83-ready')");
- const replay=src.indexOf('this.replay();',reveal);
- assert.ok(model>=0&&reveal>model&&replay>reveal,'show the 3D scene first, then start one zoom');
- assert.ok(!src.includes('await waitFor3DScene(map);'),'vector tile completion must not gate the 3D opening');
+ const start=src.indexOf('this.leaflet.flyTo([point.lat,point.lng]');
+ const style=src.indexOf("map.on('load',loaded);map.on('error',failed);");
+ const flight=src.indexOf('this.flight={start:handoff,target:continuedTarget};');
+ const scene=src.indexOf('await waitFor3DScene(map);');
+ assert.ok(start>=0&&style>start&&flight>style&&flight<scene);
+ assert.ok(src.includes('const liveCenter=this.leaflet.getCenter?.(),liveZoom=this.leaflet.getZoom?.()'));
+ assert.ok(src.includes("this.overlay.classList.add('sr83-ready')"));
 });
 
 test('3D scene updates and delayed model callbacks are scoped to the active vehicle',()=>{
