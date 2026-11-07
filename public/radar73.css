@@ -20,7 +20,21 @@
 #map .sr71-focus-reticle{inset:6px}
 body.sr71-focusing #map .leaflet-overlay-pane,body.sr72-map-zooming #map .leaflet-overlay-pane{visibility:hidden!important;opacity:0!important}
 body:has(#sheet.open) #sr60Launch,body:has(#stationSheet.open) #sr60Launch{display:none!important}
-#sheet .sr73-data-note{margin:8px 12px 10px;color:#a9c5dc;font-size:11px;line-height:1.5}
-#sheet .sr73-data-note[hidden]{display:none!important}
 
 @media(max-width:749px){#sheet.open .sr73-duplicate-progress{display:none!important}}
+
+/* Train detail header contracts as one unit on scroll; the content area gains space. */
+#sheet .sheet-heading{transition:margin .22s ease,gap .22s ease;transform-origin:top center}
+#sheet .sheet-heading-main{transition:all .22s ease;min-width:0}
+#sheet .sheet-title,#sheet .sheet-subtitle,#sheet .eyebrow,#sheet #closeSheet{transition:all .22s ease}
+#sheet.sr73-compact .handle{margin-bottom:6px}
+#sheet.sr73-compact .sheet-heading{gap:7px;align-items:center;margin-bottom:1px}
+#sheet.sr73-compact .eyebrow{font-size:8px;letter-spacing:.045em;line-height:1}
+#sheet.sr73-compact .sheet-title{font-size:17px;letter-spacing:-.35px;margin:0;line-height:1.15}
+#sheet.sr73-compact .sheet-subtitle{font-size:10px;line-height:1.2;max-height:1.3em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#sheet.sr73-compact #closeSheet{width:27px;height:27px;min-width:27px;font-size:12px}
+#sheet.sr73-compact #sheetBadges{margin:5px 0;gap:4px}
+#sheet.sr73-compact #sheetBadges .mini-badge{padding:3px 6px;font-size:9px}
+#sheet.sr73-compact #sr46Actions,#sheet.sr73-compact .sr46-actions{gap:5px;margin-top:5px}
+#sheet.sr73-compact #sr46Actions button,#sheet.sr73-compact .sr46-actions button{min-height:30px;padding:6px 8px;font-size:10px}
+@media(prefers-reduced-motion:reduce){#sheet .sheet-heading,#sheet .sheet-heading-main,#sheet .sheet-title,#sheet .sheet-subtitle,#sheet .eyebrow,#sheet #closeSheet{transition:none}}
