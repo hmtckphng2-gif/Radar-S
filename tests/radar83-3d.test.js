@@ -21,8 +21,8 @@ test('cinematic approaches from behind over a longer, smooth flight',()=>{
  assert.equal(start.bearing,358); // exact Main intro bearing for heading 90°
  assert.ok(start.zoom>15, 'closer starting zoom than the old distant shot');
  assert.ok(start.center[0]<11.35);
- assert.ok(cinematicDuration(0,4300)>=3800);
- assert.ok(cinematicDuration(0,4300)<=4600);
+ assert.ok(cinematicDuration(0,4300)>=6600);
+ assert.ok(cinematicDuration(0,4300)<=7600);
 });
 test('3D handoff inherits the live 2D camera without a geographic or scale jump',()=>{
  const handoff=handoff3DCamera({lat:46.501,lng:11.357},17.25);
@@ -35,11 +35,12 @@ test('3D handoff inherits the live 2D camera without a geographic or scale jump'
 test('camera rotates the MAP and tilts terrain, no arbitrary model spin',()=>{
  const camera=target3DCamera({lat:46.498,lng:11.353},17.4,90,4500);
  assert.deepEqual(camera.center,[11.353,46.498]);
- assert.equal(camera.pitch,38);
+ assert.equal(camera.pitch,28);
+ assert.equal(camera.zoom,18.2);
  assert.equal(camera.bearing,148);
  assert.equal(camera.duration,4500);
  assert.equal(target3DCamera({lat:92,lng:11},17,90,3000),null);
- assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,20.4);
+ assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,19.2);
 });
 test('model is only rotated based on credible fresh heading',()=>{
  assert.equal(validHeading({bearing:89,timestamp:NOW/1000-30},120,NOW),89);
@@ -76,11 +77,12 @@ test('vector buildings are extruded and terrain falls back when DEM unsupported'
  assert.equal(building.v['source-layer'],'building');
  assert.equal(building.v.filter[1][1],'hide_3d');
  assert.equal(building.v.paint['fill-extrusion-color'],'hsl(215, 10%, 72%)');
- assert.equal(building.v.paint['fill-extrusion-opacity'],.9);
+ assert.deepEqual(building.v.paint['fill-extrusion-opacity'],['interpolate',['linear'],['zoom'],14,.88,18,.72,19.2,.4,20.4,.18]);
  assert.equal(building.v.paint['fill-extrusion-height'][0],'max');
  assert.equal(building.before,'labels');
  assert.equal(edges.v.type,'line');
  assert.equal(edges.v.paint['line-color'],'rgba(238,244,250,0.52)');
+ assert.deepEqual(edges.v.paint['line-opacity'],['interpolate',['linear'],['zoom'],15,.58,18,.42,20.4,.18]);
  let dem,terrain;
  const terrainMap={getSource:()=>null,addSource:(id,s)=>{dem=s},setTerrain:x=>{terrain=x}};
  assert.equal(enable3DTerrain(terrainMap),true);

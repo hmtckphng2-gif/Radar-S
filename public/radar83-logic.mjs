@@ -37,8 +37,8 @@ export function target3DCamera(point,zoom,heading=null,duration=4300){
  if(!Number.isFinite(lng)||!Number.isFinite(lat)||lat< -85||lat>85||lng< -180||lng>180)return null;
  return {
   center:[lng,lat],
-  zoom:Math.max(18.6,Math.min(20.4,Number(zoom)||19.0)),
-  pitch:38,
+  zoom:Math.max(18.2,Math.min(19.2,Number(zoom)||18.8)),
+  pitch:28,
   bearing:Number.isFinite(heading)?(heading+58)%360:58,
   duration:Math.max(0,Math.min(5000,Number(duration)||0))
  };
@@ -98,8 +98,8 @@ export function followDecision({touched=false,center=null,point=null,thresholdMe
 export function cinematicDuration(distanceKm=0,base=4700){
   const d=Number(distanceKm);
   const extra=Number.isFinite(d)&&d>2?300:0;
-  const duration=Math.max(4200,Math.min(4800,Number(base)||4700));
-  return Math.min(5000,Math.round(duration+extra));
+  const duration=Math.max(6600,Math.min(7200,Number(base)||6900));
+  return Math.min(7600,Math.round(duration+extra));
 }
 // Feed timestamps are seconds since epoch. Never advance a stale position.
 export function positionFreshness(vehicle,now=Date.now(),maxAgeSeconds=180){

@@ -78,7 +78,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
   const toZoom=focusZoom(map.getZoom(),map.getMaxZoom(),vehicle.kind);
   // The 3D camera frames the vehicle, not the map: a 44,5 m train and a 12 m bus
   // need a different distance to fill the frame.
-  const cinematicZoom=vehicle.kind==='bus'?Math.max(toZoom,20.2):Math.max(toZoom,19);
+  const cinematicZoom=vehicle.kind==='bus'?19.0:18.7;
   const distanceKm=focusDistanceKm(map.getCenter(),pos);
   // The camera move is short and starts on the tap. A long flight felt sluggish.
   const duration=cinematicDuration(distanceKm,focusDuration(motion.matches,map.getZoom(),toZoom,distanceKm)*0.62);
