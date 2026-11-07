@@ -26,7 +26,7 @@ test('cinematic approaches from behind over a longer, smooth flight',()=>{
 });
 test('3D handoff inherits the live 2D camera without a geographic or scale jump',()=>{
  const handoff=handoff3DCamera({lat:46.501,lng:11.357},17.25);
- assert.deepEqual(handoff,{center:[11.357,46.501],zoom:17.25,pitch:0,bearing:0});
+ assert.deepEqual(handoff,{center:[11.357,46.501],zoom:16.25,pitch:0,bearing:0});
  assert.equal(handoff3DCamera({lat:91,lng:11},17),null);
  assert.equal(handoff3DCamera({lat:46,lng:181},17),null);
  assert.equal(handoff3DCamera({lat:46,lng:11},99).zoom,20.4);

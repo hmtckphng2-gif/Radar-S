@@ -415,7 +415,7 @@ export class Radar83Cinematic {
   if(sync&&oldMap&&this.ready){
    try{
     const center=oldMap.getCenter(),zoom=oldMap.getZoom();
-    this.leaflet.setView([center.lat,center.lng],Math.min(18,Math.max(3,zoom)),{animate:false});
+    this.leaflet.setView([center.lat,center.lng],Math.min(18,Math.max(3,zoom-1)),{animate:false});
    }catch{}
   }
   this.contextLostCancel?.();
