@@ -145,7 +145,8 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
   });
   window.SuedtirolRadar71={enabled:cinema3d.enabled,cancel:()=>cancel({restore:true}),isFocusing:()=>active};
   setupHud();
-  // Load MapLibre and Three.js only after the explicit 3D button tap.
+  // Warm MapLibre and Three.js during idle time; no WebGL context is allocated.
+  preload3DLibraries();
   document.addEventListener('sr37:selection',onSelection);
   document.addEventListener('sr37:feeds',()=>{
    if(!visibleKey)return;
