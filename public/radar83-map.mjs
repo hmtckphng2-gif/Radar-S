@@ -208,7 +208,7 @@ export function make3DVehicleLayer(T,lib,map,vehicle,point,heading,onModel=()=>{
 export class Radar83Cinematic {
   constructor(leaflet,{onExit=()=>{},onManual=()=>{},onFailure=()=>{},onModel=()=>{}}={}){
    this.leaflet=leaflet;this.onExit=onExit;this.onManual=onManual;this.onFailure=onFailure;this.onModel=onModel;
-  this.sequence=0;this.map=null;this.overlay=null;this.layer=null;
+  this.sequence=0;this.map=null;this.overlay=null;this.layer=null;this.closeTimer=0;this.pendingClose=null;
   this.ready=false;this.touched=false;this.active=false;this.flight=null;this.flying=false;this.flightTimer=0;this.openTimeout=0;this.lastPoint=null;this.lastHeading=null;this.visibilityHandler=null;
  }
  get enabled(){return enabled3D(location.search)}
@@ -413,19 +413,41 @@ export class Radar83Cinematic {
   if(!decision)return;
   this.map.easeTo({center:decision.center,bearing:Number.isFinite(heading)?(heading+58)%360:this.map.getBearing(),duration:900,essential:false});
  }
- close({sync=true}={}){
-  const oldMap=this.map;
+ close({sync=true,animate=true}={}){
+  if(this.closeTimer){clearTimeout(this.closeTimer);this.closeTimer=0;}
+  if(this.pendingClose){
+   try{this.pendingClose.map?.remove()}catch{}
+   this.pendingClose.overlay?.remove();this.pendingClose=null;
+  }
+  const oldMap=this.map,closingOverlay=this.overlay;
+  let animateReturn=false;
   if(sync&&oldMap&&this.ready){
    try{
     const center=oldMap.getCenter(),zoom=oldMap.getZoom();
-    this.leaflet.setView([center.lat,center.lng],Math.min(18,Math.max(3,zoom-1)),{animate:false});
-   }catch{}
+    const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    animateReturn=!!animate&&!reduced;
+    const targetZoom=Math.min(18,Math.max(3,zoom-1));
+    if(animateReturn)this.leaflet.flyTo([center.lat,center.lng],targetZoom,{animate:true,duration:1.32,easeLinearity:.25});
+    else this.leaflet.setView([center.lat,center.lng],targetZoom,{animate:false});
+   }catch{animateReturn=false}
   }
   this.contextLostCancel?.();
   this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;this.lastPoint=null;this.lastHeading=null;clearTimeout(this.flightTimer);clearTimeout(this.openTimeout);this.openTimeout=0;
   if(this.visibilityHandler){document.removeEventListener('visibilitychange',this.visibilityHandler);this.visibilityHandler=null;}
-  if(oldMap)try{oldMap.stop();oldMap.remove()}catch(error){console.info('3D map cleanup',error)}
-  this.overlay?.remove();this.overlay=null;this.surface=null;this.loading=null;
+  if(oldMap)try{oldMap.stop()}catch(error){console.info('3D map stop',error)}
+  if(animateReturn&&oldMap&&closingOverlay){
+   closingOverlay.classList.add('sr83-closing');
+   this.pendingClose={map:oldMap,overlay:closingOverlay};
+   this.closeTimer=setTimeout(()=>{
+    const pending=this.pendingClose;this.pendingClose=null;this.closeTimer=0;
+    try{pending?.map?.remove()}catch(error){console.info('3D map cleanup',error)}
+    pending?.overlay?.remove();
+   },1400);
+  }else{
+   if(oldMap)try{oldMap.remove()}catch(error){console.info('3D map cleanup',error)}
+   closingOverlay?.remove();
+  }
+  this.overlay=null;this.surface=null;this.loading=null;
   document.querySelectorAll('#sheet .sr83-info-card,#sheet .sr83-sources').forEach(node=>node.remove());
   document.body.classList.remove('sr83-cinematic');
    if(this.contextCanvas&&this.contextLostHandler){
