@@ -94,13 +94,12 @@ test('a failed downloaded 3D model returns to the stable 2D camera',()=>{
 });
 
 
-test('the real 3D model is requested only after the explicit 3D button tap',()=>{
+test('the selected vehicle automatically opens the real 3D renderer like Main',()=>{
   const src=get('radar71-camera.mjs');
-  assert.match(src,/launch\.id='sr71Open3D'/);
-  assert.match(src,/launch\.addEventListener\('click',event=>/);
-  assert.match(src,/event\.preventDefault\(\);event\.stopPropagation\(\);launch3D\(\)/);
+  assert.match(src,/document\.addEventListener\('sr37:selection',onSelection\)/);
+  assert.match(src,/if\(cinema3d\?\.enabled\)\{/);
   assert.match(src,/cinema3d\.open\(vehicle,pos,heading,duration,cinematicZoom\)/);
-  assert.match(src,/Keep the normal 2D focus as the default/);
-  assert.match(src,/classic\(\);/);
-  assert.ok(get('radar83.css').includes('#details .sr71-3d-launch'),'the 3D button is styled in the sheet, not the map');
+  assert.match(src,/if\(!ok\)\{classic\(\);return\}/);
+  assert.match(src,/\}else classic\(\);/);
+  assert.doesNotMatch(src,/sr71Open3D|Keep the normal 2D focus as the default/);
 });

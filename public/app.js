@@ -18,6 +18,44 @@ import {formatStationName,formatRelativeAge,sourceLabel,expectedStopTime,hasKnow
 import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.5';
 import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.9.5';
 
+
+
+const $ = id => document.getElementById(id);
+const DIRECT_POSITION_SOURCES=['sta_direct'];
+const POSITION_SOURCES=[...SOURCES,...DIRECT_POSITION_SOURCES];
+const DIRECT_UPDATE_SOURCES=['sta_direct_updates'];
+const ALL_UPDATE_SOURCES=[...UPDATE_SOURCES,...DIRECT_UPDATE_SOURCES];
+const ALERT_SOURCES=['sta_alerts'];
+const ENDPOINTS=[...POSITION_SOURCES,...ALL_UPDATE_SOURCES,...ALERT_SOURCES];
+let lastMotionFrame = 0;
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const DETAIL_MAX_AGE = 120000;
+const VEHICLE_KEEP_MS = 30 * 60 * 1000; // Keep a clearly labelled last-known marker during an outage.
+const STALE_MAX_AGE_SEC = 60 * 60; // Never show observations older than 1 hour.
+const MARKER_MAX_AGE_SEC = 12 * 60;
+const AVERAGE_POLL_MS = 20000;
+const BUS_PLAYBACK_LAG_MS = 38000; // Fallback lag for irregular updates, never predict ahead.
+const BUS_TRACK_MAX_GAP_MS = 140000;
+const MAX_INTERPOLATION_METERS = 3000;
+const snapMaxMeters = 350;
+const manualRefreshDelayMs=3000;
+let selectionRenderToken=0; // Invalidates stale async timetable renders after a new selection.
+let tileErrorCount=0;
+let tileLoadedCount=0;
+let fallbackTilesUsed=false;
+let tileLastHealthyAt=0;
+let initiallyLocated=false;
+const MAP_PLACES={
+  sterzing:[46.895,11.433,12], bozen:[46.498,11.354,12], brixen:[46.717,11.485,12],
+  meran:[46.670,11.160,12], bruneck:[46.797,11.940,12], trento:[46.068,11.122,12]
+};
+const TILE_PROVIDERS=[
+  {name:'OpenStreetMap',url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',options:{attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a>'}},
+  {name:'OSM HOT',url:'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',options:{subdomains:'abc',attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a> · Tiles © Humanitarian OpenStreetMap Team'}}
+];
+let tileProviderIndex=0;
+const RT_MAX_AGE_SEC=15*60;
+
 function safeText(value) { return txt(value); }
 function duration(ms) {return Math.round(ms/1000)}
 function escapeHtml(value) { return safeText(value).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }

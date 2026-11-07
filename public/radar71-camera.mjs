@@ -82,6 +82,24 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
   const distanceKm=focusDistanceKm(map.getCenter(),pos);
   // The camera move is short and starts on the tap. A long flight felt sluggish.
   const duration=cinematicDuration(distanceKm,focusDuration(motion.matches,map.getZoom(),toZoom,distanceKm)*0.62);
+  const classic=()=>{
+   if(seq!==token||fallbackStarted)return;
+   fallbackStarted=true;
+   try{
+    map.stop();
+    if(motion.matches)map.setView([pos.lat,pos.lng],toZoom,{animate:false});
+    else map.flyTo([pos.lat,pos.lng],toZoom,{animate:true,duration:duration/1000,easeLinearity:.22});
+    if(heading!==null)turnTo(heading,duration,seq);
+   }catch(error){console.info('Radar 8.2 camera fallback',error);try{map.setView([pos.lat,pos.lng],toZoom,{animate:false})}catch{}}
+   timer=setTimeout(()=>{
+    if(seq!==token)return;
+    const nextVehicle=bridge.state.vehicles.get(key);
+    const nextPos=validFocusPoint(nextVehicle,bridge.state.markers.get(key)?.marker?.getLatLng?.());
+    if(nextPos)model3d?.updatePoint(nextPos,focusHeading(nextVehicle));
+    if(nextPos && bridge.state.selectedKey===key)try{map.panTo([nextPos.lat,nextPos.lng],{animate:false})}catch{}
+    reveal(seq);
+   },duration+95);
+  };
   emergencyFallback=classic;
   if(cinema3d?.enabled){
    cinema3d.open(vehicle,pos,heading,duration,cinematicZoom).then(ok=>{
