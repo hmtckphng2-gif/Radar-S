@@ -18,7 +18,7 @@ test('cinematic 3D is available by default but can be explicitly disabled',()=>{
 test('cinematic approaches from behind over a longer, smooth flight',()=>{
  const start=start3DCamera({lat:46.5,lng:11.35},90,19);
  assert.equal(start.pitch,60);
- assert.equal(start.bearing,322);
+ assert.equal(start.bearing,358); // exact Main intro bearing for heading 90°
  assert.ok(start.zoom>15, 'closer starting zoom than the old distant shot');
  assert.ok(start.center[0]<11.35);
  assert.ok(cinematicDuration(0,4300)>=3800);
