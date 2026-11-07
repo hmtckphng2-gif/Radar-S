@@ -20,31 +20,56 @@ import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.9.5';
 
 let cinematic3D = null;
 let cinematic3DModulePromise = null;
+let cinematic3DLaunchToken = 0;
 async function launchVehicleCinematic(key) {
+  const token = ++cinematic3DLaunchToken;
   const vehicle = state.vehicles.get(key);
-  if (!vehicle || !state.map) return false;
+  if (!vehicle) return false;
+  if (!state.map) {
+    setNotice('<strong>3D-Ansicht nicht gestartet.</strong> Die Karte ist noch nicht bereit.');
+    return false;
+  }
   try {
     if (!cinematic3DModulePromise) {
-      cinematic3DModulePromise = import('./radar83-map.mjs?v=9.9.5&rev=vehicle-tap-3d').catch(error => {
+      cinematic3DModulePromise = import('./radar83-map.mjs?v=9.9.5&rev=vehicle-tap-3d-2').catch(error => {
         cinematic3DModulePromise = null;
         throw error;
       });
     }
     const { Radar83Cinematic } = await cinematic3DModulePromise;
+    if (token !== cinematic3DLaunchToken || state.selectedKey !== key) return false;
+    if (typeof Radar83Cinematic !== 'function') throw new Error('Radar83Cinematic export missing');
     if (!cinematic3D) {
       cinematic3D = new Radar83Cinematic(state.map, {
-        onFailure: () => setNotice('<strong>3D-Ansicht gerade nicht verfügbar.</strong> Die normale Karte bleibt geöffnet.')
+        onExit: () => {},
+        onManual: () => {},
+        onFailure: error => {
+          console.error('Radar 3D renderer failed', error);
+          setNotice('<strong>3D konnte nicht geladen werden.</strong> ' + (error?.message || 'Die normale Karte bleibt verfügbar.'));
+        }
       });
     }
     const current = state.vehicles.get(key);
     if (!current || state.selectedKey !== key) return false;
     const point = mapTarget(current);
-    const heading = current.bearing == null ? null : Number(current.bearing);
+    const lat = Number(point?.lat), lon = Number(point?.lon ?? point?.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 85 || Math.abs(lon) > 180) {
+      throw new Error('Fahrzeugposition ist ungültig');
+    }
+    // Radar83Cinematic.open accepts the native {lat, lon} point shape.
+    const headingValue = current.bearing == null ? NaN : Number(current.bearing);
+    const heading = Number.isFinite(headingValue) ? headingValue : null;
     const zoom = state.map.getZoom?.() ?? 12;
-    return await cinematic3D.open(current, { lat: point.lat, lon: point.lon }, heading, 4300, zoom);
+    const opened = await cinematic3D.open(current, { lat, lon }, heading, 4300, zoom);
+    if (!opened && token === cinematic3DLaunchToken && state.selectedKey === key && !cinematic3D.active) {
+      setNotice('<strong>3D-Ansicht konnte nicht gestartet werden.</strong> Prüfe die WebGL-/Kartenverbindung.');
+    }
+    return opened;
   } catch (error) {
-    console.warn('Radar 3D could not start from vehicle selection', error);
-    setNotice('<strong>3D-Ansicht konnte nicht gestartet werden.</strong> Die normale Karte bleibt geöffnet.');
+    console.error('Radar 3D could not start from vehicle selection', error);
+    if (token === cinematic3DLaunchToken) {
+      setNotice('<strong>3D-Ansicht konnte nicht gestartet werden.</strong> ' + (error?.message || 'Die normale Karte bleibt geöffnet.'));
+    }
     return false;
   }
 }
@@ -1026,7 +1051,6 @@ async function loadSchedule(key){
 }
 function selectVehicle(key){
   if(!state.vehicles.has(key))return;
-  // The ordinary vehicle tap is the cinematic 3D action; no extra control.
   if(state.selectedKey===key&&state.activeSheet==='vehicle'){
     void launchVehicleCinematic(key);
     return;
@@ -1038,6 +1062,7 @@ function selectVehicle(key){
   document.dispatchEvent(new Event('sr37:selection'));
   void launchVehicleCinematic(key);
 }
+
 function drawVehicleTrack(key){
   state.trackLayer.clearLayers();
   const pts=getTrackPoints(key);
