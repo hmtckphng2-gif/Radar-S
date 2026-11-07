@@ -53,7 +53,7 @@ export function readProjectionMatrix(input){
 export function start3DCamera(point, heading=null, finalZoom=17){
  const lat=Number(point?.lat),lng=Number(point?.lng??point?.lon);
  if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -85||lat > 85)return null;
- const finalBearing=Number.isFinite(heading)?((heading%360)+360)%360:0;
+ const finalBearing=Number.isFinite(heading)?(heading+36)%360:36;
  const direction=finalBearing*Math.PI/180;
  const meters=680,latOffset=meters/111320;
  const lngOffset=latOffset/Math.max(.2,Math.cos(lat*Math.PI/180));
