@@ -1,11 +1,11 @@
-import {Radar83Cinematic,preload3DLibraries} from './radar83-map.mjs?v=9.9.5&launch=direct-3d-on-tap-3';
+import {Radar83Cinematic,preload3DLibraries} from './radar83-map.mjs?v=9.9.5&launch=direct-3d-on-tap-4';
 /* Radar 7.1 – Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate
  * map panes with CSS and corrupt touch coordinates or marker hit testing.
  */
 import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from './radar71-camera-logic.mjs?v=9.9.5';
-import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-default';
+import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=slow-close-approach-1';
 (()=>{'use strict';
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
