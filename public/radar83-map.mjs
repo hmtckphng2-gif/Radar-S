@@ -419,22 +419,33 @@ export class Radar83Cinematic {
    try{this.pendingClose.map?.remove()}catch{}
    this.pendingClose.overlay?.remove();this.pendingClose=null;
   }
-  const oldMap=this.map,closingOverlay=this.overlay;
-  let animateReturn=false;
-  if(sync&&oldMap&&this.ready){
+  const oldMap=this.map,closingOverlay=this.overlay,returnPose=this.flight?.start||null;
+  let animateReturn=false,reverseReturn=false;
+  if(sync&&oldMap){
    try{
-    const center=oldMap.getCenter(),zoom=oldMap.getZoom();
     const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-    animateReturn=!!animate&&!reduced;
-    const targetZoom=Math.min(18,Math.max(3,zoom-1));
-    if(animateReturn)this.leaflet.flyTo([center.lat,center.lng],targetZoom,{animate:true,duration:1.32,easeLinearity:.25});
-    else this.leaflet.setView([center.lat,center.lng],targetZoom,{animate:false});
-   }catch{animateReturn=false}
+    animateReturn=!!animate&&!reduced&&!!returnPose;
+    if(returnPose){
+     // Reverse the same camera handoff used by replay(): return from the
+     // vehicle close-up to the exact original 2D handoff pose.
+     oldMap.stop();
+     if(animateReturn){
+      oldMap.easeTo({...returnPose,duration:900,easing:t=>{const x=Math.max(0,Math.min(1,t));return x*x*(3-2*x)},essential:true});
+      reverseReturn=true;
+     }else oldMap.jumpTo(returnPose);
+    }else if(this.ready){
+     const center=oldMap.getCenter(),zoom=oldMap.getZoom();
+     const targetZoom=Math.min(18,Math.max(3,zoom-1));
+     animateReturn=!!animate&&!reduced;
+     if(animateReturn)this.leaflet.flyTo([center.lat,center.lng],targetZoom,{animate:true,duration:.9,easeLinearity:.25});
+     else this.leaflet.setView([center.lat,center.lng],targetZoom,{animate:false});
+    }
+   }catch{animateReturn=false;reverseReturn=false}
   }
   this.contextLostCancel?.();
   this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;this.lastPoint=null;this.lastHeading=null;clearTimeout(this.flightTimer);clearTimeout(this.openTimeout);this.openTimeout=0;
   if(this.visibilityHandler){document.removeEventListener('visibilitychange',this.visibilityHandler);this.visibilityHandler=null;}
-  if(oldMap)try{oldMap.stop()}catch(error){console.info('3D map stop',error)}
+  if(oldMap&&!reverseReturn)try{oldMap.stop()}catch(error){console.info('3D map stop',error)}
   if(animateReturn&&oldMap&&closingOverlay){
    closingOverlay.classList.add('sr83-closing');
    this.pendingClose={map:oldMap,overlay:closingOverlay};
@@ -442,7 +453,7 @@ export class Radar83Cinematic {
     const pending=this.pendingClose;this.pendingClose=null;this.closeTimer=0;
     try{pending?.map?.remove()}catch(error){console.info('3D map cleanup',error)}
     pending?.overlay?.remove();
-   },1400);
+   },980);
   }else{
    if(oldMap)try{oldMap.remove()}catch(error){console.info('3D map cleanup',error)}
    closingOverlay?.remove();
