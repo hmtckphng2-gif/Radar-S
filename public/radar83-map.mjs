@@ -98,7 +98,7 @@ export function build3DBuildings(map){
  if(!map.getLayer('sr83-building-edges'))map.addLayer({
   id:'sr83-building-edges',type:'line',source:'openmaptiles','source-layer':'building',
   minzoom:15,filter:['!', ['has','hide_3d']],
-  paint:{'line-color':'rgba(238,244,250,0.52)','line-width':['interpolate',['linear'],['zoom'],15,0.35,18,0.8],'line-opacity':0.58}
+  paint:{'line-color':'rgba(238,244,250,0.52)','line-width':0.65,'line-opacity':0.58}
  },firstLabel);
  return true;
 }

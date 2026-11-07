@@ -64,19 +64,23 @@ test('custom WebGL layer is geographically anchored inside 3D MapLibre renderer'
  assert.equal(typeof layer.onRemove,'function');
 });
 test('vector buildings are extruded and terrain falls back when DEM unsupported',()=>{
- let building=null;const map={
+ const layers=[];const map={
   getSource:n=>n==='openmaptiles'?{}:null,getLayer:()=>null,
   getStyle:()=>({layers:[{type:'symbol',id:'labels'}]}),
-  addLayer:(v,before)=>{building={v,before}}
+  addLayer:(v,before)=>layers.push({v,before})
  };
  assert.equal(build3DBuildings(map),true);
+ const building=layers.find(x=>x.v.id==='sr83-buildings');
+ const edges=layers.find(x=>x.v.id==='sr83-building-edges');
  assert.equal(building.v.type,'fill-extrusion');
  assert.equal(building.v['source-layer'],'building');
  assert.equal(building.v.filter[1][1],'hide_3d');
- assert.equal(building.v.paint['fill-extrusion-color'],'hsl(215, 12%, 66%)');
- assert.equal(building.v.paint['fill-extrusion-opacity'],.86);
+ assert.equal(building.v.paint['fill-extrusion-color'],'hsl(215, 10%, 72%)');
+ assert.equal(building.v.paint['fill-extrusion-opacity'],.9);
  assert.equal(building.v.paint['fill-extrusion-height'][0],'max');
  assert.equal(building.before,'labels');
+ assert.equal(edges.v.type,'line');
+ assert.equal(edges.v.paint['line-color'],'rgba(238,244,250,0.52)');
  let dem,terrain;
  const terrainMap={getSource:()=>null,addSource:(id,s)=>{dem=s},setTerrain:x=>{terrain=x}};
  assert.equal(enable3DTerrain(terrainMap),true);
