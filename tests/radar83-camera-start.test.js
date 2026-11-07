@@ -85,3 +85,10 @@ test('the 3D camera respects prefers-reduced-motion', () => {
   // Die Funktion selbst darf nie werfen.
   assert.equal(typeof prefersReducedMotion(), 'boolean');
 });
+
+test('the startup watchdog does not preempt the full mobile loading budget', () => {
+  const src = read('radar83-map.mjs');
+  assert.match(src, /3D-Start nach 35 Sekunden abgebrochen/);
+  assert.match(src, /\},35000\);/);
+  assert.ok(35000 > 11000 + 11000 + 7200 + 2200, 'watchdog must exceed library, style, tile and model waits');
+});
