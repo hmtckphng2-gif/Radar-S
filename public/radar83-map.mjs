@@ -249,14 +249,17 @@ export class Radar83Cinematic {
   this.lastPoint={lat:Number(point.lat),lng:Number(point.lng??point.lon)};this.lastHeading=heading;
   this.openTimedOut=false;
   this.makeOverlay(vehicle);
+  // Full startup can include up to 11s for MapLibre, 11s for the style,
+  // 7.2s for vector tiles and 2.2s for the first model frame. The old 8s
+  // watchdog always raced those legitimate loading stages on slower phones.
   this.openTimeout=setTimeout(()=>{
    if(seq!==this.sequence||this.ready)return;
    this.openTimedOut=true;
-   const error=Error('3D konnte innerhalb von 8 Sekunden nicht geladen werden');
+   const error=Error('3D-Start nach 35 Sekunden abgebrochen');
    this.contextLostCancel?.();
    this.close({sync:false});
    this.onFailure(error);
-  },8000);
+  },35000);
   try{
    const [lib,T]=await Promise.all([loadMapLibre(),loadThree()]);
    if(seq!==this.sequence)return false;
