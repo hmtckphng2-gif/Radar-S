@@ -43,6 +43,13 @@ export function target3DCamera(point,zoom,heading=null,duration=4300){
   duration:Math.max(0,Math.min(5000,Number(duration)||0))
  };
 }
+// Build the 3D handoff camera from the live 2D map view. This keeps the
+// geographic center and scale continuous when the WebGL map takes over.
+export function handoff3DCamera(center,zoom){
+ const lat=Number(center?.lat),lng=Number(center?.lng??center?.lon),z=Number(zoom);
+ if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -85||lat > 85||lng < -180||lng > 180)return null;
+ return {center:[lng,lat],zoom:Math.max(3,Math.min(20.4,Number.isFinite(z)?z:16)),pitch:0,bearing:0};
+}
 export function readProjectionMatrix(input){
  const matrix=input?.defaultProjectionData?.mainMatrix??input?.modelViewProjectionMatrix??input;
  return matrix && matrix.length===16 && [...matrix].every(Number.isFinite)?matrix:null;

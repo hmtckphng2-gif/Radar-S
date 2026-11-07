@@ -3,7 +3,7 @@
  * vehicles initialize MapLibre; errors or ?radar3d=on fall back to Radar 8.2.
  */
 import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.5&rev=credits-2';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,positionFreshness,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&flag=enabled-default&launch=cinematic-enabled&intro=main-restore';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,handoff3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,positionFreshness,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&flag=enabled-default&launch=dynamic-handoff-1';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -204,7 +204,7 @@ export class Radar83Cinematic {
  }
  get enabled(){return enabled3D(location.search)}
  makeOverlay(vehicle){
-  const overlay=document.createElement('div');overlay.className='sr83-viewport sr83-loading';overlay.id='sr83Viewport';
+  const overlay=document.createElement('div');overlay.className='sr83-viewport';overlay.id='sr83Viewport';
   const surface=document.createElement('div');surface.className='sr83-map';overlay.append(surface);
   const toolbar=document.createElement('div');toolbar.className='sr83-toolbar';
   const focus=document.createElement('button');focus.className='sr83-control';focus.type='button';focus.textContent='Fokus';focus.setAttribute('aria-label','Kamera auf den Zug ausrichten');focus.addEventListener('click',e=>{e.stopPropagation();this.focus()});
@@ -243,12 +243,20 @@ export class Radar83Cinematic {
   this.close({sync:false});
   const seq=++this.sequence;this.active=true;
   const target=target3DCamera(point,zoom,heading,duration);
-  const start=start3DCamera(point,heading,target?.zoom);
-  if(!target||!start){this.close({sync:false});return false}
+  if(!target){this.close({sync:false});return false}
   this.vehicleKey=vehicle?.key||null;
   this.lastPoint={lat:Number(point.lat),lng:Number(point.lng??point.lon)};this.lastHeading=heading;
   this.openTimedOut=false;
   this.makeOverlay(vehicle);
+  // Start the real map flight on the tap, while the 3D scene loads invisibly.
+  // The later WebGL handoff reads the live Leaflet camera, so there is no
+  // repeated stock intro or jump back to a fixed 680 m starting point.
+  try{
+   this.leaflet.stop();
+   const twoDZoom=Math.max(3,Math.min(18,Number(zoom)||18));
+   if(prefersReducedMotion())this.leaflet.setView([point.lat,point.lng],twoDZoom,{animate:false});
+   else this.leaflet.flyTo([point.lat,point.lng],twoDZoom,{animate:true,duration:Math.max(0.1,Number(duration)||4300)/1000,easeLinearity:.22});
+  }catch(error){console.info('Radar 8.3 immediate 2D camera fallback',error)}
   // Full startup can include up to 11s for MapLibre, 11s for the style,
   // 7.2s for vector tiles and 2.2s for the first model frame. The old 8s
   // watchdog always raced those legitimate loading stages on slower phones.
@@ -265,8 +273,8 @@ export class Radar83Cinematic {
    if(seq!==this.sequence)return false;
    if(typeof lib.supported==='function'&&!lib.supported())throw Error('WebGL not supported by this browser');
    const map=new lib.Map({
-    container:this.surface,style:VECTOR_STYLE,center:start.center,zoom:start.zoom,
-    bearing:start.bearing,pitch:start.pitch,maxZoom:19,maxPitch:80,minZoom:3,
+    container:this.surface,style:VECTOR_STYLE,center:[Number(point.lng??point.lon),Number(point.lat)],zoom:Math.max(3,Math.min(18,Number(zoom)||17)),
+    bearing:0,pitch:0,maxZoom:20.4,maxPitch:80,minZoom:3,
     antialias:false,fadeDuration:0,renderWorldCopies:false,
     pixelRatio:Math.min(2,Math.max(1,Number(window.devicePixelRatio)||1)),
     attributionControl:true,interactive:true
@@ -312,13 +320,9 @@ export class Radar83Cinematic {
    map.on('dragstart',()=>this.interrupt());
    map.getCanvas().addEventListener('touchstart',()=>this.interrupt(),{passive:true});
    map.getCanvas().addEventListener('wheel',()=>this.interrupt(),{passive:true});
-   // The camera starts moving NOW. Waiting for the tiles and for the model
-   // before the first movement felt like a dead second on every tap.
-   this.flight={start,target};
+   // Keep the 3D map hidden while tiles and the real model are prepared.
+   // The visible Leaflet camera has already been zooming since the tap.
    map.resize();map.triggerRepaint();
-   document.body.classList.add('sr83-cinematic');
-   this.replay();
-   // From here the scene is built while the camera is already flying.
    await waitFor3DScene(map);
    if(seq!==this.sequence)return false;
    try{build3DBuildings(map)}catch(error){console.info('3D building fallback',error)}
@@ -345,8 +349,19 @@ export class Radar83Cinematic {
    await waitFor3DModel(map,this.layer);
    if(seq!==this.sequence)return false;
    this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
-   this.overlay.classList.remove('sr83-loading');this.overlay.classList.add('sr83-ready');
+   // Match the exact live 2D camera before revealing WebGL. Then continue
+   // the same journey in 3D: center/scale are inherited, pitch and bearing
+   // develop during the zoom instead of appearing as a hard scene cut.
+   const liveCenter=this.leaflet.getCenter?.(),liveZoom=this.leaflet.getZoom?.();
+   const handoff=handoff3DCamera(liveCenter,liveZoom);
+   if(!handoff)throw Error('Live camera handoff position invalid');
+   this.leaflet.stop();
+   this.flight={start:handoff,target};
+   map.jumpTo(handoff);map.resize();map.triggerRepaint();
+   document.body.classList.add('sr83-cinematic');
+   this.overlay.classList.add('sr83-ready');
    this.loading?.remove();this.loading=null;
+   this.replay();
    clearTimeout(this.openTimeout);this.openTimeout=0;
    this.ready=true;
    return true;

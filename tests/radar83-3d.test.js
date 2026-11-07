@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {VEHICLE_SPECS,vehicleKind,validHeading,modelYawRadians,makeVehicleMesh} from '../public/radar83-model.mjs';
-import {enabled3D,FEATURE_FLAGS,target3DCamera,start3DCamera,cinematicDuration,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta,positionFreshness} from '../public/radar83-logic.mjs';
+import {enabled3D,FEATURE_FLAGS,target3DCamera,start3DCamera,handoff3DCamera,cinematicDuration,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta,positionFreshness} from '../public/radar83-logic.mjs';
 import {build3DBuildings,enable3DTerrain,make3DVehicleLayer} from '../public/radar83-map.mjs';
 
 const NOW=1760900000000;
@@ -24,6 +24,14 @@ test('cinematic approaches from behind over a longer, smooth flight',()=>{
  assert.ok(cinematicDuration(0,4300)>=3800);
  assert.ok(cinematicDuration(0,4300)<=4600);
 });
+test('3D handoff inherits the live 2D camera without a geographic or scale jump',()=>{
+ const handoff=handoff3DCamera({lat:46.501,lng:11.357},17.25);
+ assert.deepEqual(handoff,{center:[11.357,46.501],zoom:17.25,pitch:0,bearing:0});
+ assert.equal(handoff3DCamera({lat:91,lng:11},17),null);
+ assert.equal(handoff3DCamera({lat:46,lng:181},17),null);
+ assert.equal(handoff3DCamera({lat:46,lng:11},99).zoom,20.4);
+});
+
 test('camera rotates the MAP and tilts terrain, no arbitrary model spin',()=>{
  const camera=target3DCamera({lat:46.498,lng:11.353},17.4,90,4500);
  assert.deepEqual(camera.center,[11.353,46.498]);
@@ -116,6 +124,16 @@ test('3D overlay identifies the selected vehicle, destination and vehicle ID',()
  assert.equal(selectedVehicleMeta({headsign:'MERAN',vehicleId:'STA-17',tripId:'trip-16685',source:'sta_direct'}),'Ziel: Meran · Fahrzeug: STA-17 · Datenquelle: STA direkt');
  assert.equal(selectedVehicleMeta({headsign:'Fahrtziel unbekannt',vehicleId:'—'}),'');
  assert.equal(selectedVehicleMeta({tripId:'trip-2',source:'trentino'}),'Datenquelle: Trentino Trasporti');
+});
+
+test('tap starts the 2D flight immediately and 3D takes over from the live camera',()=>{
+ const src=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
+ const start=src.indexOf('this.leaflet.flyTo([point.lat,point.lng]');
+ const awaitLibs=src.indexOf('await Promise.all([loadMapLibre(),loadThree()])');
+ assert.ok(start>=0&&start<awaitLibs,'Leaflet zoom must start before asynchronous 3D loading');
+ assert.ok(src.includes('const liveCenter=this.leaflet.getCenter?.(),liveZoom=this.leaflet.getZoom?.()'));
+ assert.ok(src.includes('this.flight={start:handoff,target}'));
+ assert.ok(src.includes("this.overlay.classList.add('sr83-ready')"));
 });
 
 test('3D scene updates and delayed model callbacks are scoped to the active vehicle',()=>{
