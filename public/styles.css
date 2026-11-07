@@ -178,3 +178,13 @@ html[data-theme="light"] #map img.leaflet-tile {
   -webkit-filter: none !important;
   filter: none !important;
 }
+
+/* Small real-time delay ring around every bus/train marker. Unknown is neutral. */
+.marker-wrap .marker-circle{position:relative;isolation:isolate;overflow:visible}
+.marker-wrap .marker-circle::after{content:"";position:absolute;inset:-4px;border:2px solid var(--marker-delay-ring,#8b96a5);border-radius:50%;pointer-events:none;opacity:.96;box-shadow:0 0 0 1px #07111b80}
+.marker-wrap.delay-unknown{--marker-delay-ring:#8993a2}
+.marker-wrap.delay-early{--marker-delay-ring:#58a8ff}
+.marker-wrap.delay-ontime{--marker-delay-ring:#46cf91}
+.marker-wrap.delay-minor{--marker-delay-ring:#e4c34f}
+.marker-wrap.delay-delayed{--marker-delay-ring:#f39a42}
+.marker-wrap.delay-severe{--marker-delay-ring:#f05252}

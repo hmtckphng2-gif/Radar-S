@@ -524,6 +524,16 @@ function visible(v){
   if(state.query&&!`${v.name} ${v.headsign} ${v.vehicleId} ${v.tripId} ${v.routeLongName}`.toLocaleLowerCase('de').includes(state.query))return false;
   return true;
 }
+function delayRingState(v){
+  const info=currentVehicleDelay(v);
+  if(!info||!Number.isFinite(Number(info.delay)))return 'unknown';
+  const minutes=Math.round(Number(info.delay)/60);
+  if(minutes<=-1)return 'early';
+  if(minutes===0)return 'ontime';
+  if(minutes<5)return 'minor';
+  if(minutes<15)return 'delayed';
+  return 'severe';
+}
 function markerIcon(v){
   const train=v.kind==='train',label=v.name.startsWith('Linie unbekannt')||v.name==='Zugnummer unbekannt'?'':v.name;
   const isOld=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
@@ -533,7 +543,8 @@ function markerIcon(v){
   const lineFav=lineKey&&isLineFavorite(lineKey);
   const zoom=state.map?state.map.getZoom():0;
   const showSpeed=zoom>=13 && v.speed!==null;
-  const cls='marker-wrap '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'')+(isEstimated?' sr86-estimated':' sr86-feed-position')+(isFav?' favorite':'')+(lineFav?' line-favorite':'');
+  const delayState=delayRingState(v);
+  const cls='marker-wrap delay-'+delayState+' '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'')+(isEstimated?' sr86-estimated':' sr86-feed-position')+(isFav?' favorite':'')+(lineFav?' line-favorite':'');
   const speedText=showSpeed?'<div class="marker-speed">'+v.speed+' km/h</div>':'';
   const icon=`<div class="${cls}">${speedText}<div class="marker-label">${escapeHtml(label)}</div><div class="marker-circle">${train?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="17" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 19.5l-2 2m10-2 2 2"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="16" rx="3"/><path d="M3 11h18M7 15h2m6 0h2M7 19l-2 2m14-2 2 2"/></svg>'}${isFav?'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22l-5-4.87L2 9.27l6.91-1.02L12 2z"/></svg>':''}</div></div>`;
   return L.divIcon({className:'radar-custom',html:icon,iconSize:[30,48],iconAnchor:[15,38]});
@@ -718,7 +729,7 @@ function refreshMarkers(){
     const target=motionDuration(v,null)?mapTarget(v):rawTarget;
     const aged=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
     const lineKey=v.routeId?(v.source+':'+v.routeId):'';
-    const iconKey=`${v.kind}|${v.name}|${state.selectedKey===key}|${aged}|${v.positionType||''}|${lineKey}`;
+    const iconKey=`${v.kind}|${v.name}|${state.selectedKey===key}|${aged}|${v.positionType||''}|${lineKey}|${delayRingState(v)}`;
     let entry=state.markers.get(key);
     if(!entry){
       const marker=L.marker([target.lat,target.lon],{icon:markerIcon(v),keyboard:true,title:v.name}).addTo(state.layer);
