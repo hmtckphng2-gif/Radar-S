@@ -77,12 +77,12 @@ test('vector buildings are extruded and terrain falls back when DEM unsupported'
  assert.equal(building.v['source-layer'],'building');
  assert.equal(building.v.filter[1][1],'hide_3d');
  assert.equal(building.v.paint['fill-extrusion-color'],'hsl(215, 10%, 72%)');
- assert.deepEqual(building.v.paint['fill-extrusion-opacity'],['interpolate',['linear'],['zoom'],14,.88,18,.72,19.2,.4,20.4,.18]);
+ assert.deepEqual(building.v.paint['fill-extrusion-opacity'],['step',['zoom'],.88,18,.72,19.2,.4,20.4,.18]);
  assert.equal(building.v.paint['fill-extrusion-height'][0],'max');
  assert.equal(building.before,'labels');
  assert.equal(edges.v.type,'line');
  assert.equal(edges.v.paint['line-color'],'rgba(238,244,250,0.52)');
- assert.deepEqual(edges.v.paint['line-opacity'],['interpolate',['linear'],['zoom'],15,.58,18,.42,20.4,.18]);
+ assert.deepEqual(edges.v.paint['line-opacity'],['step',['zoom'],.58,18,.42,20.4,.18]);
  let dem,terrain;
  const terrainMap={getSource:()=>null,addSource:(id,s)=>{dem=s},setTerrain:x=>{terrain=x}};
  assert.equal(enable3DTerrain(terrainMap),true);

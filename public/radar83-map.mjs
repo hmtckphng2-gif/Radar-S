@@ -89,7 +89,7 @@ export function build3DBuildings(map){
   filter:['!', ['has','hide_3d']],
   paint:{
    'fill-extrusion-color':'hsl(215, 10%, 72%)',
-   'fill-extrusion-opacity':['interpolate',['linear'],['zoom'],14,.88,18,.72,19.2,.4,20.4,.18],
+   'fill-extrusion-opacity':['step',['zoom'],.88,18,.72,19.2,.4,20.4,.18],
    'fill-extrusion-height':['max',3,['to-number',['coalesce',['get','render_height'],['get','height'],['*',['to-number',['get','building:levels'],3],3],8]]],
    'fill-extrusion-base':['to-number',['coalesce',['get','render_min_height'],['get','min_height'],0]]
   }
@@ -98,7 +98,7 @@ export function build3DBuildings(map){
  if(!map.getLayer('sr83-building-edges'))map.addLayer({
   id:'sr83-building-edges',type:'line',source:'openmaptiles','source-layer':'building',
   minzoom:15,filter:['!', ['has','hide_3d']],
-  paint:{'line-color':'rgba(238,244,250,0.52)','line-width':0.65,'line-opacity':['interpolate',['linear'],['zoom'],15,.58,18,.42,20.4,.18]}
+  paint:{'line-color':'rgba(238,244,250,0.52)','line-width':0.65,'line-opacity':['step',['zoom'],.58,18,.42,20.4,.18]}
  },firstLabel);
  return true;
 }

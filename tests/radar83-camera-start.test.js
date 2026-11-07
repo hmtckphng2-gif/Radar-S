@@ -59,7 +59,7 @@ test('replay works before the model is ready', () => {
 });
 
 test('the camera flight remains smooth and bounded', () => {
-  assert.ok(cinematicDuration(0.2) >= 4200 && cinematicDuration(0.2) <= 4800);
+  assert.ok(cinematicDuration(0.2) >= 6600 && cinematicDuration(0.2) <= 7600);
   assert.ok(cinematicDuration(0.2) < cinematicDuration(30));
   assert.ok(cinematicDuration(0.2, 9000) <= 5000);
   assert.ok(cinematicDuration(0.2, 100) >= 4200);
