@@ -1,4 +1,4 @@
-import {Radar83Cinematic,preload3DLibraries} from './radar83-map.mjs?v=9.9.5&launch=reverse-camera-short-2';
+import {Radar83Cinematic,preload3DLibraries} from './radar83-map.mjs?v=9.9.5&launch=reverse-camera-straight-3';
 /* Radar 7.1 – Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate

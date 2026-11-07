@@ -426,11 +426,14 @@ export class Radar83Cinematic {
     const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     animateReturn=!!animate&&!reduced&&!!returnPose;
     if(returnPose){
-     // Reverse the same camera handoff used by replay(): return from the
-     // vehicle close-up to the exact original 2D handoff pose.
+     // Calm vertical pull-back: lock the vehicle/map center and bearing,
+     // smoothly zoom out and flatten to a top-down view. Restore the exact
+     // 2D handoff pose only as the faded overlay is removed.
      oldMap.stop();
      if(animateReturn){
-      oldMap.easeTo({...returnPose,duration:900,easing:t=>{const x=Math.max(0,Math.min(1,t));return x*x*(3-2*x)},essential:true});
+      const center=oldMap.getCenter(),bearing=oldMap.getBearing();
+      oldMap.easeTo({center,zoom:returnPose.zoom,pitch:returnPose.pitch??0,bearing,duration:1650,
+       easing:t=>{const x=Math.max(0,Math.min(1,t));return x*x*(3-2*x)},essential:true});
       reverseReturn=true;
      }else oldMap.jumpTo(returnPose);
     }else if(this.ready){
@@ -453,7 +456,7 @@ export class Radar83Cinematic {
     const pending=this.pendingClose;this.pendingClose=null;this.closeTimer=0;
     try{pending?.map?.remove()}catch(error){console.info('3D map cleanup',error)}
     pending?.overlay?.remove();
-   },980);
+   },1780);
   }else{
    if(oldMap)try{oldMap.remove()}catch(error){console.info('3D map cleanup',error)}
    closingOverlay?.remove();
