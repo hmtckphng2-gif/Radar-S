@@ -117,7 +117,9 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
   if(details&&cinema3d?.enabled){
    const launch=document.createElement('button');launch.id='sr71Open3D';launch.type='button';launch.className='sr71-3d-launch';launch.textContent='3D ansehen';
    launch.setAttribute('aria-label','3D-Ansicht für dieses Fahrzeug öffnen');
-   launch.addEventListener('click',launch3D);details.append(launch);
+   launch.addEventListener('click',event=>{
+    event.preventDefault();event.stopPropagation();launch3D();
+   });details.append(launch);
   }
   // Keep the normal 2D focus as the default. Three.js and MapLibre are only
   // requested after the user explicitly taps the 3D button in the sheet.
@@ -143,10 +145,14 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
    },
    onManual:()=>{if(active)reveal(token)},
    onFailure:error=>{
+    const reason=String(error?.message||'unbekannter Fehler').slice(0,100);
+    console.warn('Radar 3D launch failed:',reason);
+    if(window.SuedtirolRadar71)window.SuedtirolRadar71.last3DError=reason;
     if(emergencyFallback){
      clearTimeout(timer);if(!fallbackStarted)emergencyFallback();
-     const notice=document.createElement('div');notice.className='sr83-fallback-notice';notice.setAttribute('role','status');notice.textContent='3D nicht verfügbar · zurück zur 2D-Karte';
-     document.getElementById('map')?.append(notice);clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>notice.remove(),2600);
+     const notice=document.createElement('div');notice.className='sr83-fallback-notice';notice.setAttribute('role','status');
+     notice.textContent='3D-Fehler: '+reason+' · 2D-Fallback';
+     document.getElementById('map')?.append(notice);clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>notice.remove(),8000);
     }
    }
   });
