@@ -18,18 +18,23 @@ import {start3DCamera,target3DCamera,use3DTerrain,cinematicDuration,prefersReduc
 const root = fileURLToPath(new URL('../', import.meta.url));
 const read = name => readFileSync(root + 'public/' + name, 'utf8');
 
-test('the clicked vehicle starts zooming immediately and 3D inherits the live camera', () => {
+test('the 3D leg continues the tap-origin flight before tiles and model finish loading', () => {
   const src = read('radar83-map.mjs');
   const immediate = src.indexOf('this.leaflet.flyTo([point.lat,point.lng]');
-  const asyncLoad = src.indexOf('await Promise.all([loadMapLibre(),loadThree()])');
+  const style = src.indexOf("map.on('load',loaded);map.on('error',failed);");
+  const handoff = src.indexOf('this.flight={start:handoff,target:continuedTarget};');
   const scene = src.indexOf('await waitFor3DScene(map);');
   const model = src.indexOf('await waitFor3DModel(map,this.layer);');
-  const handoff = src.indexOf('this.flight={start:handoff,target};');
-  assert.ok(immediate > 0 && asyncLoad > 0 && immediate < asyncLoad,
-    'the 2D zoom must start on the tap before asynchronous 3D loading');
-  assert.ok(scene > 0 && model > scene && handoff > model,
-    'the live 2D camera is handed to 3D after the scene and model are ready');
+  assert.ok(immediate > 0 && style > 0 && handoff > style,
+    '2D zoom starts on tap and 3D continues as soon as the vector style loads');
+  assert.ok(handoff < scene && scene < model,
+    '3D camera moves while vector tiles and the model are still preparing');
   assert.match(src, /handoff3DCamera\(liveCenter,liveZoom\)/);
+  assert.match(src, /const remainingDuration=Math\.max\(250,totalDuration-elapsed\)/);
+  const reveal = src.indexOf("this.overlay.classList.add('sr83-ready')");
+  assert.ok(reveal > model);
+  assert.ok(src.indexOf('this.replay();',handoff) < scene);
+  assert.ok(!src.slice(reveal,reveal+400).includes('this.replay();'), 'reveal must not restart the flight');
 });
 
 test('the 3D overlay stays hidden while loading and crossfades after the model is ready', () => {

@@ -241,13 +241,14 @@ export class Radar83Cinematic {
  async open(vehicle,point,heading,duration,zoom){
   if(!this.enabled)return false;
   this.close({sync:false});
-  const seq=++this.sequence;this.active=true;
+  const seq=++this.sequence;this.active=true;this.tapStartedAt=performance.now();
   const target=target3DCamera(point,zoom,heading,duration);
   if(!target){this.close({sync:false});return false}
   this.vehicleKey=vehicle?.key||null;
   this.lastPoint={lat:Number(point.lat),lng:Number(point.lng??point.lon)};this.lastHeading=heading;
   this.openTimedOut=false;
   this.makeOverlay(vehicle);
+  document.body.classList.add('sr83-cinematic');
   // Start the real map flight on the tap, while the 3D scene loads invisibly.
   // The later WebGL handoff reads the live Leaflet camera, so there is no
   // repeated stock intro or jump back to a fixed 680 m starting point.
@@ -272,9 +273,11 @@ export class Radar83Cinematic {
    const [lib,T]=await Promise.all([loadMapLibre(),loadThree()]);
    if(seq!==this.sequence)return false;
    if(typeof lib.supported==='function'&&!lib.supported())throw Error('WebGL not supported by this browser');
+   const initialCamera=handoff3DCamera(this.leaflet.getCenter?.(),this.leaflet.getZoom?.());
+   if(!initialCamera)throw Error('Initial live camera position invalid');
    const map=new lib.Map({
-    container:this.surface,style:VECTOR_STYLE,center:[Number(point.lng??point.lon),Number(point.lat)],zoom:Math.max(3,Math.min(18,Number(zoom)||17)),
-    bearing:0,pitch:0,maxZoom:20.4,maxPitch:80,minZoom:3,
+    container:this.surface,style:VECTOR_STYLE,center:initialCamera.center,zoom:initialCamera.zoom,
+    bearing:initialCamera.bearing,pitch:initialCamera.pitch,maxZoom:20.4,maxPitch:80,minZoom:3,
     antialias:false,fadeDuration:0,renderWorldCopies:false,
     pixelRatio:Math.min(2,Math.max(1,Number(window.devicePixelRatio)||1)),
     attributionControl:true,interactive:true
@@ -316,6 +319,17 @@ export class Radar83Cinematic {
     if(map.loaded?.())end();
    });
    if(seq!==this.sequence)return false;
+   // Continue the SAME tap-origin flight as soon as the vector style exists.
+   // Start from the current Leaflet camera and use only the remaining time.
+   const liveCenter=this.leaflet.getCenter?.(),liveZoom=this.leaflet.getZoom?.();
+   const handoff=handoff3DCamera(liveCenter,liveZoom);
+   if(!handoff)throw Error('Live camera handoff position invalid');
+   const elapsed=Math.max(0,performance.now()-(this.tapStartedAt||performance.now()));
+   const totalDuration=Number(target.duration)||Number(duration)||4300;
+   const remainingDuration=Math.max(250,totalDuration-elapsed);
+   const continuedTarget={...target,duration:remainingDuration};
+   this.flight={start:handoff,target:continuedTarget};
+   map.jumpTo(handoff);this.replay();
    // Interrupt handlers first, so a gesture can stop the flight right away.
    map.on('dragstart',()=>this.interrupt());
    map.getCanvas().addEventListener('touchstart',()=>this.interrupt(),{passive:true});
@@ -349,16 +363,10 @@ export class Radar83Cinematic {
    await waitFor3DModel(map,this.layer);
    if(seq!==this.sequence)return false;
    this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
-   // Match the exact live 2D camera before revealing WebGL. Then continue
-   // the same journey in 3D: center/scale are inherited, pitch and bearing
-   // develop during the zoom instead of appearing as a hard scene cut.
-   const liveCenter=this.leaflet.getCenter?.(),liveZoom=this.leaflet.getZoom?.();
-   const handoff=handoff3DCamera(liveCenter,liveZoom);
-   if(!handoff)throw Error('Live camera handoff position invalid');
+   // The 3D camera has already continued the tap-origin timeline while
+   // tiles and the model loaded. Stop the 2D leg and reveal—never replay.
    this.leaflet.stop();
-   this.flight={start:handoff,target};
-   map.jumpTo(handoff);map.resize();map.triggerRepaint();
-   document.body.classList.add('sr83-cinematic');
+   map.resize();map.triggerRepaint();
    this.overlay.classList.add('sr83-ready');
    this.loading?.remove();this.loading=null;
    this.replay();
