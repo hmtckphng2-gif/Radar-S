@@ -126,13 +126,14 @@ test('3D overlay identifies the selected vehicle, destination and vehicle ID',()
  assert.equal(selectedVehicleMeta({tripId:'trip-2',source:'trentino'}),'Datenquelle: Trentino Trasporti');
 });
 
-test('tap starts the 2D flight immediately and 3D takes over from the live camera',()=>{
+test('tap starts the 2D flight and 3D continues it from the live camera',()=>{
  const src=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
  const start=src.indexOf('this.leaflet.flyTo([point.lat,point.lng]');
- const awaitLibs=src.indexOf('await Promise.all([loadMapLibre(),loadThree()])');
- assert.ok(start>=0&&start<awaitLibs,'Leaflet zoom must start before asynchronous 3D loading');
+ const style=src.indexOf("map.on('load',loaded);map.on('error',failed);");
+ const flight=src.indexOf('this.flight={start:handoff,target:continuedTarget};');
+ const scene=src.indexOf('await waitFor3DScene(map);');
+ assert.ok(start>=0&&style>start&&flight>style&&flight<scene);
  assert.ok(src.includes('const liveCenter=this.leaflet.getCenter?.(),liveZoom=this.leaflet.getZoom?.()'));
- assert.ok(src.includes('this.flight={start:handoff,target}'));
  assert.ok(src.includes("this.overlay.classList.add('sr83-ready')"));
 });
 

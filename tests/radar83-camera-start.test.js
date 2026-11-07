@@ -34,7 +34,8 @@ test('the 3D leg continues the tap-origin flight before tiles and model finish l
   const reveal = src.indexOf("this.overlay.classList.add('sr83-ready')");
   assert.ok(reveal > model);
   assert.ok(src.indexOf('this.replay();',handoff) < scene);
-  assert.ok(!src.slice(reveal,reveal+400).includes('this.replay();'), 'reveal must not restart the flight');
+  const ready = src.indexOf('this.ready=true;', reveal);
+  assert.ok(ready > reveal && !src.slice(reveal,ready).includes('this.replay();'), 'reveal must not restart the flight');
 });
 
 test('the 3D overlay stays hidden while loading and crossfades after the model is ready', () => {
