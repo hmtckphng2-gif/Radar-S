@@ -30,8 +30,11 @@ function loadMapLibre(){
 }
 export function preload3DLibraries(){
  if(!enabled3D(location.search))return;
- // Resource fetch only; do not allocate a WebGL context until user selects a vehicle.
+ // Warm expensive first-tap dependencies while the radar is idle.
+ // Downloads only: no map or WebGL context is created until vehicle selection.
  loadMapLibre().catch(()=>{});
+ loadThree().catch(()=>{});
+ if(typeof fetch==='function')fetch(VECTOR_STYLE,{mode:'cors',cache:'force-cache'}).catch(()=>{});
 }
 // Wait for real vector tiles and the model render before revealing the new map.
 // Otherwise iOS Safari can display a black WebGL surface while the CSS toolbar

@@ -24,6 +24,17 @@ test('a vehicle tap starts directly on the 3D map without a 2D zoom or zoomed-ou
   assert.ok(ready > model && !src.slice(model,ready).includes('this.replay();'), 'model readiness must not restart the already-running flight');
 });
 
+test('3D libraries and style are warmed before a vehicle tap without creating a WebGL context', () => {
+  const src = read('radar83-map.mjs');
+  const preload = src.slice(src.indexOf('export function preload3DLibraries'), src.indexOf('// Wait for real vector tiles'));
+  assert.match(preload, /loadMapLibre\(\)\.catch/);
+  assert.match(preload, /loadThree\(\)\.catch/);
+  assert.match(preload, /fetch\(VECTOR_STYLE/);
+  assert.doesNotMatch(preload, /new lib\.Map|WebGLRenderer/);
+  const entry = read('radar71-camera.mjs');
+  assert.match(entry, /preload3DLibraries\(\);/);
+});
+
 test('the 3D overlay is revealed as soon as the MapLibre style is ready', () => {
   const src = read('radar83-map.mjs');
   const style = src.indexOf("map.on('load',loaded);map.on('error',failed);");
@@ -48,10 +59,10 @@ test('replay works before the model is ready', () => {
 });
 
 test('the camera flight remains smooth and bounded', () => {
-  assert.ok(cinematicDuration(0.2) >= 3800 && cinematicDuration(0.2) <= 4600);
+  assert.ok(cinematicDuration(0.2) >= 4200 && cinematicDuration(0.2) <= 4800);
   assert.ok(cinematicDuration(0.2) < cinematicDuration(30));
   assert.ok(cinematicDuration(0.2, 9000) <= 5000);
-  assert.ok(cinematicDuration(0.2, 100) >= 3800);
+  assert.ok(cinematicDuration(0.2, 100) >= 4200);
 });
 
 test('the 3D camera respects prefers-reduced-motion', () => {

@@ -95,13 +95,12 @@ export function followDecision({touched=false,center=null,point=null,thresholdMe
   return {center:[lng,lat],meters:Math.round(meters)};
 }
 // Preserve the original Main camera pacing: short, calm and predictable.
-export function cinematicDuration(distanceKm=0,base=4300){
+export function cinematicDuration(distanceKm=0,base=4700){
   const d=Number(distanceKm);
-  const extra=Number.isFinite(d)&&d>2?400:0;
-  const duration=Math.max(3800,Math.min(4600,Number(base)||4300));
+  const extra=Number.isFinite(d)&&d>2?300:0;
+  const duration=Math.max(4200,Math.min(4800,Number(base)||4700));
   return Math.min(5000,Math.round(duration+extra));
 }
-
 // Feed timestamps are seconds since epoch. Never advance a stale position.
 export function positionFreshness(vehicle,now=Date.now(),maxAgeSeconds=180){
  const timestamp=Number(vehicle?.timestamp);
