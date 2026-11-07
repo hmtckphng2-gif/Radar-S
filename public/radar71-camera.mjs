@@ -82,48 +82,17 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=enabled-defaul
   const distanceKm=focusDistanceKm(map.getCenter(),pos);
   // The camera move is short and starts on the tap. A long flight felt sluggish.
   const duration=cinematicDuration(distanceKm,focusDuration(motion.matches,map.getZoom(),toZoom,distanceKm)*0.62);
-  const launch3D=()=>{
-   if(seq!==token||!cinema3d?.enabled)return;
-   clearTimeout(timer);cancelAnimationFrame(rotationFrame);map.stop();
-   active=true;fallbackStarted=false;
+  emergencyFallback=classic;
+  if(cinema3d?.enabled){
    cinema3d.open(vehicle,pos,heading,duration,cinematicZoom).then(ok=>{
     if(seq!==token){if(ok)cinema3d?.close({sync:false});return}
-    if(!ok)return;
+    if(!ok){classic();return}
     model3d?.hide();document.body.classList.remove('sr82-3d-active');
     hud?.classList.remove('sr71-is-running');
+    // The 3D camera runs in MapLibre; do NOT also fly or rotate the 2D Leaflet map.
     timer=setTimeout(()=>{if(seq===token)reveal(seq)},duration+95);
-   }).catch(error=>{console.info('Radar 8.3 initialization fallback',error);if(!fallbackStarted)classic()});
-  };
-  const classic=()=>{
-   if(seq!==token||fallbackStarted)return;
-   fallbackStarted=true;
-   try{
-    map.stop();
-    if(motion.matches)map.setView([pos.lat,pos.lng],toZoom,{animate:false});
-    else map.flyTo([pos.lat,pos.lng],toZoom,{animate:true,duration:duration/1000,easeLinearity:.22});
-    if(heading!==null)turnTo(heading,duration,seq);
-   }catch(error){console.info('Radar 8.2 camera fallback',error);try{map.setView([pos.lat,pos.lng],toZoom,{animate:false})}catch{}}
-   timer=setTimeout(()=>{
-    if(seq!==token)return;
-    const nextVehicle=bridge.state.vehicles.get(key);
-    const nextPos=validFocusPoint(nextVehicle,bridge.state.markers.get(key)?.marker?.getLatLng?.());
-    if(nextPos)model3d?.updatePoint(nextPos,focusHeading(nextVehicle));
-    if(nextPos && bridge.state.selectedKey===key)try{map.panTo([nextPos.lat,nextPos.lng],{animate:false})}catch{}
-    reveal(seq);
-   },duration+95);
-  };
-  emergencyFallback=classic;
-  const details=$('details');
-  if(details&&cinema3d?.enabled){
-   const launch=document.createElement('button');launch.id='sr71Open3D';launch.type='button';launch.className='sr71-3d-launch';launch.textContent='3D ansehen';
-   launch.setAttribute('aria-label','3D-Ansicht für dieses Fahrzeug öffnen');
-   launch.addEventListener('click',event=>{
-    event.preventDefault();event.stopPropagation();launch3D();
-   });details.append(launch);
-  }
-  // Keep the normal 2D focus as the default. Three.js and MapLibre are only
-  // requested after the user explicitly taps the 3D button in the sheet.
-  classic();
+   }).catch(error=>{console.info('Radar 8.3 initialization fallback',error);classic()});
+  }else classic();
  }
  function manualInterrupt(){
   if(!active)return;

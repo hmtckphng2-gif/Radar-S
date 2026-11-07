@@ -18,98 +18,6 @@ import {formatStationName,formatRelativeAge,sourceLabel,expectedStopTime,hasKnow
 import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.5';
 import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.9.5';
 
-let cinematic3D = null;
-let cinematic3DModulePromise = null;
-let cinematic3DLaunchToken = 0;
-async function launchVehicleCinematic(key) {
-  const token = ++cinematic3DLaunchToken;
-  const vehicle = state.vehicles.get(key);
-  if (!vehicle) return false;
-  if (!state.map) {
-    setNotice('<strong>3D-Ansicht nicht gestartet.</strong> Die Karte ist noch nicht bereit.');
-    return false;
-  }
-  try {
-    if (!cinematic3DModulePromise) {
-      cinematic3DModulePromise = import('./radar83-map.mjs?v=9.9.5&rev=vehicle-tap-3d-2').catch(error => {
-        cinematic3DModulePromise = null;
-        throw error;
-      });
-    }
-    const { Radar83Cinematic } = await cinematic3DModulePromise;
-    if (token !== cinematic3DLaunchToken || state.selectedKey !== key) return false;
-    if (typeof Radar83Cinematic !== 'function') throw new Error('Radar83Cinematic export missing');
-    if (!cinematic3D) {
-      cinematic3D = new Radar83Cinematic(state.map, {
-        onExit: () => {},
-        onManual: () => {},
-        onFailure: error => {
-          console.error('Radar 3D renderer failed', error);
-          setNotice('<strong>3D konnte nicht geladen werden.</strong> ' + (error?.message || 'Die normale Karte bleibt verfügbar.'));
-        }
-      });
-    }
-    const current = state.vehicles.get(key);
-    if (!current || state.selectedKey !== key) return false;
-    const point = mapTarget(current);
-    const lat = Number(point?.lat), lon = Number(point?.lon ?? point?.lng);
-    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 85 || Math.abs(lon) > 180) {
-      throw new Error('Fahrzeugposition ist ungültig');
-    }
-    // Radar83Cinematic.open accepts the native {lat, lon} point shape.
-    const headingValue = current.bearing == null ? NaN : Number(current.bearing);
-    const heading = Number.isFinite(headingValue) ? headingValue : null;
-    const zoom = state.map.getZoom?.() ?? 12;
-    const opened = await cinematic3D.open(current, { lat, lon }, heading, 4300, zoom);
-    if (!opened && token === cinematic3DLaunchToken && state.selectedKey === key && !cinematic3D.active) {
-      setNotice('<strong>3D-Ansicht konnte nicht gestartet werden.</strong> Prüfe die WebGL-/Kartenverbindung.');
-    }
-    return opened;
-  } catch (error) {
-    console.error('Radar 3D could not start from vehicle selection', error);
-    if (token === cinematic3DLaunchToken) {
-      setNotice('<strong>3D-Ansicht konnte nicht gestartet werden.</strong> ' + (error?.message || 'Die normale Karte bleibt geöffnet.'));
-    }
-    return false;
-  }
-}
-
-const $ = id => document.getElementById(id);
-const DIRECT_POSITION_SOURCES=['sta_direct'];
-const POSITION_SOURCES=[...SOURCES,...DIRECT_POSITION_SOURCES];
-const DIRECT_UPDATE_SOURCES=['sta_direct_updates'];
-const ALL_UPDATE_SOURCES=[...UPDATE_SOURCES,...DIRECT_UPDATE_SOURCES];
-const ALERT_SOURCES=['sta_alerts'];
-const ENDPOINTS=[...POSITION_SOURCES,...ALL_UPDATE_SOURCES,...ALERT_SOURCES];
-let lastMotionFrame = 0;
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const DETAIL_MAX_AGE = 120000;
-const VEHICLE_KEEP_MS = 30 * 60 * 1000; // Keep a clearly labelled last-known marker during an outage.
-const STALE_MAX_AGE_SEC = 60 * 60; // Never show observations older than 1 hour.
-const MARKER_MAX_AGE_SEC = 12 * 60;
-const AVERAGE_POLL_MS = 20000;
-const BUS_PLAYBACK_LAG_MS = 38000; // Fallback lag for irregular updates, never predict ahead.
-const BUS_TRACK_MAX_GAP_MS = 140000;
-const MAX_INTERPOLATION_METERS = 3000;
-const snapMaxMeters = 350;
-const manualRefreshDelayMs=3000;
-let selectionRenderToken=0; // Invalidates stale async timetable renders after a new selection.
-let tileErrorCount=0;
-let tileLoadedCount=0;
-let fallbackTilesUsed=false;
-let tileLastHealthyAt=0;
-let initiallyLocated=false;
-const MAP_PLACES={
-  sterzing:[46.895,11.433,12], bozen:[46.498,11.354,12], brixen:[46.717,11.485,12],
-  meran:[46.670,11.160,12], bruneck:[46.797,11.940,12], trento:[46.068,11.122,12]
-};
-const TILE_PROVIDERS=[
-  {name:'OpenStreetMap',url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',options:{attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a>'}},
-  {name:'OSM HOT',url:'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',options:{subdomains:'abc',attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a> · Tiles © Humanitarian OpenStreetMap Team'}}
-];
-let tileProviderIndex=0;
-const RT_MAX_AGE_SEC=15*60;
-
 function safeText(value) { return txt(value); }
 function duration(ms) {return Math.round(ms/1000)}
 function escapeHtml(value) { return safeText(value).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -1052,7 +960,6 @@ async function loadSchedule(key){
 function selectVehicle(key){
   if(!state.vehicles.has(key))return;
   if(state.selectedKey===key&&state.activeSheet==='vehicle'){
-    void launchVehicleCinematic(key);
     return;
   }
   selectionRenderToken++;
@@ -1060,7 +967,6 @@ function selectVehicle(key){
   document.dispatchEvent(new Event('sr40:selection'));
   $('scheduleMatches').hidden=true;openSheet('vehicle');refreshMarkers();drawVehicleDetails(key,true);drawVehicleTrack(key);
   document.dispatchEvent(new Event('sr37:selection'));
-  void launchVehicleCinematic(key);
 }
 
 function drawVehicleTrack(key){
