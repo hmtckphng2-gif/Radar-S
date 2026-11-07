@@ -21,7 +21,7 @@ test('a vehicle tap starts directly on the 3D map without a 2D zoom or zoomed-ou
   assert.ok(style > 0 && flight > style && reveal > flight && replay > reveal);
   assert.ok(replay < scene && scene < model, '3D animation starts before tile/model preparation completes');
   const ready = src.indexOf('this.ready=true;',model);
-  assert.ok(ready > model && !src.slice(reveal,ready).includes('this.replay();'));
+  assert.ok(ready > model && !src.slice(model,ready).includes('this.replay();'), 'model readiness must not restart the already-running flight');
 });
 
 test('the 3D overlay is revealed as soon as the MapLibre style is ready', () => {
