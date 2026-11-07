@@ -18,27 +18,22 @@ import {start3DCamera,target3DCamera,use3DTerrain,cinematicDuration,prefersReduc
 const root = fileURLToPath(new URL('../', import.meta.url));
 const read = name => readFileSync(root + 'public/' + name, 'utf8');
 
-test('the 3D leg continues the tap-origin flight before tiles and model finish loading', () => {
+test('a vehicle tap opens the 3D map directly and starts one 3D camera flight', () => {
   const src = read('radar83-map.mjs');
-  const immediate = src.indexOf('this.leaflet.flyTo([point.lat,point.lng]');
-  const style = src.indexOf("map.on('load',loaded);map.on('error',failed);");
-  const handoff = src.indexOf('this.flight={start:handoff,target:continuedTarget};');
-  const scene = src.indexOf('await waitFor3DScene(map);');
+  const no2dFlight = !src.includes('this.leaflet.flyTo([point.lat,point.lng]');
+  assert.ok(no2dFlight, 'the underlying 2D map must not run a competing zoom');
+  assert.match(src, /const initialCamera=start3DCamera\(point,heading,target\.zoom\)/);
+  assert.match(src, /this\.flight=\{start:initialCamera,target\}/);
   const model = src.indexOf('await waitFor3DModel(map,this.layer);');
-  assert.ok(immediate > 0 && style > 0 && handoff > style,
-    '2D zoom starts on tap and 3D continues as soon as the vector style loads');
-  assert.ok(handoff < scene && scene < model,
-    '3D camera moves while vector tiles and the model are still preparing');
-  assert.match(src, /handoff3DCamera\(liveCenter,liveZoom\)/);
-  assert.match(src, /const remainingDuration=Math\.max\(250,totalDuration-elapsed\)/);
   const reveal = src.indexOf("this.overlay.classList.add('sr83-ready')");
-  assert.ok(reveal > model);
-  assert.ok(src.indexOf('this.replay();',handoff) < scene);
-  const ready = src.indexOf('this.ready=true;', reveal);
-  assert.ok(ready > reveal && !src.slice(reveal,ready).includes('this.replay();'), 'reveal must not restart the flight');
+  const replay = src.indexOf('this.replay();',reveal);
+  assert.ok(model > 0 && reveal > model && replay > reveal,
+    'reveal the ready 3D map first, then start the only zoom-in');
+  assert.ok(!src.slice(src.indexOf('await waitFor3DScene(map);'),model).includes('this.replay();'),
+    'no hidden earlier replay is allowed');
 });
 
-test('the 3D overlay stays hidden while loading and crossfades after the model is ready', () => {
+test('the 3D overlay appears after the schematic vehicle has rendered', () => {
   const src = read('radar83-map.mjs');
   assert.match(src, /className='sr83-viewport'/);
   assert.doesNotMatch(src, /className='sr83-viewport sr83-loading'/);
