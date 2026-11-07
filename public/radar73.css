@@ -41,3 +41,23 @@ body:has(#sheet.open) #sr60Launch,body:has(#stationSheet.open) #sr60Launch{displ
 
 /* The stop-by-stop timetable below is the single trip route view; suppress duplicate progress strip. */
 #sheet #sr56Journey{display:none!important}
+
+/* Extra-compact train header: reclaim vertical space for the live data cards. */
+@media(max-width:749px){
+ #sheet.sr73-compact{padding:6px 11px calc(10px + env(safe-area-inset-bottom))!important}
+ #sheet.sr73-compact .handle{width:30px;height:4px;margin:0 auto 6px!important}
+ #sheet.sr73-compact .sheet-heading{gap:6px!important;margin:0 0 0!important;align-items:center!important}
+ #sheet.sr73-compact .sheet-heading-main{display:flex;flex-wrap:wrap;align-items:center;column-gap:7px;row-gap:2px}
+ #sheet.sr73-compact .eyebrow{font-size:7px!important;line-height:1!important;letter-spacing:.04em!important;margin:0!important}
+ #sheet.sr73-compact .sheet-title{font-size:16px!important;line-height:1.05!important;letter-spacing:-.45px!important;margin:0!important}
+ #sheet.sr73-compact .sheet-subtitle{font-size:9px!important;line-height:1.1!important;max-height:1.1em!important;margin:0!important;flex-basis:100%;}
+ #sheet.sr73-compact #closeSheet{width:25px!important;height:25px!important;min-width:25px!important;min-height:25px!important;font-size:11px!important;flex:0 0 25px}
+ #sheet.sr73-compact .sheet-heading-main button,
+ #sheet.sr73-compact #sr46Actions button,
+ #sheet.sr73-compact .sr46-actions button{min-height:26px!important;height:26px!important;padding:3px 7px!important;font-size:9px!important;line-height:1!important;border-radius:8px!important}
+ #sheet.sr73-compact #sr46Actions,
+ #sheet.sr73-compact .sr46-actions{gap:4px!important;margin:3px 0 0!important;flex-basis:100%;}
+ #sheet.sr73-compact #sheetBadges{margin:3px 0 5px!important;gap:3px!important}
+ #sheet.sr73-compact #sheetBadges .mini-badge{padding:2px 5px!important;font-size:8px!important;line-height:1.15!important}
+ #sheet.sr73-compact .sheet-scroll{padding-top:0!important}
+}
