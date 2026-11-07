@@ -18,6 +18,37 @@ import {formatStationName,formatRelativeAge,sourceLabel,expectedStopTime,hasKnow
 import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.5';
 import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.9.5';
 
+let cinematic3D = null;
+let cinematic3DModulePromise = null;
+async function launchVehicleCinematic(key) {
+  const vehicle = state.vehicles.get(key);
+  if (!vehicle || !state.map) return false;
+  try {
+    if (!cinematic3DModulePromise) {
+      cinematic3DModulePromise = import('./radar83-map.mjs?v=9.9.5&rev=vehicle-tap-3d').catch(error => {
+        cinematic3DModulePromise = null;
+        throw error;
+      });
+    }
+    const { Radar83Cinematic } = await cinematic3DModulePromise;
+    if (!cinematic3D) {
+      cinematic3D = new Radar83Cinematic(state.map, {
+        onFailure: () => setNotice('<strong>3D-Ansicht gerade nicht verfügbar.</strong> Die normale Karte bleibt geöffnet.')
+      });
+    }
+    const current = state.vehicles.get(key);
+    if (!current || state.selectedKey !== key) return false;
+    const point = mapTarget(current);
+    const heading = current.bearing == null ? null : Number(current.bearing);
+    const zoom = state.map.getZoom?.() ?? 12;
+    return await cinematic3D.open(current, { lat: point.lat, lon: point.lon }, heading, 4300, zoom);
+  } catch (error) {
+    console.warn('Radar 3D could not start from vehicle selection', error);
+    setNotice('<strong>3D-Ansicht konnte nicht gestartet werden.</strong> Die normale Karte bleibt geöffnet.');
+    return false;
+  }
+}
+
 const $ = id => document.getElementById(id);
 const DIRECT_POSITION_SOURCES=['sta_direct'];
 const POSITION_SOURCES=[...SOURCES,...DIRECT_POSITION_SOURCES];
@@ -995,14 +1026,17 @@ async function loadSchedule(key){
 }
 function selectVehicle(key){
   if(!state.vehicles.has(key))return;
-  if(window.SuedtirolRadar71?.enabled&&!document.hidden)document.body.classList.add('sr71-focusing');
-  // Klick auf bereits ausgewähltes Fahrzeug schließt das Panel (Toggle).
-  if(state.selectedKey===key&&state.activeSheet==='vehicle'){closeSheets();return;}
+  // The ordinary vehicle tap is the cinematic 3D action; no extra control.
+  if(state.selectedKey===key&&state.activeSheet==='vehicle'){
+    void launchVehicleCinematic(key);
+    return;
+  }
   selectionRenderToken++;
   state.selectedKey=key;
   document.dispatchEvent(new Event('sr40:selection'));
   $('scheduleMatches').hidden=true;openSheet('vehicle');refreshMarkers();drawVehicleDetails(key,true);drawVehicleTrack(key);
   document.dispatchEvent(new Event('sr37:selection'));
+  void launchVehicleCinematic(key);
 }
 function drawVehicleTrack(key){
   state.trackLayer.clearLayers();
