@@ -181,7 +181,9 @@ html[data-theme="light"] #map img.leaflet-tile {
 
 /* Small real-time delay ring around every bus/train marker. Unknown is neutral. */
 .marker-wrap .marker-circle{position:relative;isolation:isolate;overflow:visible}
-.marker-wrap .marker-circle::after{content:"";position:absolute;inset:-4px;border:2px solid var(--marker-delay-ring,#8b96a5);border-radius:50%;pointer-events:none;opacity:.96;box-shadow:0 0 0 1px #07111b80}
+.marker-wrap .marker-circle::after{content:"";position:absolute;inset:-2px;border:1.8px solid var(--marker-delay-ring,#8b96a5);border-radius:6px;pointer-events:none;opacity:.98;box-shadow:0 0 0 1px #07111b80}
+.marker-wrap.train .marker-circle::after{inset:-2px -1px;border-radius:7px;transform:scaleX(.78) scaleY(1.08)}
+.marker-wrap.bus .marker-circle::after{inset:-1px -2px;border-radius:5px;transform:scaleX(1.13) scaleY(.88)}
 .marker-wrap.delay-unknown{--marker-delay-ring:#8993a2}
 .marker-wrap.delay-early{--marker-delay-ring:#58a8ff}
 .marker-wrap.delay-ontime{--marker-delay-ring:#46cf91}
