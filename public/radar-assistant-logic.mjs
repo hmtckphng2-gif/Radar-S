@@ -32,13 +32,13 @@ function getTrip(index, tripId, routeId) {
   const route = index?.routes?.[trip[0]];
   return route ? { trip, route } : null;
 }
-function fact(id, type, source, text, observedAt) {
-  return { id:clean(id, 180), type, source:clean(source, 50), text:clean(text, 420), observedAt:clean(observedAt, 40) };
+function fact(id, type, source, text, observedAt, extra = {}) {
+  return { id:clean(id, 180), type, source:clean(source, 50), text:clean(text, 420), observedAt:clean(observedAt, 40), ...extra };
 }
 
 export function buildAssistantEvidence({ positions = {}, updates = {}, alerts = null, indexes = {}, question = '', now = Date.now() } = {}) {
   const facts = [], today = romeServiceDay(now);
-  for (const source of ['sta','sta_direct','trentino','trains']) {
+  for (const source of ['sta','sta_direct','trentino']) { // Trenitalia position feed may be estimated and is not used as location evidence.
     const staticSource = source === 'sta_direct' ? 'sta' : source;
     const index = indexes[staticSource];
     const positionFeed = positions[source];
@@ -60,7 +60,7 @@ export function buildAssistantEvidence({ positions = {}, updates = {}, alerts = 
       const destination = clean(mapped.trip[1], 100);
       const observed = new Date(feedTimestamp * 1000).toISOString();
       const positionId = `position:${source}:${identity.key}:${tripId}`;
-      facts.push(fact(positionId, 'position', source, `${identity.label}${destination ? ' Richtung ' + destination : ''}: aktuelle Feedposition empfangen; Beobachtung ${Math.max(0, Math.round(now / 1000 - feedTimestamp))} Sekunden alt. Keine unabhängig bestätigte GPS-Qualität.`, observed));
+      facts.push(fact(positionId, 'position', source, `${identity.label}${destination ? ' Richtung ' + destination : ''}: aktuelle GTFS-Realtime-Feedposition empfangen; GPS-Qualität nicht unabhängig bestätigt.`, observed, {tripId,routeId,vehicleId:clean(vehicle?.vehicle?.id ?? vehicle?.vehicleId ?? entity?.id,120),positionQuality:'feed-reported-unverified'}));
 
       const updateSource = source === 'sta_direct' ? 'sta_direct_updates' : source + '_updates';
       const updateFeed = updates[updateSource];
@@ -73,7 +73,7 @@ export function buildAssistantEvidence({ positions = {}, updates = {}, alerts = 
         const updateTime = Number(update.timestamp ?? updateFeed.header.timestamp);
         const updateObserved = Number.isFinite(updateTime) ? new Date(updateTime * 1000).toISOString() : observed;
         if (relationship === 'CANCELED' || relationship === 'DELETED') {
-          facts.push(fact(`cancel:${source}:${identity.key}:${tripId}`, 'cancellation', source, `${identity.label}${destination ? ' Richtung ' + destination : ''}: GTFS-Realtime kennzeichnet diese Fahrt als ${relationship === 'CANCELED' ? 'ausgefallen' : 'gelöscht'}.`, updateObserved));
+          facts.push(fact(`cancel:${source}:${identity.key}:${tripId}`, 'cancellation', source, `${identity.label}${destination ? ' Richtung ' + destination : ''}: GTFS-Realtime kennzeichnet diese Fahrt als ${relationship === 'CANCELED' ? 'ausgefallen' : 'gelöscht'}.`, updateObserved, {tripId,routeId}));
           continue;
         }
         const stops = Array.isArray(update.stopTimeUpdate) ? update.stopTimeUpdate : Array.isArray(update.stop_time_update) ? update.stop_time_update : [];
@@ -84,7 +84,7 @@ export function buildAssistantEvidence({ positions = {}, updates = {}, alerts = 
           const minutes = Math.round(Number(delay) / 60);
           const stopId = clean(stop.stopId ?? stop.stop_id, 80);
           const delayId = `delay:${source}:${identity.key}:${tripId}:${seq}:${stop.arrival?.delay != null ? 'arrival' : 'departure'}`;
-          facts.push(fact(delayId, 'delay', source, `${identity.label}${destination ? ' Richtung ' + destination : ''}: GTFS-Realtime meldet an Halte-Sequenz ${seq}${stopId ? ' (Stop-ID ' + stopId + ')' : ''} ${minutes > 0 ? '+' : ''}${minutes} Minuten${minutes === 0 ? ' Abweichung' : ' Verspätung'}. Dies ist eine gemeldete Prognose, keine aus der Kartenposition berechnete Zeit.`, updateObserved));
+          facts.push(fact(delayId, 'delay', source, `${identity.label}${destination ? ' Richtung ' + destination : ''}: GTFS-Realtime meldet an Halte-Sequenz ${seq}${stopId ? ' (Stop-ID ' + stopId + ')' : ''} ${minutes > 0 ? '+' : ''}${minutes} Minuten${minutes === 0 ? ' Abweichung' : ' Verspätung'}. Dies ist eine gemeldete Prognose, keine aus der Kartenposition berechnete Zeit.`, updateObserved, {tripId,routeId,stopId}));
         }
       }
     }
@@ -102,6 +102,7 @@ export function buildAssistantEvidence({ positions = {}, updates = {}, alerts = 
       if (!tripId || dateKey(update.trip?.startDate ?? update.trip?.start_date) !== today) continue;
       const mapped = getTrip(index, tripId, clean(update.trip?.routeId ?? update.trip?.route_id, 120));
       if (!mapped) continue;
+      const routeId = clean(update.trip?.routeId ?? update.trip?.route_id ?? mapped.trip[0], 120);
       const identity = tripLabel(staticSource, mapped.trip, mapped.route);
       if (!identity) continue;
       const destination = clean(mapped.trip[1], 100);
@@ -109,7 +110,7 @@ export function buildAssistantEvidence({ positions = {}, updates = {}, alerts = 
       const observed = Number.isFinite(updateTime) ? new Date(updateTime * 1000).toISOString() : new Date(Number(updateFeed.header.timestamp) * 1000).toISOString();
       const relationship = String(update.trip?.scheduleRelationship ?? update.trip?.schedule_relationship ?? '').toUpperCase();
       if (relationship === 'CANCELED' || relationship === 'DELETED') {
-        facts.push(fact(`cancel:${source}:${identity.key}:${tripId}`, 'cancellation', source, `${identity.label}${destination ? ' Richtung ' + destination : ''}: GTFS-Realtime kennzeichnet diese Fahrt als ${relationship === 'CANCELED' ? 'ausgefallen' : 'gelöscht'}.`, observed));
+        facts.push(fact(`cancel:${source}:${identity.key}:${tripId}`, 'cancellation', source, `${identity.label}${destination ? ' Richtung ' + destination : ''}: GTFS-Realtime kennzeichnet diese Fahrt als ${relationship === 'CANCELED' ? 'ausgefallen' : 'gelöscht'}.`, observed, {tripId,routeId}));
         continue;
       }
       const stops = Array.isArray(update.stopTimeUpdate) ? update.stopTimeUpdate : Array.isArray(update.stop_time_update) ? update.stop_time_update : [];
@@ -120,7 +121,7 @@ export function buildAssistantEvidence({ positions = {}, updates = {}, alerts = 
         const minutes = Math.round(Number(delay) / 60);
         const stopId = clean(stop.stopId ?? stop.stop_id, 80);
         const delayId = `delay:${source}:${identity.key}:${tripId}:${seq}:${stop.arrival?.delay != null ? 'arrival' : 'departure'}`;
-        facts.push(fact(delayId, 'delay', source, `${identity.label}${destination ? ' Richtung ' + destination : ''}: GTFS-Realtime meldet an Halte-Sequenz ${seq}${stopId ? ' (Stop-ID ' + stopId + ')' : ''} ${minutes > 0 ? '+' : ''}${minutes} Minuten${minutes === 0 ? ' Abweichung' : ' Verspätung'}. Dies ist eine gemeldete Prognose, keine aus der Kartenposition berechnete Zeit.`, observed));
+        facts.push(fact(delayId, 'delay', source, `${identity.label}${destination ? ' Richtung ' + destination : ''}: GTFS-Realtime meldet an Halte-Sequenz ${seq}${stopId ? ' (Stop-ID ' + stopId + ')' : ''} ${minutes > 0 ? '+' : ''}${minutes} Minuten${minutes === 0 ? ' Abweichung' : ' Verspätung'}. Dies ist eine gemeldete Prognose, keine aus der Kartenposition berechnete Zeit.`, observed, {tripId,routeId,stopId}));
       }
     }
   }
@@ -138,7 +139,7 @@ export function buildAssistantEvidence({ positions = {}, updates = {}, alerts = 
       const scope = informed.slice(0, 4).map(item => [item.routeId ?? item.route_id, item.stopId ?? item.stop_id].filter(Boolean).join('/')).filter(Boolean).join(', ');
       if (!title && !description) continue;
       const observed = new Date(Number(alerts.header.timestamp) * 1000).toISOString();
-      facts.push(fact(`alert:sta:${clean(entity.id, 100)}`, 'service-alert', 'STA', `Offizielle STA-Verkehrsmeldung: ${title || 'Ohne Titel'}. ${description}${effect ? ' Wirkung: ' + effect + '.' : ''}${scope ? ' Betroffene Linien-/Haltestellen-IDs: ' + scope + '.' : ''}`, observed));
+      facts.push(fact(`alert:sta:${clean(entity.id, 100)}`, 'service-alert', 'STA', `Offizielle STA-Verkehrsmeldung: ${title || 'Ohne Titel'}. ${description}${effect ? ' Wirkung: ' + effect + '.' : ''}${scope ? ' Betroffene Linien-/Haltestellen-IDs: ' + scope + '.' : ''}`, observed, {routeIds:informed.map(item=>clean(item.routeId??item.route_id,80)).filter(Boolean)}));
     }
   }
   const unique = [...new Map(facts.map(item => [item.id, item])).values()];

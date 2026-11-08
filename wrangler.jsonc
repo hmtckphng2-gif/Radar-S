@@ -18,7 +18,7 @@
   "ratelimits": [
     {
       "name": "AI_JOURNEY_LIMITER",
-      "namespace_id": "20261108",
+      "namespace_id": "202611081925",
       "simple": {
         "limit": 5,
         "period": 60
