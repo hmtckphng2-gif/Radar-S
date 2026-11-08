@@ -48,8 +48,8 @@ test('3D info is inside the detail sheet and model credit is under Quellen',()=>
   assert.doesNotMatch(map3d,/overlay\.append\(credit\)/);
 });
 
-test('cinematic 3D remains opt-in and can be enabled for preview testing',()=>{
-  assert.equal(enabled3D(''),false);
+test('cinematic 3D is on by default and can be disabled only for debugging',()=>{
+  assert.equal(enabled3D(''),true);
   assert.equal(enabled3D('?radar3d=off'),false);
   assert.equal(enabled3D('?radar3d=on'),true);
 });
