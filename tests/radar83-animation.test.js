@@ -45,6 +45,8 @@ test('the replay button and real camera animation remain wired',()=>{
  assert.match(src,/this\.replay\(\)/);
  assert.match(src,/map\.easeTo\(/);
  assert.match(src,/await waitFor3DScene\(map\)/);
+ assert.match(src,/this\.leaflet\.flyTo\(\[point\.lat,point\.lng\]/);
+ assert.match(src,/handoff3DCamera\(liveCenter,liveZoom\)/);
  assert.match(src,/await waitFor3DModel\(map,this\.layer\)/);
  assert.doesNotMatch(src,/new Vehicle3DOverlay\(/);
 });
