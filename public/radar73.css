@@ -61,8 +61,3 @@ body:has(#sheet.open) #sr60Launch,body:has(#stationSheet.open) #sr60Launch{displ
  #sheet.sr73-compact #sheetBadges .mini-badge{padding:2px 5px!important;font-size:8px!important;line-height:1.15!important}
  #sheet.sr73-compact .sheet-scroll{padding-top:0!important}
 }
-
-/* 20px overlay matches the actual 20px vehicle glyph, not the differently sized marker discs. */
-.marker-wrap .marker-circle{position:relative}
-.marker-wrap .marker-circle::after{display:none!important}
-.marker-wrap .marker-delay-outline{position:absolute;left:50%;top:50%;width:20px;height:20px;inset:auto;transform:translate(-50%,-50%);overflow:visible;pointer-events:none;z-index:3;filter:drop-shadow(0 0 1px var(--marker-delay-ring,#8b96a5)) drop-shadow(0 0 3px var(--marker-delay-ring,#8b96a5))}

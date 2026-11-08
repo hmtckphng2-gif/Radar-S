@@ -52,17 +52,15 @@ body.sr60.rh-ready :is(button,input,select):focus-visible{outline:2px solid #69a
 }
 #map .marker-wrap .marker-circle svg{display:block!important;width:17px!important;height:17px!important;stroke-width:2!important;stroke:currentColor!important;}
 #map .marker-wrap.bus .marker-circle svg{width:16px!important;height:16px!important;}
-#map .marker-wrap.selected .marker-circle{outline:2px solid #85beff!important;outline-offset:2px!important;box-shadow:0 2px 9px #000a!important;}
-#map .marker-wrap.bus.selected .marker-circle{outline-color:#ffd084!important;}
+
 #map .marker-wrap .marker-label{max-width:80px!important;font-size:9px!important;font-weight:750!important;line-height:13px!important;padding:1px 4px!important;background:#121a27f5!important;color:#eff5ff!important;border:1px solid #506279!important;border-radius:5px!important;box-shadow:0 1px 3px #0007!important;pointer-events:none!important;}
 #map .marker-wrap.bus .marker-label{border-color:#9c691e!important;}
 html.sr44-city #map .marker-wrap.bus:not(.selected) .marker-label,
 html.sr44-far #map .marker-wrap:not(.selected) .marker-label,
 html.sr43-wide #map .marker-wrap:not(.selected) .marker-label{display:none!important;}
-#map .marker-wrap.sr43-stale .marker-circle{background:#374151!important;border-color:#9ba6b7!important;opacity:.8!important;}
-#map .marker-wrap.sr43-stale .marker-circle svg{opacity:.85!important;}
+#map .marker-wrap.sr43-stale .marker-circle{background:#374151!important;border-color:#9ba6b7!important;}
+#map .marker-wrap.sr43-stale .marker-circle svg{filter:grayscale(.8)!important;opacity:.72!important;}
 @media(max-width:749px){
-#map .marker-wrap .sr40-delay{font-size:8px!important;}
 #map .marker-wrap.selected .marker-label{display:block!important;}
 }
 

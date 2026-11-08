@@ -11,6 +11,5 @@
 #map .marker-wrap.bus .marker-circle{width:23px!important;height:23px!important;border-radius:8px!important;box-shadow:0 1px 5px rgba(0,0,0,.27)!important;filter:none}
 #map .marker-wrap.bus .marker-circle svg{width:15px!important;height:15px!important}
 #map .marker-wrap.train .marker-circle{width:27px!important;height:27px!important;border-radius:9px!important;box-shadow:0 1px 5px rgba(0,0,0,.28)!important}
-#map .marker-wrap.sr43-stale .marker-circle{filter:grayscale(.8)!important;opacity:.72!important}
-#map .marker-wrap.selected .marker-circle{outline:2px solid rgba(246,244,237,.8)!important;outline-offset:2px}
+
 @media(max-width:750px){#map .leaflet-control-zoom{opacity:.45}#map .leaflet-control-zoom:focus-within{opacity:1}}
