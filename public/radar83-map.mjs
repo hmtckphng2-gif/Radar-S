@@ -3,7 +3,7 @@
  * vehicles initialize MapLibre; errors or ?radar3d=on fall back to Radar 8.2.
  */
 import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.5&rev=credits-2';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,handoff3DCamera,approach3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-zoom-only-5';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,handoff3DCamera,approach3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-zoom-x-exit-6';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -207,10 +207,8 @@ export class Radar83Cinematic {
   replay.type='button';replay.textContent='↻ Flug';
   replay.setAttribute('aria-label','3D-Kameraflug wiederholen');
   replay.addEventListener('click',e=>{e.stopPropagation();this.replay()});
-  const back=document.createElement('button');back.className='sr83-back';back.type='button';back.textContent='↩ 2D';
-  back.setAttribute('aria-label','Zur normalen 2D-Karte zurückkehren');
-  back.addEventListener('click',e=>{e.stopPropagation();this.close();this.onExit()});
-  toolbar.append(replay,back);overlay.append(toolbar);
+  // The existing vehicle sheet X is the single exit and returns to the normal 2D map.
+  toolbar.append(replay);overlay.append(toolbar);
   const infoCard=document.createElement('section');infoCard.className='sr83-info-card';
   infoCard.append(info);
   const meta=document.createElement('div');meta.className='sr83-vehicle-meta';

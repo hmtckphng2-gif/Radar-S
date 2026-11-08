@@ -19,17 +19,17 @@ test('camera retains focus without rendering a fake floating vehicle model', () 
   assert.match(get('radar82.css'), /#map \.sr82-model-canvas\{display:none!important\}/);
 });
 test('the 3D toolbar is not covered by the fixed launch button', () => {
-  // .sr40-launch sits at z-index 1060 and would cover the "2D" button of the
+  // .sr40-launch sits at z-index 1060 and would cover the X exit of the
   // 3D view, which lives inside #sr83Viewport at z-index 835.
   const css = get('radar83.css');
   assert.match(css, /body\.sr83-cinematic \.sr40-launch\{[^}]*opacity:0/);
 });
 
 test('the 3D toolbar fits on a narrow phone', () => {
-  // 9.1: Auf 390 px Breite lag der "2D"-Knopf hinter dem Werkzeugknopf.
+  // Keep the remaining 3D action comfortably tappable on 390 px phones.
   const css = get('radar83.css');
   assert.match(css, /@media \(max-width: 430px\)/);
-  assert.match(css, /#map \.sr83-replay,#map \.sr83-back\{min-height:44px/);
+  assert.match(css, /#map \.sr83-replay\{min-height:44px/);
 });
 
 test('the 3D layer only asks for a new frame when something moved', () => {
@@ -69,4 +69,13 @@ test('a lost WebGL context ends the 3D view at once', () => {
   assert.match(src, /event\.preventDefault\(\)/, 'ohne preventDefault gibt es keine Wiederherstellung');
   assert.match(src, /this\.contextLostCancel\?\.\(\)/, 'das Warten muss sofort enden');
   assert.match(src, /removeEventListener\('webglcontextlost'/, 'der Listener muss wieder entfernt werden');
+});
+test('the existing vehicle-sheet X is the only 3D exit and returns to 2D', () => {
+  const map = get('radar83-map.mjs');
+  const camera = get('radar71-camera.mjs');
+  const html = get('index.html');
+  assert.doesNotMatch(map, /sr83-back|↩ 2D|Zur normalen 2D-Karte zurückkehren/);
+  assert.match(map, /toolbar\.append\(replay\)/);
+  assert.match(camera, /addEventListener\('sr37:sheet-closed',\(\)=>cancel\(\{restore:true\}\)\)/);
+  assert.match(html, /id=\"closeSheet\"/);
 });
