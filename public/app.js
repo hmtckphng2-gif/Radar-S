@@ -939,18 +939,24 @@ function drawVehicleDetails(key,fetchSchedule){
     sec.append(list);
     $('details').append(sec);
   }
-  let note='Die Kartenposition ist '+(v.source==='sta'?'ein Feed-Messwert, nicht zwingend GPS.':'simuliert/geschätzt, keine GPS-Ortung.')+' ';
-  if(v.stale)note+='Dieser Marker ist nur die letzte bekannte Position; der aktuelle Feed enthält ihn nicht. ';
-  if(v.kind==='bus'&&!v.lineVerified)note+='Ohne passenden statischen GTFS-Eintrag keine bestätigte Liniennummer. ';
-  if(v.kind==='bus')note+=mapTarget(v).path?'Kartenbewegung: zeitverzögert zwischen empfangenen Punkten entlang einer geprüften GTFS-Strecke; keine sekundengenaue GPS-Ortung. ':'Keine eindeutig passende GTFS-Straße: Nur tatsächlich empfangene Positionen, keine erfundene Bewegung. ';
-  if(v.kind==='train'&&!v.nameVerified)note+='Die offizielle Zugnummer ist noch nicht zugeordnet. ';
-  if(v.kind==='train')note+=state.jobs.get(v.key)?.replay ? 'Markerbewegung ist eine zeitverzögerte Wiedergabe zwischen empfangenen Feedpositionen auf einer passenden GTFS-Strecke, keine sekundengenaue Live-GPS-Ortung. ' : 'Nur empfangene Feedpositionen – ohne zwei passende Messpunkte wird keine zusätzliche Zugbewegung dargestellt. ';
-  $('sheetNote').textContent=note;
+  const notes=[];
+  if(v.stale)notes.push('Letzte bekannte Position');
+  else if(v.source==='trenitalia'||v.source==='trentino')notes.push('Position geschätzt · kein GPS');
+  if(v.kind==='bus'&&!v.lineVerified)notes.push('Linie nicht bestätigt');
+  if(v.kind==='train'&&!v.nameVerified)notes.push('Zugnummer nicht bestätigt');
+  $('sheetNote').textContent=notes.join(' · ');$('sheetNote').hidden=!notes.length;
   if(fetchSchedule)loadSchedule(key);
   else if(state.details[v.source])renderStops(v,state.details[v.source]);
 }
 function renderStops(v,details){
-  const rows=stopRows(details,v.tripId);
+ const rawRows=stopRows(details,v.tripId),seenRows=new Set();
+ const rows=rawRows.filter(row=>{
+   const stopId=txt(row.stopId),seq=Number(row.seq);
+   const key=stopId+'|'+(Number.isFinite(seq)?seq:txt(row.arrival)+'|'+txt(row.departure));
+   if(!stopId)return true;
+   if(seenRows.has(key))return false;
+   seenRows.add(key);return true;
+ });
   const section=$('scheduleSection'),list=$('stops'),empty=$('emptySchedule');
   list.replaceChildren();section.hidden=!rows.length;empty.hidden=true;
   if(!rows.length)return;
@@ -987,7 +993,7 @@ function renderStops(v,details){
 }
 async function loadSchedule(key){
   const v=state.vehicles.get(key);if(!v)return;
-  $('scheduleSection').hidden=true;$('emptySchedule').hidden=false;$('emptySchedule').textContent=t('station.loading');
+  $('scheduleSection').hidden=true;$('emptySchedule').hidden=true;
   const details=await loadDetails(v.source);
   if(state.selectedKey!==key||state.activeSheet!=='vehicle')return;
   if(details)renderStops(v,details);
@@ -1149,7 +1155,7 @@ async function selectScheduledTrain(tripId){
   detail('Position','Im Echtzeitfeed nicht gefunden');technicalDetails({tripId});
   detail('Zugnummer',gtfsNumber('',trip[3]));detail('Verspätung','Nicht überprüft');
   $('sheetNote').textContent=t('journey.noPositionNote');
-  $('scheduleSection').hidden=true;$('emptySchedule').hidden=false;$('emptySchedule').textContent=t('journey.loadingStops');
+  $('scheduleSection').hidden=true;$('emptySchedule').hidden=true;
   const details=await loadDetails('trains');
   if(selectionToken===selectionRenderToken&&state.activeSheet==='vehicle'&&state.selectedKey===null){
     if(details)renderStops({source:'trains',tripId},details);
