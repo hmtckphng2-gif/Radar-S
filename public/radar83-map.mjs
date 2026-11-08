@@ -1,9 +1,9 @@
-/* Radar 8.3 — actual pitched vector/terrain 3D map with a shared WebGL vehicle layer.
+/* Radar 8.3 â actual pitched vector/terrain 3D map with a shared WebGL vehicle layer.
  * The original Leaflet map stays intact underneath. Only selected cinematic
  * vehicles initialize MapLibre; errors or ?radar3d=on fall back to Radar 8.2.
  */
 import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.5&rev=credits-2';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,handoff3DCamera,approach3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-zoom-x-exit-6';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,handoff3DCamera,approach3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -202,22 +202,24 @@ export class Radar83Cinematic {
   const overlay=document.createElement('div');overlay.className='sr83-viewport';overlay.id='sr83Viewport';
   const surface=document.createElement('div');surface.className='sr83-map';overlay.append(surface);
   const toolbar=document.createElement('div');toolbar.className='sr83-toolbar';
-  const info=document.createElement('span');info.className='sr83-label';info.textContent='3D · '+selectedVehicleLabel(vehicle);
+  const info=document.createElement('span');info.className='sr83-label';info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
+  const exit=document.createElement('button');exit.className='sr83-exit';exit.type='button';exit.textContent='×';exit.setAttribute('aria-label','3D-Ansicht schließen und zur 2D-Karte zurückkehren');exit.title='3D schließen';
+  exit.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();window.SuedtirolRadar71?.cancel?.()||this.close({sync:true})});
   const replay=document.createElement('button');replay.className='sr83-replay';
-  replay.type='button';replay.textContent='↻ Flug';
+  replay.type='button';replay.textContent='â» Flug';
   replay.setAttribute('aria-label','3D-Kameraflug wiederholen');
   replay.addEventListener('click',e=>{e.stopPropagation();this.replay()});
-  // The existing vehicle sheet X is the single exit and returns to the normal 2D map.
-  toolbar.append(replay);overlay.append(toolbar);
+  // Keep the exit inside the overlay above the MapLibre canvas.
+  toolbar.append(replay,exit);overlay.append(toolbar);
   const infoCard=document.createElement('section');infoCard.className='sr83-info-card';
   infoCard.append(info);
   const meta=document.createElement('div');meta.className='sr83-vehicle-meta';
-  meta.textContent=selectedVehicleMeta(vehicle)||'Keine weiteren Fahrzeugdaten verfügbar';
+  meta.textContent=selectedVehicleMeta(vehicle)||'Keine weiteren Fahrzeugdaten verfÃ¼gbar';
   infoCard.append(meta);this.vehicleMeta=meta;
   const sources=document.createElement('details');sources.className='sr83-sources';
   const summary=document.createElement('summary');summary.textContent='Quellen';sources.append(summary);
   const credit=document.createElement('div');credit.className='sr83-credit';
-  credit.textContent='3D-Modell schematisch · Position aus dem Datenfeed';
+  credit.textContent='3D-Modell schematisch Â· Position aus dem Datenfeed';
   sources.append(credit);this.credit=credit;
   const detailsHost=document.getElementById('details');
   const sheetScroll=document.querySelector('#sheet .sheet-scroll');
@@ -312,17 +314,17 @@ export class Radar83Cinematic {
     this.onModel(info);
     if(this.credit){
      this.credit.textContent=info.kind==='error'
-      ?'Referenzmodell nicht geladen · '+info.error
+      ?'Referenzmodell nicht geladen Â· '+info.error
       :modelCreditText(info.credit,info.kind==='real',vehicle?.kind);
     }
-    if(this.info)this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
+    if(this.info)this.info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
    });
    this.layer=layer;
    map.addLayer(layer);
    await waitFor3DModel(map,this.layer);
    if(seq!==this.sequence)return false;
-   this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
-   // Keep the 2D map untouched and reveal the positioned 3D scene—never replay.
+   this.info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
+   // Keep the 2D map untouched and reveal the positioned 3D sceneânever replay.
    this.leaflet.stop();
    map.resize();map.triggerRepaint();
    this.overlay.classList.add('sr83-ready');
@@ -355,8 +357,8 @@ export class Radar83Cinematic {
  update(vehicle,point,heading){
   if(!this.ready||!this.layer||!point||(this.vehicleKey&&vehicle?.key!==this.vehicleKey))return;
   this.layer.update(point,heading);
-  if(this.info)this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
-  if(this.vehicleMeta)this.vehicleMeta.textContent=selectedVehicleMeta(vehicle)||'Keine weiteren Fahrzeugdaten verfügbar';
+  if(this.info)this.info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
+  if(this.vehicleMeta)this.vehicleMeta.textContent=selectedVehicleMeta(vehicle)||'Keine weiteren Fahrzeugdaten verfÃ¼gbar';
   // The camera follows the vehicle while the user has not taken over. A
   // deliberate gesture always wins; the model keeps its real feed position.
   if(this.touched||this.flying||!this.map)return;

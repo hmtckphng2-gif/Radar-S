@@ -74,8 +74,11 @@ test('the existing vehicle-sheet X is the only 3D exit and returns to 2D', () =>
   const map = get('radar83-map.mjs');
   const camera = get('radar71-camera.mjs');
   const html = get('index.html');
-  assert.doesNotMatch(map, /sr83-back|↩ 2D|Zur normalen 2D-Karte zurückkehren/);
-  assert.match(map, /toolbar\.append\(replay\)/);
+  assert.doesNotMatch(map, /sr83-back|â© 2D|Zur normalen 2D-Karte zurÃ¼ckkehren/);
+  assert.match(map, /toolbar\.append\(replay,exit\)/);
+  assert.match(map, /className='sr83-exit'/);
+  assert.match(map, /aria-label','3D-Ansicht schließen und zur 2D-Karte zurückkehren'/);
+  assert.match(map, /SuedtirolRadar71\?\.cancel\?\.\(\)/);
   assert.match(camera, /addEventListener\('sr37:sheet-closed',\(\)=>cancel\(\{restore:true\}\)\)/);
   assert.match(html, /id=\"closeSheet\"/);
 });

@@ -47,7 +47,8 @@ test('replay works before the model is ready', () => {
   const src = read('radar83-map.mjs');
   // The old guard "if(!this.ready||...)return;" meant the flight could not
   // start while the scene was still building.
-  assert.match(src, /replay\(\)\{\s*\n\s*if\(!this\.map\|\|!this\.flight\)return;/);
+  assert.match(src, /replay\(\)\{\s*
+\s*if\(!this\.map\|\|!this\.flight\)return;/);
 });
 
 test('the camera flight is long and smooth without becoming excessive', () => {
@@ -113,8 +114,8 @@ test('cinematic 3D stays enabled by default and all camera modules bypass stale 
   const html=read('index.html');
   const camera=read('radar71-camera.mjs');
   const map=read('radar83-map.mjs');
-  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=tap-3d-zoom-x-exit-6'));
-  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=tap-3d-zoom-x-exit-6'));
-  assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-zoom-x-exit-6'));
-  assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-zoom-x-exit-6'));
+  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
+  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
+  assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
+  assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
 });

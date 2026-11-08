@@ -1,11 +1,11 @@
-import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=tap-3d-zoom-x-exit-6';
-/* Radar 7.1 – Cinematic Vehicle Focus.
+import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7';
+/* Radar 7.1 â Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate
  * map panes with CSS and corrupt touch coordinates or marker hit testing.
  */
 import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from './radar71-camera-logic.mjs?v=9.9.5';
-import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-zoom-x-exit-6';
+import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7';
 (()=>{'use strict';
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -15,7 +15,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-zoom-x-e
  function setupHud(){
   if(hud)return;
   hud=document.createElement('div');hud.id='sr71Cinematic';hud.className='sr71-cinematic';hud.setAttribute('aria-hidden','true');
-  hud.innerHTML='<div class="sr71-focus-ring"><div class="sr71-focus-reticle"></div></div><div class="sr71-focus-caption"><span id="sr71FocusTitle"></span><span id="sr71FocusQuality"></span></div><span class="sr71-heading-arrow" id="sr71HeadingArrow" hidden>➤</span>';
+  hud.innerHTML='<div class="sr71-focus-ring"><div class="sr71-focus-reticle"></div></div><div class="sr71-focus-caption"><span id="sr71FocusTitle"></span><span id="sr71FocusQuality"></span></div><span class="sr71-heading-arrow" id="sr71HeadingArrow" hidden>â¤</span>';
   $('map')?.append(hud);
  }
  function turnTo(target,duration,sequence){
@@ -70,7 +70,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-zoom-x-e
   if(hud){hud.classList.remove('sr71-is-done');hud.classList.add('sr71-is-running');}
   const title=$('sr71FocusTitle'),quality=$('sr71FocusQuality');
   if(title)title.textContent=String(vehicle.name||'Fahrzeug').slice(0,28);
-  if(quality)quality.textContent=vehicle.stale?'LETZTE BEKANNTE POSITION':('FEEDPOSITION · '+String(vehicle.positionType||'KEIN GPS-NACHWEIS').slice(0,28).toUpperCase());
+  if(quality)quality.textContent=vehicle.stale?'LETZTE BEKANNTE POSITION':('FEEDPOSITION Â· '+String(vehicle.positionType||'KEIN GPS-NACHWEIS').slice(0,28).toUpperCase());
   const heading=focusHeading(vehicle),arrow=$('sr71HeadingArrow');
   if(arrow){arrow.hidden=heading===null;arrow.style.setProperty('--sr71-direction',((heading??0)-45)+'deg')}
   const toZoom=focusZoom(map.getZoom(),map.getMaxZoom(),vehicle.kind);

@@ -1,4 +1,4 @@
-/* Radar 8.3 — real 3D map only during selected vehicle cinematic view.
+/* Radar 8.3 â real 3D map only during selected vehicle cinematic view.
  * Does not rotate/transform Leaflet panes or change normal map interactions.
  */
 #map .sr83-viewport{
@@ -76,3 +76,13 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
 /* 9.9.1 Block 5: identify the actual selected feed vehicle in the 3D view. */
 #map .sr83-vehicle-meta{position:absolute;z-index:10;left:15px;top:calc(max(136px,env(safe-area-inset-top,0px)) + 54px);max-width:min(300px,calc(100% - 30px));padding:8px 11px;border:1px solid #34495dba;border-radius:10px;background:#101c29e8;color:#cbd7e2;font:550 11px/1.4 Inter,-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 5px 16px #0007;overflow-wrap:anywhere;pointer-events:none}
 @media(max-width:390px){#map .sr83-vehicle-meta{top:calc(max(130px,env(safe-area-inset-top,0px)) + 52px);font-size:10px;max-width:calc(100% - 30px)}}
+
+/* 10.0.1: the 3D exit is a real control inside the overlay, above the canvas. */
+#map .sr83-exit{pointer-events:auto;touch-action:manipulation;appearance:none;display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;border:1px solid #60758a;border-radius:12px;background:#172638f5;color:#f3f7fc;font:500 30px/1 system-ui,sans-serif;box-shadow:0 5px 18px #0009;cursor:pointer;position:relative;z-index:20}
+#map .sr83-exit:active{background:#29445f;transform:scale(.96)}
+#map .sr83-toolbar{z-index:30}
+
+/* 10.0.1: dedicated exit stays above the 3D canvas and receives taps. */
+#map .sr83-exit{pointer-events:auto;touch-action:manipulation;appearance:none;display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;border:1px solid #60758a;border-radius:12px;background:#172638f5;color:#f3f7fc;font:500 30px/1 system-ui,sans-serif;box-shadow:0 5px 18px #0009;cursor:pointer;position:relative;z-index:20}
+#map .sr83-exit:active{background:#29445f;transform:scale(.96)}
+#map .sr83-toolbar{z-index:30}

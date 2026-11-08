@@ -5,11 +5,11 @@ const read=name=>readFileSync(new URL('../public/'+name,import.meta.url),'utf8')
 
 test('detail sheet close controls render one CSS X and have a 44px touch target',()=>{
  const html=read('index.html'),css=read('radar90-preview-block1.css');
- assert.ok(html.includes('title="Schließen"></button>'));
+ assert.ok(html.includes('title="SchlieÃen"></button>'));
  assert.ok(html.includes('data-t-aria-label="stationSheet.close"></button>'));
  assert.ok(css.includes('font-size:0!important'));
  assert.ok(css.includes('width:44px!important')&&css.includes('height:44px!important'));
- assert.ok(css.includes('content:"×"'));
+ assert.ok(css.includes('content:"Ã"'));
 });
 
 test('hidden empty model card cannot be forced visible by the global flex rule',()=>{
@@ -40,8 +40,8 @@ test('MapLibre attribution stays at the lower map edge rather than over the vehi
 test('changed 3D assets use fresh cache keys while release version remains unchanged',()=>{
  const html=read('index.html'),map=read('radar83-map.mjs'),camera=read('radar71-camera.mjs');
  assert.ok(html.includes('radar90-preview-block1.css?v=9.9.5&rev=block1-fixes-2'));
- assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=tap-3d-zoom-x-exit-6'));
- assert.ok(map.includes('rev=tap-3d-zoom-x-exit-6')&&camera.includes('rev=tap-3d-zoom-x-exit-6'));
- assert.ok(html.includes('radar83.css?v=9.9.5&rev=sheet-x-exit-6'));
+ assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
+ assert.ok(map.includes('rev=tap-3d-overlay-exit-7')&&camera.includes('rev=tap-3d-overlay-exit-7'));
+ assert.ok(html.includes('radar83.css?v=9.9.5&rev=overlay-exit-7'));
  assert.ok(map.includes('rev=credits-2'));
 });
