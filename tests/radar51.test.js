@@ -8,5 +8,5 @@ test('the scheduled position stays separate from the reported delay', () => {
   const src = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
   assert.doesNotMatch(src, /detail\('Abstand zum Fahrplanpunkt'/);
   assert.match(src, /detail\('Gemeldete Verspätung'/);
-  assert.doesNotMatch(src, /trainScheduledPosition\(v,state\.indexes,state\.details,state\.shapes\)/);
+  assert.doesNotMatch(src, /trainScheduledPosition\(v,/);
 });

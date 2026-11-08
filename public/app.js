@@ -11,7 +11,7 @@ import {
 import {playbackLag} from './radar45-logic.mjs?v=9.9.5';
 import {trainReplayDuration} from './radar705-motion.mjs?v=9.9.5';
 import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.9.5';
-import {trainScheduledPosition,buildDepartureRows,romeSeconds} from './radar51-logic.mjs?v=9.9.5';
+import {buildDepartureRows,romeSeconds} from './radar51-logic.mjs?v=9.9.5';
 import {mergeStationDepartures} from './radar53-logic.mjs?v=9.9.5';
 import {groupNearbyStops,nextNearbyDepartures} from './radar93-nearby.mjs?v=9.9.5';
 import {formatStationName,formatRelativeAge,sourceLabel,expectedStopTime,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=station-labels-2';
@@ -904,7 +904,6 @@ function drawVehicleDetails(key,fetchSchedule){
   }
   // Zwei getrennte Werte: die gemeldete Verspaetung und die Abweichung vom Fahrplan.
   // Die eine ist eine Zeitangabe, die andere eine Ortsangabe.
-  const schedule=trainScheduledPosition(v,state.indexes,state.details,state.shapes);
   detail('Geschwindigkeit',v.speed===null?'Unbekannt':v.speed+' km/h (gemeldet)');
   const quality=observationQuality(v,Date.now());
   detail('Datenstand',quality.status==='aktuell'?'Aktuell':quality.status==='verzögert'?'Verzögert':'Unbekannt',quality.status==='aktuell'?'delay-ok':quality.status==='verzögert'?'delay-warn':'delay-severe');
