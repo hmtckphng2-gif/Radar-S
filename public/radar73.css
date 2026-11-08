@@ -61,3 +61,8 @@ body:has(#sheet.open) #sr60Launch,body:has(#stationSheet.open) #sr60Launch{displ
  #sheet.sr73-compact #sheetBadges .mini-badge{padding:2px 5px!important;font-size:8px!important;line-height:1.15!important}
  #sheet.sr73-compact .sheet-scroll{padding-top:0!important}
 }
+
+/* Delay outline follows each vehicle icon silhouette, not a generic box. */
+.marker-wrap .marker-circle{position:relative}
+.marker-wrap .marker-circle::after{display:none!important}
+.marker-wrap .marker-delay-outline{position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);overflow:visible;pointer-events:none;z-index:2}
