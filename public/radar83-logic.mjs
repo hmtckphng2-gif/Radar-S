@@ -3,8 +3,8 @@ import {formatStationName,sourceLabel} from './radar92-details.mjs?v=9.9.5&rev=d
 export const MAPLIBRE_VERSION='4.7.1';
 export const VECTOR_STYLE='https://tiles.openfreemap.org/styles/dark';
 export const TERRAIN_TILES='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
-// Cinematic 3D is enabled by default; ?radar3d=off remains the safe opt-out.
-export const FEATURE_FLAGS=Object.freeze({cinematic3D:true});
+// Cinematic 3D is opt-in on mobile; preview testing uses ?radar3d=on.
+export const FEATURE_FLAGS=Object.freeze({cinematic3D:false});
 
 // Display the selected feed identity, never the generic reference-model name.
 function usableVehicleText(value){
@@ -29,8 +29,7 @@ export function selectedVehicleMeta(vehicle){
 }
 
 export function enabled3D(search=''){
- if(!FEATURE_FLAGS.cinematic3D)return false;
- try{return new URLSearchParams(search).get('radar3d')!=='off'}catch{return false}
+ try{const value=new URLSearchParams(search).get('radar3d');return FEATURE_FLAGS.cinematic3D?value!=='off':value==='on'}catch{return false}
 }
 export function target3DCamera(point,zoom,heading=null,duration=4300){
  const lng=Number(point?.lng??point?.lon),lat=Number(point?.lat);
@@ -40,7 +39,7 @@ export function target3DCamera(point,zoom,heading=null,duration=4300){
   zoom:Math.max(18.6,Math.min(20.4,Number(zoom)||19.0)),
   pitch:48,
    // Finish in a steeper rear-quarter view, without a near half-turn.
-   bearing:Number.isFinite(heading)?((heading+38)%360+360)%360:38,
+   bearing:Number.isFinite(heading)?((heading+8)%360+360)%360:8,
   duration:Math.max(0,Math.min(8000,Number(duration)||0))
  };
 }
