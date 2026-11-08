@@ -3,7 +3,7 @@
  * vehicles initialize MapLibre; errors or ?radar3d=on fall back to Radar 8.2.
  */
 import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.5&rev=credits-2';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&flag=enabled-default';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&flag=opt-in';
 
 let libraryPromise=null;
 function loadMapLibre(){
