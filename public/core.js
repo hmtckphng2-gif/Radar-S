@@ -192,6 +192,20 @@ export function delayPresentation(seconds) {
   const minutes=Math.round(Number(seconds)/60);
   return {minutes,label:minutes>0?minutes+' Min. verspätet':minutes<0?Math.abs(minutes)+' Min. früher':'pünktlich',className:minutes>=15?'delay-severe':minutes>=1?'delay-warn':'delay-ok'};
 }
+export function markerDelayState(seconds) {
+  if (seconds === null || seconds === undefined || seconds === '' || !Number.isFinite(Number(seconds))) return 'unknown';
+  const minutes=Math.round(Number(seconds)/60);
+  return minutes>=15?'severe':minutes>=1?'delayed':'ontime';
+}
+export function markerDelayBadge(seconds) {
+  if (seconds === null || seconds === undefined || seconds === '' || !Number.isFinite(Number(seconds))) return '';
+  const minutes=Math.round(Number(seconds)/60);
+  return minutes>=5?'+'+minutes:'';
+}
+export function worstDelayState(values) {
+  const valid=(Array.isArray(values)?values:[]).filter(value=>value!==null&&value!==undefined&&value!=='').map(Number).filter(Number.isFinite);
+  return valid.length?markerDelayState(Math.max(...valid)):'unknown';
+}
 export function formatDelay(seconds) { return delayPresentation(seconds).label; }
 export function formatClock(time) {
   if (time === null || time === undefined) return '–';
