@@ -59,6 +59,21 @@ export function handoff3DCamera(center,zoom){
  if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -85||lat > 85||lng < -180||lng > 180)return null;
  return {center:[lng,lat],zoom:Math.max(3,Math.min(20.4,Number.isFinite(z)?z-1:15)),pitch:0,bearing:0};
 }
+// Start the visible 3D approach most of the way toward the tapped vehicle.
+// This keeps the transition anchored to the tap without a large sideways sweep.
+export function approach3DCamera(start,target,progress=.75){
+ const from=start?.center,to=target?.center,t=Number(progress);
+ if(!Array.isArray(from)||!Array.isArray(to)||from.length<2||to.length<2||
+    !from.slice(0,2).every(Number.isFinite)||!to.slice(0,2).every(Number.isFinite)||!Number.isFinite(t))return null;
+ const amount=Math.max(0,Math.min(1,t));
+ const result={...start,center:[from[0]+(to[0]-from[0])*amount,from[1]+(to[1]-from[1])*amount]};
+ const fromBearing=Number(start.bearing),toBearing=Number(target.bearing);
+ if(Number.isFinite(fromBearing)&&Number.isFinite(toBearing)){
+  const turn=((toBearing-fromBearing+540)%360)-180;
+  result.bearing=((fromBearing+turn*amount)%360+360)%360;
+ }
+ return result;
+}
 
 export function start3DCamera(point, heading=null, finalZoom=17){
  const lat=Number(point?.lat),lng=Number(point?.lng??point?.lon);

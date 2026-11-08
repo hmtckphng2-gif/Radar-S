@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {start3DCamera,target3DCamera,handoff3DCamera,use3DTerrain,cinematicDuration,prefersReducedMotion,FEATURE_FLAGS,enabled3D} from '../public/radar83-logic.mjs';
+import {start3DCamera,target3DCamera,handoff3DCamera,approach3DCamera,use3DTerrain,cinematicDuration,prefersReducedMotion,FEATURE_FLAGS,enabled3D} from '../public/radar83-logic.mjs';
 
 /* Radar 8.5 - the 3D camera must move on the tap, not after a wait.
  *
@@ -84,7 +84,12 @@ test('the handoff continues the camera from the exact live map view', () => {
   assert.deepEqual(live,{center:[11.35,46.5],zoom:17,pitch:0,bearing:0});
   assert.equal(handoff3DCamera(null,18),null);
   const src=read('radar83-map.mjs');
-  assert.ok(src.indexOf('this.leaflet.flyTo([point.lat,point.lng]') < src.indexOf('const [lib,T]=await Promise.all'));
+  const tapFlow=src.slice(src.indexOf('async open('),src.indexOf('await waitFor3DScene(map);'));
+  assert.doesNotMatch(tapFlow,/this\.leaflet\.(?:flyTo|setView)\(/,'2D stays still; the zoom belongs only to 3D');
+  const approach=approach3DCamera(live,{center:[11.45,46.5],zoom:19,pitch:48,bearing:8},.75);
+  assert.ok(approach.center[0]>live.center[0]&&approach.center[0]<11.45);
+  assert.ok(11.45-approach.center[0] < (11.45-live.center[0])*.26);
+  assert.ok(src.includes('approach3DCamera(handoff,target,.75)'));
   assert.ok(src.indexOf('this.flight={start:handoff,target:continuedTarget};') < src.indexOf('await waitFor3DScene(map);'));
   assert.ok(src.indexOf('this.replay();') < src.indexOf('await waitFor3DScene(map);'));
   const ready=src.indexOf("this.overlay.classList.add('sr83-ready')");
@@ -108,8 +113,8 @@ test('cinematic 3D stays enabled by default and all camera modules bypass stale 
   const html=read('index.html');
   const camera=read('radar71-camera.mjs');
   const map=read('radar83-map.mjs');
-  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=tap-origin-continuous-4'));
-  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=tap-origin-continuous-4'));
-  assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=tap-origin-continuous-4'));
-  assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=tap-origin-continuous-4'));
+  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=tap-3d-zoom-only-5'));
+  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=tap-3d-zoom-only-5'));
+  assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-zoom-only-5'));
+  assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-zoom-only-5'));
 });

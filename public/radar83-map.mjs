@@ -3,7 +3,7 @@
  * vehicles initialize MapLibre; errors or ?radar3d=on fall back to Radar 8.2.
  */
 import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.5&rev=credits-2';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,handoff3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&rev=tap-origin-continuous-4';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,handoff3DCamera,approach3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-zoom-only-5';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -231,20 +231,15 @@ export class Radar83Cinematic {
  async open(vehicle,point,heading,duration,zoom){
   if(!this.enabled)return false;
   this.close({sync:false});
-  const seq=++this.sequence;this.active=true;this.tapStartedAt=performance.now();
+  const seq=++this.sequence;this.active=true;
   const target=target3DCamera(point,zoom,heading,duration);
   if(!target){this.close({sync:false});return false}
   this.vehicleKey=vehicle?.key||null;
   this.makeOverlay(vehicle);
   document.body.classList.add('sr83-cinematic');
-  // Begin the flight on the actual tap. MapLibre continues from the live
-  // Leaflet camera once its vector style is ready.
-  try{
-   this.leaflet.stop();
-   const twoDZoom=Math.max(3,Math.min(18,Number(zoom)||18));
-   if(prefersReducedMotion())this.leaflet.setView([point.lat,point.lng],twoDZoom,{animate:false});
-   else this.leaflet.flyTo([point.lat,point.lng],twoDZoom,{animate:true,duration:Math.max(0.1,Number(duration)||4300)/1000,easeLinearity:.22});
-  }catch(error){console.info('Radar 8.3 immediate 2D camera fallback',error)}
+  // Keep the 2D map exactly where it is. The only camera movement starts
+  // after the vector map is ready and happens inside the 3D view.
+  try{this.leaflet.stop()}catch(error){console.info('Radar 8.3 could not stop pending 2D motion',error)}
   try{
    const [lib,T]=await Promise.all([loadMapLibre(),loadThree()]);
    if(seq!==this.sequence)return false;
@@ -291,17 +286,18 @@ export class Radar83Cinematic {
     if(map.loaded?.())end();
    });
    if(seq!==this.sequence)return false;
-   // Continue the SAME tap-origin flight from the current 2D camera.
-   // Subtract elapsed time so loading never restarts the camera animation.
+   // Keep the 2D view untouched. In 3D, start most of the way toward the
+   // tapped vehicle, leaving only a small natural lateral correction while
+   // the camera performs its single zoom-in approach.
    const liveCenter=this.leaflet.getCenter?.(),liveZoom=this.leaflet.getZoom?.();
    const handoff=handoff3DCamera(liveCenter,liveZoom);
    if(!handoff)throw Error('Live camera handoff position invalid');
-   const elapsed=Math.max(0,performance.now()-(this.tapStartedAt||performance.now()));
+   const flightStart=approach3DCamera(handoff,target,.75);
+   if(!flightStart)throw Error('3D approach start position invalid');
    const totalDuration=Number(target.duration)||Number(duration)||4300;
-   const remainingDuration=Math.max(250,totalDuration-elapsed);
-   const continuedTarget={...target,duration:remainingDuration};
-   this.flight={start:handoff,target:continuedTarget};
-   map.jumpTo(handoff);this.replay();
+   const continuedTarget={...target,duration:totalDuration};
+   this.flight={start:flightStart,target:continuedTarget};
+   map.jumpTo(flightStart);this.replay();
    // Gestures can interrupt the flight immediately; user control wins.
    map.on('dragstart',()=>this.interrupt());
    map.getCanvas().addEventListener('touchstart',()=>this.interrupt(),{passive:true});
@@ -328,8 +324,7 @@ export class Radar83Cinematic {
    await waitFor3DModel(map,this.layer);
    if(seq!==this.sequence)return false;
    this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
-   // The 2D leg has carried the same flight until the real model is ready.
-   // Stop it and reveal the positioned 3D scene—never replay.
+   // Keep the 2D map untouched and reveal the positioned 3D scene—never replay.
    this.leaflet.stop();
    map.resize();map.triggerRepaint();
    this.overlay.classList.add('sr83-ready');

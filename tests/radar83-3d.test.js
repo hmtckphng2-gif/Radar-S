@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {VEHICLE_SPECS,vehicleKind,validHeading,modelYawRadians,makeVehicleMesh} from '../public/radar83-model.mjs';
-import {enabled3D,FEATURE_FLAGS,target3DCamera,start3DCamera,handoff3DCamera,cinematicDuration,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta} from '../public/radar83-logic.mjs';
+import {enabled3D,FEATURE_FLAGS,target3DCamera,start3DCamera,handoff3DCamera,approach3DCamera,cinematicDuration,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta} from '../public/radar83-logic.mjs';
 import {build3DBuildings,enable3DTerrain,make3DVehicleLayer} from '../public/radar83-map.mjs';
 
 const NOW=1760900000000;
@@ -28,6 +28,16 @@ test('tap-origin handoff preserves the live Leaflet center and scale',()=>{
  const camera=handoff3DCamera({lat:46.5,lng:11.35},18);
  assert.deepEqual(camera,{center:[11.35,46.5],zoom:17,pitch:0,bearing:0});
  assert.equal(handoff3DCamera({lat:90,lng:11.35},18),null);
+});
+test('3D camera starts mostly aligned with the tapped vehicle for a restrained lateral move',()=>{
+ const from=handoff3DCamera({lat:46.5,lng:11.30},18);
+ const to=target3DCamera({lat:46.5,lng:11.35},19,90,4500);
+ const start=approach3DCamera(from,to,.75);
+ assert.ok(start.center[0]>from.center[0]&&start.center[0]<to.center[0]);
+ assert.ok(to.center[0]-start.center[0]<(to.center[0]-from.center[0])*.26);
+ assert.equal(start.zoom,from.zoom);
+ assert.equal(start.pitch,from.pitch);
+ assert.ok(Math.abs(to.bearing-start.bearing)<Math.abs(to.bearing-from.bearing)*.26);
 });
 test('camera rotates the MAP and tilts terrain, no arbitrary model spin',()=>{
  const camera=target3DCamera({lat:46.498,lng:11.353},17.4,90,4500);

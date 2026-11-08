@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {start3DCamera,target3DCamera,use3DTerrain} from '../public/radar83-logic.mjs';
+import {start3DCamera,target3DCamera,approach3DCamera,use3DTerrain} from '../public/radar83-logic.mjs';
 import {waitFor3DScene,waitFor3DModel} from '../public/radar83-map.mjs';
 
 test('cinematic camera begins wide, then moves toward real train coordinates',()=>{
@@ -12,6 +12,17 @@ test('cinematic camera begins wide, then moves toward real train coordinates',()
  assert.notDeepEqual(start.center,end.center);
  assert.ok(end.duration>=3200 && end.duration<=5000);
  assert.deepEqual(end.center,[p.lng,p.lat]);
+});
+test('3D approach keeps only a small lateral correction and does not move the 2D map',()=>{
+ const start={center:[11.30,46.50],zoom:16,pitch:0,bearing:0};
+ const target={center:[11.35,46.50],zoom:19,pitch:48,bearing:8};
+ const approach=approach3DCamera(start,target,.75);
+ assert.ok(approach.center[0]>start.center[0]);
+ assert.ok(approach.center[0]<target.center[0]);
+ assert.ok(Math.abs(target.center[0]-approach.center[0])<Math.abs(target.center[0]-start.center[0])*.26);
+ assert.equal(approach.zoom,start.zoom);
+ assert.ok(Math.abs(target.bearing-approach.bearing)<Math.abs(target.bearing-start.bearing)*.26);
+ assert.deepEqual(start.center,[11.30,46.50]);
 });
 test('iPhone 3D DEM terrain is opt-in to avoid black sky/tile rendering issues',()=>{
  assert.equal(use3DTerrain('?radar3d=on'),false);
@@ -45,7 +56,9 @@ test('the replay button and real camera animation remain wired',()=>{
  assert.match(src,/this\.replay\(\)/);
  assert.match(src,/map\.easeTo\(/);
  assert.match(src,/await waitFor3DScene\(map\)/);
- assert.match(src,/this\.leaflet\.flyTo\(\[point\.lat,point\.lng\]/);
+ const tapFlow=src.slice(src.indexOf('async open('),src.indexOf('await waitFor3DScene(map);'));
+ assert.doesNotMatch(tapFlow,/this\.leaflet\.(?:flyTo|setView)\(/);
+ assert.match(tapFlow,/approach3DCamera\(handoff,target,\.75\)/);
  assert.match(src,/handoff3DCamera\(liveCenter,liveZoom\)/);
  assert.match(src,/await waitFor3DModel\(map,this\.layer\)/);
  assert.doesNotMatch(src,/new Vehicle3DOverlay\(/);
