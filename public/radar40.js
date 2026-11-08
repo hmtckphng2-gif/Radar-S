@@ -43,9 +43,8 @@
    if(!bearing){bearing=mk('span','sr40-heading','➤');bearing.setAttribute('aria-hidden','true');wrap.append(bearing);}
    const dir=v.bearing == null ? NaN : Number(v.bearing);bearing.hidden=!settings.arrows||!fresh(v)||!Number.isFinite(dir);
    if(!bearing.hidden)bearing.style.transform='translateX(-50%) rotate('+(dir-90)+'deg)';
-   let pill=wrap.querySelector('.sr40-delay');if(!pill){pill=mk('span','sr40-delay');wrap.append(pill);}
-   const d=updateFor(v);pill.hidden=!settings.delays||!d||!fresh(v);
-   pill.className='sr40-delay '+(d?.kind||'unknown');pill.textContent=d?.text||'';
+   wrap.classList.toggle('sr40-hide-delays',!settings.delays);
+   const d=updateFor(v);
    const hide=settings.onlyLate&&(!d||!['low','medium','high'].includes(d.kind));
    node.style.display=hide?'none':'';
   }
@@ -75,7 +74,7 @@
  function settingsUI(){const parent=mk('div','sr40-settings');parent.id='radar40Settings';parent.hidden=true;
   const header=mk('div','sr40-settings-head');header.append(mk('strong','','Radar 4.2 · Einstellungen'));
   const close=mk('button','sr40-close','×');close.setAttribute('aria-label','Einstellungen schließen');close.onclick=()=>parent.hidden=true;header.append(close);parent.append(header);
-  const labels={arrows:'Fahrtrichtung anzeigen',trails:'Empfangene Fahrspur anzeigen',delays:'Verspätungsfarben auf Markern',compact:'Kompakte Karte',onlyLate:'Nur verspätete Fahrzeuge'};
+  const labels={arrows:'Fahrtrichtung anzeigen',trails:'Empfangene Fahrspur anzeigen',delays:'Verspätungs-Badge anzeigen',compact:'Kompakte Karte',onlyLate:'Nur verspätete Fahrzeuge'};
   for(const [key,label] of Object.entries(labels)){
    const row=mk('label','sr40-setting-row');const span=mk('span','',label);const check=document.createElement('input');check.type='checkbox';check.checked=settings[key];
    check.onchange=()=>{settings[key]=check.checked;save();document.documentElement.classList.toggle('sr40-compact',settings.compact);updatePositions();};row.append(span,check);parent.append(row);

@@ -22,22 +22,14 @@ html.sr44-classic #map .leaflet-tile-pane {opacity:1!important;}
 #map .marker-wrap.train .marker-label {top:12px;}
 #map .marker-wrap.bus .marker-circle {width:19px;height:19px;font-size:10px;}
 #map .marker-wrap.train .marker-circle {width:27px;height:27px;}
-#map .marker-wrap.bus .sr40-delay {top:24px;left:calc(50% + 11px);padding:1px 3px;font-size:7.5px;}
-#map .marker-wrap.train .sr40-delay {top:25px;left:calc(50% + 15px);padding:1px 3px;font-size:7.5px;}
-/* Far: no labels unless selected. Middle: train numbers but not bus numbers.
-   Near: bus/train number and available, verified delay. */
+/* Keep the original far/city label decluttering; only legacy delay pills were removed. */
 html.sr44-far #map .marker-wrap:not(.selected) .marker-label,
-html.sr44-far #map .marker-wrap:not(.selected) .sr40-delay,
-html.sr44-city #map .marker-wrap.bus:not(.selected) .marker-label,
-html.sr44-city #map .marker-wrap:not(.selected) .sr40-delay {display:none!important;}
+html.sr44-city #map .marker-wrap.bus:not(.selected) .marker-label {display:none!important;}
 html.sr44-far #map .marker-wrap.selected .marker-label,
 html.sr44-city #map .marker-wrap.selected .marker-label,
 html.sr44-near #map .marker-wrap.selected .marker-label {display:block!important;}
-/* The 4.3.1 class sr431-midwide hides delays until z14; selected remains readable. */
-html.sr44-far #map .marker-wrap.selected .sr40-delay,
-html.sr44-city #map .marker-wrap.selected .sr40-delay {display:block!important;}
 html.sr44-far #map .marker-wrap.sr43-stale:after {display:none;}
-html.sr44-far #map .marker-wrap.sr43-stale .marker-circle {outline:2px dashed #c3a98a;outline-offset:2px;}
+
 /* Keep the trip progress visually distinct but restrained. */
 #map .leaflet-pane.leaflet-overlay-pane path {stroke-linejoin:round;stroke-linecap:round;}
 /* Small, native-feeling sheet, with the mini card still accessible by touch. */
