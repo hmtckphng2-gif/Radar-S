@@ -157,7 +157,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&flag=slow-close-app
    if(model3d?.visible)model3d.updatePoint(p,focusHeading(v));
    if(cinema3d?.ready)cinema3d.update(v,p,focusHeading(v));
   });
-  document.addEventListener('sr37:sheet-closed',()=>cancel({restore:true}));
+  document.addEventListener('sr37:sheet-closed',()=>{if(active){cancel({restore:false});cinema3d?.onExit?.()}else cancel({restore:true})});
   map.on('dragstart',manualInterrupt);
   map.getContainer().addEventListener('wheel',()=>{if(!cinema3d?.ready)manualInterrupt()},{passive:true});
   map.getContainer().addEventListener('touchstart',()=>{if(active&&!cinema3d?.ready)manualInterrupt()},{passive:true});
