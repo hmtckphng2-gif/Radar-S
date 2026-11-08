@@ -17,18 +17,18 @@ test('cinematic 3D is enabled by default with an emergency URL opt-out',()=>{
 });
 test('cinematic approaches from behind over a longer, smooth flight',()=>{
  const start=start3DCamera({lat:46.5,lng:11.35},90,19);
- assert.equal(start.pitch,68);
- assert.equal(start.bearing,202);
- assert.ok(start.zoom>15, 'closer starting zoom than the old distant shot');
+ assert.equal(start.pitch,64);
+ assert.equal(start.bearing,90);
+ assert.equal(start.zoom,15, 'wide establishing view before the clean downward zoom');
  assert.ok(start.center[0]<11.35);
  assert.ok(cinematicDuration(0,4300)>=6800);
- assert.ok(cinematicDuration(0,4300)<=8000);
+ assert.ok(cinematicDuration(0,4300)<=7600);
 });
-test('camera rotates the MAP and tilts terrain, no arbitrary model spin',()=>{
+test('camera descends into a subtle rear-quarter MAP angle, no arbitrary model spin',()=>{
  const camera=target3DCamera({lat:46.498,lng:11.353},17.4,90,4500);
  assert.deepEqual(camera.center,[11.353,46.498]);
  assert.equal(camera.pitch,48);
- assert.equal(camera.bearing,98);
+ assert.equal(camera.bearing,128);
  assert.equal(camera.duration,4500);
  assert.equal(target3DCamera({lat:92,lng:11},17,90,3000),null);
  assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,20.4);
