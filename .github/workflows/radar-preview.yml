@@ -41,6 +41,12 @@ jobs:
           node -e "const expected=require('./package.json').version; const actual=require('/tmp/version.json').version; if(actual!==expected) { console.error({expected,actual}); process.exit(1) } console.log('Preview version OK:',actual)"
           curl --fail --silent --show-error "$BASE/api/health" -o /tmp/health.json
           node -e "const h=require('/tmp/health.json'); if(h.ok!==true) { console.error(h); process.exit(1) } console.log('Health endpoint OK')"
+          curl --fail --silent --show-error "$BASE/api/assistant/status" -o /tmp/assistant.json
+          node - <<'NODE'
+          const s = require('/tmp/assistant.json');
+          if (s.enabled !== true || s.mode !== 'free-only' || !s.providers.includes('groq') || !s.providers.includes('cloudflare')) { console.error(s); process.exit(1); }
+          console.log('Free-only assistant status OK:', s.providers.join(' → '));
+          NODE
           curl --fail --silent --show-error "$BASE/radar-ui.css?v=$VERSION" -o /tmp/radar-ui.css
           grep -q . /tmp/radar-ui.css
           curl --fail --silent --show-error "$BASE/radar-ui-v10.css?v=$VERSION" -o /tmp/radar-ui-v10.css
