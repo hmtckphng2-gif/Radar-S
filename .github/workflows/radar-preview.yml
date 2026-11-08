@@ -45,8 +45,8 @@ jobs:
           curl --fail --silent --show-error "$BASE/api/assistant/status" -o /tmp/assistant.json
           node - <<'NODE'
           const s = require('/tmp/assistant.json');
-          if (s.enabled !== true || s.mode !== 'free-only' || !s.providers.includes('groq') || !s.providers.includes('cloudflare')) { console.error(s); process.exit(1); }
-          console.log('Free-only assistant status OK:', s.providers.join(' → '));
+          if (s.enabled !== true || s.mode !== 'free-only' || !Array.isArray(s.configuredProviders) || !s.configuredProviders.includes('groq') || !s.configuredProviders.includes('cloudflare')) { console.error(s); process.exit(1); }
+          console.log('Free-only assistant status OK:', s.configuredProviders.join(' → '));
           NODE
           curl --fail --silent --show-error "$BASE/radar-ui.css?v=$VERSION" -o /tmp/radar-ui.css
           grep -q . /tmp/radar-ui.css
