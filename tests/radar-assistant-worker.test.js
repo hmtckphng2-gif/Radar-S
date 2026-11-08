@@ -9,7 +9,7 @@ const updateFeed={header:{timestamp:stamp},entity:[{tripUpdate:{trip:{tripId:'T1
 const emptyFeed={header:{timestamp:stamp},entity:[]};
 const index={meta:{ready:true,days:[day]},routes:{R1:['REG','Regionale','2']},trips:{T16685:['R1','Meran','shape','16685','service',true]}};
 const limiter={limit:async()=>({success:true})};
-function request(path='/api/assistant',body={question:'Wie ist der Status von Zug 16685?'},headers={}){return new Request(base+path,{method:path.endsWith('/status')?'GET':'POST',headers:{origin:base,'content-type':'application/json',...headers},body:path.endsWith('/status')?undefined:JSON.stringify(body)})}
+function request(path='/api/assistant',body={question:'Wie ist der Status von Zug 16685?'},headers={}){return new Request(base+path,{method:path.endsWith('/status')?'GET':'POST',headers:{origin:base,'content-type':'application/json',cookie:'sr_assistant_session=123e4567-e89b-12d3-a456-426614174000',...headers},body:path.endsWith('/status')?undefined:JSON.stringify(body)})}
 function mockAssets(){return {fetch:async req=>{const url=new URL(req.url);return new Response(JSON.stringify(url.pathname.includes('trains-index')?index:{meta:{ready:true,days:[day]},routes:{},trips:{}}),{headers:{'content-type':'application/json'}})}}}
 function mockFetch(groqStatus=429){const old=globalThis.fetch;let groqCalls=0;globalThis.fetch=async url=>{const u=String(url);if(u.includes('api.groq.com')){groqCalls++;return new Response('quota',{status:groqStatus})}if(u.includes('service-alerts'))return new Response(JSON.stringify(emptyFeed),{headers:{'content-type':'application/json'}});if(u.includes('trip-updates'))return new Response(JSON.stringify(u.includes('trenitalia')?updateFeed:emptyFeed),{headers:{'content-type':'application/json'}});return new Response(JSON.stringify(u.includes('trenitalia')?positionFeed:emptyFeed),{headers:{'content-type':'application/json'}})};return {restore:()=>{globalThis.fetch=old},groqCalls:()=>groqCalls}}
 
@@ -90,4 +90,18 @@ test('assistant status and every assistant response are never cacheable',async()
 test('live-source explanation distinguishes real-time feeds from estimated Trenitalia positions',async()=>{
  const mocks=mockFetch();const env={ASSISTANT_ENABLED:'true',GROQ_FREE_TIER_ONLY:'true',GROQ_API_KEY:'key',AI_JOURNEY_LIMITER:limiter,ASSETS:mockAssets()};
  try{const response=await worker.fetch(request('/api/assistant',{question:'Welche Daten sind wirklich live?'}),env),body=await response.json();assert.equal(response.status,200);assert.match(body.summary,/STA und Trentino liefern GTFS-Realtime-Fahrzeugpositionen/);assert.match(body.summary,/Trenitalia-Positionen behandle ich nicht als verlässlichen GPS-Nachweis/);assert.equal(body.provider,null)}finally{mocks.restore()}
+});
+
+test('assistant rate limit uses the random session cookie, not a shared IP address',async()=>{
+ let key='';const old=globalThis.fetch;const mocks=mockFetch();
+ const env={ASSISTANT_ENABLED:'true',GROQ_FREE_TIER_ONLY:'true',GROQ_API_KEY:'key',AI_JOURNEY_LIMITER:{limit:async input=>{key=input.key;return {success:false}}}};
+ try{await worker.fetch(request(),env);assert.equal(key,'123e4567-e89b-12d3-a456-426614174000:assistant')}finally{globalThis.fetch=old;mocks.restore()}
+});
+
+test('assistant status creates an HttpOnly anonymous limiter cookie without storing chat data',async()=>{
+ const req=new Request(base+'/api/assistant/status',{method:'GET'});const response=await worker.fetch(req,{ASSISTANT_ENABLED:'false'});const cookie=response.headers.get('set-cookie');assert.match(cookie,/^sr_assistant_session=[a-f0-9-]{36}; Path=\/api\/assistant; Secure; HttpOnly; SameSite=Lax$/i);assert.equal(response.headers.get('cache-control'),'no-store');
+});
+
+test('assistant fails closed when no anonymous session cookie was prepared',async()=>{
+ const req=new Request(base+'/api/assistant',{method:'POST',headers:{origin:base,'content-type':'application/json'},body:JSON.stringify({question:'Wie ist mein Zug?'})});const env={ASSISTANT_ENABLED:'true',GROQ_FREE_TIER_ONLY:'true',GROQ_API_KEY:'key',AI_JOURNEY_LIMITER:limiter};const response=await worker.fetch(req,env),body=await response.json();assert.equal(response.status,503);assert.equal(body.errorCode,'session_unavailable');assert.match(body.message,/Sitzung konnte nicht vorbereitet werden/);
 });

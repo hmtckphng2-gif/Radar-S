@@ -31,6 +31,11 @@ const respond = (data, status = 200, extra = {}) => new Response(JSON.stringify(
 
 const ASSISTANT_INDEX_FILES = Object.freeze({sta:'sta-index.json',trentino:'trentino-index.json',trains:'trains-index.json'});
 const assistantNoCache = {'cache-control':'no-store','vary':'Origin','x-content-type-options':'nosniff'};
+function assistantSessionId(request){
+  const raw=request.headers.get('cookie')||'';
+  const value=raw.split(';').map(part=>part.trim()).find(part=>part.startsWith('sr_assistant_session='))?.slice('sr_assistant_session='.length)||'';
+  return /^[a-f0-9-]{36}$/i.test(value)?value:'';
+}
 function assistantProviders(env){
   const providers=[];
   if(env.GROQ_FREE_TIER_ONLY==='true'&&env.GROQ_API_KEY)providers.push('groq');
@@ -111,7 +116,8 @@ async function assistantRequest(request,env,url){
   const vehicleRouteId=typeof input.vehicleRouteId==='string'?input.vehicleRouteId.slice(0,120):'';
   const vehicleSource=typeof input.vehicleSource==='string'?input.vehicleSource.slice(0,50):'';
   if(typeof env.AI_JOURNEY_LIMITER?.limit!=='function')return fail({errorCode:'assistant_unavailable',message:'Der Assistent ist gerade nicht verfügbar. Bitte versuche es später erneut.'},503);
-  try{const ip=String(request.headers.get('CF-Connecting-IP')||'anonymous').slice(0,100);const result=await env.AI_JOURNEY_LIMITER.limit({key:ip+':assistant'});if(result?.success!==true)return fail({errorCode:'rate_limited',message:'Du hast gerade viele Fragen gestellt. Bitte versuche es in etwa 60 Sekunden erneut.',retryAfterSeconds:60},429)}catch{return fail({errorCode:'assistant_unavailable',message:'Der Assistent ist gerade nicht verfügbar. Bitte versuche es später erneut.'},503)}
+  const sessionId=assistantSessionId(request);if(!sessionId)return fail({errorCode:'session_unavailable',message:'Die Sitzung konnte nicht vorbereitet werden. Bitte lade den Assistenten neu.'},503);
+  try{const result=await env.AI_JOURNEY_LIMITER.limit({key:sessionId+':assistant'});if(result?.success!==true)return fail({errorCode:'rate_limited',message:'Du hast gerade viele Fragen gestellt. Bitte versuche es in etwa 60 Sekunden erneut.',retryAfterSeconds:60},429)}catch{return fail({errorCode:'assistant_unavailable',message:'Der Assistent ist gerade nicht verfügbar. Bitte versuche es später erneut.'},503)}
   const today=romeServiceDay(Date.now());
   const sources=['sta','sta_direct','trentino','trains'];
   const updateSources=['sta_updates','sta_direct_updates','trentino_updates','trains_updates'];
@@ -181,7 +187,7 @@ export default {
     }
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
     if(url.pathname==='/api/version'&&request.method==='GET')return respond({version:'9.9.5',release:'Radar 9.9.5',collectorScheduled:false,historyCollectorRequiresOptIn:true},200,{'cache-control':'no-store'});
-    if(url.pathname==='/api/assistant/status'&&request.method==='GET'){const limiterConfigured=typeof env.AI_JOURNEY_LIMITER?.limit==='function';const providers=env.ASSISTANT_ENABLED==='true'&&limiterConfigured?await healthyAssistantProviders(env):[];const enabled=env.ASSISTANT_ENABLED==='true'&&limiterConfigured&&providers.length>0;return respond({enabled,status:enabled?'ready':'unavailable',limiterConfigured,providers,configuredProviders:assistantProviders(env),mode:'free-only',checkedAt:new Date().toISOString(),message:enabled?'Der Assistent ist bereit.':'Der Assistent ist gerade nicht verfügbar.'},200,assistantNoCache)}
+    if(url.pathname==='/api/assistant/status'&&request.method==='GET'){const limiterConfigured=typeof env.AI_JOURNEY_LIMITER?.limit==='function';const providers=env.ASSISTANT_ENABLED==='true'&&limiterConfigured?await healthyAssistantProviders(env):[];const enabled=env.ASSISTANT_ENABLED==='true'&&limiterConfigured&&providers.length>0;const headers={...assistantNoCache};if(!assistantSessionId(request))headers['set-cookie']='sr_assistant_session='+crypto.randomUUID()+'; Path=/api/assistant; Secure; HttpOnly; SameSite=Lax';return respond({enabled,status:enabled?'ready':'unavailable',limiterConfigured,providers,configuredProviders:assistantProviders(env),mode:'free-only',checkedAt:new Date().toISOString(),message:enabled?'Der Assistent ist bereit.':'Der Assistent ist gerade nicht verfügbar.'},200,headers)}
     if(url.pathname==='/api/assistant'&&request.method==='POST')return assistantRequest(request,env,url);
 
     if((url.pathname==='/api/ai/journey'||url.pathname==='/api/ai/journey-chat')&&request.method==='POST'){
