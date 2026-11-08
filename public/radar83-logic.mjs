@@ -3,8 +3,9 @@ import {formatStationName,sourceLabel} from './radar92-details.mjs?v=9.9.5&rev=d
 export const MAPLIBRE_VERSION='4.7.1';
 export const VECTOR_STYLE='https://tiles.openfreemap.org/styles/dark';
 export const TERRAIN_TILES='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
-// Cinematic 3D is opt-in on mobile; preview testing uses ?radar3d=on.
-export const FEATURE_FLAGS=Object.freeze({cinematic3D:false});
+// Cinematic 3D is enabled by default on every device.
+// ?radar3d=off is retained only as an emergency debugging opt-out.
+export const FEATURE_FLAGS=Object.freeze({cinematic3D:true});
 
 // Display the selected feed identity, never the generic reference-model name.
 function usableVehicleText(value){
