@@ -25,6 +25,12 @@ test('assistant uses fresh live facts, falls back from Groq quota to Cloudflare,
  try{const response=await worker.fetch(request(),env),body=await response.json();assert.equal(response.status,200);assert.equal(body.provider,'cloudflare');assert.equal(mocks.groqCalls(),1);assert.equal(cloudflareCalls,1);assert.equal(body.evidenceFacts.length,1)}finally{mocks.restore()}
 });
 
+test('assistant falls back to directly verified live facts when model citations fail validation',async()=>{
+ const mocks=mockFetch();const oldFetch=globalThis.fetch;globalThis.fetch=async url=>{if(String(url).includes('api.groq.com'))return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify({summary:'Zug 16685 hat +99 Minuten.',evidence:['invented-id'],reasons:[],options:[]})}}]}),{status:200,headers:{'content-type':'application/json'}});return oldFetch(url)};
+ const env={ASSISTANT_ENABLED:'true',GROQ_FREE_TIER_ONLY:'true',GROQ_API_KEY:'test-key',AI_JOURNEY_LIMITER:limiter,ASSETS:mockAssets()};
+ try{const response=await worker.fetch(request(),env),body=await response.json();assert.equal(response.status,200);assert.equal(body.mode,'verified-fallback');assert.equal(body.provider,null);assert.match(body.summary,/direkt durch aktuelle Live-Daten belegt/);assert.ok(body.evidenceFacts.length>0);assert.ok(body.reasons.every(reason=>reason.evidence.every(id=>body.evidenceFacts.some(fact=>fact.id===id))));assert.equal(JSON.stringify(body).includes('99 Minuten'),false)}finally{globalThis.fetch=oldFetch;mocks.restore()}
+});
+
 test('assistant does not call a model when no current GTFS evidence exists',async()=>{
  const mocks=mockFetch();let calls=0;const env={ASSISTANT_ENABLED:'true',GROQ_FREE_TIER_ONLY:'true',GROQ_API_KEY:'key',AI_JOURNEY_LIMITER:limiter,ASSETS:{fetch:async()=>new Response(JSON.stringify({meta:{ready:true,days:['2026-11-07']},routes:{},trips:{}}))},AI:{run:async()=>{calls++;throw Error('must not call')}}};
  try{const response=await worker.fetch(request(),env),body=await response.json();assert.equal(response.status,200);assert.equal(body.provider,null);assert.equal(calls,0);assert.equal(body.evidenceFacts.length,0)}finally{mocks.restore()}
