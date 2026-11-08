@@ -47,7 +47,7 @@ test('replay works before the model is ready', () => {
   const src = read('radar83-map.mjs');
   // The old guard "if(!this.ready||...)return;" meant the flight could not
   // start while the scene was still building.
-  assert.match(src, /replay\(\)\{\s*if\(!this\.map\|\|!this\.flight\)return;/);
+  assert.match(src, /replay\(\)\{\s*\n\s*if\(!this\.map\|\|!this\.flight\)return;/);
 });
 
 test('the camera flight is long and smooth without becoming excessive', () => {
