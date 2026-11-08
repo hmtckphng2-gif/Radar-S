@@ -1,22 +1,23 @@
-/* Radar 10.0.2 — compact headers and cleaner live data surfaces. */
-.topbar,.toprow,.brand-badge,.brand-title,.brand-sub,.status,.iconbtn,.controls{transition:padding .2s ease,height .2s ease,min-height .2s ease,font-size .2s ease,opacity .16s ease,margin .2s ease,gap .2s ease!important}
-body.sr94-scrolled .topbar{padding-top:calc(5px + env(safe-area-inset-top))!important;padding-bottom:5px!important}
-body.sr94-scrolled .toprow{gap:5px!important}
-body.sr94-scrolled .brand-badge{width:28px!important;height:28px!important;border-radius:9px!important}
-body.sr94-scrolled .brand-badge svg{width:20px!important;height:20px!important}
-body.sr94-scrolled .brand-title{font-size:13px!important}
-body.sr94-scrolled .brand-sub{display:none!important}
-body.sr94-scrolled .toprow>.status,body.sr94-scrolled .toprow>.iconbtn{min-height:28px!important;height:28px!important;padding:4px 6px!important;font-size:9px!important}
-body.sr94-scrolled .controls{margin-top:5px!important;gap:4px!important}
-body.sr94-scrolled .controls .chip{min-height:29px!important;padding:5px 8px!important;font-size:10px!important}
-body.sr94-scrolled .controls .search-wrap{height:29px!important}
-#sheet.sr94-sheet-scrolled .sheet-heading{gap:7px!important;align-items:center!important}
-#sheet.sr94-sheet-scrolled .eyebrow{font-size:8px!important}
-#sheet.sr94-sheet-scrolled .sheet-title{font-size:17px!important;line-height:1.08!important;margin:1px 0!important}
-#sheet.sr94-sheet-scrolled .sheet-subtitle{font-size:10px!important;line-height:1.2!important}
-#sheet.sr94-sheet-scrolled .sheet-heading .close{width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important}
+/* Radar 10.0.3 — tiny vehicle header with smooth, non-jarring collapse. */
+#sheet .sheet-heading{overflow:hidden;max-height:96px;transform:translateZ(0);transition:max-height .48s cubic-bezier(.22,.75,.2,1),margin .48s cubic-bezier(.22,.75,.2,1),padding .48s cubic-bezier(.22,.75,.2,1)!important}
+#sheet.sr94-sheet-scrolled .sheet-heading{max-height:30px;margin:0 0 2px!important}
+#sheet .handle{transition:opacity .4s ease,transform .48s cubic-bezier(.22,.75,.2,1),margin .48s ease!important}
+#sheet.sr94-sheet-scrolled .handle{opacity:.16;transform:scaleX(.42);margin:0 auto 3px!important}
+#sheet .sheet-heading-main{min-width:0;transition:transform .48s cubic-bezier(.22,.75,.2,1),opacity .35s ease}
+#sheet.sr94-sheet-scrolled .eyebrow,#sheet.sr94-sheet-scrolled .sheet-subtitle{opacity:0;max-height:0;margin:0!important;overflow:hidden;transform:translateY(-5px);transition:opacity .24s ease,max-height .38s ease,transform .38s ease,margin .38s ease!important}
+#sheet.sr94-sheet-scrolled .sheet-title{font-size:12px!important;line-height:1.05!important;letter-spacing:-.15px!important;margin:0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:font-size .48s cubic-bezier(.22,.75,.2,1),line-height .48s ease,margin .48s ease!important}
+#sheet.sr94-sheet-scrolled .sheet-heading .close{width:26px!important;height:26px!important;min-width:26px!important;min-height:26px!important;flex:0 0 26px;transition:width .48s ease,height .48s ease,transform .48s ease!important}
+#sheet .badge-row,#sheet .model-card,#sheet .details,#sheet #scheduleSection{transition:opacity .36s ease,transform .48s cubic-bezier(.22,.75,.2,1),max-height .48s ease,margin .48s ease!important;transform-origin:top center}
+#sheet.sr94-sheet-scrolled .badge-row{opacity:0;max-height:0;overflow:hidden;margin:0!important;transform:translateY(-8px);pointer-events:none}
+#sheet .badge-row .fav-badge,#sheet .badge-row .line-fav-badge{display:none!important}
 #sheetNote[hidden],#emptySchedule[hidden]{display:none!important}
-#sheetNote:not([hidden]){padding:7px 9px!important;margin:7px 0!important;font-size:10px!important;line-height:1.3!important;background:transparent!important;border:0!important;border-left:2px solid #667789!important;border-radius:0!important}
-#stationSheet .sheet-subtitle{display:none!important}
-@media(max-width:749px){body.sr94-scrolled .topbar{box-shadow:0 3px 14px #0005!important}}
-@media(prefers-reduced-motion:reduce){.topbar,.toprow,.brand-badge,.brand-title,.brand-sub,.status,.iconbtn,.controls{transition:none!important}}
+#sheetNote{display:none!important}
+#sheet .details{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:8px 0!important}
+#sheet .detail{padding:9px 10px;border-radius:10px}
+#sheet .detail small{font-size:9px}
+#sheet .detail strong{font-size:12px}
+#map .sr83-toolbar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;left:auto;z-index:30;pointer-events:none}
+#map .sr83-exit{pointer-events:auto;width:36px;height:36px;min-height:36px;flex-basis:36px;border-radius:50%;background:#101923d9;border:1px solid #526274aa;box-shadow:0 4px 14px #0006;font-size:24px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:background .2s ease,transform .2s ease,opacity .2s ease}
+#map .sr83-exit:active{transform:scale(.94)}
+#map .sr83-label,#map .sr83-credit,#map .sr83-vehicle-meta,#map .sr83-info-card,#map .sr83-sources,#map .sr83-replay{display:none!important}
+@media(prefers-reduced-motion:reduce){#sheet .sheet-heading,#sheet .handle,#sheet .sheet-heading-main,#sheet .sheet-title,#sheet .sheet-heading .close,#sheet .badge-row,#sheet .model-card,#sheet .details,#map .sr83-exit{transition:none!important}}

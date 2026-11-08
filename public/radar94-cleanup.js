@@ -1,11 +1,10 @@
-/* Radar 10.0.2 — compact the visible app header after real vertical scrolling. */
+/* Radar 10.0.3 — compact state follows only the vehicle sheet scroll. */
 (()=>{'use strict';
  const update=()=>{
-  const scrollers=[...document.querySelectorAll('.sheet-scroll,.sr70-home,.sr70-more,.lines-body,.station-results')];
-  const active=scrollers.some(el=>el.scrollTop>28);
-  document.body.classList.toggle('sr94-scrolled',active);
   const sheet=document.getElementById('sheet');
-  if(sheet){const content=sheet.querySelector('.sheet-scroll');sheet.classList.toggle('sr94-sheet-scrolled',!!content&&content.scrollTop>24);}
+  if(sheet){const content=sheet.querySelector('.sheet-scroll');sheet.classList.toggle('sr94-sheet-scrolled',!!content&&content.scrollTop>18);}
+  const pageScrolled=[...document.querySelectorAll('.sr70-home,.sr70-more,.lines-body,.station-results')].some(el=>el.scrollTop>28);
+  document.body.classList.toggle('sr94-scrolled',pageScrolled);
  };
  document.addEventListener('scroll',update,true);
  document.addEventListener('DOMContentLoaded',update,{once:true});

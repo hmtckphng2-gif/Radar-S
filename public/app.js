@@ -905,11 +905,7 @@ function drawVehicleDetails(key,fetchSchedule){
   // Zwei getrennte Werte: die gemeldete Verspaetung und die Abweichung vom Fahrplan.
   // Die eine ist eine Zeitangabe, die andere eine Ortsangabe.
   const schedule=trainScheduledPosition(v,state.indexes,state.details,state.shapes);
-  detail('Abstand zum Fahrplanpunkt',schedule?'Rund '+schedule.differenceKm.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+' km '+schedule.relative:'Unbekannt');
-  detail('Positionsalter',formatRelativeAge(feedAgeSeconds(v)));
   detail('Geschwindigkeit',v.speed===null?'Unbekannt':v.speed+' km/h (gemeldet)');
-  detail('Datenquelle',sourceLabel(v.source)+' · Echtzeitdaten');
-  detail('Unterschied der Angaben','Die gemeldete Verspätung stammt aus der Echtzeitmeldung. Der Kilometerabstand vergleicht die Feedposition mit dem Fahrplanpunkt und ist keine Minutenverspätung.');
   const quality=observationQuality(v,Date.now());
   detail('Datenstand',quality.status==='aktuell'?'Aktuell':quality.status==='verzögert'?'Verzögert':'Unbekannt',quality.status==='aktuell'?'delay-ok':quality.status==='verzögert'?'delay-warn':'delay-severe');
    technicalDetails({tripId:v.tripId,vehicleId:v.vehicleId});
@@ -939,12 +935,7 @@ function drawVehicleDetails(key,fetchSchedule){
     sec.append(list);
     $('details').append(sec);
   }
-  const notes=[];
-  if(v.stale)notes.push('Letzte bekannte Position');
-  else if(v.source==='trenitalia'||v.source==='trentino')notes.push('Position geschätzt · kein GPS');
-  if(v.kind==='bus'&&!v.lineVerified)notes.push('Linie nicht bestätigt');
-  if(v.kind==='train'&&!v.nameVerified)notes.push('Zugnummer nicht bestätigt');
-  $('sheetNote').textContent=notes.join(' · ');$('sheetNote').hidden=!notes.length;
+   $('sheetNote').textContent='';$('sheetNote').hidden=true;
   if(fetchSchedule)loadSchedule(key);
   else if(state.details[v.source])renderStops(v,state.details[v.source]);
 }
