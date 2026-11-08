@@ -43,13 +43,16 @@ function assistantProviders(env){
   return providers;
 }
 
+let assistantHealthCache={key:'',expiresAt:0,providers:[]};
 async function healthyAssistantProviders(env){
+  const configured=assistantProviders(env),key=configured.join('|');
+  if(Date.now()<assistantHealthCache.expiresAt&&assistantHealthCache.key===key)return [...assistantHealthCache.providers];
   const healthy=[];
-  for(const provider of assistantProviders(env)){
+  for(const provider of configured){
     try{
       if(provider==='groq'){
-        const response=await fetch('https://api.groq.com/openai/v1/models',{headers:{authorization:'Bearer '+env.GROQ_API_KEY,accept:'application/json'},signal:AbortSignal.timeout(4500)});
-        if(response.ok){const catalog=await response.json();if(Array.isArray(catalog?.data)&&catalog.data.some(model=>model?.id==='openai/gpt-oss-20b'))healthy.push(provider);}
+        const response=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{authorization:'Bearer '+env.GROQ_API_KEY,'content-type':'application/json'},body:JSON.stringify({model:'openai/gpt-oss-20b',messages:[{role:'user',content:'Antworte nur mit OK.'}],temperature:0,max_tokens:1}),signal:AbortSignal.timeout(4500)});
+        if(response.ok){const probe=await response.json();if(Array.isArray(probe?.choices)&&probe.choices.length)healthy.push(provider);}
       }else if(provider==='cloudflare'&&typeof env.AI?.run==='function'){
         await env.AI.run('@cf/google/gemma-4-26b-a4b-it',{messages:[{role:'user',content:'OK'}],temperature:0,max_completion_tokens:1,chat_template_kwargs:{enable_thinking:false}},{rejectIfBusy:true});
         healthy.push(provider);
@@ -57,8 +60,10 @@ async function healthyAssistantProviders(env){
     }catch{}
     if(healthy.length)break;
   }
+  assistantHealthCache={key,expiresAt:Date.now()+15000,providers:[...healthy]};
   return healthy;
 }
+
 async function assistantJson(url,source){
   const headers=source==='sta_direct'||source==='sta_direct_updates'||source==='sta_alerts'?{accept:'application/json'}:{accept:'application/json','X-BusOne-Client':'Suedtirol Radar read-only assistant','X-BusOne-Use':'personal'};
   const response=await fetch(url,{headers,signal:AbortSignal.timeout(7000),cf:{cacheEverything:true,cacheTtl:5}});
