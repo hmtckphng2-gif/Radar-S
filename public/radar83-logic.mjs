@@ -69,7 +69,7 @@ export function start3DCamera(point, heading=null, finalZoom=17){
  return {
   center:[lng-Math.sin(direction)*lngOffset,lat-Math.cos(direction)*latOffset],
   zoom:Math.max(12,Math.min(16,Number(finalZoom)-3.2)),
-  pitch:46,
+  pitch:24,
   bearing:(finalBearing+205)%360
  };
 }
