@@ -1,12 +1,13 @@
-/* Radar 10.0.3 — tiny vehicle header with smooth, non-jarring collapse. */
-#sheet .sheet-heading{overflow:hidden;max-height:96px;transform:translateZ(0);transition:max-height .48s cubic-bezier(.22,.75,.2,1),margin .48s cubic-bezier(.22,.75,.2,1),padding .48s cubic-bezier(.22,.75,.2,1)!important}
-#sheet.sr94-sheet-scrolled .sheet-heading{max-height:30px;margin:0 0 2px!important}
-#sheet .handle{transition:opacity .4s ease,transform .48s cubic-bezier(.22,.75,.2,1),margin .48s ease!important}
-#sheet.sr94-sheet-scrolled .handle{opacity:.16;transform:scaleX(.42);margin:0 auto 3px!important}
-#sheet .sheet-heading-main{min-width:0;transition:transform .48s cubic-bezier(.22,.75,.2,1),opacity .35s ease}
-#sheet.sr94-sheet-scrolled .eyebrow,#sheet.sr94-sheet-scrolled .sheet-subtitle{opacity:0;max-height:0;margin:0!important;overflow:hidden;transform:translateY(-5px);transition:opacity .24s ease,max-height .38s ease,transform .38s ease,margin .38s ease!important}
-#sheet.sr94-sheet-scrolled .sheet-title{font-size:12px!important;line-height:1.05!important;letter-spacing:-.15px!important;margin:0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:font-size .48s cubic-bezier(.22,.75,.2,1),line-height .48s ease,margin .48s ease!important}
-#sheet.sr94-sheet-scrolled .sheet-heading .close{width:26px!important;height:26px!important;min-width:26px!important;min-height:26px!important;flex:0 0 26px;transition:width .48s ease,height .48s ease,transform .48s ease!important}
+/* Radar 10.0.4 — compact sheet header is reflowed, never clipped. */
+#sheet .sheet-heading{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;min-width:0;overflow:visible!important;max-height:none!important;transform:translateZ(0);transition:min-height .42s cubic-bezier(.22,.75,.2,1),height .42s cubic-bezier(.22,.75,.2,1),padding .42s cubic-bezier(.22,.75,.2,1),margin .42s cubic-bezier(.22,.75,.2,1)!important}
+#sheet .sheet-heading-main{flex:1 1 auto;min-width:0;transition:transform .42s cubic-bezier(.22,.75,.2,1),opacity .25s ease}
+#sheet .handle{transition:opacity .3s ease,height .42s ease,margin .42s ease!important}
+#sheet.sr94-sheet-scrolled .handle{height:0!important;min-height:0!important;opacity:0;margin:0 auto!important;overflow:hidden}
+#sheet.sr94-sheet-scrolled .sheet-heading{height:56px!important;min-height:56px!important;max-height:none!important;flex:0 0 56px!important;padding:6px 14px!important;margin:0!important;overflow:visible!important}
+#sheet.sr94-sheet-scrolled .sheet-heading-main{display:flex;flex-direction:column;justify-content:center;min-height:0;transform:none;opacity:1}
+#sheet.sr94-sheet-scrolled .eyebrow,#sheet.sr94-sheet-scrolled .sheet-subtitle{max-height:0!important;opacity:0!important;margin:0!important;padding:0!important;overflow:hidden!important;transform:translateY(-4px);transition:opacity .18s ease,max-height .32s ease,transform .32s ease,margin .32s ease!important}
+#sheet.sr94-sheet-scrolled .sheet-title{display:block!important;font-size:14px!important;line-height:1.2!important;letter-spacing:-.1px!important;margin:0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:font-size .42s ease,line-height .42s ease!important}
+#sheet.sr94-sheet-scrolled .sheet-heading .close{display:grid!important;place-items:center!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;flex:0 0 40px!important;transition:width .42s ease,height .42s ease,transform .2s ease!important}
 #sheet .badge-row,#sheet .model-card,#sheet .details,#sheet #scheduleSection{transition:opacity .36s ease,transform .48s cubic-bezier(.22,.75,.2,1),max-height .48s ease,margin .48s ease!important;transform-origin:top center}
 #sheet.sr94-sheet-scrolled .badge-row{opacity:0;max-height:0;overflow:hidden;margin:0!important;transform:translateY(-8px);pointer-events:none}
 #sheet .badge-row .fav-badge,#sheet .badge-row .line-fav-badge{display:none!important}
@@ -16,10 +17,11 @@
 #sheet .detail{padding:9px 10px;border-radius:10px}
 #sheet .detail small{font-size:9px}
 #sheet .detail strong{font-size:12px}
-#map .sr83-toolbar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;left:auto;z-index:30;pointer-events:none}
-#map .sr83-exit{pointer-events:auto;width:36px;height:36px;min-height:36px;flex-basis:36px;border-radius:50%;background:#101923d9;border:1px solid #526274aa;box-shadow:0 4px 14px #0006;font-size:24px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:background .2s ease,transform .2s ease,opacity .2s ease}
+#map .sr83-toolbar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;left:auto;z-index:2147483000;pointer-events:none}
+#map .sr83-exit{pointer-events:auto!important;touch-action:manipulation!important;position:relative;z-index:2147483001;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;flex:0 0 44px!important;border-radius:50%;background:#101923ed;border:1px solid #71869aaa;box-shadow:0 4px 14px #0008;font-size:26px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer}
 #map .sr83-exit:active{transform:scale(.94)}
-#map .sr83-label,#map .sr83-credit,#map .sr83-vehicle-meta,#map .sr83-info-card,#map .sr83-sources,#map .sr83-replay{display:none!important}
+#map .sr83-viewport.sr83-ready .sr83-toolbar{pointer-events:none}
+#map .sr83-viewport.sr83-ready .sr83-exit{pointer-events:auto!important}
 @media(prefers-reduced-motion:reduce){#sheet .sheet-heading,#sheet .handle,#sheet .sheet-heading-main,#sheet .sheet-title,#sheet .sheet-heading .close,#sheet .badge-row,#sheet .model-card,#sheet .details,#map .sr83-exit{transition:none!important}}
 
 /* 10.0.3 final: the 3D viewport is visual-only; keep just its close control. */

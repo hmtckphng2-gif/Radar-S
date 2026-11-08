@@ -1,4 +1,4 @@
-/* Radar 10.0.3 — compact state follows only the vehicle sheet scroll. */
+/* Radar 10.0.4 — compact state follows only the vehicle sheet scroll. */
 (()=>{'use strict';
  const update=()=>{
   const sheet=document.getElementById('sheet');
