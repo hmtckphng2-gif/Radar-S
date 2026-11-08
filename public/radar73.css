@@ -65,4 +65,4 @@ body:has(#sheet.open) #sr60Launch,body:has(#stationSheet.open) #sr60Launch{displ
 /* Delay outline follows each vehicle icon silhouette, not a generic box. */
 .marker-wrap .marker-circle{position:relative}
 .marker-wrap .marker-circle::after{display:none!important}
-.marker-wrap .marker-delay-outline{position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);overflow:visible;pointer-events:none;z-index:2}
+.marker-wrap .marker-delay-outline{position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);overflow:visible;pointer-events:none;z-index:2;filter:drop-shadow(0 0 1.5px var(--marker-delay-ring,#8b96a5)) drop-shadow(0 0 4px var(--marker-delay-ring,#8b96a5))}
