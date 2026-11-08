@@ -21,3 +21,7 @@
 #map .sr83-exit:active{transform:scale(.94)}
 #map .sr83-label,#map .sr83-credit,#map .sr83-vehicle-meta,#map .sr83-info-card,#map .sr83-sources,#map .sr83-replay{display:none!important}
 @media(prefers-reduced-motion:reduce){#sheet .sheet-heading,#sheet .handle,#sheet .sheet-heading-main,#sheet .sheet-title,#sheet .sheet-heading .close,#sheet .badge-row,#sheet .model-card,#sheet .details,#map .sr83-exit{transition:none!important}}
+
+/* 10.0.3 final: the 3D viewport is visual-only; keep just its close control. */
+#map .sr83-label,#map .sr83-credit,#map .sr83-vehicle-meta,#map .sr83-info-card,#map .sr83-sources,#map .sr83-replay{display:none!important}
+#sheet .badge-row .fav-badge,#sheet .badge-row .line-fav-badge{display:none!important}
