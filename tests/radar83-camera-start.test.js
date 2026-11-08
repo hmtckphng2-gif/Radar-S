@@ -70,14 +70,14 @@ test('the flight still ends on the vehicle', () => {
   assert.deepEqual(end.center, [p.lng, p.lat]);
   assert.equal(end.zoom, 19);
   assert.equal(end.pitch, 48);
-  assert.equal(end.bearing, 98);
+  assert.equal(end.bearing, 128);
   assert.ok(start.zoom < end.zoom);
-  assert.equal(start.pitch, 68);
+  assert.equal(start.pitch, 64);
   assert.ok(start.pitch > end.pitch, 'the camera descends to a steeper view');
-  assert.equal(start.bearing, 202);
-  assert.equal((start.bearing - end.bearing + 360) % 360, 104, 'the camera makes a controlled 104-degree turn');
-  assert.notEqual(start.bearing, end.bearing, 'the camera rotates during the approach');
-  assert.ok(start.zoom > 15, 'the approach starts closer than the wide establishing shot');
+  assert.equal(start.bearing, 90);
+  assert.equal((end.bearing - start.bearing + 360) % 360, 38, 'the camera settles into a subtle rear-quarter angle');
+  assert.notEqual(start.bearing, end.bearing, 'the camera settles into the rear-quarter composition');
+  assert.equal(start.zoom, 15, 'the approach starts wide before descending toward the vehicle');
 });
 
 test('the 3D camera respects prefers-reduced-motion', () => {
@@ -96,8 +96,8 @@ test('cinematic 3D stays enabled by default and all camera modules bypass stale 
   const html=read('index.html');
   const camera=read('radar71-camera.mjs');
   const map=read('radar83-map.mjs');
-  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=cinematic-zoom-restore-1'));
-  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=cinematic-zoom-restore-1'));
-  assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=cinematic-zoom-restore-1'));
-  assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=cinematic-zoom-restore-1'));
+  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=clean-downward-zoom-2'));
+  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=clean-downward-zoom-2'));
+  assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=clean-downward-zoom-2'));
+  assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=clean-downward-zoom-2'));
 });
