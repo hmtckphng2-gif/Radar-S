@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {start3DCamera,target3DCamera,use3DTerrain,cinematicDuration,prefersReducedMotion} from '../public/radar83-logic.mjs';
+import {start3DCamera,target3DCamera,use3DTerrain,cinematicDuration,prefersReducedMotion,FEATURE_FLAGS,enabled3D} from '../public/radar83-logic.mjs';
 
 /* Radar 8.5 - the 3D camera must move on the tap, not after a wait.
  *
@@ -87,4 +87,17 @@ test('the 3D camera respects prefers-reduced-motion', () => {
   assert.match(src, /if\(prefersReducedMotion\(\)\)/);
   // Die Funktion selbst darf nie werfen.
   assert.equal(typeof prefersReducedMotion(), 'boolean');
+});
+
+test('cinematic 3D stays enabled by default and all camera modules bypass stale SW assets',()=>{
+  assert.equal(FEATURE_FLAGS.cinematic3D,true);
+  assert.equal(enabled3D(''),true);
+  assert.equal(enabled3D('?radar3d=off'),false);
+  const html=read('index.html');
+  const camera=read('radar71-camera.mjs');
+  const map=read('radar83-map.mjs');
+  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=cinematic-zoom-restore-1'));
+  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=cinematic-zoom-restore-1'));
+  assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=cinematic-zoom-restore-1'));
+  assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=cinematic-zoom-restore-1'));
 });
