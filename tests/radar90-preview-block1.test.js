@@ -41,6 +41,6 @@ test('changed 3D assets use fresh cache keys while release version remains uncha
  const html=read('index.html'),map=read('radar83-map.mjs'),camera=read('radar71-camera.mjs');
  assert.ok(html.includes('radar90-preview-block1.css?v=9.9.5&rev=block1-fixes-2'));
  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=tap-origin-continuous-4'));
- assert.ok(map.includes('rev=cinematic-zoom-restore-1')&&camera.includes('rev=cinematic-zoom-restore-1'));
+ assert.ok(map.includes('rev=tap-origin-continuous-4')&&camera.includes('rev=tap-origin-continuous-4'));
  assert.ok(map.includes('rev=credits-2'));
 });
