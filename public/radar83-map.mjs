@@ -223,10 +223,7 @@ export class Radar83Cinematic {
   replay.type='button';replay.textContent='↻ Flug';
   replay.setAttribute('aria-label','3D-Kameraflug wiederholen');
   replay.addEventListener('click',e=>{e.stopPropagation();this.replay()});
-  const back=document.createElement('button');back.className='sr83-back';back.type='button';back.textContent='↩ 2D';
-  back.setAttribute('aria-label','Zur normalen 2D-Karte zurückkehren');
-  back.addEventListener('click',e=>{e.stopPropagation();this.close();this.onExit()});
-  toolbar.append(focus,free,replay,back);overlay.append(toolbar);
+  toolbar.append(focus,free,replay);overlay.append(toolbar);
   const loading=document.createElement('div');loading.className='sr83-loading-state';loading.setAttribute('role','status');loading.innerHTML='<span class="sr83-spinner" aria-hidden="true"></span><span>3D wird geladen …</span>';overlay.append(loading);this.loading=loading;
   const infoCard=document.createElement('section');infoCard.className='sr83-info-card';
   infoCard.append(info);
