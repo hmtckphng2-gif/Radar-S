@@ -15,11 +15,11 @@ function post(path='/api/ai/journey',origin=base){
   body:JSON.stringify(payload)});
 }
 const limiter=(success=true)=>({limit:async()=>({success})});
-test('preview Worker is isolated from D1, AI and production rate-limit bindings',()=>{
+test('preview Worker enables only the existing AI and rate-limit bindings; D1 remains disabled',()=>{
  const cfg=JSON.parse(readFileSync(new URL('../wrangler.jsonc',import.meta.url),'utf8'));
  assert.equal(cfg.name,'suedtirol-radar-preview');
- assert.equal(cfg.ai,undefined);
- assert.equal(cfg.ratelimits,undefined);
+ assert.deepEqual(cfg.ai,{binding:'AI'});
+ assert.deepEqual(cfg.ratelimits,[{name:'AI_JOURNEY_LIMITER',namespace_id:'910001',simple:{limit:6,period:60}}]);
  assert.equal(cfg.d1_databases,undefined);
 });
 test('AI endpoint fails safely when Cloudflare AI binding is absent',async()=>{

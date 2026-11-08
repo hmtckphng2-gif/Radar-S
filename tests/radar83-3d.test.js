@@ -17,8 +17,8 @@ test('cinematic 3D is available by default but can be explicitly disabled',()=>{
 });
 test('cinematic approaches from behind over a longer, smooth flight',()=>{
  const start=start3DCamera({lat:46.5,lng:11.35},90,19);
- assert.equal(start.pitch,60);
- assert.equal(start.bearing,358); // exact Main intro bearing for heading 90°
+ assert.equal(start.pitch,46);
+ assert.equal(start.bearing,323); // less side-on intro angle for heading 90°
  assert.ok(start.zoom>15, 'closer starting zoom than the old distant shot');
  assert.ok(start.center[0]<11.35);
  assert.ok(cinematicDuration(0,4300)>=6600);
@@ -35,9 +35,9 @@ test('3D handoff inherits the live 2D camera without a geographic or scale jump'
 test('camera rotates the MAP and tilts terrain, no arbitrary model spin',()=>{
  const camera=target3DCamera({lat:46.498,lng:11.353},17.4,90,4500);
  assert.deepEqual(camera.center,[11.353,46.498]);
- assert.equal(camera.pitch,28);
+ assert.equal(camera.pitch,16);
  assert.equal(camera.zoom,18.2);
- assert.equal(camera.bearing,148);
+ assert.equal(camera.bearing,118);
  assert.equal(camera.duration,4500);
  assert.equal(target3DCamera({lat:92,lng:11},17,90,3000),null);
  assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,19.2);

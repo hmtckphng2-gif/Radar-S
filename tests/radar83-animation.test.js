@@ -12,6 +12,9 @@ test('cinematic camera begins wide, then moves toward real train coordinates',()
  assert.notDeepEqual(start.center,end.center);
  assert.ok(end.duration>=3200 && end.duration<=5000);
  assert.deepEqual(end.center,[p.lng,p.lat]);
+ assert.equal(end.pitch,16,'final view is more overhead so the whole vehicle is recognizable');
+ assert.equal(end.bearing,88,'camera looks toward the vehicle rather than along its broad side');
+ assert.equal(start.pitch,46,'intro is less side-on too');
 });
 test('iPhone 3D DEM terrain is opt-in to avoid black sky/tile rendering issues',()=>{
  assert.equal(use3DTerrain('?radar3d=on'),false);
