@@ -105,3 +105,8 @@ test('assistant status creates an HttpOnly anonymous limiter cookie without stor
 test('assistant fails closed when no anonymous session cookie was prepared',async()=>{
  const req=new Request(base+'/api/assistant',{method:'POST',headers:{origin:base,'content-type':'application/json'},body:JSON.stringify({question:'Wie ist mein Zug?'})});const env={ASSISTANT_ENABLED:'true',GROQ_FREE_TIER_ONLY:'true',GROQ_API_KEY:'key',AI_JOURNEY_LIMITER:limiter};const response=await worker.fetch(req,env),body=await response.json();assert.equal(response.status,503);assert.equal(body.errorCode,'session_unavailable');assert.match(body.message,/Sitzung konnte nicht vorbereitet werden/);
 });
+
+test('alternatives follow-up asks for start and destination instead of inventing a route',async()=>{
+ const mocks=mockFetch();const env={ASSISTANT_ENABLED:'true',GROQ_FREE_TIER_ONLY:'true',GROQ_API_KEY:'key',AI_JOURNEY_LIMITER:limiter};
+ try{const response=await worker.fetch(request('/api/assistant',{question:'Alternativen zeigen'}),env),body=await response.json();assert.equal(response.status,200);assert.match(body.summary,/Start und Ziel/);assert.deepEqual(body.evidenceFacts,[]);assert.equal(body.provider,null)}finally{mocks.restore()}
+});
