@@ -51,6 +51,15 @@ export function readProjectionMatrix(input){
 
 // Start the cinematic noticeably farther away, then descend toward the real
 // vehicle position. Camera position only; never change feed coordinates.
+// Transfer the current Leaflet camera to MapLibre without changing the
+// geographic center or apparent scale. Leaflet uses 256px tiles while
+// MapLibre vector styles use 512px tiles, hence the one-level zoom offset.
+export function handoff3DCamera(center,zoom){
+ const lat=Number(center?.lat),lng=Number(center?.lng??center?.lon),z=Number(zoom);
+ if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -85||lat > 85||lng < -180||lng > 180)return null;
+ return {center:[lng,lat],zoom:Math.max(3,Math.min(20.4,Number.isFinite(z)?z-1:15)),pitch:0,bearing:0};
+}
+
 export function start3DCamera(point, heading=null, finalZoom=17){
  const lat=Number(point?.lat),lng=Number(point?.lng??point?.lon);
  if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -85||lat > 85)return null;
