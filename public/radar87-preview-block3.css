@@ -3,7 +3,3 @@
 .fav-delay.unknown{color:#aab2bc!important}
 #sr50MapTab .mini-badge.sr86-position-estimated{color:#f2c477!important;border-color:rgba(242,196,119,.55)!important;background:rgba(116,77,25,.18)!important}
 #sr50MapTab .mini-badge.sr86-position-feed{color:#b9cde3!important;border-color:rgba(137,169,204,.4)!important;background:rgba(76,111,150,.14)!important}
-#map .marker-wrap.sr86-estimated .marker-circle{border:2px dashed #e8b76b!important;box-shadow:0 0 0 2px rgba(232,183,107,.2),0 2px 7px #0008!important;filter:saturate(.72)!important}
-#map .marker-wrap.sr86-estimated .marker-circle:after{content:"~";position:absolute;right:-6px;top:-7px;display:grid;place-items:center;width:13px;height:13px;border-radius:50%;background:#e8b76b;color:#17191d;font-size:10px;font-weight:900;line-height:1}
-#map .marker-wrap.sr86-feed-position .marker-circle{border-style:solid!important}
-@media(prefers-reduced-motion:reduce){#map .marker-wrap.sr86-estimated .marker-circle{transition:none!important}}

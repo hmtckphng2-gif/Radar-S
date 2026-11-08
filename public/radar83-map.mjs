@@ -377,7 +377,7 @@ export class Radar83Cinematic {
  focus(){
   if(!this.map)return;
   this.touched=false;
-  if(this.lastPoint)this.map.easeTo({center:[this.lastPoint.lng,this.lastPoint.lat],bearing:Number.isFinite(this.lastHeading)?(this.lastHeading+58)%360:this.map.getBearing(),duration:650,essential:false});
+  if(this.lastPoint)this.map.easeTo({center:[this.lastPoint.lng,this.lastPoint.lat],bearing:Number.isFinite(this.lastHeading)?(this.lastHeading+28)%360:this.map.getBearing(),duration:650,essential:false});
  }
  free(){this.touched=true;this.map?.stop()}
  replay(){
@@ -408,7 +408,7 @@ export class Radar83Cinematic {
   if(!quality.fresh||this.touched||this.flying||!this.map)return;
   const decision=followDecision({touched:this.touched,center:this.map.getCenter?.(),point:this.lastPoint});
   if(!decision)return;
-  this.map.easeTo({center:decision.center,bearing:Number.isFinite(heading)?(heading+58)%360:this.map.getBearing(),duration:900,essential:false});
+  this.map.easeTo({center:decision.center,bearing:Number.isFinite(heading)?(heading+28)%360:this.map.getBearing(),duration:900,essential:false});
  }
  close({sync=true,animate=true}={}){
   if(this.closeTimer){clearTimeout(this.closeTimer);this.closeTimer=0;}
