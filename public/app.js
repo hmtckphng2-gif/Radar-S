@@ -6,8 +6,8 @@ import {enrichTrainPlatform} from './train-platforms.js?v=9.9.5';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, delayPresentation,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
-  vehicleDelayInfo, bufferedAlong, departureDelay, isLiveUpdate, normalizeStopId
-} from './core.js?v=9.9.5&rev=delay-copy-2';
+  vehicleDelayInfo, markerDelayState, markerDelayBadge, bufferedAlong, departureDelay, isLiveUpdate, normalizeStopId
+} from './core.js?v=9.9.5&rev=delay-ring-block1-1';
 import {playbackLag} from './radar45-logic.mjs?v=9.9.5';
 import {trainReplayDuration} from './radar705-motion.mjs?v=9.9.5';
 import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.9.5';
@@ -501,8 +501,9 @@ function initMap(){
   state.layer=L.layerGroup().addTo(map);
   state.trackLayer=L.layerGroup().addTo(map);
   L.control.zoom({position:'bottomleft'}).addTo(map);
+  map.on('movestart',()=>{for(const entry of state.markers.values())entry.marker.getElement()?.querySelector('.marker-wrap')?.classList.remove('delay-pulse');});
   map.on('moveend',()=>{
-    updateViewportBadge();updateMapEmptyState();
+    updateViewportBadge();updateMapEmptyState();updateVisibleDelayPulses();
     clearTimeout(state.shapeViewportTimer);
     state.shapeViewportTimer=setTimeout(()=>loadBusShapesForVehicles().catch(console.warn),650);
   });
@@ -526,28 +527,45 @@ function visible(v){
 }
 function delayRingState(v){
   const info=currentVehicleDelay(v);
-  if(!info||!Number.isFinite(Number(info.delay)))return 'unknown';
-  const minutes=Math.round(Number(info.delay)/60);
-  if(minutes<=-1)return 'early';
-  if(minutes===0)return 'ontime';
-  if(minutes<5)return 'minor';
-  if(minutes<15)return 'delayed';
-  return 'severe';
+  return markerDelayState(info?.delay??null);
+}
+function delayBadgeText(v){
+  const info=currentVehicleDelay(v);
+  return markerDelayBadge(info?.delay??null);
+}
+function isEstimatedPosition(v){
+  return v?.estimated===true||v?.positionEstimated===true||String(v?.positionType||'').toLowerCase()==='estimated'||/estimated|estimate|simuliert|geschätzt|interpoliert|berechnet|simulated|interpolat|approx/i.test(String(v?.positionType||''));
+}
+function updateVisibleDelayPulses(){
+  if(!state.map)return;
+  const bounds=state.map.getBounds();
+  for(const [key,entry] of state.markers){
+    const v=state.vehicles.get(key),element=entry.marker.getElement();
+    const wrap=element?.querySelector('.marker-wrap');
+    if(!v||!wrap)continue;
+    const info=currentVehicleDelay(v),minutes=info&&Number.isFinite(Number(info.delay))?Math.round(Number(info.delay)/60):null;
+    const old=!!v.stale||(Number.isFinite(v.timestamp)&&v.timestamp>1e9&&Date.now()/1000-v.timestamp>300);
+    const unconfirmed=observationQuality(v).ageSeconds===null;
+    const estimated=isEstimatedPosition(v);
+    const visible=!element.classList.contains('sr43-in-cluster')&&bounds.contains(entry.marker.getLatLng());
+    wrap.classList.toggle('delay-pulse',minutes!==null&&minutes>=15&&!old&&!unconfirmed&&!estimated&&visible);
+  }
 }
 function markerIcon(v){
   const train=v.kind==='train',label=v.name.startsWith('Linie unbekannt')||v.name==='Zugnummer unbekannt'?'':v.name;
   const isOld=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
-  const isEstimated=/simuliert|geschätzt|interpoliert|berechnet/i.test(v.positionType||'');
+  const isUnconfirmed=observationQuality(v).ageSeconds===null;
+  const isEstimated=isEstimatedPosition(v);
   const isFav=isFavorite(v.key);
   const lineKey=v.routeId?(v.source+':'+v.routeId):'';
   const lineFav=lineKey&&isLineFavorite(lineKey);
   const zoom=state.map?state.map.getZoom():0;
   const showSpeed=zoom>=13 && v.speed!==null;
-  const delayState=delayRingState(v);
-  const cls='marker-wrap delay-'+delayState+' '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'')+(isEstimated?' sr86-estimated':' sr86-feed-position')+(isFav?' favorite':'')+(lineFav?' line-favorite':'');
+  const delayState=delayRingState(v),delayBadge=delayBadgeText(v);
+  const cls='marker-wrap delay-'+delayState+' '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'')+(isUnconfirmed?' sr86-unconfirmed':'')+(isEstimated?' sr86-estimated':' sr86-feed-position')+(isFav?' favorite':'')+(lineFav?' line-favorite':'');
   const speedText=showSpeed?'<div class="marker-speed">'+v.speed+' km/h</div>':'';
-  const icon=`<div class="${cls}">${speedText}<div class="marker-label">${escapeHtml(label)}</div><div class="marker-circle"><svg class="marker-delay-outline" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="${train?5:3}" y="${train?2.5:3}" width="${train?14:18}" height="${train?17:16}" rx="${train?4:3}" fill="none" stroke="var(--marker-delay-ring,#8b96a5)" stroke-width="1.35"/></svg>${train?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="17" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 19.5l-2 2m10-2 2 2"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="16" rx="3"/><path d="M3 11h18M7 15h2m6 0h2M7 19l-2 2m14-2 2 2"/></svg>'}${isFav?'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22l-5-4.87L2 9.27l6.91-1.02L12 2z"/></svg>':''}</div></div>`;
-  return L.divIcon({className:'radar-custom',html:icon,iconSize:[30,48],iconAnchor:[15,38]});
+  const icon=`<div class="${cls}">${speedText}<div class="marker-label">${escapeHtml(label)}</div><div class="marker-circle" data-delay="${delayBadge}">${train?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="17" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 19.5l-2 2m10-2 2 2"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="16" rx="3"/><path d="M3 11h18M7 15h2m6 0h2M7 19l-2 2m14-2 2 2"/></svg>'}${isFav?'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22l-5-4.87L2 9.27l6.91-1.02L12 2z"/></svg>':''}</div></div>`;
+  return L.divIcon({className:'radar-custom',html:icon,iconSize:[48,54],iconAnchor:[24,38]});
 }
 function shapeOf(v){
   const id=v.shapeId || v.routeShapeId;
@@ -729,7 +747,7 @@ function refreshMarkers(){
     const target=motionDuration(v,null)?mapTarget(v):rawTarget;
     const aged=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
     const lineKey=v.routeId?(v.source+':'+v.routeId):'';
-    const iconKey=`${v.kind}|${v.name}|${state.selectedKey===key}|${aged}|${v.positionType||''}|${lineKey}|${delayRingState(v)}`;
+    const iconKey=`${v.kind}|${v.name}|${state.selectedKey===key}|${aged}|${v.positionType||''}|${isEstimatedPosition(v)}|${observationQuality(v).ageSeconds===null}|${lineKey}|${delayRingState(v)}|${delayBadgeText(v)}`;
     let entry=state.markers.get(key);
     if(!entry){
       const marker=L.marker([target.lat,target.lon],{icon:markerIcon(v),keyboard:true,title:v.name}).addTo(state.layer);
@@ -771,6 +789,7 @@ function refreshMarkers(){
     stopJob(key);state.busTracks.delete(key);state.layer.removeLayer(entry.marker);state.markers.delete(key);
   }
   updateMapEmptyState();
+  updateVisibleDelayPulses();
 }
 function displayStats(){
   const keys=state.fusion?.keys||selectRepresentatives(state.vehicles.values(),state.selectedKey).keys;
@@ -1475,6 +1494,7 @@ function currentVehicleDelay(v){
 }
 // Limited local bridge for the optional 3.7 interface. It does not change the GTFS source.
 window.SuedtirolRadar37={state,showStations,showStationBoard,getStationList,openStationFromMap,setFilter,refreshMarkers,refreshScheduleMatches,
+  updateVisibleDelayPulses,
   verifiedRouteCount:()=>[...state.vehicles.values()].filter(v=>v.kind==='bus' && v.tripId && v.shapeId && mapTarget(v).path).length,
   routeOnlyCount:()=>[...state.vehicles.values()].filter(v=>v.kind==='bus' && !v.shapeId && v.routeShapeId && mapTarget(v).path).length,
   routeMatchFor:v=>mapTarget(v),vehicleDelay:currentVehicleDelay,qualityFor:v=>observationQuality(v),fusionInfo:()=>state.fusion,diagnostics:()=>state.diagnostics||feedDiagnostics(state.vehicles.values(),state.statuses)};
