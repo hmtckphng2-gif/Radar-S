@@ -204,7 +204,7 @@ export class Radar83Cinematic {
   const toolbar=document.createElement('div');toolbar.className='sr83-toolbar';
   const info=document.createElement('span');info.className='sr83-label';info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
   const exit=document.createElement('button');exit.className='sr83-exit';exit.type='button';exit.textContent='×';exit.setAttribute('aria-label','3D-Ansicht schließen und zur 2D-Karte zurückkehren');exit.title='3D schließen';
-  exit.style.pointerEvents='auto';exit.style.touchAction='manipulation';exit.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const controller=window.SuedtirolRadar71;if(controller?.close3D){controller.close3D();return}window.SuedtirolRadar71?.cancel?.();this.close({sync:true});this.onExit?.()});
+  exit.style.pointerEvents='auto';exit.style.touchAction='manipulation';exit.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const controller=window.SuedtirolRadar71;const closed=controller?.close3D?.();if(closed)return;this.close({sync:true});this.onExit?.()},{passive:false});
   const replay=document.createElement('button');replay.className='sr83-replay';
   replay.type='button';replay.textContent='â» Flug';
   replay.setAttribute('aria-label','3D-Kameraflug wiederholen');
@@ -367,21 +367,23 @@ export class Radar83Cinematic {
   this.map.easeTo({center:decision.center,duration:900,essential:false});
  }
  close({sync=true}={}){
-  const oldMap=this.map;
+  const oldMap=this.map,overlay=this.overlay;
+  let returnView=null;
   if(sync&&oldMap&&this.ready){
-   try{
-    const center=oldMap.getCenter(),zoom=oldMap.getZoom();
-    this.leaflet.setView([center.lat,center.lng],Math.min(18,Math.max(3,zoom)),{animate:false});
-   }catch{}
+   try{const center=oldMap.getCenter(),zoom=oldMap.getZoom();returnView={center:[center.lat,center.lng],zoom:Math.min(18,Math.max(3,zoom))};}catch{}
   }
   this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);
+  if(returnView)try{this.leaflet.setView(returnView.center,returnView.zoom,{animate:true,duration:560,easeLinearity:.24,noMoveStart:true});}catch{}
   if(oldMap)try{oldMap.stop();oldMap.remove()}catch(error){console.info('3D map cleanup',error)}
-  this.overlay?.remove();this.overlay=null;this.surface=null;
+  if(overlay){
+   overlay.classList.add('sr83-closing');overlay.style.pointerEvents='none';
+   const finish=()=>{if(overlay.parentNode)overlay.remove();if(this.overlay===overlay){this.overlay=null;this.surface=null;}document.body.classList.remove('sr83-returning');};
+   overlay.addEventListener('transitionend',e=>{if(e.target===overlay&&e.propertyName==='opacity')finish();},{once:true});
+   clearTimeout(this.closeTimer);this.closeTimer=setTimeout(finish,560);
+  }else{this.overlay=null;this.surface=null;}
   document.querySelectorAll('#sheet .sr83-info-card,#sheet .sr83-sources').forEach(node=>node.remove());
-  document.body.classList.remove('sr83-cinematic');
-   if(this.contextCanvas&&this.contextLostHandler){
-    try{this.contextCanvas.removeEventListener('webglcontextlost',this.contextLostHandler)}catch{}
-   }
-   this.contextCanvas=null;this.contextLostHandler=null;this.contextLostCancel=null;
+  document.body.classList.remove('sr83-cinematic');document.body.classList.add('sr83-returning');
+  if(this.contextCanvas&&this.contextLostHandler){try{this.contextCanvas.removeEventListener('webglcontextlost',this.contextLostHandler)}catch{}}
+  this.contextCanvas=null;this.contextLostHandler=null;this.contextLostCancel=null;
  }
 }

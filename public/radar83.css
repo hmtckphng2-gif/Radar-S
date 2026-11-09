@@ -86,3 +86,11 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
 #map .sr83-exit{pointer-events:auto;touch-action:manipulation;appearance:none;display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;border:1px solid #60758a;border-radius:12px;background:#172638f5;color:#f3f7fc;font:500 30px/1 system-ui,sans-serif;box-shadow:0 5px 18px #0009;cursor:pointer;position:relative;z-index:20}
 #map .sr83-exit:active{background:#29445f;transform:scale(.96)}
 #map .sr83-toolbar{z-index:30}
+
+/* Radar 10.0.5 — clean cinematic handoff back to the live 2D map. */
+#map .sr83-viewport{will-change:opacity,transform;transform:translateZ(0);}
+#map .sr83-viewport.sr83-closing{opacity:0!important;transform:scale(1.012)!important;filter:blur(2px);transition:opacity .46s cubic-bezier(.22,.72,.18,1),transform .56s cubic-bezier(.22,.72,.18,1),filter .46s ease!important;pointer-events:none!important;}
+body.sr83-returning #map .leaflet-pane,body.sr83-returning #map .leaflet-control-container{transition:filter .52s ease,opacity .42s ease;}
+body.sr83-returning #map .leaflet-tile-pane{filter:saturate(1.02) brightness(1.025);}
+#map .sr83-exit{isolation:isolate;pointer-events:auto!important;touch-action:manipulation!important;-webkit-tap-highlight-color:transparent;}
+@media(prefers-reduced-motion:reduce){#map .sr83-viewport.sr83-closing,body.sr83-returning #map .leaflet-pane,body.sr83-returning #map .leaflet-control-container{transition:none!important;}}

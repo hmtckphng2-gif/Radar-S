@@ -1,4 +1,4 @@
-import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7&fix=ist-soll-exit-8';
+import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=clean-2d-return-1&fix=ist-soll-exit-8';
 /* Radar 7.1 â Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate
@@ -130,7 +130,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-
    onManual:()=>{if(active)reveal(token)},
    onFailure:()=>{if(active&&emergencyFallback){clearTimeout(timer);emergencyFallback()}}
   });
-  window.SuedtirolRadar71={enabled:cinema3d.enabled,cancel:()=>cancel({restore:true}),close3D:()=>{const opened=Boolean(cinema3d?.active||cinema3d?.overlay);if(opened)cinema3d.close({sync:true});if(opened)cinema3d.onExit?.();return true},isFocusing:()=>active};
+  window.SuedtirolRadar71={enabled:cinema3d.enabled,cancel:()=>cancel({restore:true}),close3D:()=>{const opened=Boolean(cinema3d?.active||cinema3d?.overlay);if(!opened)return false;cinema3d.close({sync:true});cinema3d.onExit?.();return true},isFocusing:()=>active};
   setupHud();
   // Load MapLibre and Three.js only when a vehicle is selected; don't slow down the main live map.
   document.addEventListener('sr37:selection',onSelection);
