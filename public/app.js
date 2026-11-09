@@ -950,16 +950,19 @@ function renderStops(v,details){
   const section=$('scheduleSection'),list=$('stops'),empty=$('emptySchedule');
   list.replaceChildren();section.hidden=!rows.length;empty.hidden=true;
   if(!rows.length)return;
-  const update=state.updates.get(v.source+':'+v.tripId);
+  // STA direct positions share the official STA trip-update feed and detail tables.
+  const updateSource=v.source==='sta_direct'?'sta':v.source;
+  const update=state.updates.get(updateSource+':'+v.tripId);
   $('scheduleSource').textContent=t('board.source')+(update?.stops?.length?t('board.tripUpdate'):'');
-  const lookup=new Map((update?.stops||[]).map(u=>[txt(u.stopId??u.stop_id),u]));
+  const lookup=new Map((update?.stops||[]).map(u=>[txt(u.stopId??u.stop_id).toLowerCase(),u]));
   const sameDay=!update?.tripStartDate||txt(update.tripStartDate).replaceAll('-','')===gtfsLocalDate().replaceAll('-','');
-  const platformLive=Boolean(update&&sameDay&&state.statuses[v.source+'_updates']==='ok'&&Number.isFinite(update.fetchedAt)&&Date.now()-update.fetchedAt<=120000&&Date.now()>=update.fetchedAt-30000);
+  const updateStatus=state.statuses[updateSource+'_updates'];
+  const platformLive=Boolean(update&&sameDay&&updateStatus==='ok'&&Number.isFinite(Number(update.fetchedAt))&&Date.now()-Number(update.fetchedAt)<=120000&&Date.now()>=Number(update.fetchedAt)-30000);
   for(const row of rows){
     const li=document.createElement('li');li.className='stop';
     const left=document.createElement('div');const name=document.createElement('b');name.textContent=formatStationName(row.name);left.append(name);
-    const upd=lookup.get(row.stopId)||(update?.stops||[]).find(u=>!txt(u.stopId??u.stop_id)&&Number(u.stopSequence??u.stop_sequence)===Number(row.seq));
-    const timing=details.times?.[v.tripId]?.find(t=>String(t[0])===String(row.stopId)&&Number(t[3])===Number(row.seq));
+    const upd=lookup.get(txt(row.stopId).toLowerCase())||(update?.stops||[]).find(u=>Number(u.stopSequence??u.stop_sequence)===Number(row.seq)&&Number(row.seq)>0);
+    const timing=details.times?.[v.tripId]?.find(t=>String(t[0])===String(row.stopId))||details.times?.[v.tripId]?.find(t=>Number(t[3])===Number(row.seq)&&Number(row.seq)>0);
     const platform=platformInfo(details.stops?.[row.stopId],platformLive?upd:null,details.stops);
     const track=document.createElement('small');track.className='stop-platform';track.hidden=true;
     const hasPlatform=hasKnownPlatform(platform.current);
@@ -969,13 +972,15 @@ function renderStops(v,details){
     if(v.kind==='train'){
       enrichTrainPlatform(track,{number:state.indexes[v.source]?.trips?.[v.tripId]?.[3]||v.name,serviceDay:v.tripStartDate||gtfsLocalDate(),source:v.source,stopId:row.stopId,stopName:formatStationName(row.name),arrival:timing?.[1],departure:timing?.[2],terminal:Boolean(timing&&timing===details.times?.[v.tripId]?.at(-1))},platform);
     }
-    const useDeparture=row.departure!=='–',event=useDeparture?(upd?.departure||upd?.arrival):(upd?.arrival||upd?.departure);
-    const plannedSeconds=useDeparture?timing?.[2]:timing?.[1];
-    const d=event?.delay;
+    const useDeparture=row.departure!=='–';
+    const event=useDeparture?(upd?.departure||upd?.arrival):(upd?.arrival||upd?.departure);
+    const plannedClock=useDeparture?row.departure:row.arrival;
+    const clockMatch=String(plannedClock||'').match(/^(\d{1,2}):(\d{2})(?: \+(\d+))?$/);
+    const plannedSeconds=clockMatch?(Number(clockMatch[1])*3600+Number(clockMatch[2])*60+Number(clockMatch[3]||0)*86400):null;
     const skipped=/^(?:SKIPPED|1)$/i.test(txt(upd?.scheduleRelationship??upd?.schedule_relationship));
-    const liveTime=platformLive&&!skipped?expectedStopTime(plannedSeconds,event):null;
+    const liveTime=platformLive&&!skipped&&event?expectedStopTime(plannedSeconds,event):null;
     const info=document.createElement('small');
-    info.textContent=skipped?'Laut Echtzeitmeldung ausgelassen':liveTime?'IST · Echtzeit': 'Nur Soll-Fahrplan';
+    info.textContent=skipped?'Laut Echtzeitmeldung ausgelassen':liveTime?'IST · Echtzeit': platformLive?'IST · keine Haltemeldung':'IST · nicht verfügbar';
     left.append(info);
     const time=document.createElement('div');time.className='stop-time';
     const expected=document.createElement('strong');expected.className='stop-actual-time';
