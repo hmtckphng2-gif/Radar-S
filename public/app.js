@@ -973,11 +973,16 @@ function renderStops(v,details){
     const plannedSeconds=useDeparture?timing?.[2]:timing?.[1];
     const d=event?.delay;
     const skipped=/^(?:SKIPPED|1)$/i.test(txt(upd?.scheduleRelationship??upd?.schedule_relationship));
-    const info=document.createElement('small');info.textContent=skipped?'Laut Echtzeitmeldung ausgelassen':d!=null&&Number.isFinite(Number(d))?'Echtzeit: '+delayPresentation(Number(d)).label:'Nur Fahrplan';left.append(info);
+    const liveTime=platformLive&&!skipped?expectedStopTime(plannedSeconds,event):null;
+    const info=document.createElement('small');
+    info.textContent=skipped?'Laut Echtzeitmeldung ausgelassen':liveTime?'IST · Echtzeit': 'Nur Soll-Fahrplan';
+    left.append(info);
     const time=document.createElement('div');time.className='stop-time';
-    const expected=document.createElement('strong');expected.textContent=skipped?'Ausgelassen':expectedStopTime(plannedSeconds,event)||'Unbekannt';
-    const planned=document.createElement('small');planned.className='stop-plan-time';planned.textContent='Plan '+(useDeparture?row.departure:row.arrival);
-    if(expected.textContent!=='Unbekannt'&&expected.textContent!=='Ausgelassen'&&expected.textContent!==planned.textContent.slice(5))planned.classList.add('is-shifted');
+    const expected=document.createElement('strong');expected.className='stop-actual-time';
+    expected.textContent=skipped?'Ausgelassen':liveTime||'—';
+    const planned=document.createElement('small');planned.className='stop-plan-time';
+    planned.textContent='SOLL '+(useDeparture?row.departure:row.arrival);
+    if(liveTime&&liveTime!==planned.textContent.slice(5))planned.classList.add('is-shifted');
     time.append(expected,planned);li.append(left,time);list.append(li);
   }
 }

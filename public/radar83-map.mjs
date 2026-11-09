@@ -204,7 +204,7 @@ export class Radar83Cinematic {
   const toolbar=document.createElement('div');toolbar.className='sr83-toolbar';
   const info=document.createElement('span');info.className='sr83-label';info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
   const exit=document.createElement('button');exit.className='sr83-exit';exit.type='button';exit.textContent='×';exit.setAttribute('aria-label','3D-Ansicht schließen und zur 2D-Karte zurückkehren');exit.title='3D schließen';
-  exit.style.pointerEvents='auto';exit.style.touchAction='manipulation';exit.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();window.SuedtirolRadar71?.cancel?.();const controller=window.SuedtirolRadar71;if(controller?.close3D){controller.close3D();return}this.close({sync:true});this.onExit?.()});
+  exit.style.pointerEvents='auto';exit.style.touchAction='manipulation';exit.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const controller=window.SuedtirolRadar71;if(controller?.close3D){controller.close3D();return}window.SuedtirolRadar71?.cancel?.();this.close({sync:true});this.onExit?.()});
   const replay=document.createElement('button');replay.className='sr83-replay';
   replay.type='button';replay.textContent='â» Flug';
   replay.setAttribute('aria-label','3D-Kameraflug wiederholen');
