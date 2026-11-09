@@ -94,3 +94,8 @@ body.sr83-returning #map .leaflet-pane,body.sr83-returning #map .leaflet-control
 body.sr83-returning #map .leaflet-tile-pane{filter:saturate(1.02) brightness(1.025);}
 #map .sr83-exit{isolation:isolate;pointer-events:auto!important;touch-action:manipulation!important;-webkit-tap-highlight-color:transparent;}
 @media(prefers-reduced-motion:reduce){#map .sr83-viewport.sr83-closing,body.sr83-returning #map .leaflet-pane,body.sr83-returning #map .leaflet-control-container{transition:none!important;}}
+
+/* X close: 3D is detached synchronously; briefly soften the restored 2D map. */
+body.sr83-returning #map .leaflet-tile-pane{animation:sr83-2d-return .56s cubic-bezier(.22,.72,.18,1) both;}
+@keyframes sr83-2d-return{from{opacity:.72;filter:blur(1.5px) brightness(1.04)}to{opacity:1;filter:blur(0) brightness(1)}}
+@media(prefers-reduced-motion:reduce){body.sr83-returning #map .leaflet-tile-pane{animation:none!important}}

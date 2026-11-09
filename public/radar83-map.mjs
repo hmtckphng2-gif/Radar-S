@@ -204,7 +204,7 @@ export class Radar83Cinematic {
   const toolbar=document.createElement('div');toolbar.className='sr83-toolbar';
   const info=document.createElement('span');info.className='sr83-label';info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
   const exit=document.createElement('button');exit.className='sr83-exit';exit.type='button';exit.textContent='×';exit.setAttribute('aria-label','3D-Ansicht schließen und zur 2D-Karte zurückkehren');exit.title='3D schließen';
-  exit.style.pointerEvents='auto';exit.style.touchAction='manipulation';exit.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const controller=window.SuedtirolRadar71;const closed=controller?.close3D?.();if(closed)return;this.close({sync:true});this.onExit?.()},{passive:false});
+  exit.style.pointerEvents='auto';exit.style.touchAction='manipulation';exit.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const controller=window.SuedtirolRadar71;const closed=controller?.close3D?.();if(closed){document.getElementById('sr83Viewport')?.remove();document.querySelectorAll('#map .sr83-viewport').forEach(node=>node.remove());return}this.close({sync:true});this.onExit?.()},{passive:false});
   const replay=document.createElement('button');replay.className='sr83-replay';
   replay.type='button';replay.textContent='â» Flug';
   replay.setAttribute('aria-label','3D-Kameraflug wiederholen');
@@ -367,22 +367,24 @@ export class Radar83Cinematic {
   this.map.easeTo({center:decision.center,duration:900,essential:false});
  }
  close({sync=true}={}){
-  const oldMap=this.map,overlay=this.overlay;
+  const oldMap=this.map;
   let returnView=null;
   if(sync&&oldMap&&this.ready){
    try{const center=oldMap.getCenter(),zoom=oldMap.getZoom();returnView={center:[center.lat,center.lng],zoom:Math.min(18,Math.max(3,zoom))};}catch{}
   }
-  this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);
-  if(returnView)try{this.leaflet.setView(returnView.center,returnView.zoom,{animate:true,duration:560,easeLinearity:.24,noMoveStart:true});}catch{}
+  // Invalidate pending async MapLibre/Three callbacks before tearing down the DOM.
+  this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);clearTimeout(this.closeTimer);
+  // Remove the 3D viewport synchronously. Never rely on transitionend: on iOS
+  // Safari it may not fire when the sheet or its parent is being dismissed.
+  const overlay=this.overlay||document.getElementById('sr83Viewport');
   if(oldMap)try{oldMap.stop();oldMap.remove()}catch(error){console.info('3D map cleanup',error)}
-  if(overlay){
-   overlay.classList.add('sr83-closing');overlay.style.pointerEvents='none';
-   const finish=()=>{if(overlay.parentNode)overlay.remove();if(this.overlay===overlay){this.overlay=null;this.surface=null;}document.body.classList.remove('sr83-returning');};
-   overlay.addEventListener('transitionend',e=>{if(e.target===overlay&&e.propertyName==='opacity')finish();},{once:true});
-   clearTimeout(this.closeTimer);this.closeTimer=setTimeout(finish,560);
-  }else{this.overlay=null;this.surface=null;}
+  if(overlay)overlay.remove();
+  document.querySelectorAll('#map .sr83-viewport').forEach(node=>node.remove());
+  this.overlay=null;this.surface=null;
+  if(returnView)try{this.leaflet.setView(returnView.center,returnView.zoom,{animate:true,duration:560,easeLinearity:.24,noMoveStart:true});}catch{}
   document.querySelectorAll('#sheet .sr83-info-card,#sheet .sr83-sources').forEach(node=>node.remove());
   document.body.classList.remove('sr83-cinematic');document.body.classList.add('sr83-returning');
+  clearTimeout(this.returnTimer);this.returnTimer=setTimeout(()=>document.body.classList.remove('sr83-returning'),600);
   if(this.contextCanvas&&this.contextLostHandler){try{this.contextCanvas.removeEventListener('webglcontextlost',this.contextLostHandler)}catch{}}
   this.contextCanvas=null;this.contextLostHandler=null;this.contextLostCancel=null;
  }
