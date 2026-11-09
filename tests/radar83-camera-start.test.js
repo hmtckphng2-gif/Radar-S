@@ -114,7 +114,7 @@ test('cinematic 3D stays enabled by default and all camera modules bypass stale 
   const camera=read('radar71-camera.mjs');
   const map=read('radar83-map.mjs');
   assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=clean-2d-return-1'));
-  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
+  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=clean-2d-return-1'));
   assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
   assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
 });
