@@ -78,7 +78,7 @@ test('the existing vehicle-sheet X is the only 3D exit and returns to 2D', () =>
   assert.match(map, /toolbar\.append\(replay,exit\)/);
   assert.match(map, /className='sr83-exit'/);
   assert.match(map, /const closed=controller\?\.close3D\?\.\(\)/);
-  assert.match(map, /document\.querySelectorAll\('#map \\.sr83-viewport'\)\.forEach\(node=>node\.remove\(\)\)/);
+  assert.ok(map.includes("document.querySelectorAll('#map .sr83-viewport').forEach(node=>node.remove())"));
   assert.match(map, /animate:true,duration:560/);
   assert.match(map, /const overlay=this\.overlay\|\|document\.getElementById\('sr83Viewport'\)/);
   assert.match(camera, /close3D:.*if\(!opened\)return false/);
