@@ -73,6 +73,7 @@ test('a lost WebGL context ends the 3D view at once', () => {
 test('the existing vehicle-sheet X is the only 3D exit and returns to 2D', () => {
   const map = get('radar83-map.mjs');
   const camera = get('radar71-camera.mjs');
+  const app = get('app.js');
   const html = get('index.html');
   assert.doesNotMatch(map, /sr83-back|↩ 2D|Zur normalen 2D-Karte zurückkehren/);
   assert.match(map, /toolbar\.append\(replay,exit\)/);
@@ -83,5 +84,11 @@ test('the existing vehicle-sheet X is the only 3D exit and returns to 2D', () =>
   assert.match(map, /const overlay=this\.overlay\|\|document\.getElementById\('sr83Viewport'\)/);
   assert.match(camera, /close3D:.*if\(!opened\)return false/);
   assert.match(camera, /addEventListener\('sr37:sheet-closed',\(\)=>cancel\(\{restore:true\}\)\)/);
+  const closeStart=app.indexOf('function closeSheets(');
+  const closeEnd=app.indexOf('function badge(',closeStart);
+  const closeBlock=app.slice(closeStart,closeEnd);
+  assert.match(closeBlock, /window\.SuedtirolRadar71\?\.close3D\?\.\(\)/, 'vehicle-sheet X must close the 3D controller synchronously');
+  assert.ok(closeBlock.indexOf('close3D') < closeBlock.indexOf("classList.remove('open')"), '3D teardown must happen before the sheet disappears');
+  assert.match(closeBlock, /getElementById\('sr83Viewport'\)\?\.remove\(\)/);
   assert.match(html, /id=\"closeSheet\"/);
 });
