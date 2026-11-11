@@ -111,7 +111,7 @@ test('vehicle details collapse on deeper sheet scroll', () => {
   assert.match(js, /scrollTop>24/);
   assert.match(css, /sr94-sheet-scrolled #details/);
   assert.match(css, /sr94-sheet-scrolled #modelCard/);
-  assert.match(css, /sr94-sheet-scrolled \\.sr83-info-card/);
-  assert.match(css, /sr94-sheet-scrolled \\.sr83-sources/);
+  assert.match(css, /sr94-sheet-scrolled \.sr83-info-card/);
+  assert.match(css, /sr94-sheet-scrolled \.sr83-sources/);
   assert.match(js, /content\?\.classList\.toggle\('sr94-sheet-scrolled'/);
 });
