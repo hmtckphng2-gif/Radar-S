@@ -84,6 +84,7 @@ test('the existing vehicle-sheet X is the only 3D exit and returns to 2D', () =>
   assert.match(map, /const overlay=this\.overlay\|\|document\.getElementById\('sr83Viewport'\)/);
   assert.match(camera, /close3D:.*if\(!opened\)return false/);
   assert.match(camera, /addEventListener\('sr37:sheet-closed',\(\)=>cancel\(\{restore:true\}\)\)/);
+  assert.match(camera, /if\(!cinema3d\?\.closing\)cinema3d\?\.close\(\)/, 'sheet close must not abort the reverse 3D flight');
   const closeStart=app.indexOf('function closeSheets(');
   const closeEnd=app.indexOf('function badge(',closeStart);
   const closeBlock=app.slice(closeStart,closeEnd);

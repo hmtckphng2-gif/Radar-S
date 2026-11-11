@@ -38,3 +38,15 @@
 
 /* The 3D focus/meta cards are dynamically inserted after #details; collapse them too. */
 #sheet .sr83-info-card,#sheet .sr83-sources{transition:opacity .36s ease,transform .48s cubic-bezier(.22,.75,.2,1),max-height .48s ease,margin .48s ease!important;max-height:220px;overflow:hidden}
+
+/* Vehicle menu: radar55.js owns the actual scroll state (.sr55-scrolled).
+   Collapse focus, metadata and details so the journey list gets the space. */
+body.sr55-ready #sheet.sr55-scrolled .badge-row,
+body.sr55-ready #sheet.sr55-scrolled #modelCard,
+body.sr55-ready #sheet.sr55-scrolled #details,
+body.sr55-ready #sheet.sr55-scrolled #sheetNote,
+body.sr55-ready #sheet.sr55-scrolled .sr83-info-card,
+body.sr55-ready #sheet.sr55-scrolled .sr83-sources,
+body.sr55-ready #sheet.sr55-scrolled .sr46-actions {
+  display:none!important;
+}

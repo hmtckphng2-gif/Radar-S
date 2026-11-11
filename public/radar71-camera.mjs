@@ -1,4 +1,4 @@
-import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=full-return-origin-3';
+import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=sheet-close-anim-4';
 /* Radar 7.1 â Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate
@@ -53,7 +53,9 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-
    try{map.setBearing(previousBearing)}catch{}
   }
   if(restore){previousBearing=null;visibleKey=null}
-  cinema3d?.close();
+  // The vehicle sheet emits sheet-closed immediately after its X is tapped.
+  // Do not tear down MapLibre while its reverse camera flight is running.
+  if(!cinema3d?.closing)cinema3d?.close();
   model3d?.hide();document.body.classList.remove('sr82-3d-active');
  }
  function onSelection(){
