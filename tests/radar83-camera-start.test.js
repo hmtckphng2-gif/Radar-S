@@ -18,22 +18,23 @@ import {start3DCamera,target3DCamera,handoff3DCamera,approach3DCamera,use3DTerra
 const root = fileURLToPath(new URL('../', import.meta.url));
 const read = name => readFileSync(root + 'public/' + name, 'utf8');
 
-test('the camera flight starts before the scene is fully built', () => {
+test('the camera flight starts after the scene and model are rendered', () => {
   const src = read('radar83-map.mjs');
   const flight = src.indexOf('this.replay();');
   const scene = src.indexOf('await waitFor3DScene(map);');
   const model = src.indexOf('await waitFor3DModel(map,this.layer);');
   assert.ok(flight > 0 && scene > 0 && model > 0, 'the three steps must exist');
-  assert.ok(flight < scene, 'the flight must start BEFORE waiting for the scene');
-  assert.ok(flight < model, 'the flight must start BEFORE waiting for the model');
+  assert.ok(flight > scene, 'the flight must start after the vector scene is ready');
+  assert.ok(flight > model, 'the flight must start after the vehicle layer renders');
 });
 
-test('the overlay becomes visible while the scene is still loading', () => {
+test('the overlay becomes visible only after the scene and vehicle layer are ready', () => {
   const src = read('radar83-map.mjs');
   assert.doesNotMatch(src, /classList\.add\('sr83-loading'\)/);
   const css = read('radar83.css');
   assert.match(css, /\.sr83-viewport\.sr83-ready\{opacity:1;pointer-events:auto\}/);
   assert.match(css, /transition:opacity 1\.32s cubic-bezier\(\.22,\.72,\.18,1\)/);
+  assert.ok(src.indexOf("this.overlay.classList.add('sr83-ready')") > src.indexOf('await waitFor3DModel(map,this.layer);'));
 });
 
 test('the follow never fights the running flight', () => {
@@ -91,10 +92,10 @@ test('the handoff continues the camera from the exact live map view', () => {
   assert.ok(11.45-approach.center[0] < (11.45-live.center[0])*.26);
   assert.ok(src.includes('approach3DCamera(handoff,target,.75)'));
   assert.ok(src.indexOf('this.flight={start:handoff,target:continuedTarget};') < src.indexOf('await waitFor3DScene(map);'));
-  assert.ok(src.indexOf('this.replay();') < src.indexOf('await waitFor3DScene(map);'));
+  assert.ok(src.indexOf('this.replay();') > src.indexOf('await waitFor3DModel(map,this.layer);'));
   const ready=src.indexOf("this.overlay.classList.add('sr83-ready')");
   assert.ok(ready>src.indexOf('await waitFor3DModel(map,this.layer);'));
-  assert.doesNotMatch(src.slice(ready,src.indexOf('return true;',ready)),/this\.replay\(\)/);
+  assert.match(src.slice(ready,src.indexOf('return true;',ready)),/this\.replay\(\)/);
 });
 
 test('the 3D camera respects prefers-reduced-motion', () => {
@@ -113,8 +114,8 @@ test('cinematic 3D stays enabled by default and all camera modules bypass stale 
   const html=read('index.html');
   const camera=read('radar71-camera.mjs');
   const map=read('radar83-map.mjs');
-  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=x-force-remove-2'));
-  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=x-force-remove-2'));
+  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=visible-flight-1'));
+  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=visible-flight-1'));
   assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
   assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
 });
