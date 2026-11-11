@@ -98,8 +98,8 @@ test('3D X plays the camera flight backwards before fading out', () => {
   const camera = get('radar71-camera.mjs');
   const app = get('app.js');
   assert.match(map, /closeAnimated\(\)/);
-  assert.match(map, /map\.easeTo\(\{center:\[\.\.\.target\.center\],zoom:start\.zoom,pitch:start\.pitch,bearing:start\.bearing,duration/);
-  assert.match(map, /sr83-exiting/);
+  assert.match(map, /map\.easeTo\(\{\.\.\.flight\.start,duration/);
+  assert.match(map, /sr83-closing/);
   assert.match(camera, /closeAnimated\?\.\(\)/);
   assert.match(app, /if\(!cinematicExit\)\{/);
 });
@@ -108,6 +108,7 @@ test('vehicle details collapse on deeper sheet scroll', () => {
   const css = get('radar94-cleanup.css');
   const js = get('radar94-cleanup.js');
   assert.match(js, /scrollTop>18/);
-  assert.match(css, /sr94-sheet-scrolled \.details/);
-  assert.match(css, /sr94-sheet-scrolled \.model-card/);
+  assert.match(css, /sr94-sheet-scrolled #details/);
+  assert.match(css, /sr94-sheet-scrolled #modelCard/);
+  assert.match(js, /content\?\.classList\.toggle\('sr94-sheet-scrolled'/);
 });

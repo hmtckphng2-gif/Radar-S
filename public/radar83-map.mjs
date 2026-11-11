@@ -374,15 +374,16 @@ export class Radar83Cinematic {
   if(this.closing)return true;
   this.closing=true;
   const map=this.map,flight=this.flight;
-  const duration=prefersReducedMotion()?0:920;
+  const duration=920;
   this.flying=true;clearTimeout(this.flightTimer);
-  if(duration){
-   const start=flight.start,target=flight.target;
-   map.stop();
-   map.easeTo({center:[...target.center],zoom:start.zoom,pitch:start.pitch,bearing:start.bearing,duration,easing:t=>{const x=Math.max(0,Math.min(1,t));return x*x*x*(x*(x*6-15)+10)},essential:true});
-  }
+  map.stop();
+  // Replay the entrance path in reverse: current cinematic camera -> exact saved start.
+  map.easeTo({...flight.start,duration,easing:t=>{const x=Math.max(0,Math.min(1,t));return x*x*x*(x*(x*6-15)+10)},essential:true});
   clearTimeout(this.closeTimer);
-  this.closeTimer=setTimeout(()=>{this.overlay?.classList.add('sr83-exiting');this.closeTimer=setTimeout(()=>{this.closing=false;this.close({sync:true});this.onExit?.()},420)},duration);
+  this.closeTimer=setTimeout(()=>{
+   this.overlay?.classList.add('sr83-closing');
+   this.closeTimer=setTimeout(()=>{this.closing=false;this.close({sync:true});this.onExit?.()},480);
+  },duration);
   return true;
  }
  close({sync=true}={}){
