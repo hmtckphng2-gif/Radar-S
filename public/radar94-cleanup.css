@@ -39,14 +39,29 @@
 /* The 3D focus/meta cards are dynamically inserted after #details; collapse them too. */
 #sheet .sr83-info-card,#sheet .sr83-sources{transition:opacity .36s ease,transform .48s cubic-bezier(.22,.75,.2,1),max-height .48s ease,margin .48s ease!important;max-height:220px;overflow:hidden}
 
-/* Vehicle menu: radar55.js owns the actual scroll state (.sr55-scrolled).
-   Collapse focus, metadata and details so the journey list gets the space. */
+/* Vehicle menu: radar94-cleanup.js is the guaranteed scroll controller.
+   radar55.js may also set sr55-scrolled; support both states on the sheet
+   and on its actual scroll container. Hide the complete focus/metadata block
+   so the journey list becomes the only content while scrolling. */
+#sheet.sr94-sheet-scrolled .badge-row,
+#sheet.sr94-sheet-scrolled #modelCard,
+#sheet.sr94-sheet-scrolled #details,
+#sheet.sr94-sheet-scrolled #sheetNote,
+#sheet.sr94-sheet-scrolled .sr83-info-card,
+#sheet.sr94-sheet-scrolled .sr83-sources,
+#sheet.sr94-sheet-scrolled .sr46-actions,
 #sheet.sr55-scrolled .badge-row,
 #sheet.sr55-scrolled #modelCard,
 #sheet.sr55-scrolled #details,
 #sheet.sr55-scrolled #sheetNote,
 #sheet.sr55-scrolled .sr83-info-card,
 #sheet.sr55-scrolled .sr83-sources,
-#sheet.sr55-scrolled .sr46-actions {
+#sheet.sr55-scrolled .sr46-actions,
+#sheet .sheet-scroll.sr94-sheet-scrolled .badge-row,
+#sheet .sheet-scroll.sr94-sheet-scrolled #modelCard,
+#sheet .sheet-scroll.sr94-sheet-scrolled #details,
+#sheet .sheet-scroll.sr94-sheet-scrolled #sheetNote,
+#sheet .sheet-scroll.sr94-sheet-scrolled .sr83-info-card,
+#sheet .sheet-scroll.sr94-sheet-scrolled .sr83-sources {
   display:none!important;
 }

@@ -390,7 +390,9 @@ export class Radar83Cinematic {
   const oldMap=this.map;
   let returnView=null;
   if(sync&&oldMap&&this.ready){
-   try{const center=oldMap.getCenter(),zoom=oldMap.getZoom();returnView={center:[center.lat,center.lng],zoom:Math.min(18,Math.max(3,zoom))};}catch{}
+   try{const center=oldMap.getCenter(),zoom=oldMap.getZoom();// MapLibre's 512px vector tiles are one zoom level below Leaflet's 256px tiles.
+     // Restore the equivalent 2D scale instead of causing a visible zoom snap.
+     returnView={center:[center.lat,center.lng],zoom:Math.min(19.4,Math.max(4,zoom+1))};}catch{}
   }
   // Invalidate pending async MapLibre/Three callbacks before tearing down the DOM.
   this.sequence++;this.ready=false;this.active=false;this.closing=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);clearTimeout(this.closeTimer);
