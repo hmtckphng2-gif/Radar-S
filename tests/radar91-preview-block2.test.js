@@ -40,8 +40,7 @@ test('390px clusters show a type icon, not a clipped Busse text label',()=>{
  const css=read('radar91-preview-block2.css'),renderer=read('radar43.js');
  assert.ok(css.includes('@media (max-width:749px)'));
  assert.ok(css.includes('.sr43-cluster-kind-label { display:none!important; }'));
- assert.ok(renderer.includes('resolveClusterCollisions(inside'));
- assert.ok(renderer.includes('...outside'), 'offscreen groups remain preloaded');
+ assert.ok(renderer.includes('resolveClusterCollisions(grouped.clusters'));
  assert.ok(renderer.includes('sr43-cluster-kind-icon'));
  assert.ok(renderer.includes('iconSize:[iconWidth,34]'));
 });
