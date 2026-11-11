@@ -21,35 +21,12 @@ export function samePhysicalTrip(a,b){
  if(a.kind==='train')return !!number(a)&&number(a)===number(b)&&!!a.tripId&&a.tripId===b.tripId&&meters<=1500;
  return !!a.tripId&&a.tripId===b.tripId&&!!a.routeId&&a.routeId===b.routeId&&meters<=120;
 }
-function identityKeys(v){
- const keys=[];
- if(v.kind==='bus'&&['sta','sta_direct'].includes(v.source)&&/^\d{2,6}$/.test(String(v.vehicleId||'')))keys.push('sta-fleet|'+v.vehicleId);
- if(v.tripStartDate&&v.tripId){
-  if(v.kind==='train'&&number(v))keys.push('train-trip|'+v.tripStartDate+'|'+v.tripId+'|'+number(v));
-  if(v.kind==='bus'&&v.routeId)keys.push('bus-trip|'+v.tripStartDate+'|'+v.tripId+'|'+v.routeId);
- }
- return keys;
-}
-export function selectRepresentatives(vehicles,selectedKey){
- const all=[...vehicles].filter(Boolean),removed=new Set(),groups=new Map();
+export function selectRepresentatives(vehicles,selectedKey){const all=[...vehicles].filter(Boolean),removed=new Set(),groups=new Map();
  const sorted=[...all].sort((a,b)=>{const delta=Number(b.timestamp||0)-Number(a.timestamp||0);if(Math.abs(delta)>10)return delta;return Number(b.source==='sta_direct')-Number(a.source==='sta_direct')||delta});
- // Build exact-identity candidate buckets once; spatial/time checks remain in samePhysicalTrip.
- const index=new Map(),keysByIndex=sorted.map(identityKeys);
- for(let i=0;i<sorted.length;i++)for(const key of keysByIndex[i]){if(!index.has(key))index.set(key,[]);index.get(key).push(i);}
- for(let i=0;i<sorted.length;i++){
-  const a=sorted[i];if(removed.has(a.key))continue;
-  const group=[a],candidateIndexes=new Set();
-  for(const key of keysByIndex[i])for(const j of index.get(key)||[])if(j>i)candidateIndexes.add(j);
-  for(const j of [...candidateIndexes].sort((x,y)=>x-y)){
-   const b=sorted[j];if(removed.has(b.key))continue;
-   if(samePhysicalTrip(a,b)){removed.add(b.key);group.push(b);}
-  }
-  const freshest=group.reduce((best,item)=>Number(item.timestamp||0)>Number(best.timestamp||0)?item:best,group[0]);
-  const direct=group.find(x=>x.source==='sta_direct'&&x.lineVerified&&Number(freshest.timestamp||0)-Number(x.timestamp||0)<=5&&!x.stale);
-  const chosen=direct||group.find(x=>x.key===selectedKey&&!x.stale&&Number(freshest.timestamp||0)-Number(x.timestamp||0)<=5)||freshest;
-  groups.set(chosen.key,group.map(x=>x.source));
-  for(const item of group)if(item.key!==chosen.key)removed.add(item.key);
-  removed.delete(chosen.key);
+ for(let i=0;i<sorted.length;i++){const a=sorted[i];if(removed.has(a.key))continue;const group=[a];for(let j=i+1;j<sorted.length;j++){const b=sorted[j];if(removed.has(b.key))continue;if(samePhysicalTrip(a,b)){removed.add(b.key);group.push(b)}}
+ const freshest=group.reduce((best,item)=>Number(item.timestamp||0)>Number(best.timestamp||0)?item:best,group[0]);
+ const direct=group.find(x=>x.source==='sta_direct'&&x.lineVerified&&Number(freshest.timestamp||0)-Number(x.timestamp||0)<=5&&!x.stale);
+ const chosen=direct||group.find(x=>x.key===selectedKey&&!x.stale&&Number(freshest.timestamp||0)-Number(x.timestamp||0)<=5)||freshest;groups.set(chosen.key,group.map(x=>x.source));for(const item of group)if(item.key!==chosen.key)removed.add(item.key);removed.delete(chosen.key);
  }
  return {keys:new Set(all.filter(x=>!removed.has(x.key)).map(x=>x.key)),sources:groups,duplicates:removed.size};
 }
