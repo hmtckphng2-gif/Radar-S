@@ -696,6 +696,8 @@ function updateMapEmptyState(){
   const bounds=state.map?.getBounds?.();
   const inView=filtered.filter(v=>!bounds||bounds.contains([v.lat,v.lon]));
   if(inView.length){panel.hidden=true;return;}
+  // No vehicle in the current viewport is a normal map state, not an error.
+  if(filtered.length&&bounds&&inView.length===0){panel.hidden=true;return;}
   panel.hidden=false;let mode='refresh';
   if(candidates.length&&filtered.length===0){title.textContent='Keine Fahrzeuge für diesen Filter';message.textContent='Ändere den Filter oder setze die Suche zurück.';action.textContent='Filter zurücksetzen';mode='filters';}
   else if(filtered.length&&bounds&&inView.length===0){title.textContent='Keine Fahrzeuge in diesem Ausschnitt';message.textContent='Im restlichen Gebiet können weiterhin Fahrzeuge unterwegs sein.';action.textContent='Alle Fahrzeuge zeigen';mode='fit';}
