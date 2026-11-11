@@ -29,9 +29,12 @@
 #sheet .badge-row .fav-badge,#sheet .badge-row .line-fav-badge{display:none!important}
 
 /* Deeper vehicle-sheet scroll: hide the model/focus and all metadata cards, keep journey list. */
-#sheet.sr94-sheet-scrolled .badge-row,#sheet.sr94-sheet-scrolled #modelCard,#sheet.sr94-sheet-scrolled #details,#sheet.sr94-sheet-scrolled #sheetNote,
-#sheet .sheet-scroll.sr94-sheet-scrolled .badge-row,#sheet .sheet-scroll.sr94-sheet-scrolled #modelCard,#sheet .sheet-scroll.sr94-sheet-scrolled #details,#sheet .sheet-scroll.sr94-sheet-scrolled #sheetNote{
+#sheet.sr94-sheet-scrolled .badge-row,#sheet.sr94-sheet-scrolled #modelCard,#sheet.sr94-sheet-scrolled #details,#sheet.sr94-sheet-scrolled #sheetNote,#sheet.sr94-sheet-scrolled .sr83-info-card,#sheet.sr94-sheet-scrolled .sr83-sources,
+#sheet .sheet-scroll.sr94-sheet-scrolled .badge-row,#sheet .sheet-scroll.sr94-sheet-scrolled #modelCard,#sheet .sheet-scroll.sr94-sheet-scrolled #details,#sheet .sheet-scroll.sr94-sheet-scrolled #sheetNote,#sheet .sheet-scroll.sr94-sheet-scrolled .sr83-info-card,#sheet .sheet-scroll.sr94-sheet-scrolled .sr83-sources{
  opacity:0!important;visibility:hidden!important;max-height:0!important;height:0!important;min-height:0!important;overflow:hidden!important;
  margin:0!important;padding-top:0!important;padding-bottom:0!important;border-width:0!important;transform:translateY(-10px)!important;pointer-events:none!important;
 }
 #sheet.sr94-sheet-scrolled #scheduleSection,#sheet .sheet-scroll.sr94-sheet-scrolled #scheduleSection{margin-top:2px!important}
+
+/* The 3D focus/meta cards are dynamically inserted after #details; collapse them too. */
+#sheet .sr83-info-card,#sheet .sr83-sources{transition:opacity .36s ease,transform .48s cubic-bezier(.22,.75,.2,1),max-height .48s ease,margin .48s ease!important;max-height:220px;overflow:hidden}

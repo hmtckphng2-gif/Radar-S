@@ -109,6 +109,6 @@ test('vehicle details collapse on deeper sheet scroll', () => {
   const js = get('radar94-cleanup.js');
   assert.match(js, /scrollTop>24/);
   assert.match(css, /sr94-sheet-scrolled #details/);
-  assert.match(css, /sr94-sheet-scrolled #modelCard/);
+  assert.match(css, /sr94-sheet-scrolled #modelCard/);\n  assert.match(css, /sr94-sheet-scrolled \\.sr83-info-card/);\n  assert.match(css, /sr94-sheet-scrolled \\.sr83-sources/);
   assert.match(js, /content\?\.classList\.toggle\('sr94-sheet-scrolled'/);
 });

@@ -298,7 +298,7 @@ export class Radar83Cinematic {
    const flightStart={...approachStart,center:[...target.center]};
    const totalDuration=Number(target.duration)||Number(duration)||4300;
    const continuedTarget={...target,duration:totalDuration};
-   this.flight={start:flightStart,target:continuedTarget};
+   this.flight={origin:{...initialCamera,center:[...initialCamera.center]},start:flightStart,target:continuedTarget};
    map.jumpTo(flightStart);
    // Gestures can interrupt the flight immediately; user control wins.
    map.on('dragstart',()=>this.interrupt());
@@ -374,11 +374,11 @@ export class Radar83Cinematic {
   if(this.closing)return true;
   this.closing=true;
   const map=this.map,flight=this.flight;
-  const duration=920;
+  const duration=1380;
   this.flying=true;clearTimeout(this.flightTimer);
   map.stop();
-  // Replay the entrance path in reverse: current cinematic camera -> exact saved start.
-  map.easeTo({...flight.start,duration,easing:t=>{const x=Math.max(0,Math.min(1,t));return x*x*x*(x*(x*6-15)+10)},essential:true});
+  // Reverse the complete cinematic flight to the original live-map camera handoff.
+  map.easeTo({...flight.origin,duration,easing:t=>{const x=Math.max(0,Math.min(1,t));return x*x*x*(x*(x*6-15)+10)},essential:true});
   clearTimeout(this.closeTimer);
   this.closeTimer=setTimeout(()=>{
    this.overlay?.classList.add('sr83-closing');
