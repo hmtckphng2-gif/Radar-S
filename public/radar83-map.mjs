@@ -374,12 +374,15 @@ export class Radar83Cinematic {
   if(this.closing)return true;
   this.closing=true;
   const map=this.map,flight=this.flight;
-  // A calmer return lets the camera visibly lift out of the vehicle view.
+  // Reverse the visible opening path: pull straight up from the vehicle.
+  // flight.origin is the old 2D map center; returning to it creates a large
+  // sideways sweep. flight.start keeps the vehicle centered and only unwinds
+  // zoom, pitch and the small bearing change from the opening animation.
   const duration=2100,fadeDuration=320;
+  const exitCamera={...flight.start,center:[...flight.target.center]};
   this.flying=true;clearTimeout(this.flightTimer);
   map.stop();
-  // Smoothly lower pitch, unwind bearing and retreat to the exact live-map camera.
-  map.easeTo({...flight.origin,duration,easing:t=>{const x=Math.max(0,Math.min(1,t));return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},essential:true});
+  map.easeTo({...exitCamera,duration,easing:t=>{const x=Math.max(0,Math.min(1,t));return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},essential:true});
   clearTimeout(this.closeTimer);
   this.closeTimer=setTimeout(()=>{
    this.overlay?.classList.add('sr83-closing');

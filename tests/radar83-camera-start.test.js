@@ -119,8 +119,11 @@ test('cinematic 3D stays enabled by default and all camera modules bypass stale 
   const html=read('index.html');
   const camera=read('radar71-camera.mjs');
   const map=read('radar83-map.mjs');
-  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=smooth-exit-camera-6'));
-  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=smooth-exit-camera-6'));
+  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=straight-up-exit-7'));
+  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=straight-up-exit-7'));
   assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
   assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
+  assert.ok(map.includes('const exitCamera={...flight.start,center:[...flight.target.center]}'));
+  assert.ok(map.includes('map.easeTo({...exitCamera,duration'));
+  assert.ok(!map.includes('map.easeTo({...flight.origin,duration')); 
 });
