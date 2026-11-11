@@ -27,3 +27,9 @@
 /* 10.0.3 final: the 3D viewport is visual-only; keep just its close control. */
 #map .sr83-label,#map .sr83-credit,#map .sr83-vehicle-meta,#map .sr83-info-card,#map .sr83-sources,#map .sr83-replay{display:none!important}
 #sheet .badge-row .fav-badge,#sheet .badge-row .line-fav-badge{display:none!important}
+
+/* Deeper vehicle-sheet scroll: fold away model/focus tiles, retain schedule context. */
+#sheet.sr94-sheet-scrolled .model-card,#sheet.sr94-sheet-scrolled .details{opacity:0!important;max-height:0!important;overflow:hidden!important;margin-block:0!important;padding-block:0!important;transform:translateY(-9px) scale(.985)!important;pointer-events:none!important}
+#sheet.sr94-sheet-scrolled #scheduleSection{margin-top:4px!important}
+#map .sr83-viewport.sr83-exiting{opacity:0!important;transition:opacity .38s ease!important;pointer-events:none!important}
+@media(prefers-reduced-motion:reduce){#map .sr83-viewport.sr83-exiting{transition:none!important}}

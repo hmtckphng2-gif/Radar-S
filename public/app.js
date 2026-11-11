@@ -845,10 +845,13 @@ function closeSheets(resetSelection=true){
   if(resetSelection)selectionRenderToken++;
   // 10.0.6: The vehicle sheet's own X must close the cinematic map too.
   // Do this synchronously here instead of relying only on the later sheet event.
-  try{window.SuedtirolRadar71?.close3D?.()}catch(error){console.info('3D close during sheet dismissal',error)}
-  document.getElementById('sr83Viewport')?.remove();
-  document.querySelectorAll('#map .sr83-viewport').forEach(node=>node.remove());
-  document.body.classList.remove('sr83-cinematic');
+  let cinematicExit=false;
+  try{cinematicExit=Boolean(window.SuedtirolRadar71?.close3D?.())}catch(error){console.info('3D close during sheet dismissal',error)}
+  if(!cinematicExit){
+   document.getElementById('sr83Viewport')?.remove();
+   document.querySelectorAll('#map .sr83-viewport').forEach(node=>node.remove());
+   document.body.classList.remove('sr83-cinematic');
+  }
   for(const id of ['sheet','stationSheet']){$(id).classList.remove('open');$(id).setAttribute('aria-hidden','true');}
   // 9.5: Der Fokus geht zurueck auf die Karte.
   try{$('map')?.focus({preventScroll:true})}catch{}

@@ -92,3 +92,22 @@ test('the existing vehicle-sheet X is the only 3D exit and returns to 2D', () =>
   assert.match(closeBlock, /getElementById\('sr83Viewport'\)\?\.remove\(\)/);
   assert.match(html, /id=\"closeSheet\"/);
 });
+
+test('3D X plays the camera flight backwards before fading out', () => {
+  const map = get('radar83-map.mjs');
+  const camera = get('radar71-camera.mjs');
+  const app = get('app.js');
+  assert.match(map, /closeAnimated\(\)/);
+  assert.match(map, /map\.easeTo\(\{center:\[\.\.\.target\.center\],zoom:start\.zoom,pitch:start\.pitch,bearing:start\.bearing,duration/);
+  assert.match(map, /sr83-exiting/);
+  assert.match(camera, /closeAnimated\?\.\(\)/);
+  assert.match(app, /if\(!cinematicExit\)\{/);
+});
+
+test('vehicle details collapse on deeper sheet scroll', () => {
+  const css = get('radar94-cleanup.css');
+  const js = get('radar94-cleanup.js');
+  assert.match(js, /scrollTop>18/);
+  assert.match(css, /sr94-sheet-scrolled \.details/);
+  assert.match(css, /sr94-sheet-scrolled \.model-card/);
+});

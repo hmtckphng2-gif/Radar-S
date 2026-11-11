@@ -195,7 +195,7 @@ export class Radar83Cinematic {
   constructor(leaflet,{onExit=()=>{},onManual=()=>{},onFailure=()=>{},onModel=()=>{}}={}){
    this.leaflet=leaflet;this.onExit=onExit;this.onManual=onManual;this.onFailure=onFailure;this.onModel=onModel;
   this.sequence=0;this.map=null;this.overlay=null;this.layer=null;
-  this.ready=false;this.touched=false;this.active=false;this.flight=null;this.flying=false;this.flightTimer=0;
+  this.ready=false;this.touched=false;this.active=false;this.flight=null;this.flying=false;this.closing=false;this.flightTimer=0;
  }
  get enabled(){return enabled3D(location.search)}
  makeOverlay(vehicle){
@@ -204,7 +204,7 @@ export class Radar83Cinematic {
   const toolbar=document.createElement('div');toolbar.className='sr83-toolbar';
   const info=document.createElement('span');info.className='sr83-label';info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
   const exit=document.createElement('button');exit.className='sr83-exit';exit.type='button';exit.textContent='×';exit.setAttribute('aria-label','3D-Ansicht schließen und zur 2D-Karte zurückkehren');exit.title='3D schließen';
-  exit.style.pointerEvents='auto';exit.style.touchAction='manipulation';exit.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const controller=window.SuedtirolRadar71;const closed=controller?.close3D?.();if(closed){document.getElementById('sr83Viewport')?.remove();document.querySelectorAll('#map .sr83-viewport').forEach(node=>node.remove());return}this.close({sync:true});this.onExit?.()},{passive:false});
+  exit.style.pointerEvents='auto';exit.style.touchAction='manipulation';exit.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const controller=window.SuedtirolRadar71;const closed=controller?.close3D?.();if(!closed){this.close({sync:true});this.onExit?.()}},{passive:false});
   const replay=document.createElement('button');replay.className='sr83-replay';
   replay.type='button';replay.textContent='â» Flug';
   replay.setAttribute('aria-label','3D-Kameraflug wiederholen');
@@ -369,6 +369,22 @@ export class Radar83Cinematic {
   if(!decision)return;
   this.map.easeTo({center:decision.center,duration:900,essential:false});
  }
+ closeAnimated(){
+  if(!this.active||!this.ready||!this.map||!this.flight)return false;
+  if(this.closing)return true;
+  this.closing=true;
+  const map=this.map,flight=this.flight;
+  const duration=prefersReducedMotion()?0:920;
+  this.flying=true;clearTimeout(this.flightTimer);
+  if(duration){
+   const start=flight.start,target=flight.target;
+   map.stop();
+   map.easeTo({center:[...target.center],zoom:start.zoom,pitch:start.pitch,bearing:start.bearing,duration,easing:t=>{const x=Math.max(0,Math.min(1,t));return x*x*x*(x*(x*6-15)+10)},essential:true});
+  }
+  clearTimeout(this.closeTimer);
+  this.closeTimer=setTimeout(()=>{this.overlay?.classList.add('sr83-exiting');this.closeTimer=setTimeout(()=>{this.closing=false;this.close({sync:true});this.onExit?.()},420)},duration);
+  return true;
+ }
  close({sync=true}={}){
   const oldMap=this.map;
   let returnView=null;
@@ -376,7 +392,7 @@ export class Radar83Cinematic {
    try{const center=oldMap.getCenter(),zoom=oldMap.getZoom();returnView={center:[center.lat,center.lng],zoom:Math.min(18,Math.max(3,zoom))};}catch{}
   }
   // Invalidate pending async MapLibre/Three callbacks before tearing down the DOM.
-  this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);clearTimeout(this.closeTimer);
+  this.sequence++;this.ready=false;this.active=false;this.closing=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);clearTimeout(this.closeTimer);
   // Remove the 3D viewport synchronously. Never rely on transitionend: on iOS
   // Safari it may not fire when the sheet or its parent is being dismissed.
   const overlay=this.overlay||document.getElementById('sr83Viewport');

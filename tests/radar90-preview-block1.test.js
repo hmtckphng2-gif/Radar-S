@@ -40,8 +40,8 @@ test('MapLibre attribution stays at the lower map edge rather than over the vehi
 test('changed 3D assets use fresh cache keys while release version remains unchanged',()=>{
  const html=read('index.html'),map=read('radar83-map.mjs'),camera=read('radar71-camera.mjs');
  assert.ok(html.includes('radar90-preview-block1.css?v=9.9.5&rev=block1-fixes-2'));
- assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=vehicle-centered-flight-1'));
- assert.ok(map.includes('rev=credits-2')&&camera.includes('rev=vehicle-centered-flight-1'));
+ assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=reverse-exit-flight-1'));
+ assert.ok(map.includes('rev=credits-2')&&camera.includes('rev=reverse-exit-flight-1'));
  assert.ok(html.includes('radar83.css?v=9.9.5&rev=x-force-remove-2'));
  assert.ok(map.includes('rev=credits-2'));
 });
