@@ -1,7 +1,7 @@
 import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite,loadJourneyFavorites,saveJourneyFavorites,toggleJourneyFavorite,isJourneyFavorite,addTrackPoint,getTrackPoints,clearTrack,loadDismissedAlerts,saveDismissedAlerts,dismissAlert} from './app-state.js?v=9.9.5';
 import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.9.5';
 import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.9.5';
-import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.9.5';
+import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.9.5&rev=indexed-fusion-1';
 import {enrichTrainPlatform} from './train-platforms.js?v=9.9.5';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, delayPresentation,
@@ -712,8 +712,15 @@ function refreshMarkers(){
   for(const [key,v] of state.vehicles){
     if(!visible(v)||!fusion.keys.has(key))continue;
     active.add(key);
+    const moving=Boolean(motionDuration(v,null));
+    const shapeSet=state.shapes[v.source]?.shapes||null;
+    const candidateKey=Array.isArray(v.routeShapeCandidates)?v.routeShapeCandidates.join('|'):'';
+    const projectionUnchanged=entry && entry.rawLat===v.lat && entry.rawLon===v.lon && entry.rawBearing===v.bearing &&
+      entry.rawShapeId===v.shapeId && entry.rawRouteShapeId===v.routeShapeId && entry.rawCandidates===candidateKey &&
+      entry.rawShapeSet===shapeSet && entry.rawMoving===moving;
     const rawTarget={lat:v.lat,lon:v.lon,path:null,along:null};
-    const target=motionDuration(v,null)?mapTarget(v):rawTarget;
+    const target=projectionUnchanged?entry.target:(moving?mapTarget(v):rawTarget);
+    if(entry&&!projectionUnchanged){entry.rawLat=v.lat;entry.rawLon=v.lon;entry.rawBearing=v.bearing;entry.rawShapeId=v.shapeId;entry.rawRouteShapeId=v.routeShapeId;entry.rawCandidates=candidateKey;entry.rawShapeSet=shapeSet;entry.rawMoving=moving;}
     const aged=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
     const lineKey=v.routeId?(v.source+':'+v.routeId):'';
     const iconKey=`${v.kind}|${v.name}|${state.selectedKey===key}|${aged}|${v.positionType||''}|${lineKey}`;
@@ -721,7 +728,7 @@ function refreshMarkers(){
     if(!entry){
       const marker=L.marker([target.lat,target.lon],{icon:markerIcon(v),keyboard:true,title:v.name}).addTo(state.layer);
       marker.on('click',()=>selectVehicle(key));
-      entry={marker,iconKey,target,feedTimestamp:v.timestamp};state.markers.set(key,entry);
+      entry={marker,iconKey,target,feedTimestamp:v.timestamp,rawLat:v.lat,rawLon:v.lon,rawBearing:v.bearing,rawShapeId:v.shapeId,rawRouteShapeId:v.routeShapeId,rawCandidates:candidateKey,rawShapeSet:shapeSet,rawMoving:moving};state.markers.set(key,entry);
       // First bus position is a real feed observation, not a predicted position.
       if(v.kind==='bus' && !v.stale && v.timestamp && Date.now()/1000-v.timestamp<=300 &&
          target.path && Number.isFinite(target.along)){
