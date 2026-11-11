@@ -107,7 +107,7 @@ test('3D X plays the camera flight backwards before fading out', () => {
 test('vehicle details collapse on deeper sheet scroll', () => {
   const css = get('radar94-cleanup.css');
   const js = get('radar94-cleanup.js');
-  assert.match(js, /scrollTop>18/);
+  assert.match(js, /scrollTop>24/);
   assert.match(css, /sr94-sheet-scrolled #details/);
   assert.match(css, /sr94-sheet-scrolled #modelCard/);
   assert.match(js, /content\?\.classList\.toggle\('sr94-sheet-scrolled'/);
