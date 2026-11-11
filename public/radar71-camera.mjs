@@ -1,4 +1,4 @@
-import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=x-force-remove-2&fix=ist-soll-exit-8';
+import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=visible-flight-1';
 /* Radar 7.1 â Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate

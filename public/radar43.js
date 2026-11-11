@@ -8,6 +8,7 @@ import {groupNearby,resolveClusterCollisions} from './radar44-logic.mjs?v=9.9.5&
  const $=id=>document.getElementById(id);
  let bridge=null,map=null,clusters=null,stopsLayer=null,stations=[],pinsVisible=false,started=false;
  let clusterTimer=null,pinTimer=null,lastSummary='',onlyReal=false,cleanMap=true,priorityKey=null;
+  const clusteredKeys=new Set(),collisionLabelKeys=new Set();
  try{cleanMap=localStorage.getItem('sr43-clean-map')!=='off';}catch{}
  function make(tag,cls,label){const el=document.createElement(tag);if(cls)el.className=cls;if(label!=null)el.textContent=label;return el;}
  function markTheme(){document.documentElement.classList.toggle('sr43-clean-map',cleanMap);}
@@ -17,8 +18,11 @@ import {groupNearby,resolveClusterCollisions} from './radar44-logic.mjs?v=9.9.5&
  function renderClusters(){
   if(!map||!clusters)return;
   clusters.clearLayers();
-  // Reset previously hidden marker DOM on every zoom, filter and source update.
-  for(const entry of bridge.state.markers.values()){const element=entry.marker.getElement();element?.classList.remove('sr43-in-cluster');element?.querySelector('.marker-label')?.classList.remove('sr65-label-collision');}
+   // Reset only pins hidden by the previous pass, not every vehicle DOM node.
+   for(const key of clusteredKeys){const element=bridge.state.markers.get(key)?.marker?.getElement();element?.classList.remove('sr43-in-cluster');}
+   clusteredKeys.clear();
+   for(const key of collisionLabelKeys){bridge.state.markers.get(key)?.marker?.getElement()?.querySelector('.marker-label')?.classList.remove('sr65-label-collision');}
+   collisionLabelKeys.clear();
   const zoom=map.getZoom();
   // Labels thin out before clusters appear, without hiding the followed vehicle.
   document.documentElement.classList.toggle('sr431-midwide',zoom<=13);
@@ -33,12 +37,12 @@ import {groupNearby,resolveClusterCollisions} from './radar44-logic.mjs?v=9.9.5&
     label.classList.remove('sr65-label-collision');
     if(key===activeKey)continue;
     const box=label.getBoundingClientRect();if(!box.width||!box.height||box.right<0||box.left>window.innerWidth||box.bottom<0||box.top>window.innerHeight)continue;
-    if(boxes.some(b=>box.left<b.right+5&&box.right>b.left-5&&box.top<b.bottom+4&&box.bottom>b.top-4))label.classList.add('sr65-label-collision');
+    if(boxes.some(b=>box.left<b.right+5&&box.right>b.left-5&&box.top<b.bottom+4&&box.bottom>b.top-4)){label.classList.add('sr65-label-collision');collisionLabelKeys.add(key);}
     else boxes.push(box);
    }
    return;
   }
-  const bounds=map.getBounds();
+  const bounds=map.getBounds().pad(.72);
   const points=[];
   const active=bridge.followAPI?.getKey?.() || bridge.state.selectedKey;
   if(priorityKey && priorityKey!==active)
@@ -57,9 +61,11 @@ import {groupNearby,resolveClusterCollisions} from './radar44-logic.mjs?v=9.9.5&
   const clusterRadius=zoom<=6?76:zoom<=7?68:zoom<=8?60:zoom<=9?52:44;
   const grouped=groupNearby(points,clusterRadius,active,zoom>=9?'kind':'all');
   const compact=window.innerWidth<750,iconWidth=compact?58:78,size=map.getSize?.()||{x:window.innerWidth,y:window.innerHeight};
-  const placed=resolveClusterCollisions(grouped.clusters,{width:size.x,height:size.y},{markerWidth:iconWidth,markerHeight:34,gap:8,padding:iconWidth/2+8});
+   const bufferX=Math.round(size.x*.72),bufferY=Math.round(size.y*.72);
+   const buffered=grouped.clusters.map(group=>({...group,x:group.x+bufferX,y:group.y+bufferY}));
+   const placed=resolveClusterCollisions(buffered,{width:size.x+bufferX*2,height:size.y+bufferY*2},{markerWidth:iconWidth,markerHeight:34,gap:8,padding:iconWidth/2+8});
   for(const group of placed){
-   const pt=map.containerPointToLatLng([group.x,group.y]);
+   const pt=map.containerPointToLatLng([group.x-bufferX,group.y-bufferY]);
    const dominant=group.trains&&!group.buses?'train':group.buses&&!group.trains?'bus':'mixed';
    const typeIcon=group.trains&&group.buses?'🚆🚌':group.trains?'🚆':'🚌';
    const detail=group.trains&&group.buses?'Gemischt':group.trains?'Züge':'Busse';
@@ -80,7 +86,7 @@ import {groupNearby,resolveClusterCollisions} from './radar44-logic.mjs?v=9.9.5&
       map.flyTo(pt,Math.min(16,zoom+3),{animate:true,duration:.55});
      });
    marker.addTo(clusters);
-   for(const key of group.keys)bridge.state.markers.get(key)?.marker.getElement()?.classList.add('sr43-in-cluster');
+    for(const key of group.keys){const marker=bridge.state.markers.get(key)?.marker;marker?.getElement()?.classList.add('sr43-in-cluster');clusteredKeys.add(key);}
   }
  }
  function updateMini(){

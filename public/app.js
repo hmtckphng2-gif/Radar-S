@@ -111,7 +111,7 @@ function updateHealthPanel(){
   const vehicleGood=POSITION_SOURCES.filter(s=>state.statuses[s]==='ok').length;
   const g=SOURCES.filter(indexReady).length;
   const now=Date.now();
-  const lastUpd=state.fetchedAt?new Date(state.fetchedAt).toLocaleTimeString(getLocale()==='it'?'it-IT':'de-IT',{hour:'2-digit',minute:'2-digit'}):'–';
+  const lastUpd=state.fetchedAt?new Date(state.fetchedAt).toLocaleTimeString(getLocale()==='it'?'it-IT':'de-IT',{hour:'2-digit',minute:'2-digit'}):'Noch keine Daten';
   $('healthFeeds').textContent=good+'/'+ENDPOINTS.length;
   $('healthFeeds').className='health-val '+(good===ENDPOINTS.length?'ok':good>0?'warn':'bad');
   $('healthVehicles').textContent=state.vehicles.size+' ('+vehicleGood+' '+t('misc.live')+')';

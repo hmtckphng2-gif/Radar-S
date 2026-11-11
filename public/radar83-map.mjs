@@ -297,7 +297,7 @@ export class Radar83Cinematic {
    const totalDuration=Number(target.duration)||Number(duration)||4300;
    const continuedTarget={...target,duration:totalDuration};
    this.flight={start:flightStart,target:continuedTarget};
-   map.jumpTo(flightStart);this.replay();
+   map.jumpTo(flightStart);
    // Gestures can interrupt the flight immediately; user control wins.
    map.on('dragstart',()=>this.interrupt());
    map.getCanvas().addEventListener('touchstart',()=>this.interrupt(),{passive:true});
@@ -324,10 +324,11 @@ export class Radar83Cinematic {
    await waitFor3DModel(map,this.layer);
    if(seq!==this.sequence)return false;
    this.info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
-   // Keep the 2D map untouched and reveal the positioned 3D sceneânever replay.
+    // Reveal the loaded 3D scene, then run the camera flight in view.
    this.leaflet.stop();
    map.resize();map.triggerRepaint();
    this.overlay.classList.add('sr83-ready');
+   this.replay();
    this.ready=true;
    return true;
   }catch(error){
