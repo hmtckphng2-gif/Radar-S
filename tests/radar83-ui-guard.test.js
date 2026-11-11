@@ -100,7 +100,8 @@ test('3D X plays the camera flight backwards before fading out', () => {
   const app = get('app.js');
   assert.match(map, /closeAnimated\(\)/);
   assert.match(map, /this\.flight=\{origin:\{\.\.\.initialCamera/);
-  assert.match(map, /map\.easeTo\(\{\.\.\.flight\.origin,duration/);
+  assert.match(map, /const exitCamera=\{\.\.\.flight\.start,center:\[\.\.\.flight\.target\.center\]\}/, 'exit must keep the selected vehicle centered');
+  assert.match(map, /map\.easeTo\(\{\.\.\.exitCamera,duration/);
   assert.match(map, /sr83-closing/);
   assert.match(camera, /closeAnimated\?\.\(\)/);
   assert.match(app, /if\(!cinematicExit\)\{/);
