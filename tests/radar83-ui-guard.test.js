@@ -106,13 +106,13 @@ test('3D X plays the camera flight backwards before fading out', () => {
   assert.match(app, /if\(!cinematicExit\)\{/);
 });
 
-test('vehicle details collapse on deeper sheet scroll', () => {
+test('vehicle focus and details collapse using the real radar55 sheet scroll state', () => {
   const css = get('radar94-cleanup.css');
-  const js = get('radar94-cleanup.js');
-  assert.match(js, /scrollTop>24/);
-  assert.match(css, /sr94-sheet-scrolled #details/);
-  assert.match(css, /sr94-sheet-scrolled #modelCard/);
-  assert.match(css, /sr94-sheet-scrolled \.sr83-info-card/);
-  assert.match(css, /sr94-sheet-scrolled \.sr83-sources/);
-  assert.match(js, /content\?\.classList\.toggle\('sr94-sheet-scrolled'/);
+  const scroll = get('radar55.js');
+  assert.match(scroll, /const next=collapsed\?top>10:top>42/);
+  assert.match(scroll, /sheet\.classList\.toggle\('sr55-scrolled',collapsed\)/);
+  assert.match(css, /#sheet\.sr55-scrolled #details/);
+  assert.match(css, /#sheet\.sr55-scrolled #modelCard/);
+  assert.match(css, /#sheet\.sr55-scrolled \.sr83-info-card/);
+  assert.match(css, /#sheet\.sr55-scrolled \.sr83-sources/);
 });
