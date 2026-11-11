@@ -292,8 +292,10 @@ export class Radar83Cinematic {
    const liveCenter=this.leaflet.getCenter?.(),liveZoom=this.leaflet.getZoom?.();
    const handoff=handoff3DCamera(liveCenter,liveZoom);
    if(!handoff)throw Error('Live camera handoff position invalid');
-   const flightStart=approach3DCamera(handoff,target,.75);
-   if(!flightStart)throw Error('3D approach start position invalid');
+   const approachStart=approach3DCamera(handoff,target,.75);
+   if(!approachStart)throw Error('3D approach start position invalid');
+   // Keep the selected vehicle centered for the entire cinematic.
+   const flightStart={...approachStart,center:[...target.center]};
    const totalDuration=Number(target.duration)||Number(duration)||4300;
    const continuedTarget={...target,duration:totalDuration};
    this.flight={start:flightStart,target:continuedTarget};
