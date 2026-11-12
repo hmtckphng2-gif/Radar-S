@@ -27,3 +27,7 @@ test('chat history is memory-only and API requests bypass browser cache',()=>{
 test('main dock stays above chat when keyboard is closed and hides smoothly while typing',()=>{
  const ui=read('radar-assistant-ui.mjs'),css=read('radar-assistant.css');assert.match(ui,/window\.innerHeight-vv\.height>120/);assert.match(ui,/sr-chat-keyboard-open/);assert.match(ui,/input\.addEventListener\('blur'/);assert.match(css,/sr-chat-open:not\(\.sr-chat-keyboard-open\) #sr70Dock/);assert.match(css,/sr-chat-open\.sr-chat-keyboard-open #sr70Dock/);assert.match(css,/padding-bottom:82px/);assert.match(css,/sr-chat-keyboard-open \.sr-chat-main\{padding-bottom:0/);
 });
+
+test('opening the assistant selects Chat in the Horizon dock and closing restores the previous tab',()=>{
+ const ui=read('radar-assistant-ui.mjs'),home=read('radar70-redesign.mjs');assert.match(ui,/previousDockPage=active\?\.dataset\.page\|\|'home'/);assert.match(ui,/setDockActive\?\.\('chat'\)/);assert.match(ui,/setDockActive\?\.\(previousDockPage\)/);assert.match(home,/setDockActive:\(id\)=>/);
+});

@@ -199,7 +199,7 @@ function init(){
  if(legacyStartup){nativeTab(first);if(first==='departures')for(const b of dock?.querySelectorAll('[data-page]')||[])b.setAttribute('aria-current',b.dataset.page==='departures'?'page':'false');}
  window.addEventListener('hashchange',()=>{const p=location.hash.slice(1);if(['home','map','journey','more'].includes(p)&&p!==page)navigate(p,true)});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!home.hidden){if(pane==='detail')drawResults(selected.from,selected.to,'');else if(pane==='results')drawSearch()}});
- window.SuedtirolRadar70={openHome:()=>navigate('home'),openJourney:()=>navigate('journey'),navigate,search:searchJourneys};
+ window.SuedtirolRadar70={openHome:()=>navigate('home'),openJourney:()=>navigate('journey'),navigate,setDockActive:(id)=>{for(const b of dock.querySelectorAll('[data-page]'))b.setAttribute('aria-current',b.dataset.page===id?'page':'false')},search:searchJourneys};
  return true;
 }
 let tries=0;const timer=setInterval(()=>{if(init()||++tries>=100)clearInterval(timer)},250);document.addEventListener('sr37:ready',()=>{if(init())clearInterval(timer)});

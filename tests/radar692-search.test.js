@@ -64,3 +64,7 @@ test('the Home redesign dock keeps Chat centered between map and departures',()=
  assert.ok(home.includes("[['home','Home','home'],['map','Karte','map'],['chat','Chat','chat'],['departures','Abfahrten','train'],['journey','Reisen','route']]"));
  assert.ok(home.includes("window.SuedtirolRadarAssistant?.open?.();return"));
 });
+
+test('Abfahrten keeps the live radar50 board but uses the Horizon graphite and silver design',()=>{
+ const css=read('radar70.css'),legacy=read('radar50.js');assert.match(css,/Horizon 7\.0 skin for the existing live Abfahrten data view/);assert.match(css,/#sr50DeparturesView\.active/);assert.match(css,/sr51-departure-row/);assert.match(legacy,/buildDepartureRows\(chosen,state\?\.indexes,state\?\.details,state\?\.updates,state\?\.statuses/);assert.match(legacy,/mergeStationDepartures/);
+});
