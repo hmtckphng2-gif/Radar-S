@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=name=>readFileSync(new URL('../public/'+name,import.meta.url),'utf8');
 test('chat starts with map-back navigation, one new-chat action and four drawer destinations',()=>{
- const ui=read('radar-assistant-ui.mjs');for(const id of ['chat','map','departures','favorites'])assert.ok(ui.includes("['"+id+"'" )||ui.includes("['"+id+","));assert.match(ui,/Zurück zur Karte/);assert.match(ui,/Neuer Chat/);assert.doesNotMatch(ui,/sr-chat-menu/);
+ const ui=read('radar-assistant-ui.mjs');for(const id of ['chat','map','departures','favorites'])assert.ok(ui.includes("['"+id+"'" )||ui.includes("['"+id+","));assert.match(ui,/Zurück zur Karte/);assert.match(ui,/Neuer Chat/);assert.match(ui,/sr-chat-menu/);assert.match(ui,/aria-label','AI-Menü öffnen/);assert.match(ui,/setDrawer\(true\)/);assert.match(ui,/sidebar-open/);assert.match(ui,/drawerOpen\)setDrawer\(false\)/);
 });
 test('assistant health check requires ready status and reads live feed freshness',()=>{
  const ui=read('radar-assistant-ui.mjs');assert.match(ui,/\/api\/assistant\/status/);assert.match(ui,/health\.enabled===true&&health\.status==='ready'/);assert.match(ui,/\/api\/v1\/diagnostics/);assert.match(ui,/Live-Daten geprüft/);
