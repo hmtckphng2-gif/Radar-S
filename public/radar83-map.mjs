@@ -374,15 +374,16 @@ export class Radar83Cinematic {
   if(this.closing)return true;
   this.closing=true;
   const map=this.map,flight=this.flight;
-  // Reverse the visible opening path: pull straight up from the vehicle.
-  // flight.origin is the old 2D map center; returning to it creates a large
-  // sideways sweep. flight.start keeps the vehicle centered and only unwinds
-  // zoom, pitch and the small bearing change from the opening animation.
-  const duration=2100,fadeDuration=320;
-  const exitCamera={...flight.start,center:[...flight.target.center]};
+  // Exit like the opening flight in reverse: rise vertically above the
+  // selected vehicle. Keep pitch and bearing fixed; changing either while
+  // zooming out makes the horizon/buildings visibly snap around mid-flight.
+  // The Leaflet map underneath has not moved, so it must not be re-centered
+  // or re-zoomed during teardown.
+  const duration=2100,fadeDuration=460;
+  const exitCamera={...flight.target,center:[...flight.target.center],zoom:flight.origin.zoom};
   this.flying=true;clearTimeout(this.flightTimer);
   map.stop();
-  map.easeTo({...exitCamera,duration,easing:t=>{const x=Math.max(0,Math.min(1,t));return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},essential:true});
+  map.easeTo({...exitCamera,duration,easing:t=>{const x=Math.max(0,Math.min(1,t));return x*x*x*(x*(x*6-15)+10)},essential:true});
   clearTimeout(this.closeTimer);
   this.closeTimer=setTimeout(()=>{
    this.overlay?.classList.add('sr83-closing');
@@ -392,12 +393,10 @@ export class Radar83Cinematic {
  }
  close({sync=true}={}){
   const oldMap=this.map;
-  let returnView=null;
-  if(sync&&oldMap&&this.ready){
-   try{const center=oldMap.getCenter(),zoom=oldMap.getZoom();// MapLibre's 512px vector tiles are one zoom level below Leaflet's 256px tiles.
-     // Restore the equivalent 2D scale instead of causing a visible zoom snap.
-     returnView={center:[center.lat,center.lng],zoom:Math.min(19.4,Math.max(4,zoom+1))};}catch{}
-  }
+  // The Leaflet map stays parked at its original view underneath the 3D
+  // overlay. Do not copy the final MapLibre camera back into Leaflet: that
+  // creates a second, unrelated camera jump as the overlay disappears.
+  const returnView=null;
   // Invalidate pending async MapLibre/Three callbacks before tearing down the DOM.
   this.sequence++;this.ready=false;this.active=false;this.closing=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);clearTimeout(this.closeTimer);
   // Remove the 3D viewport synchronously. Never rely on transitionend: on iOS

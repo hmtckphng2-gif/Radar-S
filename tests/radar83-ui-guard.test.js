@@ -100,7 +100,9 @@ test('3D X plays the camera flight backwards before fading out', () => {
   const app = get('app.js');
   assert.match(map, /closeAnimated\(\)/);
   assert.match(map, /this\.flight=\{origin:\{\.\.\.initialCamera/);
-  assert.match(map, /const exitCamera=\{\.\.\.flight\.start,center:\[\.\.\.flight\.target\.center\]\}/, 'exit must keep the selected vehicle centered');
+  assert.match(map, /const exitCamera=\{\.\.\.flight\.target,center:\[\.\.\.flight\.target\.center\],zoom:flight\.origin\.zoom\}/, 'exit must zoom vertically above the vehicle at the original 2D scale');
+  assert.match(map, /const returnView=null/, 'the untouched Leaflet camera must not be overwritten during teardown');
+  assert.match(map, /return x\*x\*x\*\(x\*\(x\*6-15\)\+10\)/, 'exit uses the same smooth quintic easing as the opening flight');
   assert.match(map, /map\.easeTo\(\{\.\.\.exitCamera,duration/);
   assert.match(map, /sr83-closing/);
   assert.match(camera, /closeAnimated\?\.\(\)/);
