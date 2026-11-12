@@ -59,9 +59,8 @@ test('connection search uses all grouped stop IDs and has bottom-safe scrolling'
  assert.ok(css.includes('max-height:min(42dvh,320px)'));
 });
 
-test('the function page is named Verbindungen in every active bottom navigation',()=>{
- const native=read('radar50.js'),compact=read('radar60.js'),home=read('radar70-redesign.mjs');
- assert.ok(native.includes("['stats','↔','Verbindungen']"));
- assert.ok(compact.includes("['stats','Verbindungen']"));
- assert.ok(home.includes("['stats','Verbindungen','route']"));
+test('the Home redesign dock keeps Chat centered between map and departures',()=>{
+ const home=read('radar70-redesign.mjs');
+ assert.ok(home.includes("[['home','Home','home'],['map','Karte','map'],['chat','Chat','chat'],['departures','Abfahrten','train'],['journey','Reisen','route']]"));
+ assert.ok(home.includes("window.SuedtirolRadarAssistant?.open?.();return"));
 });
