@@ -28,7 +28,7 @@ function navigate(to,hashChange=false){
  if(to==='journey'){mode='journey';if(previous!==to||pane==='search')drawSearch()}
  else if(to==='home'&&(previous!==to||pane!=='search'))drawSearch();
  document.body.classList.toggle('sr70-home-active',!home.hidden);document.body.classList.toggle('sr70-more-active',!more.hidden);
- for(const b of dock.querySelectorAll('[data-page]'))b.setAttribute('aria-current',b.dataset.page===to?'page':'false');
+ const dockPage=document.body.classList.contains('sr-chat-open')?'chat':to;for(const b of dock.querySelectorAll('[data-page]'))b.setAttribute('aria-current',b.dataset.page===dockPage?'page':'false');
  if(!hashChange)history.replaceState(null,'','#'+to);
  if(to==='map')requestAnimationFrame(()=>bridge.state.map?.invalidateSize?.({pan:false}));
 }
