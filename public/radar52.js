@@ -76,7 +76,7 @@ function renderDelay(){
  if(!delayCard||!active())return;delayCard.replaceChildren();
  delayCard.append(el('div','sr52-card-title','▥ Verspätungsverlauf'));
  const v=current(),key=v.source+':'+v.tripId+':'+(v.tripStartDate||''),points=delayHistory.get(key)||[];
- if(!points.length){delayCard.append(el('p','sr52-muted','Noch keine frischen, passenden GTFS-RT-Verspätungswerte empfangen.'));return}
+ if(!points.length){delayCard.append(el('p','sr52-muted','Noch keine aktuellen, passenden Verspätungsmeldungen empfangen.'));return}
  const last=points.at(-1);delayCard.append(el('strong','sr52-delay-value',(last.min>0?'+':'')+last.min+' Min.'));
  if(points.length<2){delayCard.append(el('p','sr52-muted','Erster Messwert gespeichert. Die Kurve erscheint nach einer weiteren aktualisierten Meldung.'));return}
  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 320 115');svg.setAttribute('role','img');svg.setAttribute('aria-label','Tatsächlich empfangene Verspätungsmeldungen im Verlauf dieser Sitzung');

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {samePhysicalTrip} from '../public/radar64-logic.mjs';
+import {samePhysicalTrip,selectRepresentatives} from '../public/radar64-logic.mjs';
 
 function vehicle(overrides = {}) {
   return {
@@ -60,4 +60,23 @@ test('samePhysicalTrip: stale vehicles are not matched', () => {
   const a = vehicle({ tripId: 'trip-a', timestamp: Date.now() / 1000 - 300, stale: true });
   const b = vehicle({ tripId: 'trip-a', timestamp: Date.now() / 1000, stale: false });
   assert.equal(samePhysicalTrip(a, b), false, 'Stale vehicle must not match');
+});
+
+
+test('selectRepresentatives keeps one freshest representative for exact duplicate trips', () => {
+  const now=Date.now()/1000;
+  const a=vehicle({key:'sta:trip-shared',source:'sta',tripId:'trip-shared',timestamp:now-2,lat:46.5,lon:11.35});
+  const b=vehicle({key:'trentino:trip-shared',source:'trentino',tripId:'trip-shared',timestamp:now,lat:46.5001,lon:11.3501});
+  const result=selectRepresentatives([a,b]);
+  assert.deepEqual([...result.keys],['trentino:trip-shared']);
+  assert.equal(result.duplicates,1);
+});
+
+test('selectRepresentatives retains separate services even when fleet IDs or routes look similar', () => {
+  const now=Date.now()/1000;
+  const a=vehicle({key:'sta:trip-a',source:'sta',tripId:'trip-a',timestamp:now,lat:46.5,lon:11.35});
+  const b=vehicle({key:'trentino:trip-b',source:'trentino',tripId:'trip-b',timestamp:now,lat:46.5001,lon:11.3501});
+  const result=selectRepresentatives([a,b]);
+  assert.equal(result.keys.size,2);
+  assert.equal(result.duplicates,0);
 });

@@ -12,13 +12,13 @@
 .sr51-board-controls{display:flex;flex-wrap:wrap;gap:8px}.sr51-board-summary{color:#8db6d7;font-size:12px;font-weight:650}
 .sr51-departure-list{display:flex;flex-direction:column;gap:8px;max-height:min(53dvh,590px);overflow-y:auto;overscroll-behavior:contain}
 .sr51-departure-row{padding:11px 12px;border-radius:12px;background:#182b44;border:1px solid #344b66;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.sr51-departure-main{display:flex;flex-direction:column;gap:5px;min-width:0}.sr51-departure-main strong{font-size:13px;line-height:1.35;overflow-wrap:anywhere;color:#ecf6ff}.sr51-departure-main small{font-size:11px;color:#6bd6ba}
+.sr51-departure-main{display:flex;flex-direction:column;gap:5px;min-width:0}.sr51-departure-main strong{font-size:13px;line-height:1.35;overflow-wrap:anywhere;color:#ecf6ff}.sr51-departure-main small{font-size:11px;color:#c4ccd5}
 .sr51-departure-time{display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}.sr51-departure-time strong{font-size:16px;font-variant-numeric:tabular-nums}.sr51-departure-time small{font-size:10px;color:#9badc8}
 .sr51-cancelled{opacity:.65}.sr51-cancelled .sr51-departure-main small{color:#ff9e9e}
-.sr50-badge.sr51-delay-late{background:#63361a;color:#ffcb83}.sr50-badge.sr51-delay-zero{background:#18544a;color:#91ffdc}.sr50-badge.sr51-delay-early{background:#1d416a;color:#99cfff}
+.sr50-badge.sr51-delay-late{background:#63361a;color:#ffcb83}.sr50-badge.sr51-delay-zero{background:#18544a;color:#6fae86}.sr50-badge.sr51-delay-early{background:#1d416a;color:#99cfff}
 /* Route label badges: only printed for verified, recent matched TripUpdates. */
 .marker-label .sr51-map-delay{display:inline-block;margin-left:4px;border-radius:5px;padding:1px 3px;background:#274e6a;color:#e8f7ff;font-size:9px;font-weight:800}
-.marker-label .sr51-map-delay.late{background:#94532a;color:#fff1bc}.marker-label .sr51-map-delay.early{background:#1b567e;color:#d1f1ff}.marker-label .sr51-map-delay.ontime{background:#13644c;color:#b6ffda}
+.marker-label .sr51-map-delay.late{background:#94532a;color:#fff1bc}.marker-label .sr51-map-delay.early{background:#1b567e;color:#d1f1ff}.marker-label .sr51-map-delay.ontime{background:#13644c;color:#6fae86}
 #sr50MapTab .map-actions>button:not(#refreshBtn):not(#fitBtn):not(#sr51MoreBtn){display:none!important}
 #sr50MapTab #sr51MoreBtn{font-size:22px;line-height:1}
 #sr50MapTab .info-banner.sr51-compact-notice[hidden]{display:none!important}
@@ -29,7 +29,7 @@
 .sr51-menu-item:active{background:#29466a}
 .sr51-train-compare{padding:13px;border:1px solid #3a5776;border-radius:14px;background:#142b42;margin:12px 0;display:flex;flex-direction:column;gap:6px}
 .sr51-train-compare[hidden]{display:none!important}.sr51-train-title{font-size:14px;font-weight:760;color:#eaf6ff}
-.sr51-train-compare svg{width:100%;height:76px;display:block}.sr51-cmp-line{color:#a0d7dc;font-size:11px;line-height:1.4}
+.sr51-train-compare svg{width:100%;height:76px;display:block}.sr51-cmp-line{display:flex;flex-wrap:wrap;gap:4px 12px;color:#c4ccd5;font-size:11px;line-height:1.4}.sr51-legend-feed{color:#c4ccd5}.sr51-legend-soll{color:#d6a75f}
 .sr51-gap{color:#f2d395;font-size:13px}.sr51-quiet{color:#9fb8d0;font-size:11px;line-height:1.48;margin:2px 0}.sr51-caution{color:#f3c081;font-size:10.5px;line-height:1.5}
 .leaflet-tooltip.sr51-map-tooltip{border:1px solid #6795b5;border-radius:6px;background:#142944ec;color:#f3f9ff;box-shadow:0 2px 10px #0008;font:700 10px system-ui;padding:2px 6px}
 /* Cleaner mobile hierarchy. Unneeded diagnostics are in the ⋯ menu. */
@@ -57,3 +57,7 @@
 }
 
 #sr50DepResults[hidden]{display:none!important}.sr51-board{scroll-margin-top:90px}
+
+.sr51-explanation{display:block!important;margin:8px 0 0;color:#aeb8c4;font-size:10px;line-height:1.5;overflow-wrap:anywhere}
+
+.sr51-unknown,.sr51-caption{display:block!important;margin:7px 0;color:#aeb8c4;font-size:10px;line-height:1.45;overflow-wrap:anywhere}

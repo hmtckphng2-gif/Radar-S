@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from '../public/radar71-camera-logic.mjs';
 const NOW=1760900000000;
 test('camera travel adapts to remaining zoom and distance',()=>{
@@ -37,4 +38,12 @@ test('rotation uses the shortest heading turn',()=>{
  assert.equal(shortestRotation(350,10),20);
  assert.equal(shortestRotation(10,350),-20);
  assert.equal(shortestRotation(90,180),90);
+});
+
+test('first vehicle tap survives a brief inactive-map frame after rapid tab switching',()=>{
+ const source=readFileSync(new URL('../public/radar71-camera.mjs',import.meta.url),'utf8');
+ assert.match(source,/visibilityRetries\+\+<8/);
+ assert.match(source,/requestAnimationFrame\(begin\)/);
+ assert.match(source,/const request=\+\+selectionRequest/);
+ assert.match(source,/addEventListener\('sr37:sheet-closed',\(\)=>cancel\(\{restore:true\}\)\)/);
 });

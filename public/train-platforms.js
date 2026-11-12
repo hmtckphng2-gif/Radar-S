@@ -14,6 +14,7 @@ function loadURL(key,url){
  });});cache.set(key,item);pump();return item.promise||Promise.resolve(item.data);
 }
 function paint(element,p){
+ element.hidden=false;
  element.textContent='Gleis '+p.current+(p.changed?' · geändert':p.live?' · gemeldet':' · Plan')+' · '+(p.source==='RFI'?'RFI':'Trenitalia');
  element.title=p.source+(p.changed?' · geplant: Gleis '+p.planned:'');
  element.classList.toggle('sr54-platform-changed',p.changed);element.style.color=p.changed?'#ffc37d':'';

@@ -2,7 +2,8 @@
  * Additive only: original GTFS feeds, MapLibre/Leaflet synchronization and marker movement stay untouched.
  */
 import {busDelayLabel,trainScheduledPosition} from './radar51-logic.mjs?v=9.9.5';
-import {timetablePositionTiming,timeDifferenceLabel} from './radar74-time.mjs?v=9.9.5';
+import {timetablePositionTiming,timeDifferenceLabel} from './radar74-time.mjs?v=9.9.5&rev=details-1';
+import {formatStationName} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 (function(){
 'use strict';
 let bridge=null,started=false,comparisonLayer=null,card=null,tools=null,moreBtn=null,noticeExpanded=false,refreshPending=false;
@@ -47,7 +48,7 @@ function updateBusBadges(){
   if(!badge){badge=node('span','sr51-map-delay');label.append(badge)}
   badge.className='sr51-map-delay '+(d.minutes>0?'late':d.minutes<0?'early':'ontime');
   badge.textContent=d.label;
-  badge.title='GTFS-RT '+(d.basis==='halt'?'am zugeordneten Halt':'Fahrtwert')+' · Aktualisierung unter 2 Minuten';
+  badge.title='Echtzeitmeldung '+(d.basis==='halt'?'am zugeordneten Halt':'für die ganze Fahrt')+' · Aktualisierung unter 2 Minuten';
  }
 }
 function addCompareVisual(){
@@ -69,7 +70,7 @@ function progressGraphic(value){
   svg.append(mk('circle',{cx:String(34+f/100*272),cy:'37',r:'9',fill:col,stroke:'#e8f3ff','stroke-width':'2'}));
   svg.append(mk('text',{x:String(34+f/100*272),y:String(y),'text-anchor':'middle',fill:col,'font-size':'11','font-weight':'700'},label));
  };
- marker(planned,20,'#e8bd72','SOLL');marker(actual,67,'#50e6c6','FEED');
+ marker(planned,20,'#d6a75f','SOLL');marker(actual,67,'#c4ccd5','FEED');
  return svg;
 }
 function renderComparison(){
@@ -80,11 +81,13 @@ function renderComparison(){
  card.hidden=false;
  const title=node('div','sr51-train-title','🚆 Position vs. Fahrplan');card.append(title);
  if(!calc){
-  card.append(node('p','sr51-quiet','Soll-Position nicht verfügbar: Es fehlen passende heutige GTFS-Haltezeiten, eine bestätigte Zugstrecke oder eine zuordenbare Feedposition. Es wird nichts geraten.'));
+  card.append(node('p','sr51-unknown','Abstand zum Fahrplanpunkt: unbekannt. Es fehlen passende Fahrplandaten oder eine zuordenbare Position; es wird nichts geschätzt.'));
   return;
  }
  const visual=progressGraphic({vehicle:v,calculated:calc});if(visual)card.append(visual);
- card.append(node('div','sr51-cmp-line','● Grün: gemeldete Feedposition · ● Gold: fahrplanmäßige Soll-Position (Modell)'));
+ const legend=node('div','sr51-cmp-line');
+  legend.append(node('span','sr51-legend-feed','● Feedposition'),node('span','sr51-legend-soll','● Soll laut Fahrplan'));
+  card.append(legend);
  const gap=calc.differenceKm;
  card.append(node('strong','sr51-gap',gap===0?'Positionen nahezu gleich':`Rund ${gap.toLocaleString('de-DE')} km ${calc.relative}`));
  const timing=timetablePositionTiming(calc,v);
@@ -92,13 +95,13 @@ function renderComparison(){
  estimate.append(node('strong','sr74-time-label',timeDifferenceLabel(timing)));
  estimate.append(node('small','sr74-time-caution',timing?.reason||'Ohne einen zugeordneten Abschnitt ist keine Modellrechnung möglich.'));
  card.append(estimate);
- card.append(node('small','sr51-quiet',`Zwischen ${calc.from} und ${calc.to}. Sollpunkt linear aus Haltezeiten berechnet; Fahrgeschwindigkeit unterwegs ist nicht exakt bekannt.`));
+ card.append(node('small','sr51-caption',`Zwischen ${formatStationName(calc.from)} und ${formatStationName(calc.to)}. Der Sollpunkt wird aus den Fahrplan-Haltezeiten abgeleitet.`));
  const estimated=/simuliert|geschätzt|interpoliert/i.test(v.positionType||'');
  card.append(node('small','sr51-caution',estimated?'Die gemeldete Position ist laut Datenquelle simuliert oder geschätzt – kein bestätigtes GPS.':'Eine Feedposition ist nicht automatisch nachweislich echtes GPS.'));
- card.append(node('p','sr51-quiet','Die modellierte Zeitabweichung ersetzt niemals die gemeldete GTFS-RT-Verspätung. Sie setzt vereinfachte gleichmäßige Fahrt zwischen zwei Haltestellen voraus.')); 
+ card.append(node('p','sr51-explanation','Die gemeldete Verspätung kommt aus einer Echtzeitmeldung. Der Kilometerabstand beschreibt nur, wie weit die Feedposition vom Fahrplanpunkt entfernt ist – daraus wird keine Minutenverspätung berechnet.'));
  if(!comparisonLayer || !window.L)return;
  const mk=(pos,color,text)=>L.circleMarker([pos.lat,pos.lon],{radius:7,color:'#f0f7ff',weight:2,fillColor:color,fillOpacity:1,interactive:false}).bindTooltip(text,{permanent:true,direction:'top',className:'sr51-map-tooltip'}).addTo(comparisonLayer);
- mk(calc.scheduled,'#e8b668','Soll laut Fahrplan');mk(calc.observed,'#50e6c6','Feedposition');
+ mk(calc.scheduled,'#d6a75f','Soll laut Fahrplan');mk(calc.observed,'#c4ccd5','Feedposition');
 }
 function refresh(){
  if(refreshPending)return;refreshPending=true;

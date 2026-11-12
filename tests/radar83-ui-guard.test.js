@@ -19,17 +19,17 @@ test('camera retains focus without rendering a fake floating vehicle model', () 
   assert.match(get('radar82.css'), /#map \.sr82-model-canvas\{display:none!important\}/);
 });
 test('the 3D toolbar is not covered by the fixed launch button', () => {
-  // .sr40-launch sits at z-index 1060 and would cover the "2D" button of the
+  // .sr40-launch sits at z-index 1060 and would cover the X exit of the
   // 3D view, which lives inside #sr83Viewport at z-index 835.
   const css = get('radar83.css');
   assert.match(css, /body\.sr83-cinematic \.sr40-launch\{[^}]*opacity:0/);
 });
 
 test('the 3D toolbar fits on a narrow phone', () => {
-  // 9.1: Auf 390 px Breite lag der "2D"-Knopf hinter dem Werkzeugknopf.
+  // Keep the remaining 3D action comfortably tappable on 390 px phones.
   const css = get('radar83.css');
   assert.match(css, /@media \(max-width: 430px\)/);
-  assert.match(css, /#map \.sr83-replay,#map \.sr83-back\{min-height:44px/);
+  assert.match(css, /#map \.sr83-replay\{min-height:44px/);
 });
 
 test('the 3D layer only asks for a new frame when something moved', () => {
@@ -69,4 +69,53 @@ test('a lost WebGL context ends the 3D view at once', () => {
   assert.match(src, /event\.preventDefault\(\)/, 'ohne preventDefault gibt es keine Wiederherstellung');
   assert.match(src, /this\.contextLostCancel\?\.\(\)/, 'das Warten muss sofort enden');
   assert.match(src, /removeEventListener\('webglcontextlost'/, 'der Listener muss wieder entfernt werden');
+});
+test('the existing vehicle-sheet X is the only 3D exit and returns to 2D', () => {
+  const map = get('radar83-map.mjs');
+  const camera = get('radar71-camera.mjs');
+  const app = get('app.js');
+  const html = get('index.html');
+  assert.doesNotMatch(map, /sr83-back|↩ 2D|Zur normalen 2D-Karte zurückkehren/);
+  assert.match(map, /toolbar\.append\(replay,exit\)/);
+  assert.match(map, /className='sr83-exit'/);
+  assert.match(map, /const closed=controller\?\.close3D\?\.\(\)/);
+  assert.ok(map.includes("document.querySelectorAll('#map .sr83-viewport').forEach(node=>node.remove())"));
+  assert.match(map, /animate:true,duration:560/);
+  assert.match(map, /const overlay=this\.overlay\|\|document\.getElementById\('sr83Viewport'\)/);
+  assert.match(camera, /close3D:.*if\(!opened\)return false/);
+  assert.match(camera, /addEventListener\('sr37:sheet-closed',\(\)=>cancel\(\{restore:true\}\)\)/);
+  assert.match(camera, /if\(!cinema3d\?\.closing\)cinema3d\?\.close\(\)/, 'sheet close must not abort the reverse 3D flight');
+  const closeStart=app.indexOf('function closeSheets(');
+  const closeEnd=app.indexOf('function badge(',closeStart);
+  const closeBlock=app.slice(closeStart,closeEnd);
+  assert.match(closeBlock, /window\.SuedtirolRadar71\?\.close3D\?\.\(\)/, 'vehicle-sheet X must close the 3D controller synchronously');
+  assert.ok(closeBlock.indexOf('close3D') < closeBlock.indexOf("classList.remove('open')"), '3D teardown must happen before the sheet disappears');
+  assert.match(closeBlock, /getElementById\('sr83Viewport'\)\?\.remove\(\)/);
+  assert.match(html, /id=\"closeSheet\"/);
+});
+
+test('3D X plays the camera flight backwards before fading out', () => {
+  const map = get('radar83-map.mjs');
+  const camera = get('radar71-camera.mjs');
+  const app = get('app.js');
+  assert.match(map, /closeAnimated\(\)/);
+  assert.match(map, /this\.flight=\{origin:\{\.\.\.initialCamera/);
+  assert.match(map, /const exitCamera=\{\.\.\.flight\.target,center:\[\.\.\.flight\.target\.center\],zoom:flight\.origin\.zoom\}/, 'exit must zoom vertically above the vehicle at the original 2D scale');
+  assert.match(map, /const returnView=null/, 'the untouched Leaflet camera must not be overwritten during teardown');
+  assert.match(map, /return x\*x\*x\*\(x\*\(x\*6-15\)\+10\)/, 'exit uses the same smooth quintic easing as the opening flight');
+  assert.match(map, /map\.easeTo\(\{\.\.\.exitCamera,duration/);
+  assert.match(map, /sr83-closing/);
+  assert.match(camera, /closeAnimated\?\.\(\)/);
+  assert.match(app, /if\(!cinematicExit\)\{/);
+});
+
+test('vehicle focus and details collapse using the real radar55 sheet scroll state', () => {
+  const css = get('radar94-cleanup.css');
+  const scroll = get('radar55.js');
+  assert.match(scroll, /const next=collapsed\?top>10:top>42/);
+  assert.match(scroll, /sheet\.classList\.toggle\('sr55-scrolled',collapsed\)/);
+  assert.match(css, /#sheet\.sr55-scrolled #details/);
+  assert.match(css, /#sheet\.sr55-scrolled #modelCard/);
+  assert.match(css, /#sheet\.sr55-scrolled \.sr83-info-card/);
+  assert.match(css, /#sheet\.sr55-scrolled \.sr83-sources/);
 });

@@ -15,11 +15,16 @@ function post(path='/api/ai/journey',origin=base){
   body:JSON.stringify(payload)});
 }
 const limiter=(success=true)=>({limit:async()=>({success})});
-test('preview Worker is isolated from D1, AI and production rate-limit bindings',()=>{
+test('preview Worker uses only its free AI and preview rate-limit bindings, with D1 disabled',()=>{
  const cfg=JSON.parse(readFileSync(new URL('../wrangler.jsonc',import.meta.url),'utf8'));
  assert.equal(cfg.name,'suedtirol-radar-preview');
- assert.equal(cfg.ai,undefined);
- assert.equal(cfg.ratelimits,undefined);
+ assert.deepEqual(cfg.ai,{binding:'AI'});
+ assert.equal(cfg.ratelimits.length,1);
+ assert.equal(cfg.ratelimits[0].name,'AI_JOURNEY_LIMITER');
+ assert.equal(cfg.ratelimits[0].simple.limit,5);
+ assert.equal(cfg.vars.ASSISTANT_ENABLED,'true');
+ assert.equal(cfg.vars.GROQ_FREE_TIER_ONLY,'true');
+ assert.equal(cfg.vars.CLOUDFLARE_AI_FREE_TIER_ONLY,'true');
  assert.equal(cfg.d1_databases,undefined);
 });
 test('AI endpoint fails safely when Cloudflare AI binding is absent',async()=>{

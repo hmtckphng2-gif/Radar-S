@@ -2,22 +2,48 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {VEHICLE_SPECS,vehicleKind,validHeading,modelYawRadians,makeVehicleMesh} from '../public/radar83-model.mjs';
-import {enabled3D,target3DCamera,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta} from '../public/radar83-logic.mjs';
+import {enabled3D,FEATURE_FLAGS,target3DCamera,start3DCamera,handoff3DCamera,approach3DCamera,cinematicDuration,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta} from '../public/radar83-logic.mjs';
 import {build3DBuildings,enable3DTerrain,make3DVehicleLayer} from '../public/radar83-map.mjs';
 
 const NOW=1760900000000;
-test('explicit switch can return users to intact Leaflet 2D map',()=>{
+test('cinematic 3D is enabled by default with an emergency URL opt-out',()=>{
+ assert.equal(FEATURE_FLAGS.cinematic3D,true);
  assert.equal(enabled3D('?radar3d=off'),false);
  assert.equal(enabled3D('?radar3d=on'),true);
  assert.equal(enabled3D('?language=de'),true);
+ assert.equal(enabled3D(''),true);
  assert.equal(MAPLIBRE_VERSION,'4.7.1');
  assert.ok(VECTOR_STYLE.includes('/styles/dark'));
+});
+test('cinematic approaches from behind over a longer, smooth flight',()=>{
+ const start=start3DCamera({lat:46.5,lng:11.35},90,19);
+ assert.equal(start.pitch,68);
+ assert.equal(start.bearing,202);
+ assert.ok(start.zoom>15, 'closer starting zoom than the old distant shot');
+ assert.ok(start.center[0]<11.35);
+ assert.equal(cinematicDuration(0,4300),4300);
+ assert.equal(cinematicDuration(0,700),700);
+});
+test('tap-origin handoff preserves the live Leaflet center and scale',()=>{
+ const camera=handoff3DCamera({lat:46.5,lng:11.35},18);
+ assert.deepEqual(camera,{center:[11.35,46.5],zoom:17,pitch:0,bearing:0});
+ assert.equal(handoff3DCamera({lat:90,lng:11.35},18),null);
+});
+test('3D camera starts mostly aligned with the tapped vehicle for a restrained lateral move',()=>{
+ const from=handoff3DCamera({lat:46.5,lng:11.30},18);
+ const to=target3DCamera({lat:46.5,lng:11.35},19,90,4500);
+ const start=approach3DCamera(from,to,.75);
+ assert.ok(start.center[0]>from.center[0]&&start.center[0]<to.center[0]);
+ assert.ok(to.center[0]-start.center[0]<(to.center[0]-from.center[0])*.26);
+ assert.equal(start.zoom,from.zoom);
+ assert.equal(start.pitch,from.pitch);
+ assert.ok(Math.abs(to.bearing-start.bearing)<Math.abs(to.bearing-from.bearing)*.26);
 });
 test('camera rotates the MAP and tilts terrain, no arbitrary model spin',()=>{
  const camera=target3DCamera({lat:46.498,lng:11.353},17.4,90,4500);
  assert.deepEqual(camera.center,[11.353,46.498]);
- assert.equal(camera.pitch,38);
- assert.equal(camera.bearing,148);
+ assert.equal(camera.pitch,48);
+ assert.equal(camera.bearing,98);
  assert.equal(camera.duration,4500);
  assert.equal(target3DCamera({lat:92,lng:11},17,90,3000),null);
  assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,20.4);
@@ -53,6 +79,10 @@ test('vector buildings are extruded and terrain falls back when DEM unsupported'
  assert.equal(build3DBuildings(map),true);
  assert.equal(building.v.type,'fill-extrusion');
  assert.equal(building.v['source-layer'],'building');
+ assert.equal(building.v.filter[1][1],'hide_3d');
+ assert.equal(building.v.paint['fill-extrusion-color'],'hsl(215, 12%, 66%)');
+ assert.equal(building.v.paint['fill-extrusion-opacity'],.86);
+ assert.equal(building.v.paint['fill-extrusion-height'][0],'max');
  assert.equal(building.before,'labels');
  let dem,terrain;
  const terrainMap={getSource:()=>null,addSource:(id,s)=>{dem=s},setTerrain:x=>{terrain=x}};
@@ -95,12 +125,12 @@ test('FLIRT-inspired train has detailed multipart 3D mesh and bus is separate',(
 });
 
 test('3D overlay identifies the selected vehicle, destination and vehicle ID',()=>{
- assert.equal(selectedVehicleLabel({kind:'train',name:'REG 16685'}),'Zug · REG 16685');
- assert.equal(selectedVehicleLabel({kind:'bus',name:'5'}),'Bus · Linie 5');
- assert.equal(selectedVehicleLabel({kind:'train',name:'Zugnummer unbekannt'}),'Zug · Nummer unbekannt');
- assert.equal(selectedVehicleMeta({headsign:'Meran',vehicleId:'STA-17',tripId:'trip-16685',source:'sta_direct'}),'Ziel: Meran · ID: STA-17 · Fahrt: trip-16685 · Feed: STA_DIRECT');
- assert.equal(selectedVehicleMeta({headsign:'Fahrtziel unbekannt',vehicleId:'—'}),'');
- assert.equal(selectedVehicleMeta({tripId:'trip-2',source:'trentino'}),'Fahrt: trip-2 · Feed: TRENTINO');
+ assert.equal(selectedVehicleLabel({kind:'train',name:'REG 16685'}),'Zug Â· REG 16685');
+ assert.equal(selectedVehicleLabel({kind:'bus',name:'5'}),'Bus Â· Linie 5');
+ assert.equal(selectedVehicleLabel({kind:'train',name:'Zugnummer unbekannt'}),'Zug Â· Nummer unbekannt');
+ assert.equal(selectedVehicleMeta({headsign:'MERAN',vehicleId:'STA-17',tripId:'trip-16685',source:'sta_direct'}),'Ziel: Meran Â· Fahrzeug: STA-17 Â· Datenquelle: STA direkt');
+ assert.equal(selectedVehicleMeta({headsign:'Fahrtziel unbekannt',vehicleId:'â'}),'');
+ assert.equal(selectedVehicleMeta({tripId:'trip-2',source:'trentino'}),'Datenquelle: Trentino Trasporti');
 });
 
 test('3D scene updates and delayed model callbacks are scoped to the active vehicle',()=>{
@@ -110,7 +140,22 @@ test('3D scene updates and delayed model callbacks are scoped to the active vehi
  assert.match(src,/this\.layer!==layer\|\|this\.map!==map/);
  assert.match(src,/vehicle\?\.key!==this\.vehicleKey/);
  assert.match(src,/this\.vehicleKey=null/);
- assert.doesNotMatch(src,/3D · FLIRT-Stil/);
+ assert.doesNotMatch(src,/3D Â· FLIRT-Stil/);
  assert.match(src,/modelCreditText\(info\.credit,info\.kind==='real',vehicle\?\.kind\)/);
  assert.match(src,/this\.vehicleMeta\.textContent=selectedVehicleMeta\(vehicle\)/);
+});
+
+test('first vehicle tap has MapLibre and Three.js warmed before selection',()=>{
+ const mapSource=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
+ const cameraSource=readFileSync(new URL('../public/radar71-camera.mjs',import.meta.url),'utf8');
+ assert.match(mapSource,/Promise\.all\(\[loadMapLibre\(\),loadThree\(\)\]\)/);
+ assert.match(cameraSource,/preload3DLibraries\(\);/);
+});
+
+test('preload3DLibraries warms both MapLibre and Three.js before vehicle selection',()=>{
+ const source=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
+ const start=source.indexOf('export function preload3DLibraries');
+ const end=source.indexOf('// Wait for real vector tiles',start);
+ const preload=source.slice(start,end);
+ assert.match(preload,/Promise\.all\(\[loadMapLibre\(\),loadThree\(\)\]\)/);
 });

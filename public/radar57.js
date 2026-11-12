@@ -1,3 +1,4 @@
+import {sourceLabel,formatStationName,hasKnownPlatform,formatRelativeAge} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 /* Radar 5.7 Graphite Intelligence — additive station-first monitor.
    Reuses existing GTFS rows and Radar 5.4 train history. No map rendering changes. */
 import {findStations,nearbyStationGroup,buildDepartureRows,romeDay} from './radar51-logic.mjs?v=9.9.5';
@@ -68,7 +69,7 @@ function showDetails(row){
  const recovery=evidence(row);
  radar.append(el('small','','ERWARTETE AUFHOLUNG'),el('strong','',recovery?'↘ '+recovery.gained+' min':'–'));
  stats.append(official,radar);dialog.append(stats);
- dialog.append(el('p','sr57-explain',row.cancelled?'Diese Fahrt ist laut frischer GTFS-RT-Meldung ausgefallen. Es wird keine Zeitaufholung prognostiziert.':recovery?'An diesem Halt prognostiziert GTFS-RT '+recovery.gained+' Minuten weniger Verspätung als am vorherigen gemeldeten Halt. Radar zeigt die Differenz; es ist keine zusätzliche KI-Vorhersage.':'Noch keine unabhängig belastbare Prognose zur Zeitaufholung. GTFS-RT-Verspätung und Ist-/Soll-Abstand bleiben getrennt.'));
+ dialog.append(el('p','sr57-explain',row.cancelled?'Diese Fahrt ist laut aktueller Echtzeitmeldung ausgefallen. Es wird keine Zeitaufholung prognostiziert.':recovery?'An diesem Halt deutet die Echtzeitmeldung auf '+recovery.gained+' Minuten weniger Verspätung als am vorherigen gemeldeten Halt. Radar zeigt die Differenz; es ist keine zusätzliche KI-Vorhersage.':'Noch keine unabhängig belastbare Prognose zur Zeitaufholung. GTFS-RT-Verspätung und Ist-/Soll-Abstand bleiben getrennt.'));
  const vehicleInfo=vehicleType(row);if(row.kind==='train')dialog.append(el('p','sr57-vehicle-type','Fahrzeugtyp: '+vehicleInfo.name+' · '+vehicleInfo.confidence));
  const schedule=el('div','sr57-schedule');schedule.append(el('span','','Fahrplan '+clock(row.sec)),el('span','',row.forecast===null?'Livezeit unbekannt':'Gemeldet '+clock(row.forecast)));dialog.append(schedule);
  if(row.kind==='train'){
@@ -96,7 +97,7 @@ function showDetails(row){
     const gpsDelay=el('div','sr58-gps-delay');
     gpsDelay.append(el('small','','GESCHÄTZTE VERSPÄTUNG · POSITION'));
     gpsDelay.append(el('strong','',estimate?(estimate.minutes>0?'+':'')+estimate.minutes+' Min.':'Nicht verfügbar'));
-    gpsDelay.append(el('small','',estimate?'Letzte Positionsmeldung vor '+estimate.ageSeconds+' Sek. · keine offizielle GTFS-RT-Zeit':'Keine aktuelle, verifizierbare Position auf diesem Fahrplanabschnitt'));
+    gpsDelay.append(el('small','',estimate?'Letzte Positionsmeldung '+formatRelativeAge(estimate.ageSeconds)+' · keine bestätigte Echtzeitzeit':'Keine aktuelle, verifizierbare Position auf diesem Fahrplanabschnitt'));
     comparison.append(gpsDelay);
     const info=el('details','sr57-position-info');info.append(el('summary','','Wie wird das berechnet?'),el('p','sr57-explain',compare.note+' Die Grafik ist schematisch, nicht maßstabsgetreu. Die Minutenangabe darunter ist eine unabhängige Näherung aus der gemeldeten Position und dem Fahrplan, nicht die offizielle Verspätung.'));
     comparison.append(info);dialog.append(comparison);
@@ -137,7 +138,7 @@ function render(){
  if(seq!==request)return;
  const serviceDate=new Intl.DateTimeFormat('de-DE',{timeZone:'Europe/Rome',weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date());
   const info=el('div','sr57-boardinfo');info.append(el('span','','ABFAHRTEN · '+serviceDate+' · NÄCHSTE 4 STD.'),el('span','',rows.length+' FAHRTEN'));board.append(info);
-  board.append(el('p','sr57-data-note','Zeiten laut GTFS-Fahrplan. Echtzeit nur bei aktueller GTFS-RT-Meldung. Verschiedene Abfahrtszeiten sind eigene Fahrten.'));
+  board.append(el('p','sr57-data-note','Zeiten laut Fahrplan. Echtzeitangaben erscheinen nur bei einer aktuellen, passenden Meldung. Verschiedene Abfahrtszeiten sind eigene Fahrten.'));
  if(!rows.length){board.append(el('p','sr57-empty',res.reasons.length?'Keine gültigen Fahrplandaten für diesen Bahnhof.':'Keine Abfahrten im aktuellen Zeitraum gefunden.'));return}
  for(const row of rows){
   const item=button('',()=>showDetails(row),'sr57-row');
@@ -145,11 +146,11 @@ function render(){
   const route=el('div','sr57-route');
    const genericTrain=row.kind==='train'&&/^(reg|zug|train|regional|regionalzug)$/i.test(String(row.number||'').trim());
    route.append(el('strong','sr57-route-number',genericTrain?String(row.number)+' · Nummer unbekannt':row.number));
-   route.append(el('span','sr57-route-destination',row.headsign+(row.platform?.current?' · '+(row.kind==='train'?'Gleis ':'Steig ')+row.platform.current:'')));
-   route.append(el('small','sr57-service-meta',row.source.toUpperCase()+' · '+(row.forecast===null?'nur Fahrplan':'Live-Meldung vorhanden')));
+   route.append(el('span','sr57-route-destination',formatStationName(row.headsign)+(hasKnownPlatform(row.platform?.current)?' · '+(row.kind==='train'?'Gleis ':'Steig ')+row.platform.current:'')));
+   route.append(el('small','sr57-service-meta',sourceLabel(row.source)+' · '+(row.forecast===null?'nur Fahrplan':'Live-Meldung vorhanden')));
   const delay=el('div','sr57-delay');
   delay.append(el('strong',row.cancelled?'sr57-bad':row.delaySec>0?'sr57-late':'',row.cancelled?'Ausfall':row.delaySec===null?'–':labelDelay(row.delaySec)));
-  const gain=evidence(row);delay.append(el('small','',gain?'↘ '+gain.gained+' min GTFS-RT':row.delaySec===null?'Nur Fahrplan':'GTFS-RT'));
+  const gain=evidence(row);delay.append(el('small','',gain?'↘ '+gain.gained+' Min. gemeldet':row.delaySec===null?'Nur Fahrplan':'Echtzeitmeldung'));
   item.append(time,route,delay);board.append(item);
  }
 }

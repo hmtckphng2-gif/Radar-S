@@ -11,5 +11,23 @@
     "run_worker_first": [
       "/api/*"
     ]
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "ratelimits": [
+    {
+      "name": "AI_JOURNEY_LIMITER",
+      "namespace_id": "202611081925",
+      "simple": {
+        "limit": 5,
+        "period": 60
+      }
+    }
+  ],
+  "vars": {
+    "ASSISTANT_ENABLED": "true",
+    "GROQ_FREE_TIER_ONLY": "true",
+    "CLOUDFLARE_AI_FREE_TIER_ONLY": "true"
   }
 }

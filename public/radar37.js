@@ -21,6 +21,9 @@
     try { localStorage.setItem(FAV_KEY, JSON.stringify(favorites.slice(0,60))); } catch {}
   }
   const text = value => value == null ? '' : String(value);
+  const stationLabel = value => {let raw=text(value).trim().replace(/[’'](?=-)|[’']$/gu,'');const letters=raw.replace(/[^\p{L}]/gu,'');if(!letters||letters!==letters.toLocaleUpperCase('it-IT'))return raw||'Unbekannt';return raw.split(/([\s-]+)/u).map(part=>{if(/^[\s-]+$/u.test(part))return part;const token=part.replace(/[’']+$/gu,'');if(/^[A-Z0-9]{1,3}$/u.test(token))return token;const lower=token.toLocaleLowerCase('it-IT');return lower.charAt(0).toLocaleUpperCase('it-IT')+lower.slice(1)}).join('')};
+  const sourceLabel = value => ({trains:'Zug',sta:'STA',sta_direct:'STA direkt',trentino:'Trentino Trasporti',rfi:'RFI'}[text(value).toLowerCase()]||'Unbekannt');
+  const ageLabel = seconds => !Number.isFinite(Number(seconds))?'unbekannt':Number(seconds)<60?'vor weniger als 1 Min.':'vor '+Math.floor(Number(seconds)/60)+' Min.';
   const secItaly = () => {
     const parts = new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Europe/Rome', hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'
@@ -37,7 +40,7 @@
   function readableDelay(seconds) {
     if (seconds == null || !Number.isFinite(Number(seconds))) return null;
     const m = Math.round(Number(seconds)/60);
-    return (m>0?'+':'')+m+' Min.';
+    return m>0?m+' Min. verspätet':m<0?Math.abs(m)+' Min. früher':'pünktlich';
   }
   function validRecent(v) {
     const age = v?.timestamp ? Date.now()/1000-v.timestamp : Infinity;
@@ -98,7 +101,7 @@
     const atStop=/^(?:STOPPED_AT|1)$/i.test(text(v.currentStatus));
     const planned=atStop ? (stop[2]??stop[1]) : (stop[1]??stop[2]);
     const candidate={index, rows, stopId:text(stop[0]),
-      name:text(detail.stops?.[stop[0]]?.[0] || 'Haltestelle'),
+      name:stationLabel(detail.stops?.[stop[0]]?.[0] || 'Haltestelle'),
       time:planned == null ? NaN : Number(planned),
       atStop};
     // A recent GPS/estimated fix does not prove that an old scheduled stop
@@ -111,7 +114,7 @@
     if(rt.cancelled){lastStopRejection='Fahrt entfällt laut Echtzeitmeldung';return null;}
     if(!check({scheduledSeconds:candidate.time,
       serviceDate:v.tripStartDate,delaySeconds:delay,nowMs:Date.now()})){
-      lastStopRejection='Gemeldeter Halt zeitlich nicht bestätigt – Planzeit überholt oder Fahrplantag unklar';
+      lastStopRejection='Halt nicht bestätigt – die Planzeit passt nicht zur aktuellen Fahrt';
       return null;
     }
     return candidate;
@@ -154,36 +157,32 @@
       const all=[...$('stops').querySelectorAll('li.stop')];
       all.forEach((li,i)=>li.classList.add(i<p.index?'stop-past':i===p.index?'stop-current':'stop-future'));
       const li=all[p.index];
-      const note=make('small','stop-position-note',p.atStop?'● Am Halt (laut Feed)':'● Nächster Halt (laut Feed)');
-      li.querySelector('div')?.append(note);
       focusCurrent(li,v,p);
     }
-    const head=make('strong','radar37-card-head',p
-      ? (p.atStop?'Am Halt: ':'Nächster Halt: ')+p.name
-      : 'Nächster Halt nicht verifiziert');
+    const head=make('strong','radar37-card-head',p?'Fahrtstatus':'Nächster Halt nicht verifiziert');
     el.append(head);
     const sub=make('div','radar37-card-sub');
     if(p) {
       const delay=rtDelay(v,p.stopId);
-      const bits=[Number.isFinite(p.time)?'Plan '+formatClock(p.time)+' (Fahrplantag)':'' ];
-      if(delay.cancelled)bits.push('Fahrt entfällt laut GTFS-RT');
-      else if(delay.delay!==null)bits.push('RT '+readableDelay(delay.delay)+' ('+delay.kind+')');
+      const bits=[Number.isFinite(p.time)?'Planmäßig '+formatClock(p.time):'' ];
+      if(delay.cancelled)bits.push('Fahrt entfällt laut Echtzeitmeldung');
+      else if(delay.delay!==null)bits.push('Echtzeit: '+readableDelay(delay.delay));
       else bits.push('Keine bestätigte Verspätung');
       const now=secItaly();
       if(Number.isFinite(p.time) && now-p.time>900 && p.time<86400)
         bits.push('Planzeit bereits vergangen – Prognose prüfen');
       sub.textContent=bits.filter(Boolean).join(' · ');
     } else {
-      sub.textContent=!v.tripId?'Keine Fahrt-ID im Feed – Haltestelle nicht zuordenbar':
+      sub.textContent=!v.tripId?'Keine passende Fahrtzuordnung im Datenfeed – Haltestelle nicht verifizierbar':
         !validRecent(v)?'Positionsmeldung zu alt oder Zeit nicht bekannt':
         lastStopRejection || 'Keine eindeutig passende Haltestellenfolge / Stop-ID vorhanden';
     }
     el.append(sub);
     const stateInfo=make('div','radar37-card-foot');
-    const age=v.timestamp ? Math.max(0,Math.round(Date.now()/1000-v.timestamp))+' Sek.' : 'unbekannt';
-    stateInfo.textContent='Position '+age+' alt · '+
-      (v.kind==='train'?'Bahnposition kann geschätzt sein':'Position laut Feed, GPS nicht garantiert')+
-      ' · '+(trackIsDrawn?(v.routeShapeId&&!v.shapeId?'Möglicher GTFS-Linienverlauf':'GTFS-Route sichtbar'):'Strecke nicht verifiziert');
+    const age=v.timestamp ? ageLabel(Math.max(0,Math.round(Date.now()/1000-v.timestamp))) : 'unbekannt';
+    stateInfo.textContent=(age==='unbekannt'?'Zeit der Positionsmeldung unbekannt':'Position '+age+' gemeldet')+' · '+
+      (v.kind==='train'?'Zugposition möglicherweise geschätzt':'Position laut Feed, GPS nicht garantiert')+
+      ' · '+(trackIsDrawn?(v.routeShapeId&&!v.shapeId?'Möglicher Fahrplanverlauf':'Fahrstrecke aus Fahrplandaten sichtbar'):'Strecke nicht verifiziert');
     el.append(stateInfo);
     const buttons=make('div','radar37-actions');
     const follow=make('button','radar37-smallbtn',followKey===v.key?'■ Verfolgung beenden':'◎ Fahrzeug verfolgen');
@@ -291,7 +290,7 @@
     if(!favorites.length){panel.append(make('p','radar37-muted','Noch keine Favoriten. Speichere eine Linie in den Fahrzeugdetails oder eine Haltestelle in der Abfahrtstafel.'));return;}
     for(const entry of favorites){
       const row=make('div','radar37-favrow');
-      const use=make('button','radar37-favuse',entry.type==='station'?'▦ '+entry.name:'☆ '+entry.name+' · '+entry.source.toUpperCase());
+      const use=make('button','radar37-favuse',entry.type==='station'?'▦ '+entry.name:'☆ '+stationLabel(entry.name)+' · '+sourceLabel(entry.source));
       use.type='button';use.onclick=()=>openFavorite(entry);
       const remove=make('button','radar37-favdelete','✕');remove.type='button';remove.title='Favorit entfernen';remove.onclick=()=>toggleFavorite(entry);
       row.append(use,remove);panel.append(row);
@@ -388,14 +387,14 @@
     heading.replaceChildren();
     const fav=make('button','radar37-smallbtn',isFavorite(entry)?'★ Haltestelle gespeichert':'☆ Haltestelle merken');
     fav.type='button';fav.onclick=()=>toggleFavorite(entry);
-    heading.append(fav,make('small','radar37-muted','Heute · '+displayDate+' · GTFS-Plan · Echtzeit nur bei passender GTFS-RT-Meldung.'));
+    heading.append(fav,make('small','radar37-muted','Heute · '+displayDate+' · Fahrplan · Echtzeit nur bei passender Meldung.'));
     for(const d of departures.slice(0,28)) {
       const row=make('div','radar37-departure');
       const left=make('div','radar37-departure-info');
       left.append(make('strong','',d.number+' · '+d.headsign));
        if(st.source==='trains'&&!/^\\d{2,6}$/.test(String(d.number)))left.append(make('small','radar37-muted','Zugnummer nicht angegeben · Fahrt ab '+formatClock(d.sec)));
-      const label=d.cancelled?'ENTFÄLLT (GTFS-RT)':d.realtime?
-        (d.reportedTime?'GTFS-RT Zeitprognose': 'GTFS-RT '+readableDelay(d.delay)+(d.exactStopRt?' am Halt':' zur Fahrt')):'Nur Fahrplan';
+      const label=d.cancelled?'ENTFÄLLT (Echtzeitmeldung)':d.realtime?
+        (d.reportedTime?'Echtzeit-Zeitprognose': 'Echtzeitmeldung '+readableDelay(d.delay)+(d.exactStopRt?' am Halt':' zur Fahrt')):'Nur Fahrplan';
       const meta=make('small',d.cancelled?'radar37-cancelled':d.realtime?'radar37-real':'radar37-muted',label+' · Plan '+formatClock(d.sec));
       left.append(meta);
        left.append(make('small','radar37-muted','Quelle: '+({trains:'Trenitalia',sta:'STA',trentino:'Trentino'}[st.source]||st.source)+' · '+displayDate));

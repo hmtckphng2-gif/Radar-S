@@ -186,10 +186,13 @@ export function bufferedAlong(samples, when){
   }
   return ordered.at(-1).along;
 }
-export function formatDelay(seconds) {
-  if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return 'Keine Verspätungsdaten';
-  const min = Math.round(seconds / 60); return min > 0 ? '+' + min + ' Min.' : min < 0 ? min + ' Min.' : '0 Min. (laut Feed)';
+export function delayPresentation(seconds) {
+  if (seconds === null || seconds === undefined || seconds === '' || !Number.isFinite(Number(seconds)))
+    return {minutes:null,label:'Keine Verspätungsdaten',className:'delay-none'};
+  const minutes=Math.round(Number(seconds)/60);
+  return {minutes,label:minutes>0?minutes+' Min. verspätet':minutes<0?Math.abs(minutes)+' Min. früher':'pünktlich',className:minutes>=15?'delay-severe':minutes>=1?'delay-warn':'delay-ok'};
 }
+export function formatDelay(seconds) { return delayPresentation(seconds).label; }
 export function formatClock(time) {
   if (time === null || time === undefined) return '–';
   if (typeof time === 'number') { if (!Number.isFinite(time)) return '–'; const minutes=Math.floor(time/60); return String(Math.floor(minutes/60)%24).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0')+(minutes>=1440?' +1':''); }

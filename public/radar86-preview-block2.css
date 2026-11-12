@@ -10,3 +10,16 @@
 #sr50MapTab .sr86-nearby-stop strong{font-size:12px;font-weight:650}
 #sr50MapTab .sr86-nearby-stop small{font-size:10px;color:#9eabb9}
 @media(max-width:749px){#sr50MapTab .controls .segments{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}#sr50MapTab .controls .segments::-webkit-scrollbar{display:none}#sr50MapTab .controls .chip{flex:0 0 auto}}
+
+/* Block 4 — nearby stops with compact, source-grounded departures. */
+#sr50MapTab .sr86-nearby-panel{width:min(330px,calc(100vw - 24px));max-height:48vh;box-sizing:border-box;}
+#sr50MapTab .sr86-nearby-stop{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:9px;border:1px solid rgba(190,202,216,.16);border-radius:12px;background:#ffffff08;}
+#sr50MapTab .sr86-nearby-open{display:block;width:100%;min-height:44px;padding:7px 4px;border:0;background:transparent;color:#edf1f5;text-align:left;font-size:12px;font-weight:750;line-height:1.35;overflow-wrap:anywhere;}
+#sr50MapTab .sr86-nearby-stop>small{font-size:10px;line-height:1.35;color:#9eabb9;overflow-wrap:anywhere;}
+#sr50MapTab .sr86-nearby-departures{display:grid;gap:4px;min-width:0;}
+#sr50MapTab .sr86-nearby-departure{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:6px 7px;border-radius:8px;background:#111a25;border:1px solid rgba(190,202,216,.1);min-width:0;}
+#sr50MapTab .sr86-nearby-departure-main{display:flex;flex-direction:column;gap:2px;min-width:0;}
+#sr50MapTab .sr86-nearby-departure strong{font-size:10.5px;line-height:1.3;color:#e8edf3;overflow-wrap:anywhere;}
+#sr50MapTab .sr86-nearby-departure small{font-size:9.5px;line-height:1.3;color:#aab6c3;}
+#sr50MapTab .sr86-nearby-empty{font-size:10px;color:#aab6c3;line-height:1.4;}
+@media(max-width:420px){#sr50MapTab .sr86-nearby-panel{left:12px;right:12px;width:auto;max-height:46vh;padding:9px;}#sr50MapTab .sr86-nearby-departure{gap:5px;padding:6px;}#sr50MapTab .sr86-nearby-departure strong{font-size:10px;}}
