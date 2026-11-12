@@ -151,3 +151,11 @@ test('first vehicle tap has MapLibre and Three.js warmed before selection',()=>{
  assert.match(mapSource,/Promise\.all\(\[loadMapLibre\(\),loadThree\(\)\]\)/);
  assert.match(cameraSource,/preload3DLibraries\(\);/);
 });
+
+test('preload3DLibraries warms both MapLibre and Three.js before vehicle selection',()=>{
+ const source=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
+ const start=source.indexOf('export function preload3DLibraries');
+ const end=source.indexOf('// Wait for real vector tiles',start);
+ const preload=source.slice(start,end);
+ assert.match(preload,/Promise\.all\(\[loadMapLibre\(\),loadThree\(\)\]\)/);
+});
