@@ -9,3 +9,10 @@ test('preview Wrangler config declares the exact fail-closed rate-limit binding'
 test('preview deployment pins Wrangler with support for ratelimits bindings',()=>{
  const workflow=readFileSync(new URL('../.github/workflows/radar-preview.yml',import.meta.url),'utf8');assert.match(workflow,/wranglerVersion:\s*["']4\.36\.0["']/);assert.match(workflow,/deploy worker\.js --config wrangler\.jsonc/);
 });
+
+test('production deploy pins Wrangler with rate-limit binding support and checks the live assistant',()=>{
+ const workflow=readFileSync(new URL('../.github/workflows/radar-deploy.yml',import.meta.url),'utf8');
+ assert.match(workflow,/wranglerVersion:\s*["']4\.36\.0["']/);
+ assert.match(workflow,/AI_JOURNEY_LIMITER binding missing/);
+ assert.match(workflow,/status\.enabled!==true/);
+});
