@@ -1,34 +1,36 @@
 /* Pure 3D cinematic decisions; keep the fallback independently testable. */
+import {formatStationName,sourceLabel} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 export const MAPLIBRE_VERSION='4.7.1';
 export const VECTOR_STYLE='https://tiles.openfreemap.org/styles/dark';
 export const TERRAIN_TILES='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+// Cinematic 3D is enabled by default on every device.
+// ?radar3d=off is retained only as an emergency debugging opt-out.
+export const FEATURE_FLAGS=Object.freeze({cinematic3D:true});
 
 // Display the selected feed identity, never the generic reference-model name.
 function usableVehicleText(value){
  const text=value==null?'':String(value).trim();
- return text&&!/^(?:[-–—]+|n\/?a|null|undefined|unbekannt|nicht verfügbar|fahrtziel unbekannt)$/i.test(text)?text:'';
+ return text&&!/^(?:[-ââ]+|n\/?a|null|undefined|unbekannt|nicht verfÃ¼gbar|fahrtziel unbekannt)$/i.test(text)?text:'';
 }
 export function selectedVehicleLabel(vehicle){
  const name=usableVehicleText(vehicle?.name);
- if(vehicle?.kind==='bus')return name&&name!=='Linie unbekannt'?'Bus · Linie '+name:'Bus · Linie unbekannt';
- if(vehicle?.kind==='train')return name&&name!=='Zugnummer unbekannt'?'Zug · '+name:'Zug · Nummer unbekannt';
+ if(vehicle?.kind==='bus')return name&&name!=='Linie unbekannt'?'Bus Â· Linie '+name:'Bus Â· Linie unbekannt';
+ if(vehicle?.kind==='train')return name&&name!=='Zugnummer unbekannt'?'Zug Â· '+name:'Zug Â· Nummer unbekannt';
  return 'Fahrzeug';
 }
 export function selectedVehicleMeta(vehicle){
  const destination=usableVehicleText(vehicle?.headsign);
  const id=usableVehicleText(vehicle?.vehicleId);
- const trip=usableVehicleText(vehicle?.tripId);
  const source=usableVehicleText(vehicle?.source);
  const parts=[];
- if(destination)parts.push('Ziel: '+destination);
- if(id)parts.push('ID: '+id);
- if(trip)parts.push('Fahrt: '+trip);
- if(source)parts.push('Feed: '+source.toUpperCase());
- return parts.join(' · ');
+ if(destination)parts.push('Ziel: '+formatStationName(destination));
+ if(id)parts.push('Fahrzeug: '+id);
+ if(source)parts.push('Datenquelle: '+sourceLabel(source));
+ return parts.join(' Â· ');
 }
 
 export function enabled3D(search=''){
- try{return new URLSearchParams(search).get('radar3d')!=='off'}catch{return true}
+ try{const value=new URLSearchParams(search).get('radar3d');return FEATURE_FLAGS.cinematic3D?value!=='off':value==='on'}catch{return false}
 }
 export function target3DCamera(point,zoom,heading=null,duration=4300){
  const lng=Number(point?.lng??point?.lon),lat=Number(point?.lat);
@@ -36,9 +38,10 @@ export function target3DCamera(point,zoom,heading=null,duration=4300){
  return {
   center:[lng,lat],
   zoom:Math.max(18.6,Math.min(20.4,Number(zoom)||19.0)),
-  pitch:38,
-  bearing:Number.isFinite(heading)?(heading+58)%360:58,
-  duration:Math.max(0,Math.min(5000,Number(duration)||0))
+  pitch:48,
+   // Finish in a steeper rear-quarter view, without a near half-turn.
+   bearing:Number.isFinite(heading)?((heading+8)%360+360)%360:8,
+  duration:Math.max(0,Math.min(8000,Number(duration)||0))
  };
 }
 export function readProjectionMatrix(input){
@@ -48,18 +51,42 @@ export function readProjectionMatrix(input){
 
 // Start the cinematic noticeably farther away, then descend toward the real
 // vehicle position. Camera position only; never change feed coordinates.
+// Transfer the current Leaflet camera to MapLibre without changing the
+// geographic center or apparent scale. Leaflet uses 256px tiles while
+// MapLibre vector styles use 512px tiles, hence the one-level zoom offset.
+export function handoff3DCamera(center,zoom){
+ const lat=Number(center?.lat),lng=Number(center?.lng??center?.lon),z=Number(zoom);
+ if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -85||lat > 85||lng < -180||lng > 180)return null;
+ return {center:[lng,lat],zoom:Math.max(3,Math.min(20.4,Number.isFinite(z)?z-1:15)),pitch:0,bearing:0};
+}
+// Start the visible 3D approach most of the way toward the tapped vehicle.
+// This keeps the transition anchored to the tap without a large sideways sweep.
+export function approach3DCamera(start,target,progress=.75){
+ const from=start?.center,to=target?.center,t=Number(progress);
+ if(!Array.isArray(from)||!Array.isArray(to)||from.length<2||to.length<2||
+    !from.slice(0,2).every(Number.isFinite)||!to.slice(0,2).every(Number.isFinite)||!Number.isFinite(t))return null;
+ const amount=Math.max(0,Math.min(1,t));
+ const result={...start,center:[from[0]+(to[0]-from[0])*amount,from[1]+(to[1]-from[1])*amount]};
+ const fromBearing=Number(start.bearing),toBearing=Number(target.bearing);
+ if(Number.isFinite(fromBearing)&&Number.isFinite(toBearing)){
+  const turn=((toBearing-fromBearing+540)%360)-180;
+  result.bearing=((fromBearing+turn*amount)%360+360)%360;
+ }
+ return result;
+}
+
 export function start3DCamera(point, heading=null, finalZoom=17){
  const lat=Number(point?.lat),lng=Number(point?.lng??point?.lon);
  if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -85||lat > 85)return null;
- const finalBearing=Number.isFinite(heading)?(heading+36)%360:36;
+ const finalBearing=Number.isFinite(heading)?((heading%360)+360)%360:0;
  const direction=finalBearing*Math.PI/180;
- const meters=680,latOffset=meters/111320;
+ const meters=450,latOffset=meters/111320;
  const lngOffset=latOffset/Math.max(.2,Math.cos(lat*Math.PI/180));
  return {
   center:[lng-Math.sin(direction)*lngOffset,lat-Math.cos(direction)*latOffset],
-  zoom:Math.max(12,Math.min(16,Number(finalZoom)-3.2)),
-  pitch:60,
-  bearing:(finalBearing+232)%360
+   zoom:Math.max(13.2,Math.min(16.8,Number(finalZoom)-2.2)),
+   pitch:68,
+   bearing:(finalBearing+112)%360
  };
 }
 // DEM tiles consume substantial GPU memory on mobile Safari. The real pitched
@@ -84,10 +111,8 @@ export function followDecision({touched=false,center=null,point=null,thresholdMe
   return {center:[lng,lat],meters:Math.round(meters)};
 }
 // The 3D cinematic is a camera move, not a page transition. It has to feel
-// immediate: it starts on the tap and is done in about two seconds, while
-// the 3D scene is still being built up in the background. The old flow
-// waited for the tiles and for the model first, which felt like a dead
-// second on every single tap.
+// A deliberate cinematic approach: begin well behind the vehicle and ease
+// into a rear-follow composition. Scene/model loading continues in parallel.
 export function cinematicDuration(distanceKm=0,base=4300){
   const d=Number(distanceKm);
   const extra=Number.isFinite(d)&&d>2?Math.min(350,Math.sqrt(d-2)*45):0;

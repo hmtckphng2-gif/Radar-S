@@ -1,0 +1,5 @@
+/* Radar 9.9.5 preview — Block 4: calm, readable delay states. */
+#details .detail.delay-ok strong,.line-item .delay-ok { color:#9bc5a7!important; }
+#details .detail.delay-warn strong,.line-item .delay-warn { color:#d5b77f!important; }
+#details .detail.delay-severe strong,.line-item .delay-severe { color:#d88f98!important; }
+#details .detail.delay-none strong,.line-item .delay-none { color:#aab2bc!important; }

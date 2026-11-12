@@ -16,7 +16,7 @@
   const vehicle=window.SuedtirolRadar37?.state?.vehicles?.get(window.SuedtirolRadar37?.state?.selectedKey);
   if(vehicle?.kind!=='train'){note.hidden=true;return}
   if(note.hidden)note.hidden=false;
-  const explanation='Ist/Soll ist eine räumliche Fahrplanabweichung, keine gemessene Minutenverspätung. GTFS-RT-Meldungen und geschätzte Fahrzeugpositionen werden getrennt ausgewertet.';
+  const explanation='Ist/Soll beschreibt den Abstand zwischen gemeldeter Position und Fahrplanpunkt, nicht die Verspätung in Minuten. Echtzeitmeldungen und geschätzte Fahrzeugpositionen werden getrennt ausgewertet.';
   if(note.textContent!==explanation)note.textContent=explanation;
  }
  function queue(){if(scheduled)return;scheduled=true;requestAnimationFrame(tidy)}

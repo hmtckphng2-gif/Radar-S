@@ -1,3 +1,4 @@
+import {sourceLabel,formatStationName} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 /* Radar 5.8 Traffic Intelligence: additive, no replacement of 5.7 map logic */
 import {collectTrafficIssues,feedDiagnostics,summarizeNetwork,matchesFavoriteIssue,resolveRollingStock} from './radar58-logic.mjs?v=9.9.5';
 import {isSevereDelay} from './radar52-logic.mjs?v=9.9.5';
@@ -72,7 +73,7 @@ function renderCurrent(){
  if(current==='issues'){
   body.append(e('h2','','Aktuelle Störungen'));
   if(!issues.length)body.append(e('p','sr58-muted','Keine bestätigten größeren Fahrtstörungen in den aktuell empfangenen Updates. Das bedeutet nicht, dass keine Probleme bestehen.'));
-  for(const issue of issues.slice(0,60))body.append(textRow(issue.title,issue.detail+' · '+issue.source.toUpperCase(),issue.severity));
+  for(const issue of issues.slice(0,60))body.append(textRow(issue.title,issue.detail+' · '+sourceLabel(issue.source),issue.severity));
  }
  if(current==='network'){
   body.append(e('h2','','Netzwerk-Radar'));
@@ -81,8 +82,8 @@ function renderCurrent(){
   for(const x of groups.slice(0,60))body.append(textRow((x.kind==='train'?'🚆 ':'🚌 ')+x.line,[x.cancelled?x.cancelled+' Ausfälle/entfallene Halte':'',x.delayed?x.delayed+' verspätete Fahrten · max. +'+x.maxDelay+' Min.':'',x.changed?x.changed+' Gleiswechsel':''].filter(Boolean).join(' · '),x.cancelled?'danger':x.delayed?'delay':'info'));
  }
  if(current==='health'){
-  body.append(e('h2','','Feed Health Center'));
-  for(const f of diagnostics)body.append(textRow(f.source.toUpperCase(),f.ok?'Quelle meldet OK':'Feed-Status: '+f.status,f.ok?'good':'unknown'));
+  body.append(e('h2','','Datenquellen'));
+  for(const f of diagnostics)body.append(textRow(sourceLabel(f.source),f.ok?'Quelle meldet OK':'Datenstatus: '+f.status,f.ok?'good':'unknown'));
   const at=Number(bridge.state.fetchedAt)||0;
   if(at)body.append(e('p','sr58-muted','Letzter insgesamt vermerkter Feed-Abruf: '+new Date(at).toLocaleTimeString('de-DE')));
   body.append(e('p','sr58-muted','Feed OK bedeutet nicht, dass jedes Fahrzeug Echtzeitpositionen sendet. Fehlende Feeds sind keine Betriebsstörungen.'));
@@ -129,7 +130,7 @@ function renderCurrent(){
   if(!vs.length)body.append(e('p','sr58-muted','Derzeit keine aktiven Züge mit verwertbaren Fahrzeugdaten.'));
   for(const v of vs){
    const label=e('div','sr58-issue');
-   label.append(e('strong','',v.name||v.tripId),e('small','','Fahrzeug-ID: '+(v.vehicleId||'unbekannt')+' · '+v.source.toUpperCase()));
+   label.append(e('strong','',v.name||'Zugfahrt'),e('small','','Fahrzeug-ID: '+(v.vehicleId||'unbekannt')+' · '+sourceLabel(v.source)));
    const model=resolveRollingStock(v);
    label.append(e('small','','Fahrzeugtyp: '+model.name+' · '+model.evidence));
    label.append(btn('Auf Karte ansehen →',()=>{dialog.close();window.SuedtirolRadar50?.openVehicle?.(v.key)},'sr58-inline-btn'));
@@ -144,7 +145,7 @@ function renderCurrent(){
   const s=bridge.state,data=findConnections({source:v.source,tripId:v.tripId,db:s.indexes[v.source],details:s.details[v.source],updates:s.updates,statuses:s.statuses,serviceDay:romeDay(),nowSec:romeSeconds(),minTransfer:240});
   body.append(e('p','sr58-muted',v.name+' · '+(v.headsign||'Ziel unbekannt')+' · Mindestumstieg 4 Min. (Fußweg nicht geprüft)'));
   if(!data.station){body.append(e('p','sr58-muted',data.reason));return}
-  body.append(textRow('Nächster Halt: '+data.station.name,'Geplant '+fmt(data.station.arr)+(data.station.arrivalDelay===null?' · keine Ankunftsprognose':' · mit Echtzeitmeldung')));
+  body.append(textRow('Laut Fahrplan: '+formatStationName(data.station.name),'Geplante Ankunft '+fmt(data.station.arr)+(data.station.arrivalDelay===null?' · keine Ankunftsprognose':' · Echtzeitmeldung vorhanden')));
   if(!data.rows.length)body.append(e('p','sr58-muted',data.reason||'Keine passenden Anschlüsse'));
   for(const c of data.rows.slice(0,14))body.append(textRow(c.line+' → '+c.destination,fmt(c.departure+(c.assessment.live?(c.departureDelaySec||0):0))+' · '+c.assessment.label+' · '+Math.round(c.assessment.margin/60)+' Min. Umsteigezeit',c.assessment.kind));
   body.append(e('p','sr58-muted','Nur eindeutig identische Haltestellen innerhalb desselben GTFS-Feeds. Keine garantierte Anschlusssicherung.'));

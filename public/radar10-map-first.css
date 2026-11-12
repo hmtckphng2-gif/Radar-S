@@ -19,7 +19,7 @@
 #healthBtn{display:none!important}
 #statusBtn{max-width:min(44vw,210px);min-height:40px}
 #statusText{font-size:11px;white-space:normal;line-height:1.15}
-#statusBtn.mf-good .status-dot{background:#69c995!important;box-shadow:0 0 0 3px #69c99520}
+#statusBtn.mf-good .status-dot{background:#6fae86!important;box-shadow:0 0 0 3px #6fae8620}
 #statusBtn.mf-warn .status-dot{background:#e7b45f!important;box-shadow:0 0 0 3px #e7b45f20}
 #statusBtn.mf-bad .status-dot{background:#ef7777!important;box-shadow:0 0 0 3px #ef777720}
 .mf-filter-toggle{display:none;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 12px;border:1px solid var(--mf-border);border-radius:12px;background:#141920ed;color:#e8edf1;font:600 12px system-ui;white-space:nowrap}

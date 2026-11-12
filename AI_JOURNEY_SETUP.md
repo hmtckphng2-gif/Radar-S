@@ -1,11 +1,21 @@
-# Radar 7.0.4 – Cloudflare Workers AI Reiseberater
+# Radar-Assistent – Free-only Preview
 
-**Modell:** `@cf/google/gemma-4-26b-a4b-it` (Gemma 4 26B A4B) über das native Cloudflare-AI-Binding `env.AI`.
+## Anbieter und Reihenfolge
 
-**Kein OpenRouter-Konto, keine externe API und kein API-Key erforderlich.** Das AI-Binding wird unter `ai.binding: "AI"` in `wrangler.jsonc` konfiguriert.
+- **Groq `openai/gpt-oss-20b`** zuerst, nur wenn `GROQ_FREE_TIER_ONLY=true` und das Secret `GROQ_API_KEY` vorhanden ist.
+- **Cloudflare Workers AI `@cf/google/gemma-4-26b-a4b-it`** als Fallback, nur wenn `CLOUDFLARE_AI_FREE_TIER_ONLY=true` und das AI-Binding vorhanden ist.
+- Es gibt keinen kostenpflichtigen Anbieter-Fallback. Sind beide kostenlosen Kontingente erschöpft, liefert die API eine vorübergehende Nichtverfügbarkeit.
 
-Cloudflare Workers AI hat auf dem kostenlosen Workers-Tarif ein Kontingent von **10.000 Neurons pro Tag**, keine 10.000 oder 100.000 Anfragen. Bei ausgeschöpftem Limit oder fehlendem AI-Binding bleibt die lokale, regelbasierte Fahrplanbewertung funktionsfähig. Auf einem kostenpflichtigen Cloudflare-Tarif kann Mehrverbrauch berechnet werden; im Cloudflare-Dashboard das Budget kontrollieren.
+Groq Free-Plan-Limits können sich ändern und gelten organisationsweit. Cloudflare Workers AI hat im Workers-Free-Tarif ein tägliches kostenloses Neurons-Kontingent; auf Workers Paid kann Mehrverbrauch kostenpflichtig werden. Die beiden `*_FREE_TIER_ONLY`-Variablen sind eine ausdrückliche Betreiberfreigabe, keine automatische Tarif-Erkennung. Vor einer öffentlichen Freigabe muss der Betreiber bestätigen, dass beide Konten tatsächlich im Free-Tier laufen.
 
-Die vorhandene `AI_JOURNEY_LIMITER`-Binding begrenzt öffentliche Anfragen. Der Worker akzeptiert ausschließlich same-origin-POST-Anfragen mit beschränkter Länge. Der Chat erhält nur die eingegebene Frage, einige kurze Chat-Nachrichten und maximal acht GTFS-Routen-Zusammenfassungen; keine Standort- oder Bewegungsdaten. Die KI interpretiert ausschließlich bereitgestellte Verbindungen und darf fehlende Echtzeit-, Gehzeit- und Tarifdaten nicht erfinden.
+## Sicherheitsmodell
 
-Veröffentlichung: Änderungen auf GitHub **allein** garantieren kein aktives Cloudflare-Deployment. Nach dem Deploy in Cloudflare die AI-Binding prüfen, die API mit einem gültigen Request testen und das verwendete Kontingent beobachten.
+`POST /api/assistant` akzeptiert nur same-origin JSON, kurze Fragen und höchstens sechs kurze Chat-Nachrichten. Der Browser überträgt weder GPS noch Koordinaten. Der Chat wird nicht serverseitig gespeichert oder protokolliert. `AI_JOURNEY_LIMITER` begrenzt Anfragen auf fünf pro Minute und IP/Worker-Region (Cloudflare Rate Limiting ist approximativ und nicht global strikt).
+
+Die KI erhält ausschließlich frische GTFS-Realtime-Fakten. Fahrzeugpositionen, Zugnummern und Buslinien werden nur bei einer tagesaktuellen statischen GTFS-Referenz und exakt passender Fahrt aufgenommen. Gemeldete Verspätung bleibt von einer positionsbasierten Fahrplanabweichung getrennt. Offizielle STA-Service-Alerts werden als solche gekennzeichnet. Jede KI-Begründung muss auf eine vom Worker erzeugte Fakten-ID verweisen; unbekannte oder erfundene IDs werden verworfen. Wenn keine ausreichend frischen Fakten existieren, wird kein Modell aufgerufen.
+
+`/api/*` bleibt vom Service-Worker-Cache ausgeschlossen. D1 History Collector und Cron bleiben deaktiviert. 3D ist standardmäßig ausgeschaltet und kann in der Preview gezielt mit `?radar3d=on` getestet werden.
+
+## Preview-Konfiguration
+
+Die Preview-Konfiguration setzt `ASSISTANT_ENABLED=true`, `GROQ_FREE_TIER_ONLY=true` und `CLOUDFLARE_AI_FREE_TIER_ONLY=true`. Das Secret `GROQ_API_KEY` bleibt serverseitig. `AI` und `AI_JOURNEY_LIMITER` werden als Cloudflare-Bindings konfiguriert. Production (`radar-s`/`main`) wird nicht verändert.

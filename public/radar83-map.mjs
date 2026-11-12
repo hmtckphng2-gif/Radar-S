@@ -1,9 +1,9 @@
-/* Radar 8.3 — actual pitched vector/terrain 3D map with a shared WebGL vehicle layer.
+/* Radar 8.3 â actual pitched vector/terrain 3D map with a shared WebGL vehicle layer.
  * The original Leaflet map stays intact underneath. Only selected cinematic
- * vehicles initialize MapLibre; errors or ?radar3d=off fall back to Radar 8.2.
+ * vehicles initialize MapLibre; errors or ?radar3d=on fall back to Radar 8.2.
  */
-import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.5';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,start3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1';
+import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.5&rev=credits-2';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,handoff3DCamera,approach3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -29,9 +29,10 @@ function loadMapLibre(){
  return libraryPromise;
 }
 export function preload3DLibraries(){
- if(!enabled3D(location.search))return;
- // Resource fetch only; do not allocate a WebGL context until user selects a vehicle.
- loadMapLibre().catch(()=>{});
+  if(!enabled3D(location.search))return;
+  // Warm both renderers before the first vehicle tap. This fetches JavaScript
+  // assets only; it does not allocate a WebGL context or create a map.
+  Promise.all([loadMapLibre(),loadThree()]).catch(()=>{});
 }
 // Wait for real vector tiles and the model render before revealing the new map.
 // Otherwise iOS Safari can display a black WebGL surface while the CSS toolbar
@@ -80,13 +81,15 @@ export function build3DBuildings(map){
  map.addLayer({
   id:'sr83-buildings',type:'fill-extrusion',source:'openmaptiles', 'source-layer':'building',
   minzoom:14,
-  // Most OSM buildings lack measured heights; a modest illustration is better
-  // than a missing 3D city. Unknown heights remain schematic, not claimed real.
+  // Match the provider's working OpenMapTiles 3D layer, but retain safe
+  // fallbacks for incomplete OSM height tags. The old near-black blue-grey
+  // blended into the dark building footprints and made extrusions look absent.
+  filter:['!', ['has','hide_3d']],
   paint:{
-   'fill-extrusion-color':'#263848',
-   'fill-extrusion-opacity':.88,
-   'fill-extrusion-height':['to-number',['get','render_height'],8],
-   'fill-extrusion-base':['to-number',['get','render_min_height'],0]
+   'fill-extrusion-color':'hsl(215, 12%, 66%)',
+   'fill-extrusion-opacity':.86,
+   'fill-extrusion-height':['max',3,['to-number',['coalesce',['get','render_height'],['get','height'],['*',['to-number',['get','building:levels'],3],3],8]]],
+   'fill-extrusion-base':['to-number',['coalesce',['get','render_min_height'],['get','min_height'],0]]
   }
  },firstLabel);
  return true;
@@ -193,29 +196,36 @@ export class Radar83Cinematic {
   constructor(leaflet,{onExit=()=>{},onManual=()=>{},onFailure=()=>{},onModel=()=>{}}={}){
    this.leaflet=leaflet;this.onExit=onExit;this.onManual=onManual;this.onFailure=onFailure;this.onModel=onModel;
   this.sequence=0;this.map=null;this.overlay=null;this.layer=null;
-  this.ready=false;this.touched=false;this.active=false;this.flight=null;this.flying=false;this.flightTimer=0;
+  this.ready=false;this.touched=false;this.active=false;this.flight=null;this.flying=false;this.closing=false;this.flightTimer=0;
  }
  get enabled(){return enabled3D(location.search)}
  makeOverlay(vehicle){
   const overlay=document.createElement('div');overlay.className='sr83-viewport';overlay.id='sr83Viewport';
   const surface=document.createElement('div');surface.className='sr83-map';overlay.append(surface);
   const toolbar=document.createElement('div');toolbar.className='sr83-toolbar';
-  const info=document.createElement('span');info.className='sr83-label';info.textContent='3D · '+selectedVehicleLabel(vehicle);
+  const info=document.createElement('span');info.className='sr83-label';info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
+  const exit=document.createElement('button');exit.className='sr83-exit';exit.type='button';exit.textContent='×';exit.setAttribute('aria-label','3D-Ansicht schließen und zur 2D-Karte zurückkehren');exit.title='3D schließen';
+  exit.style.pointerEvents='auto';exit.style.touchAction='manipulation';exit.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const controller=window.SuedtirolRadar71;const closed=controller?.close3D?.();if(!closed){this.close({sync:true});this.onExit?.()}},{passive:false});
   const replay=document.createElement('button');replay.className='sr83-replay';
-  replay.type='button';replay.textContent='↻ Flug';
+  replay.type='button';replay.textContent='â» Flug';
   replay.setAttribute('aria-label','3D-Kameraflug wiederholen');
   replay.addEventListener('click',e=>{e.stopPropagation();this.replay()});
-  const back=document.createElement('button');back.className='sr83-back';back.type='button';back.textContent='↩ 2D';
-  back.setAttribute('aria-label','Zur normalen 2D-Karte zurückkehren');
-  back.addEventListener('click',e=>{e.stopPropagation();this.close();this.onExit()});
-  toolbar.append(info,replay,back);overlay.append(toolbar);
+  // Keep the exit inside the overlay above the MapLibre canvas.
+  toolbar.append(replay,exit);overlay.append(toolbar);
+  const infoCard=document.createElement('section');infoCard.className='sr83-info-card';
+  infoCard.append(info);
   const meta=document.createElement('div');meta.className='sr83-vehicle-meta';
-  meta.textContent=selectedVehicleMeta(vehicle)||'Keine weiteren Fahrzeugdaten verfügbar';
-  overlay.append(meta);this.vehicleMeta=meta;
+  meta.textContent=selectedVehicleMeta(vehicle)||'Keine weiteren Fahrzeugdaten verfÃ¼gbar';
+  infoCard.append(meta);this.vehicleMeta=meta;
+  const sources=document.createElement('details');sources.className='sr83-sources';
+  const summary=document.createElement('summary');summary.textContent='Quellen';sources.append(summary);
   const credit=document.createElement('div');credit.className='sr83-credit';
-  credit.textContent='3D-Modell schematisch · Position aus dem Datenfeed · Ziehen zum Schwenken';
-  overlay.append(credit);
-   this.credit=credit;
+  credit.textContent='3D-Modell schematisch Â· Position aus dem Datenfeed';
+  sources.append(credit);this.credit=credit;
+  const detailsHost=document.getElementById('details');
+  const sheetScroll=document.querySelector('#sheet .sheet-scroll');
+  if(detailsHost?.parentNode){detailsHost.insertAdjacentElement('afterend',infoCard);infoCard.insertAdjacentElement('afterend',sources)}
+  else if(sheetScroll)sheetScroll.append(infoCard,sources);
   document.getElementById('map')?.append(overlay);
   this.overlay=overlay;this.surface=surface;this.info=info;
  }
@@ -224,17 +234,22 @@ export class Radar83Cinematic {
   this.close({sync:false});
   const seq=++this.sequence;this.active=true;
   const target=target3DCamera(point,zoom,heading,duration);
-  const start=start3DCamera(point,heading,target?.zoom);
-  if(!target||!start){this.close({sync:false});return false}
+  if(!target){this.close({sync:false});return false}
   this.vehicleKey=vehicle?.key||null;
   this.makeOverlay(vehicle);
+  document.body.classList.add('sr83-cinematic');
+  // Keep the 2D map exactly where it is. The only camera movement starts
+  // after the vector map is ready and happens inside the 3D view.
+  try{this.leaflet.stop()}catch(error){console.info('Radar 8.3 could not stop pending 2D motion',error)}
   try{
    const [lib,T]=await Promise.all([loadMapLibre(),loadThree()]);
    if(seq!==this.sequence)return false;
    if(typeof lib.supported==='function'&&!lib.supported())throw Error('WebGL not supported by this browser');
+   const initialCamera=handoff3DCamera(this.leaflet.getCenter?.(),this.leaflet.getZoom?.());
+   if(!initialCamera)throw Error('Initial live camera position invalid');
    const map=new lib.Map({
-    container:this.surface,style:VECTOR_STYLE,center:start.center,zoom:start.zoom,
-    bearing:start.bearing,pitch:start.pitch,maxZoom:19,maxPitch:80,minZoom:3,
+    container:this.surface,style:VECTOR_STYLE,center:initialCamera.center,zoom:initialCamera.zoom,
+    bearing:initialCamera.bearing,pitch:initialCamera.pitch,maxZoom:20.4,maxPitch:80,minZoom:3,
     antialias:false,fadeDuration:0,renderWorldCopies:false,
     attributionControl:true,interactive:true
    });
@@ -272,18 +287,25 @@ export class Radar83Cinematic {
     if(map.loaded?.())end();
    });
    if(seq!==this.sequence)return false;
-   // Interrupt handlers first, so a gesture can stop the flight right away.
+   // Keep the 2D view untouched. In 3D, start most of the way toward the
+   // tapped vehicle, leaving only a small natural lateral correction while
+   // the camera performs its single zoom-in approach.
+   const liveCenter=this.leaflet.getCenter?.(),liveZoom=this.leaflet.getZoom?.();
+   const handoff=handoff3DCamera(liveCenter,liveZoom);
+   if(!handoff)throw Error('Live camera handoff position invalid');
+   const approachStart=approach3DCamera(handoff,target,.75);
+   if(!approachStart)throw Error('3D approach start position invalid');
+   // Keep the selected vehicle centered for the entire cinematic.
+   const flightStart={...approachStart,center:[...target.center]};
+   const totalDuration=Number(target.duration)||Number(duration)||4300;
+   const continuedTarget={...target,duration:totalDuration};
+   this.flight={origin:{...initialCamera,center:[...initialCamera.center]},start:flightStart,target:continuedTarget};
+   map.jumpTo(flightStart);
+   // Gestures can interrupt the flight immediately; user control wins.
    map.on('dragstart',()=>this.interrupt());
    map.getCanvas().addEventListener('touchstart',()=>this.interrupt(),{passive:true});
    map.getCanvas().addEventListener('wheel',()=>this.interrupt(),{passive:true});
-   // The camera starts moving NOW. Waiting for the tiles and for the model
-   // before the first movement felt like a dead second on every tap.
-   this.flight={start,target};
    map.resize();map.triggerRepaint();
-   this.overlay.classList.add('sr83-loading');
-   document.body.classList.add('sr83-cinematic');
-   this.replay();
-   // From here the scene is built while the camera is already flying.
    await waitFor3DScene(map);
    if(seq!==this.sequence)return false;
    try{build3DBuildings(map)}catch(error){console.info('3D building fallback',error)}
@@ -295,17 +317,21 @@ export class Radar83Cinematic {
     this.onModel(info);
     if(this.credit){
      this.credit.textContent=info.kind==='error'
-      ?'Referenzmodell nicht geladen · '+info.error
+      ?'Referenzmodell nicht geladen Â· '+info.error
       :modelCreditText(info.credit,info.kind==='real',vehicle?.kind);
     }
-    if(this.info)this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
+    if(this.info)this.info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
    });
    this.layer=layer;
    map.addLayer(layer);
    await waitFor3DModel(map,this.layer);
    if(seq!==this.sequence)return false;
-   this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
+   this.info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
+    // Reveal the loaded 3D scene, then run the camera flight in view.
+   this.leaflet.stop();
+   map.resize();map.triggerRepaint();
    this.overlay.classList.add('sr83-ready');
+   this.replay();
    this.ready=true;
    return true;
   }catch(error){
@@ -335,8 +361,8 @@ export class Radar83Cinematic {
  update(vehicle,point,heading){
   if(!this.ready||!this.layer||!point||(this.vehicleKey&&vehicle?.key!==this.vehicleKey))return;
   this.layer.update(point,heading);
-  if(this.info)this.info.textContent='3D · '+selectedVehicleLabel(vehicle);
-  if(this.vehicleMeta)this.vehicleMeta.textContent=selectedVehicleMeta(vehicle)||'Keine weiteren Fahrzeugdaten verfügbar';
+  if(this.info)this.info.textContent='3D Â· '+selectedVehicleLabel(vehicle);
+  if(this.vehicleMeta)this.vehicleMeta.textContent=selectedVehicleMeta(vehicle)||'Keine weiteren Fahrzeugdaten verfÃ¼gbar';
   // The camera follows the vehicle while the user has not taken over. A
   // deliberate gesture always wins; the model keeps its real feed position.
   if(this.touched||this.flying||!this.map)return;
@@ -344,21 +370,48 @@ export class Radar83Cinematic {
   if(!decision)return;
   this.map.easeTo({center:decision.center,duration:900,essential:false});
  }
+ closeAnimated(){
+  if(!this.active||!this.ready||!this.map||!this.flight)return false;
+  if(this.closing)return true;
+  this.closing=true;
+  const map=this.map,flight=this.flight;
+  // Exit like the opening flight in reverse: rise vertically above the
+  // selected vehicle. Keep pitch and bearing fixed; changing either while
+  // zooming out makes the horizon/buildings visibly snap around mid-flight.
+  // The Leaflet map underneath has not moved, so it must not be re-centered
+  // or re-zoomed during teardown.
+  const duration=2100,fadeDuration=460;
+  const exitCamera={...flight.target,center:[...flight.target.center],zoom:flight.origin.zoom};
+  this.flying=true;clearTimeout(this.flightTimer);
+  map.stop();
+  map.easeTo({...exitCamera,duration,easing:t=>{const x=Math.max(0,Math.min(1,t));return x*x*x*(x*(x*6-15)+10)},essential:true});
+  clearTimeout(this.closeTimer);
+  this.closeTimer=setTimeout(()=>{
+   this.overlay?.classList.add('sr83-closing');
+   this.closeTimer=setTimeout(()=>{this.closing=false;this.close({sync:true});this.onExit?.()},fadeDuration);
+  },duration);
+  return true;
+ }
  close({sync=true}={}){
   const oldMap=this.map;
-  if(sync&&oldMap&&this.ready){
-   try{
-    const center=oldMap.getCenter(),zoom=oldMap.getZoom();
-    this.leaflet.setView([center.lat,center.lng],Math.min(18,Math.max(3,zoom)),{animate:false});
-   }catch{}
-  }
-  this.sequence++;this.ready=false;this.active=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);
+  // The Leaflet map stays parked at its original view underneath the 3D
+  // overlay. Do not copy the final MapLibre camera back into Leaflet: that
+  // creates a second, unrelated camera jump as the overlay disappears.
+  const returnView=null;
+  // Invalidate pending async MapLibre/Three callbacks before tearing down the DOM.
+  this.sequence++;this.ready=false;this.active=false;this.closing=false;this.touched=false;this.layer=null;this.map=null;this.vehicleKey=null;this.vehicleMeta=null;this.flight=null;this.flying=false;clearTimeout(this.flightTimer);clearTimeout(this.closeTimer);
+  // Remove the 3D viewport synchronously. Never rely on transitionend: on iOS
+  // Safari it may not fire when the sheet or its parent is being dismissed.
+  const overlay=this.overlay||document.getElementById('sr83Viewport');
   if(oldMap)try{oldMap.stop();oldMap.remove()}catch(error){console.info('3D map cleanup',error)}
-  this.overlay?.remove();this.overlay=null;this.surface=null;
-  document.body.classList.remove('sr83-cinematic');
-   if(this.contextCanvas&&this.contextLostHandler){
-    try{this.contextCanvas.removeEventListener('webglcontextlost',this.contextLostHandler)}catch{}
-   }
-   this.contextCanvas=null;this.contextLostHandler=null;this.contextLostCancel=null;
+  if(overlay)overlay.remove();
+  document.querySelectorAll('#map .sr83-viewport').forEach(node=>node.remove());
+  this.overlay=null;this.surface=null;
+  if(returnView)try{this.leaflet.setView(returnView.center,returnView.zoom,{animate:true,duration:560,easeLinearity:.24,noMoveStart:true});}catch{}
+  document.querySelectorAll('#sheet .sr83-info-card,#sheet .sr83-sources').forEach(node=>node.remove());
+  document.body.classList.remove('sr83-cinematic');document.body.classList.add('sr83-returning');
+  clearTimeout(this.returnTimer);this.returnTimer=setTimeout(()=>document.body.classList.remove('sr83-returning'),600);
+  if(this.contextCanvas&&this.contextLostHandler){try{this.contextCanvas.removeEventListener('webglcontextlost',this.contextLostHandler)}catch{}}
+  this.contextCanvas=null;this.contextLostHandler=null;this.contextLostCancel=null;
  }
 }

@@ -32,6 +32,34 @@ export function groupNearby(points,radius=42,selectedKey=null,mode='all'){
  }
  return {clusters,singles};
 }
+
+export function resolveClusterCollisions(clusters,viewport={},options={}){
+ const width=Math.max(1,Number(viewport.width)||1),height=Math.max(1,Number(viewport.height)||1);
+ const markerWidth=Math.max(1,Number(options.markerWidth)||58),markerHeight=Math.max(1,Number(options.markerHeight)||34);
+ const gap=Math.max(0,Number(options.gap)||8),padding=Math.max(0,Number(options.padding)||8);
+ const mergeUntilClear=items=>{
+  let changed=true,passes=0;
+  while(changed&&passes++<items.length*items.length+1){
+   changed=false;
+   outer:for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
+    const a=items[i],b=items[j];
+    if(Math.abs(a.x-b.x)<markerWidth+gap&&Math.abs(a.y-b.y)<markerHeight+gap){
+     const ac=Math.max(1,Number(a.count)||a.keys?.length||1),bc=Math.max(1,Number(b.count)||b.keys?.length||1),total=ac+bc;
+     items[i]={...a,keys:[...(a.keys||[]),...(b.keys||[])],count:(Number(a.count)||a.keys?.length||ac)+(Number(b.count)||b.keys?.length||bc),buses:(Number(a.buses)||0)+(Number(b.buses)||0),trains:(Number(a.trains)||0)+(Number(b.trains)||0),staleCount:(Number(a.staleCount)||0)+(Number(b.staleCount)||0),x:(a.x*ac+b.x*bc)/total,y:(a.y*ac+b.y*bc)/total};
+     items.splice(j,1);changed=true;break outer;
+    }
+   }
+  }
+  return items;
+ };
+ let items=(clusters||[]).filter(c=>Number.isFinite(c?.x)&&Number.isFinite(c?.y)).map(c=>({...c,keys:[...(c.keys||[])]}));
+ items=mergeUntilClear(items);
+ const minX=Math.min(width/2,markerWidth/2+padding),maxX=Math.max(minX,width-markerWidth/2-padding);
+ const minY=Math.min(height/2,markerHeight/2+padding),maxY=Math.max(minY,height-markerHeight/2-padding);
+ items=items.map(c=>({...c,x:Math.max(minX,Math.min(maxX,c.x)),y:Math.max(minY,Math.min(maxY,c.y))}));
+ return mergeUntilClear(items);
+}
+
 export function safeDelay(info,feedStatus){
  if(feedStatus!=='ok'||!info||!Number.isFinite(Number(info.delay)))return null;
  const n=Math.round(Number(info.delay)/60);

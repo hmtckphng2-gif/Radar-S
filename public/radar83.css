@@ -1,4 +1,4 @@
-/* Radar 8.3 — real 3D map only during selected vehicle cinematic view.
+/* Radar 8.3 â real 3D map only during selected vehicle cinematic view.
  * Does not rotate/transform Leaflet panes or change normal map interactions.
  */
 #map .sr83-viewport{
@@ -22,16 +22,6 @@
  background:#101c29e8;border:1px solid #395066bb;box-shadow:0 6px 20px #0008;
  white-space:nowrap;
 }
-#map .sr83-back{
- pointer-events:auto;touch-action:manipulation;appearance:none;
- min-height:41px;padding:10px 14px;
- border-radius:12px;border:1px solid #6c8aa6a9;
- background:#112234f2;color:#f4f8fc;box-shadow:0 5px 20px #0008;
- font:650 13px/1.1 Inter,-apple-system,BlinkMacSystemFont,sans-serif;
- -webkit-tap-highlight-color:transparent;
-}
-#map .sr83-back:active{background:#25435c}
-#map .sr83-back:focus-visible{outline:2px solid #8bcdff;outline-offset:2px}
 #map .sr83-credit{
  position:absolute;z-index:10;left:50%;
  bottom:calc(32dvh + 18px);
@@ -64,7 +54,6 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
 #map .sr83-toolbar{gap:6px;right:12px;left:12px;top:max(125px,env(safe-area-inset-top,0px))}
 #map .sr83-label{white-space:nowrap;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:10px;padding:9px 8px}
 #map .sr83-replay{pointer-events:auto;touch-action:manipulation;appearance:none;min-height:40px;white-space:nowrap;padding:9px 10px;border-radius:10px;border:1px solid #516c86;background:#162c41ee;color:#e6f1ff;font:650 12px Inter,system-ui,sans-serif}
-#map .sr83-back{min-height:40px;white-space:nowrap;padding:9px 10px;font-size:12px}
 #map .sr83-viewport .maplibregl-ctrl-attrib{font-size:9px;max-width:44vw;line-height:1.2}
 #map .sr83-viewport .maplibregl-ctrl-bottom-right{right:8px}
 
@@ -72,13 +61,11 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
 #map .sr83-viewport .maplibregl-ctrl-attrib{background:#0c1b2bf0!important;color:#b5c9db!important;border:1px solid #30465c!important;border-radius:10px!important;padding:5px 8px!important}
 #map .sr83-viewport .maplibregl-ctrl-attrib a{color:#a8d6ff!important}
 
-/* 9.1 - Auf schmalen Telefonen war die 3D-Werkzeugleiste breiter als der
-   Bildschirm, der "2D"-Knopf lag hinter dem Werkzeugknopf. Die Leiste
-   wird hier kompakt und die Knöpfe bekommen die volle Hoehe. */
+/* 9.1 - Keep the 3D toolbar compact on narrow phones. */
 @media (max-width: 430px){
   #map .sr83-toolbar{left:8px;right:8px;top:max(118px,env(safe-area-inset-top,0px));gap:6px}
   #map .sr83-label{font-size:9px;padding:8px 9px;letter-spacing:.1em}
-  #map .sr83-replay,#map .sr83-back{min-height:44px;padding:10px 12px;font-size:12px}
+  #map .sr83-replay{min-height:44px;padding:10px 12px;font-size:12px}
   #map .sr83-credit{bottom:calc(30dvh + 14px);font-size:9px;padding:6px 9px}
 }
 /* 10.0 motion polish: the camera flight eases into a stable final frame. */
@@ -89,3 +76,26 @@ body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32d
 /* 9.9.1 Block 5: identify the actual selected feed vehicle in the 3D view. */
 #map .sr83-vehicle-meta{position:absolute;z-index:10;left:15px;top:calc(max(136px,env(safe-area-inset-top,0px)) + 54px);max-width:min(300px,calc(100% - 30px));padding:8px 11px;border:1px solid #34495dba;border-radius:10px;background:#101c29e8;color:#cbd7e2;font:550 11px/1.4 Inter,-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 5px 16px #0007;overflow-wrap:anywhere;pointer-events:none}
 @media(max-width:390px){#map .sr83-vehicle-meta{top:calc(max(130px,env(safe-area-inset-top,0px)) + 52px);font-size:10px;max-width:calc(100% - 30px)}}
+
+/* 10.0.1: the 3D exit is a real control inside the overlay, above the canvas. */
+#map .sr83-exit{pointer-events:auto;touch-action:manipulation;appearance:none;display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;border:1px solid #60758a;border-radius:12px;background:#172638f5;color:#f3f7fc;font:500 30px/1 system-ui,sans-serif;box-shadow:0 5px 18px #0009;cursor:pointer;position:relative;z-index:20}
+#map .sr83-exit:active{background:#29445f;transform:scale(.96)}
+#map .sr83-toolbar{z-index:30}
+
+/* 10.0.1: dedicated exit stays above the 3D canvas and receives taps. */
+#map .sr83-exit{pointer-events:auto;touch-action:manipulation;appearance:none;display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;border:1px solid #60758a;border-radius:12px;background:#172638f5;color:#f3f7fc;font:500 30px/1 system-ui,sans-serif;box-shadow:0 5px 18px #0009;cursor:pointer;position:relative;z-index:20}
+#map .sr83-exit:active{background:#29445f;transform:scale(.96)}
+#map .sr83-toolbar{z-index:30}
+
+/* Radar 10.0.5 — clean cinematic handoff back to the live 2D map. */
+#map .sr83-viewport{will-change:opacity,transform;transform:translateZ(0);}
+#map .sr83-viewport.sr83-closing{opacity:0!important;transform:scale(1.012)!important;filter:blur(2px);transition:opacity .46s cubic-bezier(.22,.72,.18,1),transform .56s cubic-bezier(.22,.72,.18,1),filter .46s ease!important;pointer-events:none!important;}
+body.sr83-returning #map .leaflet-pane,body.sr83-returning #map .leaflet-control-container{transition:filter .52s ease,opacity .42s ease;}
+body.sr83-returning #map .leaflet-tile-pane{filter:saturate(1.02) brightness(1.025);}
+#map .sr83-exit{isolation:isolate;pointer-events:auto!important;touch-action:manipulation!important;-webkit-tap-highlight-color:transparent;}
+@media(prefers-reduced-motion:reduce){#map .sr83-viewport.sr83-closing,body.sr83-returning #map .leaflet-pane,body.sr83-returning #map .leaflet-control-container{transition:none!important;}}
+
+/* X close: 3D is detached synchronously; briefly soften the restored 2D map. */
+body.sr83-returning #map .leaflet-tile-pane{animation:sr83-2d-return .56s cubic-bezier(.22,.72,.18,1) both;}
+@keyframes sr83-2d-return{from{opacity:.72;filter:blur(1.5px) brightness(1.04)}to{opacity:1;filter:blur(0) brightness(1)}}
+@media(prefers-reduced-motion:reduce){body.sr83-returning #map .leaflet-tile-pane{animation:none!important}}

@@ -95,9 +95,10 @@ test('the legacy version module is gone and index.html does not load it', () => 
 });
 
 test('index.html ships the badge and the script tag of the current version', () => {
-  assert.ok(index.includes('<em>' + pkg.version + '</em>'), 'the static badge must show ' + pkg.version);
+  assert.ok(index.includes('class="brand-title"'), 'the brand title must remain');
   assert.ok(index.includes('/radar80.js?v=' + pkg.version), 'radar80.js needs a matching cache buster');
-  assert.ok(index.includes('class="brand-title"'), 'the version badge element must exist');
+  assert.ok(!index.includes('<em>' + pkg.version + '</em>'), 'the version must no longer appear in the map header');
+  assert.ok(read('public/radar60.js').includes('SÜDTIROL RADAR · VERSION ' + pkg.version), 'the menu must show the current version');
 });
 
 test('every cache buster in index.html points at the current release', () => {

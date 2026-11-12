@@ -38,7 +38,7 @@ export function collectTrafficIssues(state,now=Date.now(),limit=80){
   const stopIds=Array.isArray(times)?times.map(x=>String(x[0])):[];
   if(canceled||delay!==null&&delay>=600){
    const severity=canceled?'danger':'delay',minutes=canceled?null:Math.round(delay/60);
-   const detail=canceled?'Ausfall in frischem GTFS-RT-TripUpdate':stopConfirmed?'Verspätung am nächsten gemeldeten Halt; nicht die gesamte Linie':'Fahrtweiter GTFS-RT-Verspätungswert; Haltprognose nicht garantiert';
+   const detail=canceled?'Ausfall laut aktueller Echtzeitmeldung':stopConfirmed?'Verspätung am nächsten gemeldeten Halt; nicht die gesamte Linie':'Gemeldete Verspätung für die ganze Fahrt; keine bestätigte Prognose für den nächsten Halt';
    issues.push({id:source+':'+tripId+':'+severity,source,tripId,line,kind,severity,minutes,verified:true,stopIds,
      title:(kind==='train'?'Zug ':'Bus ')+line+(canceled?' · Ausfall':' · +'+minutes+' Min.'),detail});
   }
@@ -51,12 +51,12 @@ export function collectTrafficIssues(state,now=Date.now(),limit=80){
     const stopName=String(state.details?.[source]?.stops?.[stopId]?.[0]||stopId);
     if(/^(SKIPPED|1)$/i.test(String(st.scheduleRelationship??st.schedule_relationship??''))){
      issues.push({id:source+':'+tripId+':skip:'+stopId,source,tripId,line,kind,severity:'danger',minutes:null,verified:true,stopIds:[stopId],
-      title:(kind==='train'?'Zug ':'Bus ')+line+' · Halt entfällt',detail:stopName+' laut GTFS-RT übersprungen'});
+      title:(kind==='train'?'Zug ':'Bus ')+line+' · Halt entfällt',detail:stopName+' laut Echtzeitmeldung ausgelassen'});
     }
     if(kind==='train'){
      const p=platformInfo(state.details?.[source]?.stops?.[stopId],st,state.details?.[source]?.stops);
      if(p.live&&p.changed)issues.push({id:source+':'+tripId+':platform:'+stopId,source,tripId,line,kind,severity:'info',minutes:null,verified:true,stopIds:[stopId],
-      title:'Gleiswechsel · '+line,detail:stopName+': Gleis '+p.planned+' → '+p.current+' (GTFS-RT)'});
+      title:'Gleiswechsel · '+line,detail:stopName+': Gleis '+p.planned+' → '+p.current+' (Echtzeitmeldung)'});
     }
    }
   }

@@ -79,10 +79,11 @@ export function feedQuality(v,statuses,now=Date.now()){
  const age=Number.isFinite(Number(v.timestamp))&&Number(v.timestamp)>1e9?Math.max(0,now/1000-Number(v.timestamp)):null;
  const sourceOk=statuses?.[v.source]==='ok';
  const estimated=/simuliert|geschätzt|estimated|interpoliert/i.test(String(v.positionType||''))||v.source==='trains';
- if(v.stale||!sourceOk||(age!==null&&age>300))return {level:'stale',label:'Letzte bekannte Position',detail:age===null?'Alter unbekannt':Math.round(age)+' Sekunden alt',age,estimated};
- if(age===null)return {level:'unknown',label:'Zeit nicht bestätigt',detail:estimated?'Position geschätzt':'Feedposition ohne überprüfbare Zeit',age,estimated};
- if(estimated)return {level:'estimated',label:'Position geschätzt',detail:Math.round(age)+' Sekunden seit Feedmeldung',age,estimated};
- return {level:'reported',label:'Feedposition gemeldet',detail:Math.round(age)+' Sekunden seit Feedmeldung · kein GPS-Nachweis',age,estimated};
+ const relative=age===null?null:age<60?'vor weniger als 1 Min.':'vor '+Math.max(1,Math.round(age/60))+' Min.';
+ if(v.stale||!sourceOk||(age!==null&&age>300))return {level:'stale',label:'Letzte bekannte Position',detail:relative?'Letzte Positionsmeldung '+relative:'Zeit der Positionsmeldung unbekannt',age,estimated};
+ if(age===null)return {level:'unknown',label:'Zeit nicht bestätigt',detail:estimated?'Position geschätzt':'Zeit der Positionsmeldung unbekannt',age,estimated};
+ if(estimated)return {level:'estimated',label:'Position geschätzt',detail:'Position '+relative+' gemeldet',age,estimated};
+ return {level:'reported',label:'Position gemeldet',detail:'Position '+relative+' gemeldet',age,estimated};
 }
 export function spatialWarning(km,rtMinutes,quality){
  if(!Number.isFinite(km)||km<3)return null;
