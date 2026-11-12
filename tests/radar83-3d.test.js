@@ -21,8 +21,8 @@ test('cinematic approaches from behind over a longer, smooth flight',()=>{
  assert.equal(start.bearing,202);
  assert.ok(start.zoom>15, 'closer starting zoom than the old distant shot');
  assert.ok(start.center[0]<11.35);
- assert.ok(cinematicDuration(0,4300)>=6800);
- assert.ok(cinematicDuration(0,4300)<=8000);
+ assert.equal(cinematicDuration(0,4300),4300);
+ assert.equal(cinematicDuration(0,700),700);
 });
 test('tap-origin handoff preserves the live Leaflet center and scale',()=>{
  const camera=handoff3DCamera({lat:46.5,lng:11.35},18);

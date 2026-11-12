@@ -51,11 +51,13 @@ test('replay works before the model is ready', () => {
   assert.match(src, /replay\(\)\{\s*\n\s*if\(!this\.map\|\|!this\.flight\)return;/);
 });
 
-test('the camera flight is long and smooth without becoming excessive', () => {
-  assert.ok(cinematicDuration(0.2) >= 6800 && cinematicDuration(0.2) <= 7600);
-  assert.ok(cinematicDuration(0.2) < cinematicDuration(30), 'a distant vehicle may take a little longer');
-  assert.ok(cinematicDuration(0.2, 9000) <= 8000);
-  assert.ok(cinematicDuration(0.2, 100) >= 6800);
+test('3D camera travel adapts to zoom and distance instead of forcing a long flight', () => {
+  const near=cinematicDuration(0.2, 430);
+  const far=cinematicDuration(30, 2200);
+  assert.ok(near>=650 && near<=750, 'a nearby tap while zoomed in stays quick');
+  assert.ok(far>near && far<=5200, 'a distant vehicle may take longer');
+  assert.ok(cinematicDuration(0.2, 9000) <= 4850);
+  assert.equal(cinematicDuration(0.2, 100), 650);
 });
 
 test('the default live camera flight uses the slower cinematic timing', () => {
@@ -120,9 +122,9 @@ test('cinematic 3D stays enabled by default and all camera modules bypass stale 
   const camera=read('radar71-camera.mjs');
   const map=read('radar83-map.mjs');
   assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=first-tap-preload-1'));
-  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=first-tap-visibility-retry-2'));
-  assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
-  assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-exit-7'));
+  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
+  assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
+  assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
   assert.ok(map.includes('const exitCamera={...flight.target,center:[...flight.target.center],zoom:flight.origin.zoom}'));
   assert.ok(map.includes('const returnView=null'));
   assert.ok(map.includes('map.easeTo({...exitCamera,duration'));
