@@ -1,6 +1,6 @@
-import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=first-tap-preload-1';
-import {preload3DLibraries} from './radar83-map.mjs?v=9.9.5&rev=first-tap-preload-1';
-/* Radar 7.1 â Cinematic Vehicle Focus.
+import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=first-tap-visibility-retry-2';
+import {preload3DLibraries} from './radar83-map.mjs?v=9.9.5&rev=first-tap-visibility-retry-2';
+/* Radar 7.1 Ã¢ÂÂ Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate
  * map panes with CSS and corrupt touch coordinates or marker hit testing.
@@ -10,13 +10,13 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-
 (()=>{'use strict';
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
- let bridge=null,map=null,initialized=false,token=0,timer=0,rotationFrame=0,active=false;
+ let bridge=null,map=null,initialized=false,token=0,selectionRequest=0,timer=0,rotationFrame=0,active=false;
  let hud=null,previousBearing=null,visibleKey=null,animatingTurn=false,model3d=null,cinema3d=null,emergencyFallback=null;
  const mapVisible=()=>!$('sr50MapTab')?.classList.contains('sr50-map-inactive') && !document.hidden && location.hash!=='#home' && location.hash!=='#journey' && location.hash!=='#more';
  function setupHud(){
   if(hud)return;
   hud=document.createElement('div');hud.id='sr71Cinematic';hud.className='sr71-cinematic';hud.setAttribute('aria-hidden','true');
-  hud.innerHTML='<div class="sr71-focus-ring"><div class="sr71-focus-reticle"></div></div><div class="sr71-focus-caption"><span id="sr71FocusTitle"></span><span id="sr71FocusQuality"></span></div><span class="sr71-heading-arrow" id="sr71HeadingArrow" hidden>â¤</span>';
+  hud.innerHTML='<div class="sr71-focus-ring"><div class="sr71-focus-reticle"></div></div><div class="sr71-focus-caption"><span id="sr71FocusTitle"></span><span id="sr71FocusQuality"></span></div><span class="sr71-heading-arrow" id="sr71HeadingArrow" hidden>Ã¢ÂÂ¤</span>';
   $('map')?.append(hud);
  }
  function turnTo(target,duration,sequence){
@@ -60,12 +60,19 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-
   model3d?.hide();document.body.classList.remove('sr82-3d-active');
  }
  function onSelection(){
-  const key=bridge?.state?.selectedKey,vehicle=bridge?.state?.vehicles?.get(key);
-  const marker=bridge?.state?.markers?.get(key)?.marker;
-  const pos=validFocusPoint(vehicle,marker?.getLatLng?.());
-  if(!vehicle||!pos||!mapVisible()){
-   cancel();document.body.classList.remove('sr71-focusing');return;
-  }
+  const request=++selectionRequest;
+  let visibilityRetries=0;
+  const begin=()=>{
+   if(request!==selectionRequest)return;
+   const key=bridge?.state?.selectedKey,vehicle=bridge?.state?.vehicles?.get(key);
+   const marker=bridge?.state?.markers?.get(key)?.marker;
+   const pos=validFocusPoint(vehicle,marker?.getLatLng?.());
+   // A fast tab switch can leave the map inactive for a transition frame.
+   // Retry briefly instead of dropping the first vehicle selection.
+   if(vehicle&&pos&&!mapVisible()&&visibilityRetries++<8){requestAnimationFrame(begin);return;}
+   if(!vehicle||!pos||!mapVisible()){
+    cancel();document.body.classList.remove('sr71-focusing');return;
+   }
   const seq=++token;clearTimeout(timer);cancelAnimationFrame(rotationFrame);
   active=true;visibleKey=key;document.body.classList.add('sr71-focusing');
   document.body.classList.remove('sr71-focused');
@@ -73,7 +80,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-
   if(hud){hud.classList.remove('sr71-is-done');hud.classList.add('sr71-is-running');}
   const title=$('sr71FocusTitle'),quality=$('sr71FocusQuality');
   if(title)title.textContent=String(vehicle.name||'Fahrzeug').slice(0,28);
-  if(quality)quality.textContent=vehicle.stale?'LETZTE BEKANNTE POSITION':('FEEDPOSITION Â· '+String(vehicle.positionType||'KEIN GPS-NACHWEIS').slice(0,28).toUpperCase());
+  if(quality)quality.textContent=vehicle.stale?'LETZTE BEKANNTE POSITION':('FEEDPOSITION ÃÂ· '+String(vehicle.positionType||'KEIN GPS-NACHWEIS').slice(0,28).toUpperCase());
   const heading=focusHeading(vehicle),arrow=$('sr71HeadingArrow');
   if(arrow){arrow.hidden=heading===null;arrow.style.setProperty('--sr71-direction',((heading??0)-45)+'deg')}
   const toZoom=focusZoom(map.getZoom(),map.getMaxZoom(),vehicle.kind);
@@ -111,6 +118,8 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-
     timer=setTimeout(()=>{if(seq===token)reveal(seq)},duration+95);
    }).catch(error=>{console.info('Radar 8.3 initialization fallback',error);classic()});
   }else classic();
+  };
+  if(mapVisible())begin();else requestAnimationFrame(begin);
  }
  function manualInterrupt(){
   if(!active)return;
@@ -148,7 +157,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-
    if(model3d?.visible)model3d.updatePoint(p,focusHeading(v));
    if(cinema3d?.ready)cinema3d.update(v,p,focusHeading(v));
   });
-  document.addEventListener('sr37:sheet-closed',()=>cancel({restore:true}));
+  document.addEventListener('sr37:sheet-closed',()=>{selectionRequest++;cancel({restore:true})});
   map.on('dragstart',manualInterrupt);
   map.getContainer().addEventListener('wheel',()=>{if(!cinema3d?.ready)manualInterrupt()},{passive:true});
   map.getContainer().addEventListener('touchstart',()=>{if(active&&!cinema3d?.ready)manualInterrupt()},{passive:true});
