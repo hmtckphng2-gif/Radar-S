@@ -144,3 +144,10 @@ test('3D scene updates and delayed model callbacks are scoped to the active vehi
  assert.match(src,/modelCreditText\(info\.credit,info\.kind==='real',vehicle\?\.kind\)/);
  assert.match(src,/this\.vehicleMeta\.textContent=selectedVehicleMeta\(vehicle\)/);
 });
+
+test('first vehicle tap has MapLibre and Three.js warmed before selection',()=>{
+ const mapSource=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
+ const cameraSource=readFileSync(new URL('../public/radar71-camera.mjs',import.meta.url),'utf8');
+ assert.match(mapSource,/Promise\.all\(\[loadMapLibre\(\),loadThree\(\)\]\)/);
+ assert.match(cameraSource,/preload3DLibraries\(\);/);
+});
