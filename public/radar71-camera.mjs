@@ -73,51 +73,51 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-
    if(!vehicle||!pos||!mapVisible()){
     cancel();document.body.classList.remove('sr71-focusing');return;
    }
-  const seq=++token;clearTimeout(timer);cancelAnimationFrame(rotationFrame);
-  active=true;visibleKey=key;document.body.classList.add('sr71-focusing');
-  document.body.classList.remove('sr71-focused');
-  setupHud();
-  if(hud){hud.classList.remove('sr71-is-done');hud.classList.add('sr71-is-running');}
-  const title=$('sr71FocusTitle'),quality=$('sr71FocusQuality');
-  if(title)title.textContent=String(vehicle.name||'Fahrzeug').slice(0,28);
-  if(quality)quality.textContent=vehicle.stale?'LETZTE BEKANNTE POSITION':('FEEDPOSITION ÃÂ· '+String(vehicle.positionType||'KEIN GPS-NACHWEIS').slice(0,28).toUpperCase());
-  const heading=focusHeading(vehicle),arrow=$('sr71HeadingArrow');
-  if(arrow){arrow.hidden=heading===null;arrow.style.setProperty('--sr71-direction',((heading??0)-45)+'deg')}
-  const toZoom=focusZoom(map.getZoom(),map.getMaxZoom(),vehicle.kind);
-  // The 3D camera frames the vehicle, not the map: a 44,5 m train and a 12 m bus
-  // need a different distance to fill the frame.
-  const cinematicZoom=vehicle.kind==='bus'?Math.max(toZoom,20.2):Math.max(toZoom,19);
-  const distanceKm=focusDistanceKm(map.getCenter(),pos);
-  // The camera move is short and starts on the tap. A long flight felt sluggish.
-  const duration=cinematicDuration(distanceKm,focusDuration(motion.matches,map.getZoom(),toZoom,distanceKm)*0.62);
-  const classic=()=>{
-   if(seq!==token)return;
-   try{
-    map.stop();
-    if(motion.matches)map.setView([pos.lat,pos.lng],toZoom,{animate:false});
-    else map.flyTo([pos.lat,pos.lng],toZoom,{animate:true,duration:duration/1000,easeLinearity:.22});
-    if(heading!==null)turnTo(heading,duration,seq);
-   }catch(error){console.info('Radar 8.2 camera fallback',error);try{map.setView([pos.lat,pos.lng],toZoom,{animate:false})}catch{}}
-   timer=setTimeout(()=>{
+   const seq=++token;clearTimeout(timer);cancelAnimationFrame(rotationFrame);
+   active=true;visibleKey=key;document.body.classList.add('sr71-focusing');
+   document.body.classList.remove('sr71-focused');
+   setupHud();
+   if(hud){hud.classList.remove('sr71-is-done');hud.classList.add('sr71-is-running');}
+   const title=$('sr71FocusTitle'),quality=$('sr71FocusQuality');
+   if(title)title.textContent=String(vehicle.name||'Fahrzeug').slice(0,28);
+   if(quality)quality.textContent=vehicle.stale?'LETZTE BEKANNTE POSITION':('FEEDPOSITION ÃÂ· '+String(vehicle.positionType||'KEIN GPS-NACHWEIS').slice(0,28).toUpperCase());
+   const heading=focusHeading(vehicle),arrow=$('sr71HeadingArrow');
+   if(arrow){arrow.hidden=heading===null;arrow.style.setProperty('--sr71-direction',((heading??0)-45)+'deg')}
+   const toZoom=focusZoom(map.getZoom(),map.getMaxZoom(),vehicle.kind);
+   // The 3D camera frames the vehicle, not the map: a 44,5 m train and a 12 m bus
+   // need a different distance to fill the frame.
+   const cinematicZoom=vehicle.kind==='bus'?Math.max(toZoom,20.2):Math.max(toZoom,19);
+   const distanceKm=focusDistanceKm(map.getCenter(),pos);
+   // The camera move is short and starts on the tap. A long flight felt sluggish.
+   const duration=cinematicDuration(distanceKm,focusDuration(motion.matches,map.getZoom(),toZoom,distanceKm)*0.62);
+   const classic=()=>{
     if(seq!==token)return;
-    const nextVehicle=bridge.state.vehicles.get(key);
-    const nextPos=validFocusPoint(nextVehicle,bridge.state.markers.get(key)?.marker?.getLatLng?.());
-    if(nextPos)model3d?.updatePoint(nextPos,focusHeading(nextVehicle));
-    if(nextPos && bridge.state.selectedKey===key)try{map.panTo([nextPos.lat,nextPos.lng],{animate:false})}catch{}
-    reveal(seq);
-   },duration+95);
-  };
-  emergencyFallback=classic;
-  if(cinema3d?.enabled){
-   cinema3d.open(vehicle,pos,heading,duration,cinematicZoom).then(ok=>{
-    if(seq!==token){if(ok)cinema3d?.close({sync:false});return}
-    if(!ok){classic();return}
-    model3d?.hide();document.body.classList.remove('sr82-3d-active');
-    hud?.classList.remove('sr71-is-running');
-    // The 3D camera runs in MapLibre; do NOT also fly or rotate the 2D Leaflet map.
-    timer=setTimeout(()=>{if(seq===token)reveal(seq)},duration+95);
-   }).catch(error=>{console.info('Radar 8.3 initialization fallback',error);classic()});
-  }else classic();
+    try{
+     map.stop();
+     if(motion.matches)map.setView([pos.lat,pos.lng],toZoom,{animate:false});
+     else map.flyTo([pos.lat,pos.lng],toZoom,{animate:true,duration:duration/1000,easeLinearity:.22});
+     if(heading!==null)turnTo(heading,duration,seq);
+    }catch(error){console.info('Radar 8.2 camera fallback',error);try{map.setView([pos.lat,pos.lng],toZoom,{animate:false})}catch{}}
+    timer=setTimeout(()=>{
+     if(seq!==token)return;
+     const nextVehicle=bridge.state.vehicles.get(key);
+     const nextPos=validFocusPoint(nextVehicle,bridge.state.markers.get(key)?.marker?.getLatLng?.());
+     if(nextPos)model3d?.updatePoint(nextPos,focusHeading(nextVehicle));
+     if(nextPos && bridge.state.selectedKey===key)try{map.panTo([nextPos.lat,nextPos.lng],{animate:false})}catch{}
+     reveal(seq);
+    },duration+95);
+   };
+   emergencyFallback=classic;
+   if(cinema3d?.enabled){
+    cinema3d.open(vehicle,pos,heading,duration,cinematicZoom).then(ok=>{
+     if(seq!==token){if(ok)cinema3d?.close({sync:false});return}
+     if(!ok){classic();return}
+     model3d?.hide();document.body.classList.remove('sr82-3d-active');
+     hud?.classList.remove('sr71-is-running');
+     // The 3D camera runs in MapLibre; do NOT also fly or rotate the 2D Leaflet map.
+     timer=setTimeout(()=>{if(seq===token)reveal(seq)},duration+95);
+    }).catch(error=>{console.info('Radar 8.3 initialization fallback',error);classic()});
+   }else classic();
   };
   if(mapVisible())begin();else requestAnimationFrame(begin);
  }
@@ -157,7 +157,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=tap-3d-overlay-
    if(model3d?.visible)model3d.updatePoint(p,focusHeading(v));
    if(cinema3d?.ready)cinema3d.update(v,p,focusHeading(v));
   });
-  document.addEventListener('sr37:sheet-closed',()=>{selectionRequest++;cancel({restore:true})});
+  document.addEventListener('sr37:sheet-closed',()=>cancel({restore:true}));
   map.on('dragstart',manualInterrupt);
   map.getContainer().addEventListener('wheel',()=>{if(!cinema3d?.ready)manualInterrupt()},{passive:true});
   map.getContainer().addEventListener('touchstart',()=>{if(active&&!cinema3d?.ready)manualInterrupt()},{passive:true});

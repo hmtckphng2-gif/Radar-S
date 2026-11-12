@@ -45,5 +45,5 @@ test('first vehicle tap survives a brief inactive-map frame after rapid tab swit
  assert.match(source,/visibilityRetries\+\+<8/);
  assert.match(source,/requestAnimationFrame\(begin\)/);
  assert.match(source,/const request=\+\+selectionRequest/);
- assert.match(source,/selectionRequest\+\+;cancel\(\{restore:true\}\)/);
+ assert.match(source,/addEventListener\('sr37:sheet-closed',\(\)=>cancel\(\{restore:true\}\)\)/);
 });
