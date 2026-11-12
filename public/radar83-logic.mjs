@@ -90,9 +90,10 @@ export function followDecision({touched=false,center=null,point=null,thresholdMe
 // second on every single tap.
 export function cinematicDuration(distanceKm=0,base=4300){
   const d=Number(distanceKm);
-  const extra=Number.isFinite(d)&&d>2?400:0;
-  const duration=Math.max(3800,Math.min(4600,Number(base)||4300));
-  return Math.min(5000,Math.round(duration+extra));
+  const extra=Number.isFinite(d)&&d>2?Math.min(350,Math.sqrt(d-2)*45):0;
+  const requested=Number(base);
+  const duration=Math.max(650,Math.min(4850,Number.isFinite(requested)&&requested>0?requested:4300));
+  return Math.round(Math.max(650,Math.min(5200,duration+extra)));
 }
 // If the system asks for less motion, the cinematic camera must not fly.
 // It jumps straight to the vehicle instead.

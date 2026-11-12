@@ -51,13 +51,15 @@ test('replay works before the model is ready', () => {
   assert.match(src, /replay\(\)\{\s*\n\s*if\(!this\.map\|\|!this\.flight\)return;/);
 });
 
-test('the camera move is short enough to feel immediate', () => {
-  assert.ok(cinematicDuration(0.2) >= 3800 && cinematicDuration(0.2) <= 4600);
-  assert.ok(cinematicDuration(0.2) < cinematicDuration(30), 'a distant vehicle may take a little longer');
-  // A very long base value is still clamped.
-  assert.ok(cinematicDuration(0.2, 9000) <= 4600);
-  assert.ok(cinematicDuration(0.2, 100) >= 3800);
+test('3D camera travel adapts to zoom and distance instead of forcing a long flight', () => {
+  const near=cinematicDuration(0.2, 430);
+  const far=cinematicDuration(30, 2200);
+  assert.ok(near>=650 && near<=750, 'a nearby tap while zoomed in stays quick');
+  assert.ok(far>near && far<=5200, 'a distant vehicle may take longer');
+  assert.ok(cinematicDuration(0.2, 9000) <= 4850);
+  assert.equal(cinematicDuration(0.2, 100), 650);
 });
+
 
 test('the default live camera flight uses the slower cinematic timing', () => {
   const src = read('radar83-logic.mjs');
@@ -82,4 +84,11 @@ test('the 3D camera respects prefers-reduced-motion', () => {
   assert.match(src, /if\(prefersReducedMotion\(\)\)/);
   // Die Funktion selbst darf nie werfen.
   assert.equal(typeof prefersReducedMotion(), 'boolean');
+});
+test('adaptive camera modules use fresh cache revisions on main', () => {
+  const html=read('index.html'),camera=read('radar71-camera.mjs'),map=read('radar83-map.mjs');
+  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
+  assert.ok(camera.includes('radar71-camera-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
+  assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
+  assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
 });
