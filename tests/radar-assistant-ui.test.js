@@ -9,7 +9,7 @@ test('assistant health check requires ready status and reads live feed freshness
  const ui=read('radar-assistant-ui.mjs');assert.match(ui,/\/api\/assistant\/status/);assert.match(ui,/health\.enabled===true&&health\.status==='ready'/);assert.match(ui,/\/api\/v1\/diagnostics/);assert.match(ui,/Live-Daten geprüft/);
 });
 test('composer stays above safe area and visual viewport with 16px iOS input',()=>{
- const ui=read('radar-assistant-ui.mjs'),css=read('radar-assistant.css');assert.match(ui,/visualViewport/);assert.match(css,/position:sticky/);assert.match(css,/env\(safe-area-inset-bottom\)/);assert.match(css,/font:400 16px/);assert.match(css,/min-height:44px/);assert.match(css,/z-index:2600/);
+ const ui=read('radar-assistant-ui.mjs'),css=read('radar-assistant.css');assert.match(ui,/visualViewport/);assert.match(css,/position:sticky/);assert.match(css,/env\(safe-area-inset-bottom\)/);assert.match(css,/font:400 16px/);assert.match(css,/min-height:44px/);assert.match(css,/z-index:15800/);
 });
 test('friendly error states, retry, cancel and animated progressive answer are present',()=>{
  const ui=read('radar-assistant-ui.mjs');for(const code of ['rate_limited','assistant_unavailable','feed_unavailable','model_unavailable','model_quota','timeout','offline'])assert.ok(ui.includes(code));assert.match(ui,/Erneut versuchen/);assert.match(ui,/cancelRequest/);assert.match(ui,/requestAnimationFrame/);assert.match(ui,/sr-chat-dots/);
@@ -31,3 +31,5 @@ test('main dock stays above chat when keyboard is closed and hides smoothly whil
 test('opening the assistant selects Chat in the Horizon dock and closing restores the previous tab',()=>{
  const ui=read('radar-assistant-ui.mjs'),home=read('radar70-redesign.mjs');assert.match(ui,/previousDockPage=active\?\.dataset\.page\|\|'home'/);assert.match(ui,/setDockActive\?\.\('chat'\)/);assert.match(ui,/setDockActive\?\.\(previousDockPage\)/);assert.match(home,/setDockActive:\(id\)=>/);
 });
+
+test('assistant initializes without opening Chat over the app',()=>{const ui=read('radar-assistant-ui.mjs');assert.ok(ui.includes('async function init(){create();if(mapButton)'));assert.ok(!ui.includes('async function init(){create();open();'))});

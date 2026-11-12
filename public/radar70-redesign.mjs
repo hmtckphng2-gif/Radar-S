@@ -17,6 +17,7 @@ let bridge,home,more,dock,stage,page='home',pane='search',mode='journey',station
 let rankingMode='recommended',chatBusy=false,chatHistory=[];
 function nativeTab(id){window.SuedtirolRadar50?.switchTab?.(id)}
 function navigate(to,hashChange=false){
+ if(document.body.classList.contains('sr-chat-open'))window.SuedtirolRadarAssistant?.close?.();
  if(!['home','map','journey','more'].includes(to))to='home';
  const previous=page;
  page=to;home.hidden=to==='map'||to==='more';more.hidden=to!=='more';
@@ -33,6 +34,7 @@ function navigate(to,hashChange=false){
  if(to==='map')requestAnimationFrame(()=>bridge.state.map?.invalidateSize?.({pan:false}));
 }
 function legacy(id,action){
+ if(document.body.classList.contains('sr-chat-open'))window.SuedtirolRadarAssistant?.close?.();
  navigate('map');if(id)nativeTab(id);
  if(['departures','stats','favorites'].includes(id))for(const b of dock?.querySelectorAll('[data-page]')||[])b.setAttribute('aria-current',b.dataset.page===id?'page':'false');
  if(action)requestAnimationFrame(()=>{try{const task=action();task?.catch?.(console.warn)}catch(e){console.warn('Radar-Menü',e)}});

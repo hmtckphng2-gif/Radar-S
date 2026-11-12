@@ -72,3 +72,5 @@ test('Abfahrten keeps the live radar50 board but uses the Horizon graphite and s
 test('Horizon startup keeps Chat selected if the assistant opened before the dock initialized',()=>{
  const home=read('radar70-redesign.mjs');assert.match(home,/const dockPage=document\.body\.classList\.contains\('sr-chat-open'\)\?'chat':to/);assert.match(home,/b\.dataset\.page===dockPage\?'page':'false'/);
 });
+
+test('leaving any Horizon page closes the assistant panel',()=>{const home=read('radar70-redesign.mjs');assert.ok(home.includes("function navigate(to,hashChange=false){\n if(document.body.classList.contains('sr-chat-open'))window.SuedtirolRadarAssistant?.close?.();"));assert.ok(home.includes("function legacy(id,action){\n if(document.body.classList.contains('sr-chat-open'))window.SuedtirolRadarAssistant?.close?.();"))});
