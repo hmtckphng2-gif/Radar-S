@@ -5,11 +5,11 @@ const read=name=>readFileSync(new URL('../public/'+name,import.meta.url),'utf8')
 
 test('detail sheet close controls render one CSS X and have a 44px touch target',()=>{
  const html=read('index.html'),css=read('radar90-preview-block1.css');
- assert.ok(html.includes('title="SchlieÃen"></button>'));
+ assert.ok(html.includes('title="Schließen"></button>'));
  assert.ok(html.includes('data-t-aria-label="stationSheet.close"></button>'));
  assert.ok(css.includes('font-size:0!important'));
  assert.ok(css.includes('width:44px!important')&&css.includes('height:44px!important'));
- assert.ok(css.includes('content:"Ã"'));
+ assert.ok(css.includes('content:"×"'));
 });
 
 test('hidden empty model card cannot be forced visible by the global flex rule',()=>{
