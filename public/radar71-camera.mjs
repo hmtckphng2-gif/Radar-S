@@ -1,12 +1,12 @@
-import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=adaptive-camera-travel-1';
-import {preload3DLibraries} from './radar83-map.mjs?v=9.9.5&rev=adaptive-camera-travel-1';
+import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=production-camera-repair-1';
+import {preload3DLibraries} from './radar83-map.mjs?v=9.9.5&rev=production-camera-repair-1';
 /* Radar 7.1 – Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate
  * map panes with CSS and corrupt touch coordinates or marker hit testing.
  */
-import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from './radar71-camera-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1';
-import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1';
+import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from './radar71-camera-logic.mjs?v=9.9.5&rev=production-camera-repair-1';
+import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=production-camera-repair-1';
 (()=>{'use strict';
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -88,8 +88,12 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=adaptive-camera
    // need a different distance to fill the frame.
    const cinematicZoom=vehicle.kind==='bus'?Math.max(toZoom,20.2):Math.max(toZoom,19);
    const distanceKm=focusDistanceKm(map.getCenter(),pos);
-   // The camera move is short and starts on the tap. A long flight felt sluggish.
-   const duration=cinematicDuration(distanceKm,focusDuration(motion.matches,map.getZoom(),toZoom,distanceKm)*0.62);
+   // Keep 2D and 3D timings separate. MapLibre inherits Leaflet's scale minus
+   // one zoom level, and the visible 3D flight covers only the final 25% of
+   // the approach because the hidden map is handed off close to the target.
+   const duration=motion.matches?0:cinematicDuration(distanceKm,focusDuration(false,map.getZoom(),toZoom,distanceKm)*0.62);
+   const remaining3DDistanceKm=distanceKm*0.25;
+   const duration3D=motion.matches?0:cinematicDuration(remaining3DDistanceKm,focusDuration(false,Math.max(3,map.getZoom()-1),cinematicZoom,remaining3DDistanceKm)*0.62);
    const classic=()=>{
     if(seq!==token)return;
     try{
@@ -109,13 +113,13 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=adaptive-camera
    };
    emergencyFallback=classic;
    if(cinema3d?.enabled){
-    cinema3d.open(vehicle,pos,heading,duration,cinematicZoom).then(ok=>{
+    cinema3d.open(vehicle,pos,heading,duration3D,cinematicZoom).then(ok=>{
      if(seq!==token){if(ok)cinema3d?.close({sync:false});return}
      if(!ok){classic();return}
      model3d?.hide();document.body.classList.remove('sr82-3d-active');
      hud?.classList.remove('sr71-is-running');
      // The 3D camera runs in MapLibre; do NOT also fly or rotate the 2D Leaflet map.
-     timer=setTimeout(()=>{if(seq===token)reveal(seq)},duration+95);
+     timer=setTimeout(()=>{if(seq===token)reveal(seq)},duration3D+95);
     }).catch(error=>{console.info('Radar 8.3 initialization fallback',error);classic()});
    }else classic();
   };

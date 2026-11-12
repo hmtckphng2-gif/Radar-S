@@ -27,6 +27,7 @@ jobs:
       - name: Deploy Worker and assets
         uses: cloudflare/wrangler-action@v3
         with:
+          wranglerVersion: "4.36.0"
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy worker.js --name radar-s --config wrangler.jsonc
@@ -76,5 +77,13 @@ jobs:
             });
             console.log('Verified',path);
           }
+          const assistant = await retry('assistant runtime bindings', async () => {
+            const status = JSON.parse(await request('/api/assistant/status'));
+            if(status.limiterConfigured!==true)throw Error('AI_JOURNEY_LIMITER binding missing');
+            if(!Array.isArray(status.configuredProviders)||!status.configuredProviders.includes('cloudflare'))throw Error('Cloudflare AI provider not configured');
+            if(status.enabled!==true)throw Error('Assistant provider health check failed: '+(status.status||'unavailable'));
+            return status;
+          });
+          console.log('Assistant ready:',assistant.providers.join(', '));
           console.log('Live Radar '+expected+' confirmed');
           NODE

@@ -3,7 +3,7 @@
  * vehicles initialize MapLibre; errors or ?radar3d=on fall back to Radar 8.2.
  */
 import {loadThree,loadVehicleModel,modelCreditText,makeVehicleMesh,makeContactShadow,vehicleKind,VEHICLE_SPECS,modelYawRadians} from './radar83-model.mjs?v=9.9.5&rev=credits-2';
-import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,handoff3DCamera,approach3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1';
+import {MAPLIBRE_VERSION,VECTOR_STYLE,TERRAIN_TILES,enabled3D,target3DCamera,handoff3DCamera,approach3DCamera,use3DTerrain,readProjectionMatrix,followDecision,prefersReducedMotion,selectedVehicleLabel,selectedVehicleMeta} from './radar83-logic.mjs?v=9.9.5&rev=production-camera-repair-1';
 
 let libraryPromise=null;
 function loadMapLibre(){
@@ -295,8 +295,9 @@ export class Radar83Cinematic {
    if(!handoff)throw Error('Live camera handoff position invalid');
    const approachStart=approach3DCamera(handoff,target,.75);
    if(!approachStart)throw Error('3D approach start position invalid');
-   // Keep the selected vehicle centered for the entire cinematic.
-   const flightStart={...approachStart,center:[...target.center]};
+   // Preserve the interpolated approach center. Overwriting it with the
+   // target center here caused an instant geographic jump before the flight.
+   const flightStart=approachStart;
    const totalDuration=Number(target.duration)||Number(duration)||4300;
    const continuedTarget={...target,duration:totalDuration};
    this.flight={origin:{...initialCamera,center:[...initialCamera.center]},start:flightStart,target:continuedTarget};
