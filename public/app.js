@@ -48,6 +48,7 @@ const MAP_PLACES={
   meran:[46.670,11.160,12], bruneck:[46.797,11.940,12], trento:[46.068,11.122,12]
 };
 const TILE_PROVIDERS=[
+  {name:'CARTO Dark',url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',options:{subdomains:'abcd',attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a> · © <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>'}},
   {name:'OpenStreetMap',url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',options:{attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a>'}},
   {name:'OSM HOT',url:'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',options:{subdomains:'abc',attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a> · Tiles © Humanitarian OpenStreetMap Team'}}
 ];
@@ -1453,7 +1454,7 @@ function setupControls(){
     renderLinesPanel();
   });
   $('refreshBtnFromBanner').onclick=()=>refreshFeeds();
-  $('tileBtn').onclick=()=>switchTileProvider(1-tileProviderIndex,'Benutzerwahl');
+  $('tileBtn').onclick=()=>switchTileProvider((tileProviderIndex+1)%TILE_PROVIDERS.length,'Benutzerwahl');
   document.addEventListener('click',e=>{
     if(!e.target.closest('#search')&&!e.target.closest('#searchResults'))$('searchResults')?.classList.add('hidden');
     if($('healthPanel')&&!$('healthPanel').hidden)$('healthPanel').hidden=true;
