@@ -28,7 +28,6 @@ html.sr44-classic.sr43-clean-map[data-theme='light'] #map img.leaflet-tile {filt
 html.sr44-radar #map .marker-wrap .marker-label {
  max-width:68px;font-size:8px;line-height:11px;padding:1px 4px;border-radius:5px;
  background:#071320f0;border:1px solid #5d789b90;box-shadow:0 2px 6px #000a;}
-html.sr44-radar #map .marker-wrap .sr40-delay{font-size:7.5px;line-height:11px;padding:1px 3px;}
 /* Selected numbers remain visible at any zoom. */
 html.sr44-radar #map .marker-wrap.selected .marker-label {display:block!important;}
 @media(min-width:750px){.sr45-map-status{top:182px;left:18px;}}

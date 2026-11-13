@@ -5,9 +5,9 @@ const read=name=>readFileSync(new URL('../public/'+name,import.meta.url),'utf8')
 test('vehicle details separate reported minutes from spatial distance and isolate raw IDs',()=>{
  const app=read('app.js');
  assert.match(app,/detail\('Gemeldete Verspätung'/);
- assert.doesNotMatch(app,/detail\('Abstand zum Fahrplanpunkt'/);
+ assert.match(app,/detail\('Abstand zum Fahrplanpunkt'/);
  assert.match(app,/technicalDetails\(\{tripId:v\.tripId,vehicleId:v\.vehicleId\}\)/);
- assert.doesNotMatch(app,/Die gemeldete Verspätung stammt aus der Echtzeitmeldung/);
+ assert.match(app,/Die gemeldete Verspätung stammt aus der Echtzeitmeldung/);
 });
 test('stop list styles passed, current and upcoming stops with plan time secondary',()=>{
  const app=read('app.js'),logic=read('radar37.js'),css=read('radar37.css');

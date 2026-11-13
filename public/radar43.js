@@ -3,6 +3,7 @@
  */
 import {classifyPosition,nearbyStations,followNeedsPan,stopSummary} from './radar43-logic.mjs?v=9.9.5';
 import {groupNearby,resolveClusterCollisions} from './radar44-logic.mjs?v=9.9.5&rev=collision-2';
+import {worstDelayState} from './core.js?v=9.9.5&rev=delay-ring-block1-1';
 (() => {
  'use strict';
  const $=id=>document.getElementById(id);
@@ -21,6 +22,8 @@ import {groupNearby,resolveClusterCollisions} from './radar44-logic.mjs?v=9.9.5&
    // Reset only pins hidden by the previous pass, not every vehicle DOM node.
    for(const key of clusteredKeys){const element=bridge.state.markers.get(key)?.marker?.getElement();element?.classList.remove('sr43-in-cluster');}
    clusteredKeys.clear();
+   bridge.updateVisibleDelayPulses?.();
+   bridge.updateVisibleDelayPulses?.();
    for(const key of collisionLabelKeys){bridge.state.markers.get(key)?.marker?.getElement()?.querySelector('.marker-label')?.classList.remove('sr65-label-collision');}
    collisionLabelKeys.clear();
   const zoom=map.getZoom();
@@ -70,7 +73,12 @@ import {groupNearby,resolveClusterCollisions} from './radar44-logic.mjs?v=9.9.5&
    const typeIcon=group.trains&&group.buses?'🚆🚌':group.trains?'🚆':'🚌';
    const detail=group.trains&&group.buses?'Gemischt':group.trains?'Züge':'Busse';
    const tier=group.count>=24?'xl':group.count>=12?'lg':group.count>=6?'md':'sm';
-   const icon=L.divIcon({className:'sr43-cluster-icon',html:
+   const delays=group.keys.map(key=>{const v=bridge.state.vehicles.get(key),info=v&&bridge.vehicleDelay?.(v);return info&&Number.isFinite(Number(info.delay))?Number(info.delay):null;});
+   const delayState=worstDelayState(delays);
+   const estimatedMember=group.keys.some(key=>{const v=bridge.state.vehicles.get(key);return v?.estimated===true||v?.positionEstimated===true||String(v?.positionType||'').toLowerCase()==='estimated'||/estimated|estimate|simuliert|geschätzt|interpoliert|berechnet|simulated|interpolat|approx/i.test(String(v?.positionType||''));});
+   const positionDashed=group.staleCount>0||estimatedMember;
+   const clusterClass='sr43-cluster-icon delay-'+delayState+(positionDashed?' position-dashed':'');
+   const icon=L.divIcon({className:clusterClass,html:
     '<div class="sr43-cluster-circle sr80-group-chip '+dominant+' '+tier+'" aria-hidden="true"><strong>'+group.count+'</strong><small class="sr43-cluster-kind-icon">'+typeIcon+'</small><span class="sr43-cluster-kind-label">'+detail+'</span>'+
     (group.staleCount?'<span class="sr431-cluster-stale" title="Letzte bekannte Positionen">◷</span>':'')+'</div>',
      iconSize:[iconWidth,34],iconAnchor:[iconWidth/2,17]});
@@ -86,7 +94,7 @@ import {groupNearby,resolveClusterCollisions} from './radar44-logic.mjs?v=9.9.5&
       map.flyTo(pt,Math.min(16,zoom+3),{animate:true,duration:.55});
      });
    marker.addTo(clusters);
-    for(const key of group.keys){const marker=bridge.state.markers.get(key)?.marker;marker?.getElement()?.classList.add('sr43-in-cluster');clusteredKeys.add(key);}
+    for(const key of group.keys){const marker=bridge.state.markers.get(key)?.marker,element=marker?.getElement();element?.classList.add('sr43-in-cluster');element?.querySelector('.marker-wrap')?.classList.remove('delay-pulse');clusteredKeys.add(key);}
   }
  }
  function updateMini(){

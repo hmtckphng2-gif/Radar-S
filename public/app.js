@@ -6,12 +6,12 @@ import {enrichTrainPlatform} from './train-platforms.js?v=9.9.5';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, delayPresentation,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
-  vehicleDelayInfo, bufferedAlong, departureDelay, isLiveUpdate, normalizeStopId
-} from './core.js?v=9.9.5&rev=delay-copy-2';
+  vehicleDelayInfo, markerDelayState, markerDelayBadge, bufferedAlong, departureDelay, isLiveUpdate, normalizeStopId
+} from './core.js?v=9.9.5&rev=delay-ring-block1-1';
 import {playbackLag} from './radar45-logic.mjs?v=9.9.5';
 import {trainReplayDuration} from './radar705-motion.mjs?v=9.9.5';
 import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.9.5';
-import {buildDepartureRows,romeSeconds} from './radar51-logic.mjs?v=9.9.5';
+import {trainScheduledPosition,buildDepartureRows,romeSeconds} from './radar51-logic.mjs?v=9.9.5';
 import {mergeStationDepartures} from './radar53-logic.mjs?v=9.9.5';
 import {groupNearbyStops,nextNearbyDepartures} from './radar93-nearby.mjs?v=9.9.5';
 import {formatStationName,formatRelativeAge,sourceLabel,expectedStopTime,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=station-labels-2';
@@ -499,8 +499,9 @@ function initMap(){
   state.layer=L.layerGroup().addTo(map);
   state.trackLayer=L.layerGroup().addTo(map);
   L.control.zoom({position:'bottomleft'}).addTo(map);
+  map.on('movestart',()=>{for(const entry of state.markers.values())entry.marker.getElement()?.querySelector('.marker-wrap')?.classList.remove('delay-pulse');});
   map.on('moveend',()=>{
-    updateViewportBadge();updateMapEmptyState();
+    updateViewportBadge();updateMapEmptyState();updateVisibleDelayPulses();
     clearTimeout(state.shapeViewportTimer);
     state.shapeViewportTimer=setTimeout(()=>loadBusShapesForVehicles().catch(console.warn),650);
   });
@@ -522,19 +523,36 @@ function visible(v){
   if(state.query&&!`${v.name} ${v.headsign} ${v.vehicleId} ${v.tripId} ${v.routeLongName}`.toLocaleLowerCase('de').includes(state.query))return false;
   return true;
 }
+function delayRingState(v){const info=currentVehicleDelay(v);return markerDelayState(info?.delay??null);}
+function delayBadgeText(v){const info=currentVehicleDelay(v);return markerDelayBadge(info?.delay??null);}
+function isEstimatedPosition(v){return v?.estimated===true||v?.positionEstimated===true||String(v?.positionType||'').toLowerCase()==='estimated'||/estimated|estimate|simuliert|geschätzt|interpoliert|berechnet|simulated|interpolat|approx/i.test(String(v?.positionType||''));}
+function updateVisibleDelayPulses(){
+  if(!state.map)return;const bounds=state.map.getBounds();
+  for(const [key,entry] of state.markers){
+    const v=state.vehicles.get(key),element=entry.marker.getElement(),wrap=element?.querySelector('.marker-wrap');
+    if(!v||!wrap)continue;
+    const info=currentVehicleDelay(v),minutes=info&&Number.isFinite(Number(info.delay))?Math.round(Number(info.delay)/60):null;
+    const old=!!v.stale||(Number.isFinite(v.timestamp)&&v.timestamp>1e9&&Date.now()/1000-v.timestamp>300);
+    const unconfirmed=observationQuality(v).ageSeconds===null,estimated=isEstimatedPosition(v);
+    const visible=!element.classList.contains('sr43-in-cluster')&&bounds.contains(entry.marker.getLatLng());
+    wrap.classList.toggle('delay-pulse',minutes!==null&&minutes>=15&&!old&&!unconfirmed&&!estimated&&visible);
+  }
+}
 function markerIcon(v){
   const train=v.kind==='train',label=v.name.startsWith('Linie unbekannt')||v.name==='Zugnummer unbekannt'?'':v.name;
   const isOld=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
-  const isEstimated=/simuliert|geschätzt|interpoliert|berechnet/i.test(v.positionType||'');
+  const isUnconfirmed=observationQuality(v).ageSeconds===null;
+  const isEstimated=isEstimatedPosition(v);
   const isFav=isFavorite(v.key);
   const lineKey=v.routeId?(v.source+':'+v.routeId):'';
   const lineFav=lineKey&&isLineFavorite(lineKey);
   const zoom=state.map?state.map.getZoom():0;
   const showSpeed=zoom>=13 && v.speed!==null;
-  const cls='marker-wrap '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'')+(isEstimated?' sr86-estimated':' sr86-feed-position')+(isFav?' favorite':'')+(lineFav?' line-favorite':'');
+  const delayState=delayRingState(v),delayBadge=delayBadgeText(v);
+  const cls='marker-wrap delay-'+delayState+' '+(train?'train':'bus')+(label?'':' unverified')+(state.selectedKey===v.key?' selected':'')+(isOld?' sr43-stale':'')+(isUnconfirmed?' sr86-unconfirmed':'')+(isEstimated?' sr86-estimated':' sr86-feed-position')+(isFav?' favorite':'')+(lineFav?' line-favorite':'');
   const speedText=showSpeed?'<div class="marker-speed">'+v.speed+' km/h</div>':'';
-  const icon=`<div class="${cls}">${speedText}<div class="marker-label">${escapeHtml(label)}</div><div class="marker-circle">${train?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="17" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 19.5l-2 2m10-2 2 2"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="16" rx="3"/><path d="M3 11h18M7 15h2m6 0h2M7 19l-2 2m14-2 2 2"/></svg>'}${isFav?'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22l-5-4.87L2 9.27l6.91-1.02L12 2z"/></svg>':''}</div></div>`;
-  return L.divIcon({className:'radar-custom',html:icon,iconSize:[30,48],iconAnchor:[15,38]});
+  const icon=`<div class="${cls}">${speedText}<div class="marker-label">${escapeHtml(label)}</div><div class="marker-circle" data-delay="${delayBadge}">${train?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="17" rx="4"/><path d="M5 10h14M8 16h1m6 0h1M8 19.5l-2 2m10-2 2 2"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="16" rx="3"/><path d="M3 11h18M7 15h2m6 0h2M7 19l-2 2m14-2 2 2"/></svg>'}${isFav?'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22l-5-4.87L2 9.27l6.91-1.02L12 2z"/></svg>':''}</div></div>`;
+  return L.divIcon({className:'radar-custom',html:icon,iconSize:[48,54],iconAnchor:[24,38]});
 }
 function shapeOf(v){
   const id=v.shapeId || v.routeShapeId;
@@ -718,7 +736,7 @@ function refreshMarkers(){
     const target=motionDuration(v,null)?mapTarget(v):rawTarget;
     const aged=v.stale || (Number.isFinite(v.timestamp) && v.timestamp>1e9 && Date.now()/1000-v.timestamp>300);
     const lineKey=v.routeId?(v.source+':'+v.routeId):'';
-    const iconKey=`${v.kind}|${v.name}|${state.selectedKey===key}|${aged}|${v.positionType||''}|${lineKey}`;
+    const iconKey=`${v.kind}|${v.name}|${state.selectedKey===key}|${aged}|${v.positionType||''}|${v.estimated===true}|${observationQuality(v).ageSeconds===null}|${delayRingState(v)}|${delayBadgeText(v)}|${lineKey}`;
     let entry=state.markers.get(key);
     if(!entry){
       const marker=L.marker([target.lat,target.lon],{icon:markerIcon(v),keyboard:true,title:v.name}).addTo(state.layer);
@@ -759,7 +777,7 @@ function refreshMarkers(){
   for(const [key,entry] of state.markers)if(!active.has(key)){
     stopJob(key);state.busTracks.delete(key);state.layer.removeLayer(entry.marker);state.markers.delete(key);
   }
-  updateMapEmptyState();
+  updateMapEmptyState();updateVisibleDelayPulses();
 }
 function displayStats(){
   const keys=state.fusion?.keys||selectRepresentatives(state.vehicles.values(),state.selectedKey).keys;
@@ -913,8 +931,14 @@ function drawVehicleDetails(key,fetchSchedule){
     detail('Geplantes Rollmaterial 2026',v.plannedComposition.type+' · '+v.plannedComposition.composition);
     detail('Hinweis Rollmaterial','Fahrplanangabe – tatsächlicher Fahrzeugeinsatz kann abweichen');
   }
-  // Zwei getrennte Werte: die gemeldete Verspaetung und die Abweichung vom Fahrplan.
-  // Die eine ist eine Zeitangabe, die andere eine Ortsangabe.
+  // Reported delay is a time value; schedule-point distance is a separate location comparison.
+  if(v.kind==='train'){
+    const schedule=trainScheduledPosition(v,state.indexes,state.details,state.shapes);
+    detail('Abstand zum Fahrplanpunkt',schedule?'Rund '+schedule.differenceKm.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+' km '+schedule.relative:'Unbekannt');
+  }
+  detail('Positionsalter',formatRelativeAge(feedAgeSeconds(v)));
+  detail('Datenquelle',sourceLabel(v.source)+' · Echtzeitdaten');
+  detail('Unterschied der Angaben','Die gemeldete Verspätung stammt aus der Echtzeitmeldung. Der Kilometerabstand vergleicht die Feedposition mit dem Fahrplanpunkt und ist keine Minutenverspätung.');
   detail('Geschwindigkeit',v.speed===null?'Unbekannt':v.speed+' km/h (gemeldet)');
   const quality=observationQuality(v,Date.now());
   detail('Datenstand',quality.status==='aktuell'?'Aktuell':quality.status==='verzögert'?'Verzögert':'Unbekannt',quality.status==='aktuell'?'delay-ok':quality.status==='verzögert'?'delay-warn':'delay-severe');
@@ -945,7 +969,13 @@ function drawVehicleDetails(key,fetchSchedule){
     sec.append(list);
     $('details').append(sec);
   }
-   $('sheetNote').textContent='';$('sheetNote').hidden=true;
+  let note='Die Kartenposition stammt aus dem jeweiligen Echtzeitfeed; GPS-Genauigkeit ist nicht bestätigt. ';
+  if(v.stale)note+='Dieser Marker zeigt nur die letzte bekannte Position; der aktuelle Feed enthält ihn nicht. ';
+  if(isEstimatedPosition(v))note+='Die Position ist geschätzt oder interpoliert. ';
+  if(v.kind==='bus'&&!v.lineVerified)note+='Ohne passenden statischen GTFS-Eintrag ist die Liniennummer nicht bestätigt. ';
+  if(v.kind==='train'&&!v.nameVerified)note+='Die offizielle Zugnummer ist noch nicht sicher zugeordnet. ';
+  note+='Ist/Soll beschreibt die Ortsabweichung zum Fahrplanpunkt, nicht die gemeldete Verspätung in Minuten.';
+  $('sheetNote').textContent=note;$('sheetNote').hidden=false;
   if(fetchSchedule)loadSchedule(key);
   else if(state.details[v.source])renderStops(v,state.details[v.source]);
 }
@@ -1004,7 +1034,7 @@ function renderStops(v,details){
 }
 async function loadSchedule(key){
   const v=state.vehicles.get(key);if(!v)return;
-  $('scheduleSection').hidden=true;$('emptySchedule').hidden=true;
+  $('scheduleSection').hidden=true;$('emptySchedule').hidden=false;$('emptySchedule').textContent=t('journey.loadingStops');
   const details=await loadDetails(v.source);
   if(state.selectedKey!==key||state.activeSheet!=='vehicle')return;
   if(details)renderStops(v,details);
@@ -1166,7 +1196,7 @@ async function selectScheduledTrain(tripId){
   detail('Position','Im Echtzeitfeed nicht gefunden');technicalDetails({tripId});
   detail('Zugnummer',gtfsNumber('',trip[3]));detail('Verspätung','Nicht überprüft');
   $('sheetNote').textContent=t('journey.noPositionNote');
-  $('scheduleSection').hidden=true;$('emptySchedule').hidden=true;
+  $('scheduleSection').hidden=true;$('emptySchedule').hidden=false;$('emptySchedule').textContent=t('journey.loadingStops');
   const details=await loadDetails('trains');
   if(selectionToken===selectionRenderToken&&state.activeSheet==='vehicle'&&state.selectedKey===null){
     if(details)renderStops({source:'trains',tripId},details);
@@ -1477,7 +1507,7 @@ function currentVehicleDelay(v){
   return vehicleDelayInfo(update,v);
 }
 // Limited local bridge for the optional 3.7 interface. It does not change the GTFS source.
-window.SuedtirolRadar37={state,showStations,showStationBoard,getStationList,openStationFromMap,setFilter,refreshMarkers,refreshScheduleMatches,
+window.SuedtirolRadar37={state,updateVisibleDelayPulses,showStations,showStationBoard,getStationList,openStationFromMap,setFilter,refreshMarkers,refreshScheduleMatches,
   verifiedRouteCount:()=>[...state.vehicles.values()].filter(v=>v.kind==='bus' && v.tripId && v.shapeId && mapTarget(v).path).length,
   routeOnlyCount:()=>[...state.vehicles.values()].filter(v=>v.kind==='bus' && !v.shapeId && v.routeShapeId && mapTarget(v).path).length,
   routeMatchFor:v=>mapTarget(v),vehicleDelay:currentVehicleDelay,qualityFor:v=>observationQuality(v),fusionInfo:()=>state.fusion,diagnostics:()=>state.diagnostics||feedDiagnostics(state.vehicles.values(),state.statuses)};

@@ -1,0 +1,130 @@
+/* Preview Block 1 — one semantic delay ring, one CSS-only badge. */
+:root{
+  --sr-delay-green:#7f9f86;
+  --sr-delay-amber:#c49a55;
+  --sr-delay-red:#d66b70;
+  --sr-delay-grey:#8b929d;
+  --sr-delay-green-glow:rgba(127,159,134,.25);
+  --sr-delay-amber-glow:rgba(196,154,85,.27);
+  --sr-delay-red-glow:rgba(214,107,112,.34);
+}
+#map .marker-wrap{width:48px!important;}
+#map .marker-wrap.train .marker-circle{--sr-marker-radius:9px;}
+#map .marker-wrap.bus .marker-circle{--sr-marker-radius:8px;}
+#map .marker-wrap .marker-circle{
+  position:relative!important;
+  overflow:visible!important;
+  isolation:isolate;
+}
+#map .marker-wrap .marker-circle>svg{position:relative;z-index:1;}
+#map .marker-wrap .marker-circle::before{
+  content:"";
+  position:absolute;
+  inset:-10px;
+  box-sizing:border-box;
+  border:2.5px solid var(--sr-delay-ring,var(--sr-delay-grey));
+  border-radius:calc(var(--sr-marker-radius,9px) + 10px);
+  pointer-events:none;
+  z-index:2;
+  box-shadow:0 0 8px var(--sr-delay-glow,transparent),0 0 14px var(--sr-delay-glow-soft,transparent);
+}
+#map .marker-wrap.delay-ontime .marker-circle{--sr-delay-ring:var(--sr-delay-green);--sr-delay-glow:var(--sr-delay-green-glow);--sr-delay-glow-soft:rgba(127,159,134,.12);}
+#map .marker-wrap.delay-delayed .marker-circle{--sr-delay-ring:var(--sr-delay-amber);--sr-delay-glow:var(--sr-delay-amber-glow);--sr-delay-glow-soft:rgba(196,154,85,.13);}
+#map .marker-wrap.delay-severe .marker-circle{--sr-delay-ring:var(--sr-delay-red);--sr-delay-glow:var(--sr-delay-red-glow);--sr-delay-glow-soft:rgba(214,107,112,.16);}
+#map .marker-wrap.delay-unknown .marker-circle{--sr-delay-ring:var(--sr-delay-grey);--sr-delay-glow:transparent;--sr-delay-glow-soft:transparent;}
+#map .marker-wrap.selected .marker-circle::before,
+#map .radar-custom.sr46-highlight .marker-circle::before{
+  border-width:3px;
+  box-shadow:0 0 10px var(--sr-delay-glow,transparent),0 0 14px var(--sr-delay-glow-soft,transparent);
+}
+#map .marker-wrap.delay-unknown .marker-circle::before,
+#map .marker-wrap.sr86-estimated .marker-circle::before,
+#map .marker-wrap.sr43-stale .marker-circle::before,
+#map .marker-wrap.sr86-unconfirmed .marker-circle::before{
+  border-style:dashed;
+  box-shadow:none;
+  animation:none;
+}
+#map .marker-wrap.delay-severe.delay-pulse:not(.sr86-estimated):not(.sr43-stale) .marker-circle::before{
+  animation:sr-delay-pulse 2s ease-in-out infinite;
+}
+@keyframes sr-delay-pulse{
+  0%,100%{opacity:.96;box-shadow:0 0 8px var(--sr-delay-glow),0 0 14px var(--sr-delay-glow-soft);}
+  50%{opacity:.66;box-shadow:0 0 11px var(--sr-delay-glow),0 0 14px var(--sr-delay-glow-soft);}
+}
+@media(prefers-reduced-motion:reduce){
+  #map .marker-wrap.delay-severe .marker-circle::before{animation:none!important;}
+}
+#map .marker-wrap .marker-circle[data-delay]:not([data-delay=""])::after{
+  content:attr(data-delay);
+  position:absolute;
+  top:-10px;
+  right:-10px;
+  z-index:4;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  min-width:18px;
+  height:14px;
+  padding:0 2px;
+  border:1px solid rgba(255,255,255,.78);
+  border-radius:7px;
+  background:var(--sr-delay-ring,var(--sr-delay-amber));
+  color:#17191d;
+  font:800 9px/1 Inter,system-ui,sans-serif;
+  white-space:nowrap;
+  box-shadow:0 1px 4px rgba(0,0,0,.5);
+  pointer-events:none;
+}
+#map .marker-wrap.sr40-hide-delays .marker-circle::after{display:none!important;}
+/* Cluster rings use the worst valid GTFS-RT delay and are deliberately static. */
+#map .sr43-cluster-circle{position:relative!important;overflow:visible!important;}
+#map .sr43-cluster-circle::before{
+  content:"";position:absolute;inset:-3px;box-sizing:border-box;
+  border:2px solid var(--sr-delay-ring,var(--sr-delay-grey));
+  border-radius:13px;pointer-events:none;z-index:3;
+  box-shadow:0 0 8px var(--sr-delay-glow,transparent);
+}
+#map .sr43-cluster-icon.delay-ontime .sr43-cluster-circle{--sr-delay-ring:var(--sr-delay-green);--sr-delay-glow:rgba(127,159,134,.16);}
+#map .sr43-cluster-icon.delay-delayed .sr43-cluster-circle{--sr-delay-ring:var(--sr-delay-amber);--sr-delay-glow:rgba(196,154,85,.18);}
+#map .sr43-cluster-icon.delay-severe .sr43-cluster-circle{--sr-delay-ring:var(--sr-delay-red);--sr-delay-glow:rgba(214,107,112,.22);}
+#map .sr43-cluster-icon.delay-unknown .sr43-cluster-circle{--sr-delay-ring:var(--sr-delay-grey);--sr-delay-glow:transparent;}
+#map .sr43-cluster-icon.delay-unknown .sr43-cluster-circle::before{border-style:dashed;box-shadow:none;}
+#map .sr43-cluster-icon.position-dashed .sr43-cluster-circle::before{border-style:dashed;box-shadow:none;}
+/* Legend in the existing map-tools/layer panel. */
+.sr-delay-legend{margin-top:10px;padding:10px 11px;border:1px solid rgba(151,164,179,.22);border-radius:12px;background:rgba(20,27,36,.72);color:#e8edf2;}
+.sr-delay-legend>strong{display:block;margin-bottom:8px;font-size:12px;}
+.sr-delay-legend__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px;}
+.sr-delay-legend__grid>div{display:flex;align-items:center;gap:7px;min-width:0;font-size:10px;line-height:1.25;}
+.sr-delay-legend__swatch{display:block;flex:0 0 19px;width:19px;height:13px;border:2px solid var(--sr-delay-grey);border-radius:5px;box-sizing:border-box;}
+.sr-delay-legend__swatch.is-green{border-color:var(--sr-delay-green);box-shadow:0 0 7px var(--sr-delay-green-glow);}
+.sr-delay-legend__swatch.is-amber{border-color:var(--sr-delay-amber);box-shadow:0 0 7px var(--sr-delay-amber-glow);}
+.sr-delay-legend__swatch.is-red{border-color:var(--sr-delay-red);box-shadow:0 0 7px var(--sr-delay-red-glow);}
+.sr-delay-legend__swatch.is-grey{border-color:var(--sr-delay-grey);border-style:dashed;}
+.sr-delay-legend>small{display:block;margin-top:8px;color:#aeb8c3;font-size:9px;line-height:1.35;}
+@media(max-width:480px){
+  .sr-delay-legend{padding:9px 10px;}
+  .sr-delay-legend__grid{gap:8px 7px;}
+  .sr-delay-legend__grid>div{font-size:9px;}
+}
+/* The layer/tools panel must have enough width for the legend at 390px. */
+@media(max-width:749px){
+  body.sr60.rh-ready #sr50MapTab .rh-tools-panel{
+    width:min(260px,calc(100vw - 24px))!important;
+    max-width:calc(100vw - 24px)!important;
+    box-sizing:border-box!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+  }
+  body.sr60.rh-ready #sr50MapTab .rh-tools-panel .map-actions{
+    width:100%!important;
+    align-items:flex-end!important;
+  }
+  .sr-delay-legend{width:100%;box-sizing:border-box;}
+}
+#map .marker-wrap .marker-circle[data-delay]:not([data-delay=""])::after{
+  padding:0 1px;
+  font-size:8px;
+}

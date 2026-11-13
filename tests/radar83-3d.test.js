@@ -17,12 +17,12 @@ test('cinematic 3D is enabled by default with an emergency URL opt-out',()=>{
 });
 test('cinematic approaches from behind over a longer, smooth flight',()=>{
  const start=start3DCamera({lat:46.5,lng:11.35},90,19);
- assert.equal(start.pitch,68);
- assert.equal(start.bearing,202);
+ assert.equal(start.pitch,24);
+ assert.equal(start.bearing,323);
  assert.ok(start.zoom>15, 'closer starting zoom than the old distant shot');
  assert.ok(start.center[0]<11.35);
- assert.equal(cinematicDuration(0,4300),4300);
- assert.equal(cinematicDuration(0,700),700);
+ assert.equal(cinematicDuration(0,4300),6600);
+ assert.equal(cinematicDuration(0,700),6600);
 });
 test('tap-origin handoff preserves the live Leaflet center and scale',()=>{
  const camera=handoff3DCamera({lat:46.5,lng:11.35},18);
@@ -42,11 +42,11 @@ test('3D camera starts mostly aligned with the tapped vehicle for a restrained l
 test('camera rotates the MAP and tilts terrain, no arbitrary model spin',()=>{
  const camera=target3DCamera({lat:46.498,lng:11.353},17.4,90,4500);
  assert.deepEqual(camera.center,[11.353,46.498]);
- assert.equal(camera.pitch,48);
- assert.equal(camera.bearing,98);
+ assert.equal(camera.pitch,16);
+ assert.equal(camera.bearing,118);
  assert.equal(camera.duration,4500);
  assert.equal(target3DCamera({lat:92,lng:11},17,90,3000),null);
- assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,20.4);
+ assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,19.2);
 });
 test('model is only rotated based on credible fresh heading',()=>{
  assert.equal(validHeading({bearing:89,timestamp:NOW/1000-30},120,NOW),89);
@@ -71,19 +71,21 @@ test('custom WebGL layer is geographically anchored inside 3D MapLibre renderer'
  assert.equal(typeof layer.onRemove,'function');
 });
 test('vector buildings are extruded and terrain falls back when DEM unsupported',()=>{
- let building=null;const map={
+ const layers=[];const map={
   getSource:n=>n==='openmaptiles'?{}:null,getLayer:()=>null,
   getStyle:()=>({layers:[{type:'symbol',id:'labels'}]}),
-  addLayer:(v,before)=>{building={v,before}}
+  addLayer:(v,before)=>layers.push({v,before})
  };
  assert.equal(build3DBuildings(map),true);
+  const building=layers.find(x=>x.v.id==='sr83-buildings');const edges=layers.find(x=>x.v.id==='sr83-building-edges');
  assert.equal(building.v.type,'fill-extrusion');
  assert.equal(building.v['source-layer'],'building');
  assert.equal(building.v.filter[1][1],'hide_3d');
- assert.equal(building.v.paint['fill-extrusion-color'],'hsl(215, 12%, 66%)');
- assert.equal(building.v.paint['fill-extrusion-opacity'],.86);
+ assert.equal(building.v.paint['fill-extrusion-color'],'hsl(215, 10%, 72%)');
+ assert.deepEqual(building.v.paint['fill-extrusion-opacity'],['step',['zoom'],.88,18,.72,19.2,.4,20.4,.18]);
  assert.equal(building.v.paint['fill-extrusion-height'][0],'max');
  assert.equal(building.before,'labels');
+  assert.equal(edges.v.type,'line');assert.equal(edges.v.id,'sr83-building-edges');
  let dem,terrain;
  const terrainMap={getSource:()=>null,addSource:(id,s)=>{dem=s},setTerrain:x=>{terrain=x}};
  assert.equal(enable3DTerrain(terrainMap),true);
@@ -142,13 +144,16 @@ test('3D scene updates and delayed model callbacks are scoped to the active vehi
  assert.match(src,/this\.vehicleKey=null/);
  assert.doesNotMatch(src,/3D Â· FLIRT-Stil/);
  assert.match(src,/modelCreditText\(info\.credit,info\.kind==='real',vehicle\?\.kind\)/);
- assert.match(src,/this\.vehicleMeta\.textContent=selectedVehicleMeta\(vehicle\)/);
+ assert.ok(src.includes("this.vehicleMeta.textContent=meta+(meta?' · ':'')+label;"));
+  assert.match(src,/positionFreshness\(vehicle\)/);
 });
 
 test('first vehicle tap has MapLibre and Three.js warmed before selection',()=>{
  const mapSource=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
  const cameraSource=readFileSync(new URL('../public/radar71-camera.mjs',import.meta.url),'utf8');
- assert.match(mapSource,/Promise\.all\(\[loadMapLibre\(\),loadThree\(\)\]\)/);
+ assert.match(mapSource,/loadMapLibre\(\)\.catch/);
+  assert.match(mapSource,/loadThree\(\)\.catch/);
+  assert.match(mapSource,/fetch\(VECTOR_STYLE/);
  assert.match(cameraSource,/preload3DLibraries\(\);/);
 });
 
@@ -157,5 +162,7 @@ test('preload3DLibraries warms both MapLibre and Three.js before vehicle selecti
  const start=source.indexOf('export function preload3DLibraries');
  const end=source.indexOf('// Wait for real vector tiles',start);
  const preload=source.slice(start,end);
- assert.match(preload,/Promise\.all\(\[loadMapLibre\(\),loadThree\(\)\]\)/);
+  assert.match(preload,/loadMapLibre\(\)\.catch/);
+  assert.match(preload,/loadThree\(\)\.catch/);
+  assert.ok(preload.includes('fetch(VECTOR_STYLE'));
 });

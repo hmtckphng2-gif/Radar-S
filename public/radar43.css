@@ -3,10 +3,10 @@ html.sr43-clean-map[data-theme='dark'] #map img.leaflet-tile {
   -webkit-filter:brightness(.79) invert(1) hue-rotate(180deg) saturate(.7) grayscale(.16)!important;
   filter:brightness(.79) invert(1) hue-rotate(180deg) saturate(.7) grayscale(.16)!important;
 }
-/* Far zoom: no text wall. Selection and cluster counts remain readable. */
-html.sr43-wide #map .marker-wrap:not(.selected) .marker-label,
-html.sr431-midwide #map .marker-wrap:not(.selected) .sr40-delay {display:none!important;}
+/* Far zoom: retain label decluttering while the CSS ring remains visible. */
+html.sr43-wide #map .marker-wrap:not(.selected) .marker-label {display:none!important;}
 html.sr43-wide #map .marker-wrap:not(.selected) .sr40-heading {display:none!important;}
+#map .marker-wrap.sr43-stale .sr40-heading{display:none!important;}
 #map .sr43-in-cluster {visibility:hidden!important;pointer-events:none!important;}
 #map .sr43-cluster-icon {background:transparent;border:0;}
 .sr43-cluster-circle {position:relative;width:46px;height:46px;display:flex;flex-direction:column;justify-content:center;align-items:center;
@@ -15,11 +15,9 @@ html.sr43-wide #map .marker-wrap:not(.selected) .sr40-heading {display:none!impo
 .sr43-cluster-circle strong{font-size:17px;line-height:19px;font-weight:800;font-variant-numeric:tabular-nums;}
 .sr43-cluster-circle small{font-size:8px;opacity:.93;line-height:11px;white-space:nowrap;}
 /* Late observations remain visible but cannot be mistaken for moving live buses. */
-#map .marker-wrap.sr43-stale .marker-circle{filter:grayscale(.8);opacity:.68;}
 #map .marker-wrap.sr43-stale:after {content:'NICHT LIVE';position:absolute;left:50%;top:37px;
   transform:translateX(-50%);background:#27303e;color:#fff;border:1px solid #88919b;
   border-radius:4px;padding:2px 3px;white-space:nowrap;font-size:7px;font-weight:900;pointer-events:none;z-index:7;}
-#map .marker-wrap.sr43-stale .sr40-delay,#map .marker-wrap.sr43-stale .sr40-heading{display:none!important;}
 /* Mini journey card lives INSIDE the draggable panel, never covering the map. */
 .sr43-mini {display:none;flex-shrink:0;margin:0 8px 4px;border-radius:9px;background:var(--panel2);
   border:1px solid var(--edge);padding:7px 9px;line-height:1.35;min-width:0;}

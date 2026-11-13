@@ -14,6 +14,8 @@
   let note=$('sr73PositionNote');
   if(!note){note=document.createElement('p');note.id='sr73PositionNote';note.className='sr73-data-note';const compare=$('sr51TrainCompare');if(compare)compare.insertAdjacentElement('afterend',note);else scroll.prepend(note)}
   const vehicle=window.SuedtirolRadar37?.state?.vehicles?.get(window.SuedtirolRadar37?.state?.selectedKey);
+  const compact=scroll.scrollTop>14;sheet.classList.toggle('sr73-compact',compact);
+  sheet.classList.toggle('sr73-train-sheet',vehicle?.kind==='train');
   if(vehicle?.kind!=='train'){note.hidden=true;return}
   if(note.hidden)note.hidden=false;
   const explanation='Ist/Soll beschreibt den Abstand zwischen gemeldeter Position und Fahrplanpunkt, nicht die Verspätung in Minuten. Echtzeitmeldungen und geschätzte Fahrzeugpositionen werden getrennt ausgewertet.';
@@ -22,6 +24,7 @@
  function queue(){if(scheduled)return;scheduled=true;requestAnimationFrame(tidy)}
  function init(){const sheet=$('sheet');if(!sheet)return;
   observer=new MutationObserver(queue);observer.observe(sheet,{childList:true,subtree:true});
+  sheet.querySelector('.sheet-scroll')?.addEventListener('scroll',queue,{passive:true});
   document.addEventListener('sr37:selection',queue);document.addEventListener('sr37:feeds',queue);
   queue();
  }

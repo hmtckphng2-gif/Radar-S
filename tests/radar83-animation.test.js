@@ -10,12 +10,12 @@ test('cinematic camera begins wide, then moves toward real train coordinates',()
  assert.ok(start.zoom<end.zoom,'the camera comes closer');
  assert.ok(start.pitch>end.pitch,'the camera descends to the height of the train');
  assert.notDeepEqual(start.center,end.center);
- assert.ok(end.duration>=3200 && end.duration<=5000);
+ assert.ok(end.duration>=3200 && end.duration<=5000);assert.equal(end.pitch,16);assert.equal(end.bearing,88);
  assert.deepEqual(end.center,[p.lng,p.lat]);
 });
 test('3D approach keeps only a small lateral correction and does not move the 2D map',()=>{
  const start={center:[11.30,46.50],zoom:16,pitch:0,bearing:0};
- const target={center:[11.35,46.50],zoom:19,pitch:48,bearing:8};
+ const target={center:[11.35,46.50],zoom:19,pitch:16,bearing:28};
  const approach=approach3DCamera(start,target,.75);
  assert.ok(approach.center[0]>start.center[0]);
  assert.ok(approach.center[0]<target.center[0]);
@@ -47,7 +47,7 @@ test('3D scene does not wait for unrelated shaded-relief raster tiles',async()=>
  const map=fakeMap();map.areTilesLoaded=()=>false;
  await waitFor3DScene(map,30);
 });
-test('3D model render must be confirmed before revealing the map',async()=>{
+test('3D camera flight begins before tile/model loading and reveals after style readiness',async()=>{
  const map=fakeMap(),layer={didRender:false,renderError:false};
  const ready=waitFor3DModel(map,layer,150);layer.didRender=true;map.emit('render');await ready;
 });
