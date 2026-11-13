@@ -76,12 +76,14 @@ test('cluster rings use the worst delay class and never pulse',()=>{
  assert.ok(js.includes("classList.remove('delay-pulse')"));
 });
 
-test('delay legend is attached to the existing mobile map-tools/layer panel',()=>{
+test('mobile map tools have no legend card or oversized backing box',()=>{
  const js=read('radar67.js'),css=read('radar94-preview-block1.css'),html=read('index.html');
- assert.ok(js.includes('actions.append(delayLegend)'));
- assert.ok(js.includes('Gestrichelt = geschätzte oder veraltete Position'));
- assert.ok(css.includes('.sr-delay-legend__grid'));
- assert.ok(html.includes('radar94-preview-block1.css?v=9.9.5&rev=delay-ring-1'));
+ assert.ok(!js.includes('delayLegend'));
+ assert.ok(!css.includes('.sr-delay-legend__grid'));
+ assert.ok(css.includes('background:transparent!important'));
+ assert.ok(css.includes('width:auto!important'));
+ assert.ok(!css.includes('width:min(260px'));
+ assert.ok(html.includes('radar94-preview-block1.css?v=9.9.5&rev=compact-map-tools-2'));
 });
 
 test('stale and estimated quality never grayscale the delay ring itself',()=>{

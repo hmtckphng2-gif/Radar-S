@@ -92,38 +92,26 @@
 #map .sr43-cluster-icon.delay-unknown .sr43-cluster-circle{--sr-delay-ring:var(--sr-delay-grey);--sr-delay-glow:transparent;}
 #map .sr43-cluster-icon.delay-unknown .sr43-cluster-circle::before{border-style:dashed;box-shadow:none;}
 #map .sr43-cluster-icon.position-dashed .sr43-cluster-circle::before{border-style:dashed;box-shadow:none;}
-/* Legend in the existing map-tools/layer panel. */
-.sr-delay-legend{margin-top:10px;padding:10px 11px;border:1px solid rgba(151,164,179,.22);border-radius:12px;background:rgba(20,27,36,.72);color:#e8edf2;}
-.sr-delay-legend>strong{display:block;margin-bottom:8px;font-size:12px;}
-.sr-delay-legend__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px;}
-.sr-delay-legend__grid>div{display:flex;align-items:center;gap:7px;min-width:0;font-size:10px;line-height:1.25;}
-.sr-delay-legend__swatch{display:block;flex:0 0 19px;width:19px;height:13px;border:2px solid var(--sr-delay-grey);border-radius:5px;box-sizing:border-box;}
-.sr-delay-legend__swatch.is-green{border-color:var(--sr-delay-green);box-shadow:0 0 7px var(--sr-delay-green-glow);}
-.sr-delay-legend__swatch.is-amber{border-color:var(--sr-delay-amber);box-shadow:0 0 7px var(--sr-delay-amber-glow);}
-.sr-delay-legend__swatch.is-red{border-color:var(--sr-delay-red);box-shadow:0 0 7px var(--sr-delay-red-glow);}
-.sr-delay-legend__swatch.is-grey{border-color:var(--sr-delay-grey);border-style:dashed;}
-.sr-delay-legend>small{display:block;margin-top:8px;color:#aeb8c3;font-size:9px;line-height:1.35;}
-@media(max-width:480px){
-  .sr-delay-legend{padding:9px 10px;}
-  .sr-delay-legend__grid{gap:8px 7px;}
-  .sr-delay-legend__grid>div{font-size:9px;}
-}
-/* The layer/tools panel must have enough width for the legend at 390px. */
+/* Map tools stay as floating buttons: no legend card and no large backing box. */
 @media(max-width:749px){
   body.sr60.rh-ready #sr50MapTab .rh-tools-panel{
-    width:min(260px,calc(100vw - 24px))!important;
-    max-width:calc(100vw - 24px)!important;
+    width:auto!important;
+    max-width:none!important;
+    min-width:0!important;
     box-sizing:border-box!important;
-    display:flex!important;
-    flex-direction:column!important;
-    align-items:stretch!important;
+    align-items:flex-end!important;
+    background:transparent!important;
+    border:0!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+    padding:0!important;
   }
   body.sr60.rh-ready #sr50MapTab .rh-tools-panel .map-actions{
-    width:100%!important;
+    width:auto!important;
     align-items:flex-end!important;
   }
-  .sr-delay-legend{width:100%;box-sizing:border-box;}
 }
+.sr-delay-legend{display:none!important;}
 #map .marker-wrap .marker-circle[data-delay]:not([data-delay=""])::after{
   padding:0 1px;
   font-size:8px;

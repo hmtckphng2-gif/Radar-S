@@ -10,10 +10,6 @@ function init(){if(ready||window.innerWidth>=750||!window.SuedtirolRadar37?.stat
 panel=document.createElement('section');panel.className='rh-search-panel';panel.id='rhSearchPanel';panel.hidden=true;panel.setAttribute('aria-label','Fahrzeuge filtern oder suchen');panel.append(filters);top.after(panel);
 trigger=button('Suchen und filtern',ICON.search,()=>toggle('search'),'rhSearchTrigger');trigger.setAttribute('aria-controls',panel.id);trigger.setAttribute('aria-expanded','false');row.append(trigger);
 actions=document.createElement('section');actions.className='rh-tools-panel';actions.id='rhToolsPanel';actions.hidden=true;actions.setAttribute('aria-label','Kartenwerkzeuge');actions.append(originalActions);
-const delayLegend=document.createElement('section');delayLegend.className='sr-delay-legend';delayLegend.setAttribute('aria-label','Legende zur Verspätung');
-delayLegend.innerHTML='<strong>Verspätung</strong><div class=\"sr-delay-legend__grid\"><div><i class=\"sr-delay-legend__swatch is-green\"></i><span>Pünktlich / früher</span></div><div><i class=\"sr-delay-legend__swatch is-amber\"></i><span>1–14 Min.</span></div><div><i class=\"sr-delay-legend__swatch is-red\"></i><span>Ab 15 Min.</span></div><div><i class=\"sr-delay-legend__swatch is-grey\"></i><span>Unbekannt</span></div></div><small>Gestrichelt = geschätzte oder veraltete Position · keine Aura.</small>';
-delayLegend.hidden=true;
-actions.append(delayLegend);
 toolsTrigger=button('Kartenwerkzeuge öffnen',ICON.layers,()=>toggle('tools'),'rhToolsTrigger');toolsTrigger.setAttribute('aria-controls',actions.id);toolsTrigger.setAttribute('aria-expanded','false');document.getElementById('sr50MapTab').append(toolsTrigger,actions);
 // Maintain all existing feature endpoints, only rename visible entrypoint.
 const launch=document.getElementById('sr60Launch');if(launch){launch.textContent='☰';launch.title='Mehr';launch.setAttribute('aria-label','Menü öffnen');row.append(launch)}
