@@ -27,6 +27,14 @@ export function sourceLabel(source){
  if(key==='gtfs-rt')return 'Echtzeitdaten';
  return key?key.charAt(0).toUpperCase()+key.slice(1):'Unbekannt';
 }
+export function feedSourceLabel(source){
+ const key=String(source??'').trim().toLowerCase();
+ if(key==='sta')return 'südtirolmobil / STA · BusOne';
+ if(key==='sta_direct')return 'südtirolmobil / STA · Open Data Hub';
+ if(key==='trentino')return 'Trentino Trasporti · BusOne';
+ if(key==='trains')return 'Trenitalia · BusOne';
+ return sourceLabel(key);
+}
 export function formatRelativeAge(seconds){
  if(seconds===null||seconds===undefined||seconds==='')return 'Unbekannt';
  const age=Number(seconds);

@@ -5,16 +5,16 @@ import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.
 import {enrichTrainPlatform} from './train-platforms.js?v=9.9.5';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, delayPresentation,
-  feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, formatClock, delayForVehicle,
+  feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, nextStopFromRows, formatClock, delayForVehicle,
   vehicleDelayInfo, markerDelayState, markerDelayBadge, bufferedAlong, departureDelay, isLiveUpdate, normalizeStopId
-} from './core.js?v=9.9.5&rev=delay-ring-block1-1';
+} from './core.js?v=9.9.5&rev=next-stop-details-1';
 import {playbackLag} from './radar45-logic.mjs?v=9.9.5';
 import {trainReplayDuration} from './radar705-motion.mjs?v=9.9.5';
 import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.9.5';
 import {trainScheduledPosition,buildDepartureRows,romeSeconds} from './radar51-logic.mjs?v=9.9.5';
 import {mergeStationDepartures} from './radar53-logic.mjs?v=9.9.5';
 import {groupNearbyStops,nextNearbyDepartures} from './radar93-nearby.mjs?v=9.9.5';
-import {formatStationName,formatRelativeAge,sourceLabel,expectedStopTime,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=station-labels-2';
+import {formatStationName,formatRelativeAge,sourceLabel,feedSourceLabel,expectedStopTime,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=source-provenance-1';
 import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.5&rev=feed-timestamp-truth-1';
 import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.9.5';
 
@@ -312,7 +312,7 @@ function updateAlertTicker(){
 function showSourceStatus(){
   const lines=ENDPOINTS.map(ep=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0"><b>'+escapeHtml(ep)+'</b><span>'+ (state.statuses[ep]==='ok'?'✓ '+t('status.feedsOk'):'↻ '+(state.statuses[ep]==='old'?t('status.old'):t('status.error')))+'</span></div>').join('');
   const g=SOURCES.filter(indexReady).length;
-  setNotice('<strong>Datenquellen · Südtirol Radar '+(window.SuedtirolRadar80?.version?.()||'')+'</strong><div style="margin:7px 0">'+lines+'</div><div>GTFS-Fahrplandaten: <b>'+g+'/3</b> Regionen geladen.</div><div style="margin-top:5px">'+mapMetrics().inside+' Fahrzeuge hier, '+state.markers.size+' Marker geladen, '+state.vehicles.size+' Positionen im Feed. Kartenanbieter: '+escapeHtml(TILE_PROVIDERS[tileProviderIndex].name)+' ('+tileLoadedCount+' Kacheln geladen, '+tileErrorCount+' Fehler).</div><div style="margin-top:5px">Kartenebenen: <b>'+escapeHtml(leafletLayoutHealth())+'</b>.</div><div style="margin-top:5px">STA Open Data Hub: direkter offizieller Positions- und Trip-Update-Feed. Trenitalia/Trentino: teilweise geschätzte Positionen. RFI-Daten sind nur in speziellen Stationsfunktionen verfügbar. Feed-Erreichbarkeit bedeutet nicht echtes GPS.</div>');
+  setNotice('<strong>Datenquellen · Südtirol Radar '+(window.SuedtirolRadar80?.version?.()||'')+'</strong><div style="margin:7px 0">'+lines+'</div><div>GTFS-Fahrplandaten: <b>'+g+'/3</b> Regionen geladen.</div><div style="margin-top:5px">'+mapMetrics().inside+' Fahrzeuge hier, '+state.markers.size+' Marker geladen, '+state.vehicles.size+' Positionen im Feed. Kartenanbieter: '+escapeHtml(TILE_PROVIDERS[tileProviderIndex].name)+' ('+tileLoadedCount+' Kacheln geladen, '+tileErrorCount+' Fehler).</div><div style="margin-top:5px">Kartenebenen: <b>'+escapeHtml(leafletLayoutHealth())+'</b>.</div><div style="margin-top:5px">STA/südtirolmobil: BusOne-Positionsfeed plus direkter Open-Data-Hub-Feed. Trentino Trasporti und Trenitalia kommen über BusOne-GTFS-RT; ihre Positionen können geschätzt sein. RFI-Daten sind nur in speziellen Stationsfunktionen verfügbar. Feed-Erreichbarkeit bedeutet nicht bestätigtes GPS.</div>');
 }
 async function loadIndexes(){
   await Promise.all(SOURCES.map(async source => {
@@ -928,6 +928,9 @@ function drawVehicleDetails(key,fetchSchedule){
   const delayText=cancelled?'Entfällt':info?delayView.label:'Unbekannt';
   detail('Gemeldete Verspätung',delayText+(info?(info.basis==='fahrt'?' · ganze Fahrt':/^(STOPPED_AT|1)$/i.test(v.currentStatus)?' · am Halt':' · nächster Halt'):''),delayCls);
    detail('Fahrtziel',formatStationName(v.headsign));
+   const cachedStops=state.details[v.source]?stopRows(state.details[v.source],v.tripId):[];
+   const nextStop=nextStopFromRows(cachedStops,v);
+   detail('Nächster Halt',nextStop?formatStationName(nextStop.name):'Unbekannt');
   if(v.plannedComposition?.confidence==='planned'){
     detail('Geplantes Rollmaterial 2026',v.plannedComposition.type+' · '+v.plannedComposition.composition);
     detail('Hinweis Rollmaterial','Fahrplanangabe – tatsächlicher Fahrzeugeinsatz kann abweichen');
@@ -938,7 +941,7 @@ function drawVehicleDetails(key,fetchSchedule){
     detail('Abstand zum Fahrplanpunkt',schedule?'Rund '+schedule.differenceKm.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+' km '+schedule.relative:'Unbekannt');
   }
   detail('Positionsalter',formatRelativeAge(feedAgeSeconds(v)));
-  detail('Datenquelle',sourceLabel(v.source)+' · Echtzeitdaten');
+  detail('Datenquelle',feedSourceLabel(v.source)+' · Echtzeitdaten');
   detail('Unterschied der Angaben','Die gemeldete Verspätung stammt aus der Echtzeitmeldung. Der Kilometerabstand vergleicht die Feedposition mit dem Fahrplanpunkt und ist keine Minutenverspätung.');
   detail('Geschwindigkeit',v.speed===null?'Unbekannt':v.speed+' km/h (gemeldet)');
   const quality=observationQuality(v,Date.now());
@@ -1038,8 +1041,12 @@ async function loadSchedule(key){
   $('scheduleSection').hidden=true;$('emptySchedule').hidden=false;$('emptySchedule').textContent=t('journey.loadingStops');
   const details=await loadDetails(v.source);
   if(state.selectedKey!==key||state.activeSheet!=='vehicle')return;
-  if(details)renderStops(v,details);
-  else $('emptySchedule').textContent=t('station.noStops');
+  if(details){
+    const nextStop=nextStopFromRows(stopRows(details,v.tripId),v);
+    const row=[...$('details').children].find(el=>el.querySelector('small')?.textContent==='Nächster Halt');
+    if(row)row.replaceWith(detailElement('Nächster Halt',nextStop?formatStationName(nextStop.name):'Unbekannt'));
+    renderStops(v,details);
+  }else $('emptySchedule').textContent=t('station.noStops');
 }
 function selectVehicle(key){
   if(!state.vehicles.has(key))return;
