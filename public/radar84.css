@@ -264,7 +264,6 @@
 .fav-badge{background:#ffd700!important;color:#000!important;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:bold;border:none}
 .badge.fav-badge{background:#ffd700!important;color:#000!important;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:bold;border:none}
 .marker-wrap.favorite .marker-label{color:#ffd700!important}
-.marker-wrap.line-favorite{filter:drop-shadow(0 0 3px #ffd700)}
 .marker-wrap.line-favorite .marker-label{color:#ffd700!important}
 /* 9.8 - Gleiche Linie im Fahrzeug-Detail */
 .line-vehicles{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}

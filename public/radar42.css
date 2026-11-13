@@ -32,9 +32,6 @@ html.sr42-ready .scrim.show {opacity:0!important;pointer-events:none!important;}
 @media(min-width:750px){.sheet.sr42-sheet.open{max-height:min(86dvh,820px)!important;}}
 @media(prefers-reduced-motion:reduce){.sheet.sr42-sheet.open{transition:none!important;}}
 /* Markers: declutter at large geographic zoom levels, preserve selected info. */
-#map.sr42-far .sr40-delay, #map.sr42-far .marker-label{display:none!important;}
-#map.sr42-medium .sr40-delay.on-time{display:none!important;}
-#map.sr42-far .marker-wrap.selected .marker-label,
-#map.sr42-far .marker-wrap.selected .sr40-delay {display:block!important;}
-/* compact delay pill, anchored near the vehicle without floating far away */
-#map .marker-wrap.bus .sr40-delay {top:23px;left:calc(50% + 6px);font-size:7.5px;line-height:1;padding:1px 2px;}
+#map.sr42-far .marker-label{display:none!important;}
+
+#map.sr42-far .marker-wrap.selected .marker-label{display:block!important;}

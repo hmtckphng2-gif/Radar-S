@@ -64,6 +64,23 @@ export function loadGLTFLoader(){
 
 export const MODEL_CONFIG_URL='/models/models.json';
 let configPromise;
+const modelBinaryCache=new Map();
+async function loadModelBinary(url,timeoutMs=8000){
+ let pending=modelBinaryCache.get(url);
+ if(!pending){
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),Math.max(1000,Number(timeoutMs)||8000));
+  pending=fetch(url,{signal:controller.signal,cache:'force-cache'})
+   .then(response=>{if(!response.ok)throw Error('3D-Modell konnte nicht geladen werden');return response.arrayBuffer()})
+   .finally(()=>clearTimeout(timeout));
+  modelBinaryCache.set(url,pending);
+  pending.catch(()=>{if(modelBinaryCache.get(url)===pending)modelBinaryCache.delete(url)});
+ }
+ const buffer=await pending;
+ return buffer.slice(0);
+}
+export function cachedModelBinaryCount(){return modelBinaryCache.size;}
+
 export function loadModelConfig(){
   return configPromise??=(fetch(MODEL_CONFIG_URL,{cache:'no-store'})
     .then(r=>{if(!r.ok)throw Error('Keine Modellkonfiguration');return r.json()})
@@ -143,15 +160,10 @@ export async function loadVehicleModel(kind,THREE,{timeoutMs=8000}={}){
   loader=await loadGLTFLoader()
   if(!loader)return null;
   const url='/models/'+String(entry.file).replace(/^\/+/,'');
+  const buffer=await loadModelBinary(url,timeoutMs);
   const gltf=await new Promise((resolve,reject)=>{
-    let settled=false;
-    const finish=(error,data)=>{if(settled)return;settled=true;clearTimeout(timer);error?reject(error):resolve(data)};
-    const timer=setTimeout(()=>finish(Error('Modell-Download zu langsam')),Math.max(1000,Number(timeoutMs)||8000));
-    try{
-      // loadGLTFLoader() already returns a configured GLTFLoader instance.
-      // Constructing it again throws and silently leaves the schematic model.
-      loader.load(url,data=>finish(null,data),undefined,err=>finish(err||Error('Modell nicht ladbar')));
-    }catch(error){finish(error)}
+    try{loader.parse(buffer,'/models/',resolve,error=>reject(error||Error('Modell nicht ladbar')))}
+    catch(error){reject(error)}
   });
   const scene=gltf?.scene;
   if(!scene)return null;

@@ -76,7 +76,7 @@ test('the existing vehicle-sheet X is the only 3D exit and returns to 2D', () =>
   const app = get('app.js');
   const html = get('index.html');
   assert.doesNotMatch(map, /sr83-back|↩ 2D|Zur normalen 2D-Karte zurückkehren/);
-  assert.match(map, /toolbar\.append\(replay,exit\)/);
+  assert.match(map, /toolbar\.append\(focus,free,replay,exit\)/);
   assert.match(map, /className='sr83-exit'/);
   assert.match(map, /const closed=controller\?\.close3D\?\.\(\)/);
   assert.ok(map.includes("document.querySelectorAll('#map .sr83-viewport').forEach(node=>node.remove())"));

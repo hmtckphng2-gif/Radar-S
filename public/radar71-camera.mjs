@@ -1,12 +1,12 @@
-import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=production-camera-repair-1';
-import {preload3DLibraries} from './radar83-map.mjs?v=9.9.5&rev=production-camera-repair-1';
+import {Radar83Cinematic} from './radar83-map.mjs?v=9.9.5&rev=preview-3d-reliability-1';
+import {preload3DLibraries} from './radar83-map.mjs?v=9.9.5&rev=preview-3d-reliability-1';
 /* Radar 7.1 – Cinematic Vehicle Focus.
  * A single cancellation-aware camera, separate from feed data and marker movement.
  * On standard Leaflet (no setBearing), turn only the heading HUD; do not rotate
  * map panes with CSS and corrupt touch coordinates or marker hit testing.
  */
 import {focusDuration,focusZoom,focusDistanceKm,focusHeading,validFocusPoint,shortestRotation} from './radar71-camera-logic.mjs?v=9.9.5&rev=production-camera-repair-1';
-import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=production-camera-repair-1';
+import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=preview-3d-reliability-1';
 (()=>{'use strict';
  const $=id=>document.getElementById(id);
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -86,7 +86,7 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=production-came
    const toZoom=focusZoom(map.getZoom(),map.getMaxZoom(),vehicle.kind);
    // The 3D camera frames the vehicle, not the map: a 44,5 m train and a 12 m bus
    // need a different distance to fill the frame.
-   const cinematicZoom=vehicle.kind==='bus'?Math.max(toZoom,20.2):Math.max(toZoom,19);
+   const cinematicZoom=vehicle.kind==='bus'?19.0:18.7;
    const distanceKm=focusDistanceKm(map.getCenter(),pos);
    // Keep 2D and 3D timings separate. MapLibre inherits Leaflet's scale minus
    // one zoom level, and the visible 3D flight covers only the final 25% of
@@ -94,8 +94,10 @@ import {cinematicDuration} from './radar83-logic.mjs?v=9.9.5&rev=production-came
    const duration=motion.matches?0:cinematicDuration(distanceKm,focusDuration(false,map.getZoom(),toZoom,distanceKm)*0.62);
    const remaining3DDistanceKm=distanceKm*0.25;
    const duration3D=motion.matches?0:cinematicDuration(remaining3DDistanceKm,focusDuration(false,Math.max(3,map.getZoom()-1),cinematicZoom,remaining3DDistanceKm)*0.62);
+   let fallbackStarted=false;
    const classic=()=>{
-    if(seq!==token)return;
+    if(seq!==token||fallbackStarted)return;
+    fallbackStarted=true;
     try{
      map.stop();
      if(motion.matches)map.setView([pos.lat,pos.lng],toZoom,{animate:false});
