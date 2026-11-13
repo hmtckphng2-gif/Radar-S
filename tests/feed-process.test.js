@@ -32,9 +32,29 @@ test('freshness: alter Feed ist old', () => {
   assert.equal(freshness(feed(nowSec - 200000), nowSec), 'old');
 });
 
-test('freshness: ohne Timestamp ist ok (nicht erfinden)', () => {
+test('freshness: ohne oder ungültigen Timestamp ist unknown, niemals live', () => {
   const nowSec = Math.floor(Date.now()/1000);
-  assert.equal(freshness({header: {}}, nowSec), 'ok');
+  assert.equal(freshness({header: {}}, nowSec), 'unknown');
+  assert.equal(freshness({header: {timestamp: 'not-a-time'}}, nowSec), 'unknown');
+  assert.equal(freshness({header: {timestamp: 0}}, nowSec), 'unknown');
+});
+
+test('freshness: far-future timestamp is unknown because it cannot prove freshness', () => {
+  const nowSec = Math.floor(Date.now()/1000);
+  assert.equal(freshness(feed(nowSec + 301), nowSec), 'unknown');
+  assert.equal(freshness(feed(nowSec + 120), nowSec), 'ok');
+});
+
+test('buildFeedStatus: fulfilled feed without timestamp is preserved separately as unknown', () => {
+  const results = [
+    {status: 'fulfilled', value: feed(undefined)},
+    {status: 'fulfilled', value: feed(Math.floor(Date.now()/1000))}
+  ];
+  const {ok, unknownFeeds, statuses} = buildFeedStatus(results, ['sta','trentino']);
+  assert.equal(statuses.sta, 'unknown');
+  assert.equal(statuses.trentino, 'ok');
+  assert.ok(unknownFeeds.sta);
+  assert.ok(!ok.sta);
 });
 
 test('processPositionFeed: parst Fahrzeuge und berechnet Bus-Kandidaten', () => {

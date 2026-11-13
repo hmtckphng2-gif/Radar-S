@@ -15,7 +15,7 @@ import {trainScheduledPosition,buildDepartureRows,romeSeconds} from './radar51-l
 import {mergeStationDepartures} from './radar53-logic.mjs?v=9.9.5';
 import {groupNearbyStops,nextNearbyDepartures} from './radar93-nearby.mjs?v=9.9.5';
 import {formatStationName,formatRelativeAge,sourceLabel,expectedStopTime,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=station-labels-2';
-import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.5';
+import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.5&rev=feed-timestamp-truth-1';
 import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.9.5';
 
 const $ = id => document.getElementById(id);
@@ -48,7 +48,6 @@ const MAP_PLACES={
   meran:[46.670,11.160,12], bruneck:[46.797,11.940,12], trento:[46.068,11.122,12]
 };
 const TILE_PROVIDERS=[
-  {name:'Carto Dark',url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',options:{subdomains:'abcd',attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a> · © <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>'}},
   {name:'OpenStreetMap',url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',options:{attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a>'}},
   {name:'OSM HOT',url:'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',options:{subdomains:'abc',attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a> · Tiles © Humanitarian OpenStreetMap Team'}}
 ];
@@ -794,7 +793,7 @@ async function refreshFeeds(){
   state.busy=true;$('statusText').textContent=t('status.loading');
   try{
     const results=await Promise.allSettled(ENDPOINTS.map(name=>fetchJson('/api/'+name,16000)));
-    const {ok, oldFeeds, statuses}=buildFeedStatus(results, ENDPOINTS);
+    const {ok, oldFeeds, unknownFeeds, statuses}=buildFeedStatus(results, ENDPOINTS);
     state.statuses=statuses;
     for(const [name, feed] of Object.entries(ok)){
       state.lastSuccess[name]=Date.now();
@@ -806,10 +805,10 @@ async function refreshFeeds(){
     }
     const now=Date.now();state.fetchedAt=now;
     for(const source of POSITION_SOURCES){
-      if(!ok[source] && !oldFeeds[source])continue;
-      // Old upstream data is last-known context, never live GPS or moving animation.
+      if(!ok[source] && !oldFeeds[source] && !unknownFeeds[source])continue;
+      // Old or unverified-timestamp data is context only, never live GPS or moving animation.
       const staleFeed=!ok[source];
-      const {parsed, latest}=processPositionFeed(source, ok[source]||oldFeeds[source], now, state.indexes, gtfsLocalDate());
+      const {parsed, latest}=processPositionFeed(source, ok[source]||oldFeeds[source]||unknownFeeds[source], now, state.indexes, gtfsLocalDate());
       state.counts[source]=parsed;
       mergePositionVehicles(state.vehicles, latest, source, now, staleFeed);
     }

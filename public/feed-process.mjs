@@ -15,26 +15,27 @@ export const POSITION_SOURCES = ['sta', 'trentino', 'trains'];
 export function buildFeedStatus(results, endpointNames){
   const ok = {};
   const oldFeeds = {};
+  const unknownFeeds = {};
   const statuses = {};
   for(let i = 0; i < results.length; i++){
     const name = endpointNames[i];
     const result = results[i];
     const fresh = result.status === 'fulfilled' ? freshness(result.value, Date.now() / 1000) : 'error';
     statuses[name] = fresh;
-    if(fresh === 'ok'){
-      ok[name] = result.value;
-    }
-    if(fresh === 'old' && result.status === 'fulfilled'){
-      oldFeeds[name] = result.value;
-    }
+    if(fresh === 'ok') ok[name] = result.value;
+    if(fresh === 'old' && result.status === 'fulfilled') oldFeeds[name] = result.value;
+    if(fresh === 'unknown' && result.status === 'fulfilled') unknownFeeds[name] = result.value;
   }
-  return {ok, oldFeeds, statuses};
+  return {ok, oldFeeds, unknownFeeds, statuses};
 }
 
 // Prüft Frische eines Feeds anhand des GTFS-RT Timestamps (nowSec in Sekunden).
 export function freshness(feed, nowSec){
-  const stamp = Number(feed?.header?.timestamp ?? feed?.header?.timeStamp);
-  if(!Number.isFinite(stamp) || stamp < 1000000000) return 'ok';
+  const rawStamp = feed?.header?.timestamp ?? feed?.header?.timeStamp;
+  const stamp = Number(rawStamp);
+  // Missing, malformed, implausibly old, or far-future timestamps cannot prove freshness.
+  if(rawStamp == null || rawStamp === '' || !Number.isFinite(stamp) || stamp < 1000000000) return 'unknown';
+  if(stamp - nowSec > 300) return 'unknown';
   return nowSec - stamp > STALE_MAX_AGE_SEC ? 'old' : 'ok';
 }
 
