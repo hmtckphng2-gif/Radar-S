@@ -131,3 +131,8 @@
 
 /* Radar 10.0: remove the map delay legend and its surrounding box. */
 .sr-delay-legend{display:none!important}
+
+/* Radar 10.0.5: remove floating delay panel shell and disturbance pill. */
+.sr-delay-legend{display:none!important}
+body.sr60.rh-ready .rh-tools-panel{background:transparent!important;border:0!important;border-radius:0!important;padding:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.mf-quickrow{display:none!important}
