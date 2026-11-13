@@ -128,3 +128,6 @@
   padding:0 1px;
   font-size:8px;
 }
+
+/* Radar 10.0: remove the map delay legend and its surrounding box. */
+.sr-delay-legend{display:none!important}
