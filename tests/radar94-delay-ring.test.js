@@ -81,7 +81,7 @@ test('delay legend is attached to the existing mobile map-tools/layer panel',()=
  assert.ok(js.includes('actions.append(delayLegend)'));
  assert.ok(js.includes('Gestrichelt = geschätzte oder veraltete Position'));
  assert.ok(css.includes('.sr-delay-legend__grid'));
- assert.ok(html.includes('radar94-preview-block1.css?v=9.9.5&rev=remove-map-overlay-2'));
+ assert.ok(html.includes('radar94-preview-block1.css?v=9.9.5&rev=dark-map-clean-ui-1'));
 });
 
 test('stale and estimated quality never grayscale the delay ring itself',()=>{
