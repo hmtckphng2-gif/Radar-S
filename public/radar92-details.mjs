@@ -18,10 +18,11 @@ export function sameStationName(a,b){
 }
 export function sourceLabel(source){
  const key=String(source??'').trim().toLowerCase();
- if(key==='trains'||key==='train')return 'Zug';
- if(key==='sta')return 'STA';
- if(key==='sta_direct')return 'STA direkt';
- if(key==='trentino')return 'Trentino Trasporti';
+ if(key==='trains')return 'Trenitalia (BusOne)';
+ if(key==='train')return 'Zug';
+ if(key==='sta')return 'südtirolmobil (STA · BusOne)';
+ if(key==='sta_direct')return 'südtirolmobil (STA · Open Data Hub)';
+ if(key==='trentino')return 'Trentino Trasporti (BusOne)';
  if(key==='rfi')return 'RFI';
  if(key==='gtfs')return 'Fahrplandaten';
  if(key==='gtfs-rt')return 'Echtzeitdaten';

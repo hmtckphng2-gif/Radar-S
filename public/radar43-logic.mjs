@@ -1,4 +1,4 @@
-import {formatStationName} from './radar92-details.mjs?v=9.9.5&rev=details-1';
+import {formatStationName} from './radar92-details.mjs?v=9.9.5&rev=source-provenance-1';
 /* Südtirol Radar 4.3 — pure, testable screen/data helpers.
    No location is predicted, invented, or converted into an exact ETA. */
 export function clusterGrid(points,cell=72,selectedKey=null){
