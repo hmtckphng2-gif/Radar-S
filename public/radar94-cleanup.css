@@ -1,0 +1,67 @@
+/* Radar 10.0.4 — compact sheet header is reflowed, never clipped. */
+#sheet .sheet-heading{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;min-width:0;overflow:visible!important;max-height:none!important;transform:translateZ(0);transition:min-height .42s cubic-bezier(.22,.75,.2,1),height .42s cubic-bezier(.22,.75,.2,1),padding .42s cubic-bezier(.22,.75,.2,1),margin .42s cubic-bezier(.22,.75,.2,1)!important}
+#sheet .sheet-heading-main{flex:1 1 auto;min-width:0;transition:transform .42s cubic-bezier(.22,.75,.2,1),opacity .25s ease}
+#sheet .handle{transition:opacity .3s ease,height .42s ease,margin .42s ease!important}
+#sheet.sr94-sheet-scrolled .handle{height:0!important;min-height:0!important;opacity:0;margin:0 auto!important;overflow:hidden}
+#sheet.sr94-sheet-scrolled .sheet-heading{height:56px!important;min-height:56px!important;max-height:none!important;flex:0 0 56px!important;padding:6px 14px!important;margin:0!important;overflow:visible!important}
+#sheet.sr94-sheet-scrolled .sheet-heading-main{display:flex;flex-direction:column;justify-content:center;min-height:0;transform:none;opacity:1}
+#sheet.sr94-sheet-scrolled .eyebrow,#sheet.sr94-sheet-scrolled .sheet-subtitle{max-height:0!important;opacity:0!important;margin:0!important;padding:0!important;overflow:hidden!important;transform:translateY(-4px);transition:opacity .18s ease,max-height .32s ease,transform .32s ease,margin .32s ease!important}
+#sheet.sr94-sheet-scrolled .sheet-title{display:block!important;font-size:14px!important;line-height:1.2!important;letter-spacing:-.1px!important;margin:0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:font-size .42s ease,line-height .42s ease!important}
+#sheet.sr94-sheet-scrolled .sheet-heading .close{display:grid!important;place-items:center!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;flex:0 0 40px!important;transition:width .42s ease,height .42s ease,transform .2s ease!important}
+#sheet .badge-row,#sheet .model-card,#sheet .details,#sheet #scheduleSection{transition:opacity .36s ease,transform .48s cubic-bezier(.22,.75,.2,1),max-height .48s ease,margin .48s ease!important;transform-origin:top center}
+#sheet.sr94-sheet-scrolled .badge-row{opacity:0;max-height:0;overflow:hidden;margin:0!important;transform:translateY(-8px);pointer-events:none}
+#sheet .badge-row .fav-badge,#sheet .badge-row .line-fav-badge{display:none!important}
+#sheetNote[hidden],#emptySchedule[hidden]{display:none!important}
+#sheetNote{display:none!important}
+#sheet .details{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:8px 0!important}
+#sheet .detail{padding:9px 10px;border-radius:10px}
+#sheet .detail small{font-size:9px}
+#sheet .detail strong{font-size:12px}
+#map .sr83-toolbar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;left:auto;z-index:2147483000;pointer-events:none}
+#map .sr83-exit{pointer-events:auto!important;touch-action:manipulation!important;position:relative;z-index:2147483001;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;flex:0 0 44px!important;border-radius:50%;background:#101923ed;border:1px solid #71869aaa;box-shadow:0 4px 14px #0008;font-size:26px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer}
+#map .sr83-exit:active{transform:scale(.94)}
+#map .sr83-viewport.sr83-ready .sr83-toolbar{pointer-events:none}
+#map .sr83-viewport.sr83-ready .sr83-exit{pointer-events:auto!important}
+@media(prefers-reduced-motion:reduce){#sheet .sheet-heading,#sheet .handle,#sheet .sheet-heading-main,#sheet .sheet-title,#sheet .sheet-heading .close,#sheet .badge-row,#sheet .model-card,#sheet .details,#map .sr83-exit{transition:none!important}}
+
+/* 10.0.3 final: the 3D viewport is visual-only; keep just its close control. */
+#map .sr83-label,#map .sr83-credit,#map .sr83-vehicle-meta,#map .sr83-info-card,#map .sr83-sources,#map .sr83-replay{display:none!important}
+#sheet .badge-row .fav-badge,#sheet .badge-row .line-fav-badge{display:none!important}
+
+/* Deeper vehicle-sheet scroll: hide the model/focus and all metadata cards, keep journey list. */
+#sheet.sr94-sheet-scrolled .badge-row,#sheet.sr94-sheet-scrolled #modelCard,#sheet.sr94-sheet-scrolled #details,#sheet.sr94-sheet-scrolled #sheetNote,#sheet.sr94-sheet-scrolled .sr83-info-card,#sheet.sr94-sheet-scrolled .sr83-sources,
+#sheet .sheet-scroll.sr94-sheet-scrolled .badge-row,#sheet .sheet-scroll.sr94-sheet-scrolled #modelCard,#sheet .sheet-scroll.sr94-sheet-scrolled #details,#sheet .sheet-scroll.sr94-sheet-scrolled #sheetNote,#sheet .sheet-scroll.sr94-sheet-scrolled .sr83-info-card,#sheet .sheet-scroll.sr94-sheet-scrolled .sr83-sources{
+ opacity:0!important;visibility:hidden!important;max-height:0!important;height:0!important;min-height:0!important;overflow:hidden!important;
+ margin:0!important;padding-top:0!important;padding-bottom:0!important;border-width:0!important;transform:translateY(-10px)!important;pointer-events:none!important;
+}
+#sheet.sr94-sheet-scrolled #scheduleSection,#sheet .sheet-scroll.sr94-sheet-scrolled #scheduleSection{margin-top:2px!important}
+
+/* The 3D focus/meta cards are dynamically inserted after #details; collapse them too. */
+#sheet .sr83-info-card,#sheet .sr83-sources{transition:opacity .36s ease,transform .48s cubic-bezier(.22,.75,.2,1),max-height .48s ease,margin .48s ease!important;max-height:220px;overflow:hidden}
+
+/* Vehicle menu: radar94-cleanup.js is the guaranteed scroll controller.
+   radar55.js may also set sr55-scrolled; support both states on the sheet
+   and on its actual scroll container. Hide the complete focus/metadata block
+   so the journey list becomes the only content while scrolling. */
+#sheet.sr94-sheet-scrolled .badge-row,
+#sheet.sr94-sheet-scrolled #modelCard,
+#sheet.sr94-sheet-scrolled #details,
+#sheet.sr94-sheet-scrolled #sheetNote,
+#sheet.sr94-sheet-scrolled .sr83-info-card,
+#sheet.sr94-sheet-scrolled .sr83-sources,
+#sheet.sr94-sheet-scrolled .sr46-actions,
+#sheet.sr55-scrolled .badge-row,
+#sheet.sr55-scrolled #modelCard,
+#sheet.sr55-scrolled #details,
+#sheet.sr55-scrolled #sheetNote,
+#sheet.sr55-scrolled .sr83-info-card,
+#sheet.sr55-scrolled .sr83-sources,
+#sheet.sr55-scrolled .sr46-actions,
+#sheet .sheet-scroll.sr94-sheet-scrolled .badge-row,
+#sheet .sheet-scroll.sr94-sheet-scrolled #modelCard,
+#sheet .sheet-scroll.sr94-sheet-scrolled #details,
+#sheet .sheet-scroll.sr94-sheet-scrolled #sheetNote,
+#sheet .sheet-scroll.sr94-sheet-scrolled .sr83-info-card,
+#sheet .sheet-scroll.sr94-sheet-scrolled .sr83-sources {
+  display:none!important;
+}

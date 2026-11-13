@@ -1,0 +1,132 @@
+/* Radar 5.8 Traffic Intelligence controls */
+.sr58-banner{position:fixed;z-index:10006;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 6px);max-width:720px;margin:auto;text-align:left;color:#ffe5e7;background:#4f202b;border:1px solid #be5362;box-shadow:0 9px 30px #0009;border-radius:13px;padding:10px 13px;font:12px -apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+.sr58-banner[hidden]{display:none!important}.sr58-banner-heading{display:flex;justify-content:space-between;font-size:10px;font-weight:800;letter-spacing:.04em;margin-bottom:5px;color:#ffb8bd}.sr58-banner strong{display:block;font-size:13px}.sr58-banner small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:4px;color:#f0b7bf}
+.sr58-quick{position:fixed;z-index:10008;bottom:calc(76px + env(safe-area-inset-bottom));right:12px;border:1px solid #536d86;background:#202f41;color:#ddecff;border-radius:999px;padding:9px 15px;font-size:11px;font-weight:800;box-shadow:0 4px 18px #0009}
+.sr58-dialog{border:1px solid #34485d;border-radius:18px;background:#111923;color:#eef4fb;max-height:86dvh;width:min(96vw,560px);padding:0;box-shadow:0 22px 80px #000b;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}.sr58-dialog::backdrop{background:#000c;backdrop-filter:blur(5px)}
+.sr58-dialog-head{display:flex;align-items:center;justify-content:space-between;padding:17px;border-bottom:1px solid #283847;font-size:13px}.sr58-close{border:0;border-radius:10px;background:#2b3c50;color:#fff;padding:7px 11px}
+.sr58-body{padding:15px;overflow:auto;max-height:70dvh}.sr58-body h2{font-size:19px;margin:20px 2px 15px}.sr58-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:9px}.sr58-tab{border:1px solid #394958;background:#1a2836;color:#acbed0;border-radius:9px;padding:9px;font-size:11px;white-space:nowrap}.sr58-tab[aria-pressed=true]{background:#435c76;color:white}.sr58-issue{background:#1c2835;padding:12px;margin:7px 0;border-radius:10px;border-left:3px solid #607d9d}.sr58-issue.danger{border-color:#f0717a}.sr58-issue.delay{border-color:#edbb7b}.sr58-issue.good{border-color:#6fae86}.sr58-issue.unknown{border-color:#7895aa}.sr58-issue strong,.sr58-issue small{display:block}.sr58-issue strong{font-size:13px}.sr58-issue small{color:#a7bad0;margin-top:5px;font-size:11px;line-height:1.5}.sr58-muted{color:#a4b3c6;font-size:12px;line-height:1.6}.sr58-setting{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px 0;border-bottom:1px solid #354153;font-size:13px}.sr58-setting select{background:#263849;color:white;border:1px solid #4a637b;border-radius:8px;padding:6px}.sr58-search{width:100%;background:#1d2b39;border:1px solid #3c536d;padding:12px;border-radius:10px;color:#fff;font-size:16px}.sr58-result{display:block;width:100%;padding:13px;color:#e2efff;background:#25374a;border:0;border-radius:9px;margin:7px 0;text-align:left}.sr58-toast{position:fixed;z-index:10025;left:12px;right:12px;bottom:calc(154px + env(safe-area-inset-bottom));background:#4c2530;border:1px solid #c35a6a;color:#fff;padding:15px;border-radius:11px;box-shadow:0 8px 34px #000a}
+
+.sr58-action{width:100%;padding:14px;color:white;background:#385778;border:0;border-radius:12px;font-weight:700}
+
+.sr58-inline-btn{display:inline-block;margin:9px 6px 0 0;border:1px solid #4c6683;border-radius:8px;background:#25384d;color:#dceafa;padding:8px 11px;font-size:11px;font-weight:700}.sr58-vehicle-tabs{display:flex;gap:7px}
+body.sr58-has-warning #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-area-inset-top) + 112px)}
+@media(max-width:390px){.sr58-banner{left:8px;right:8px}.sr58-quick{right:8px}.sr58-dialog{width:97vw}.sr58-body{padding:12px}}
+
+.sr58-issue.info{border-left-color:#79b8ef}.sr58-issue.info strong{color:#b4d7fc}.sr58-vehicle-tabs{margin:12px 0}.sr58-dialog .sr58-issue button{touch-action:manipulation}
+
+/* 5.8.1 – sliding liquid-glass selection. Existing four-tab navigation stays intact. */
+#sr50BottomNav.sr58-liquid-nav{isolation:isolate;background:rgba(9,18,32,.74)!important;-webkit-backdrop-filter:blur(28px) saturate(160%)!important;backdrop-filter:blur(28px) saturate(160%)!important}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{position:relative;z-index:2;background:transparent!important;transition:color .26s ease,transform .26s ease}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn.active{background:transparent!important;color:#d3e8ff!important}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn:active{transform:scale(.96)}
+#sr50BottomNav .sr58-liquid-pill{position:absolute;z-index:1;top:0;left:0;border-radius:19px;pointer-events:none;opacity:0;background:linear-gradient(160deg,rgba(182,218,255,.24),rgba(93,158,242,.13) 45%,rgba(50,103,188,.25));border:1px solid rgba(202,226,255,.27);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(115,172,255,.07),0 5px 18px rgba(0,0,0,.14);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);transition:transform .48s cubic-bezier(.2,1.18,.27,1),width .35s ease,height .35s ease,opacity .2s ease;will-change:transform}
+#sr50BottomNav .sr58-liquid-pill.sr58-liquid-ready{opacity:1}
+.sr58-banner-heading .sr58-banner-controls{display:flex;align-items:center;gap:14px}
+.sr58-banner-close{background:rgba(255,255,255,.11);border:1px solid rgba(255,225,230,.23);color:#ffe2e5;border-radius:50%;width:27px;height:27px;display:grid;place-items:center;font-size:13px;line-height:1;cursor:pointer;flex:none}
+.sr58-banner-close:active{transform:scale(.91)}
+@media(prefers-reduced-motion:reduce){#sr50BottomNav .sr58-liquid-pill,#sr50BottomNav .sr50-nav-btn{transition:none!important}}
+
+/* 5.8.2 glass layer and language control */
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn.active{background:transparent!important}
+#sr50BottomNav .sr58-liquid-pill{transition:transform .48s cubic-bezier(.19,1.15,.26,1),width .3s ease,height .3s ease,opacity .18s ease}
+.sr58-language-toggle{position:fixed;z-index:10012;top:calc(env(safe-area-inset-top,0px) + 7px);right:13px;width:35px;height:29px;border:1px solid rgba(170,206,255,.35);border-radius:9px;background:rgba(24,39,60,.84);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:#e7f4ff;font:800 11px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:.05em;box-shadow:0 4px 12px #0004}
+
+@media(max-width:390px){.sr58-language-toggle{right:8px}}
+
+#sr50BottomNav.sr58-liquid-nav{touch-action:pan-y}#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{touch-action:pan-y}#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{touch-action:none}
+
+/* Radar 5.8.6: the pill stays on the icon+label grid cell; dragging preserves Y. */
+#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{
+ box-sizing:border-box!important;
+ inset:0 auto auto 0!important;
+ transform-origin:top left;
+ transition:transform .38s cubic-bezier(.22,.87,.23,1),width .18s ease,height .18s ease,opacity .18s ease!important;
+ border-radius:17px!important;
+}
+#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill.sr58-no-glass-motion{
+ transition:none!important;
+}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{
+ transform:none!important;
+ -webkit-tap-highlight-color:transparent;
+}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn:active{transform:none!important}
+#sr50BottomNav.sr58-liquid-nav{touch-action:pan-y}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{touch-action:pan-y}
+@media(prefers-reduced-motion:reduce){
+ #sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{transition:none!important}
+}
+/* Floating incident banner occupies safe space, without covering the selected stop. */
+body:has(#sr58Banner:not([hidden])) .sr57-view:not(.sr57-hidden) {
+ padding-top:calc(env(safe-area-inset-top,0px) + 110px)!important;
+}
+body:has(#sr58Banner:not([hidden])) .sr50-tab-view.active>.sr50-header{
+ padding-top:calc(env(safe-area-inset-top,0px) + 120px)!important;
+}
+.sr58-language-toggle{
+ top:calc(env(safe-area-inset-top,0px) + 8px)!important;
+ right:12px!important;
+}
+body:has(#sr58Banner:not([hidden])) .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 8px)!important}
+
+/* 5.8.6: glass pill stays on precisely the same Y position as tab buttons. */
+#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill {
+  left:0;top:0;box-sizing:border-box;contain:paint;
+  transition:transform .36s cubic-bezier(.18,.85,.28,1),width .25s,height .25s,opacity .2s;
+}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn.active {background:none!important}
+#sr50BottomNav.sr58-liquid-nav {touch-action:none}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn {touch-action:none}
+.sr58-language-toggle {top:calc(env(safe-area-inset-top,0px) + 9px)!important;right:12px!important}
+.sr58-banner {top:calc(env(safe-area-inset-top,0px) + 50px)!important;}
+body:has(.sr58-banner:not([hidden])) #sr50DeparturesView,
+body:has(.sr58-banner:not([hidden])) #sr50StatsView,
+body:has(.sr58-banner:not([hidden])) #sr50FavoritesView {padding-top:120px!important;}
+body:has(.sr58-banner:not([hidden])) .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 9px)!important}
+@media(prefers-reduced-motion:reduce){
+ #sr50BottomNav .sr58-liquid-pill{transition:none!important}
+}
+
+/* Radar 5.8.6: align the single glass pill inside the 53px navigation cell. */
+#sr50BottomNav.sr58-liquid-nav{position:fixed;align-items:center;overflow:hidden}
+#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{top:5px!important;bottom:auto!important;left:0!important;height:53px!important;box-sizing:border-box!important;transform-origin:center center;z-index:1}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{height:53px;align-self:center;z-index:2}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn.active{background:transparent!important}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn .sr50-icon,
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn span{pointer-events:none}
+/* The alert never covers the station selector or statistics header. */
+.sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 12px);right:14px}
+body:has(.sr58-banner:not([hidden])) .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 127px)}
+#sr50DeparturesView .sr57-view{padding-top:calc(env(safe-area-inset-top,0px) + 67px)}
+body:has(.sr58-banner:not([hidden])) #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-area-inset-top,0px) + 179px)!important}
+#sr50StatsView .sr50-header,#sr50FavoritesView .sr50-header{padding-top:calc(env(safe-area-inset-top,0px) + 65px)}
+body:has(.sr58-banner:not([hidden])) #sr50StatsView .sr50-header,
+body:has(.sr58-banner:not([hidden])) #sr50FavoritesView .sr50-header{padding-top:calc(env(safe-area-inset-top,0px) + 178px)!important}
+body:has(.sr58-banner:not([hidden])) #sr50MapTab{padding-top:0}
+@media(max-width:390px){body:has(.sr58-banner:not([hidden])) .sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 135px)}}
+
+/* Radar 5.8.6 – fixed glass Y-axis, safe warning/language positions. */
+#sr50BottomNav.sr58-liquid-nav{overflow:hidden;touch-action:pan-y}
+#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{top:5px;max-height:53px;transform-origin:center center;box-sizing:border-box;pointer-events:none}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{transform:none!important;position:relative;z-index:2}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn .sr50-icon{pointer-events:none}
+.sr58-language-toggle{top:calc(env(safe-area-inset-top,0px) + 7px)!important;right:12px!important;width:auto;min-width:46px;padding:0 7px}
+.sr58-banner{top:calc(env(safe-area-inset-top,0px) + 48px)!important}
+body.sr58-has-banner #sr50DeparturesView .sr57-view{padding-top:calc(env(safe-area-inset-top,0px) + 155px)!important}
+body.sr58-has-banner #sr50StatsView .sr50-header,body.sr58-has-banner #sr50FavoritesView .sr50-header{padding-top:calc(env(safe-area-inset-top,0px) + 158px)!important}
+body.sr58-has-banner #sr50MapTab .sr50-map-tab{padding-top:0}
+@media (prefers-reduced-motion:reduce){#sr50BottomNav .sr58-liquid-pill{transition:none!important}}
+
+/* 5.8.7: eliminate legacy pill dimensions/offsets and avoid double highlights. */
+#sr50BottomNav.sr58-liquid-nav{overflow:hidden!important;touch-action:none!important}
+#sr50BottomNav.sr58-liquid-nav .sr58-liquid-pill{
+ position:absolute!important;left:0!important;top:0!important;bottom:auto!important;
+ max-height:none!important;box-sizing:border-box!important;pointer-events:none!important;
+ z-index:1!important;will-change:transform;
+ transition:transform .3s cubic-bezier(.22,.8,.25,1),width .25s!important
+}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn{
+ flex:1 1 0!important;min-width:0!important;transform:none!important;
+ position:relative!important;z-index:2!important;background:transparent!important
+}
+#sr50BottomNav.sr58-liquid-nav .sr50-nav-btn.active{background:transparent!important}

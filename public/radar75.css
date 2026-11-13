@@ -1,0 +1,20 @@
+/* Radar 7.5: calm iPhone interaction and accessible tutorial. */
+@media(max-width:749px){
+ #sheet.open .sheet-scroll,#stationSheet.open .sheet-scroll{overscroll-behavior-y:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+ #sheet.open #sr47ProgressCard,#sheet.open .sr47-progress-card,#sheet.open #sr52RouteCard,#sheet.open #sr55DataExplainer,#sheet.open #sr64Quality{display:none!important}
+ #sheet.open #sr51TrainCompare{padding:10px!important;margin:6px 0!important}
+ #sheet.open #sr51TrainCompare .sr74-time-summary{margin:5px 0;padding:8px 10px}
+ #sheet.open #sr51TrainCompare .sr74-time-caution{font-size:10px}
+ #sheet.open .sheet-scroll,#stationSheet.open .sheet-scroll{padding-bottom:max(12px,env(safe-area-inset-bottom))}
+}
+#map .sr71-focus-ring{width:36px!important;height:36px!important;box-shadow:0 0 0 2px rgba(88,164,235,.08)!important;animation:none!important;filter:none!important}
+#map .sr71-focus-reticle{inset:4px!important}
+#map .sr71-cinematic{pointer-events:none!important}
+.sr75-tutorial-pointer{position:fixed;width:32px;height:32px;border:2px solid #8ad5ff;border-radius:50%;box-shadow:0 0 0 8px rgba(74,169,232,.16);z-index:2147483000;pointer-events:none;animation:sr75Pulse 1.7s ease-in-out infinite}
+@keyframes sr75Pulse{50%{box-shadow:0 0 0 14px rgba(74,169,232,.06)}}
+.sr75-tutorial-spotlight-label{font-size:11px;color:#90d4fa;letter-spacing:.015em;margin:6px 0 8px}
+@media(prefers-reduced-motion:reduce){.sr75-tutorial-pointer{animation:none}}
+
+#sr75StationHistory{margin:10px 12px;padding:12px;border:1px solid rgba(116,166,199,.28);border-radius:13px;background:rgba(30,48,68,.5);font-size:12px;line-height:1.5}
+#sr75StationHistory strong{font-size:13px}#sr75StationHistory p{margin:5px 0;color:#d1dce8}#sr75StationHistory small{color:#a8baca}
+#sr75HistorySummary{padding:12px;margin:10px 0;border-radius:12px;background:rgba(27,48,67,.8)}

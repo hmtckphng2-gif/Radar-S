@@ -1,0 +1,376 @@
+/* Südtirol Radar 8.4 — restrained, map-first design layer.
+   Existing app logic, data feeds, navigation, map layers and vehicle models remain untouched. */
+:root {
+  --radar84-ink: #f3f7fc;
+  --radar84-muted: #a4b2c5;
+  --radar84-glass: rgba(10, 18, 30, .88);
+  --radar84-glass-strong: rgba(13, 23, 38, .97);
+  --radar84-line: rgba(179, 201, 228, .15);
+  --radar84-blue: #398cff;
+  --radar84-ease: cubic-bezier(.23, 1, .32, 1);
+}
+
+/* Floating header: one quiet surface, clear hierarchy, no heavy neon glow. */
+#sr50MapTab .topbar {
+  position: absolute;
+  z-index: 1000;
+  top: calc(9px + env(safe-area-inset-top));
+  left: 10px;
+  right: 10px;
+  padding: 12px 13px 11px;
+  border: 1px solid var(--radar84-line);
+  border-radius: 21px;
+  background: var(--radar84-glass);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.25);
+  backdrop-filter: blur(22px) saturate(1.25);
+}
+#sr50MapTab .toprow { gap: 10px; }
+#sr50MapTab .brand-badge {
+  width: 40px; height: 40px; border-radius: 13px;
+  box-shadow: none; background: #152c49; color: #73b4ff;
+  border: 1px solid rgba(95, 158, 236, .27);
+}
+#sr50MapTab .brand-title { font-size: 17px; letter-spacing: -.55px; }
+#sr50MapTab .brand-title em {
+  display: inline-flex; align-items: center; margin-left: 6px;
+  padding: 3px 6px; border-radius: 6px; background: #183654;
+  color: #82bdff; font-size: 10px; letter-spacing: .02em;
+}
+#sr50MapTab .brand-sub { font-size: 10px; letter-spacing: .07em; }
+#sr50MapTab .status {
+  padding: 7px 9px; gap: 7px; border-radius: 999px;
+  border-color: var(--radar84-line); background: rgba(255,255,255,.035);
+  font-size: 9px; letter-spacing: .035em;
+}
+#sr50MapTab .status-dot { box-shadow: none; }
+#sr50MapTab .iconbtn, #sr50MapTab .round-action, #sr50MapTab .close {
+  border-color: var(--radar84-line); background: rgba(19, 33, 51, .92);
+  box-shadow: none; transition: transform 150ms var(--radar84-ease), background-color 150ms ease, border-color 150ms ease;
+}
+#sr50MapTab .iconbtn { width: 39px; height: 39px; border-radius: 13px; }
+
+/* Filter row stays reachable on narrow phones; search takes remaining width. */
+#sr50MapTab .controls { gap: 7px; margin-top: 12px; }
+#sr50MapTab .segments { gap: 5px; }
+#sr50MapTab .chip {
+  min-height: 38px; padding: 9px 12px; border-radius: 12px;
+  border-color: var(--radar84-line); background: rgba(255,255,255,.035);
+  font-size: 11px; font-weight: 650;
+  transition: transform 150ms var(--radar84-ease), background-color 150ms ease, border-color 150ms ease;
+}
+#sr50MapTab .chip.active {
+  background: #2879e8; border-color: #4b96ff; color: #fff; box-shadow: none;
+}
+#sr50MapTab .search-wrap {
+  height: 39px; border-radius: 12px; padding: 0 11px;
+  border-color: var(--radar84-line); background: rgba(255,255,255,.045);
+}
+#sr50MapTab .search-wrap input { font-size: 12px; }
+
+/* Map tools align in one consistent rail, clear of the header and data summary. */
+#sr50MapTab .map-actions {
+  right: 11px; bottom: calc(104px + env(safe-area-inset-bottom)); gap: 7px;
+}
+#sr50MapTab .round-action {
+  width: 42px; height: 42px; border-radius: 14px;
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  font-size: 16px;
+}
+#sr50MapTab .viewport-badge, #sr50MapTab .info-banner,
+#sr50MapTab .area-picker, #sr50MapTab .schedule-matches {
+  border: 1px solid var(--radar84-line); border-radius: 14px;
+  background: var(--radar84-glass-strong); box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+}
+#sr50MapTab .info-banner { top: calc(119px + env(safe-area-inset-top)); }
+
+/* Compact live summary: numbers first, source/update status secondary. */
+#sr50MapTab .stats {
+  left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom));
+  min-height: 64px; padding: 12px 13px; gap: 10px;
+  border-radius: 18px; border-color: var(--radar84-line);
+  background: var(--radar84-glass); box-shadow: 0 8px 28px rgba(0,0,0,.2);
+  -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px);
+}
+#sr50MapTab .stats-counts { gap: clamp(8px, 2.8vw, 15px); }
+#sr50MapTab .stat { gap: 5px; }
+#sr50MapTab .stat b { font-size: 17px; letter-spacing: -.45px; }
+#sr50MapTab .stat span, #sr50MapTab .stats-time { font-size: 10px; color: var(--radar84-muted); }
+
+/* Vehicle / station sheets: comfortable handle, calm surface, fast interruptible motion. */
+#sr50MapTab .sheet {
+  padding: 9px 17px calc(18px + env(safe-area-inset-bottom));
+  max-height: min(80dvh, 760px); border-radius: 25px 25px 0 0;
+  border-color: var(--radar84-line); background: var(--radar84-glass-strong);
+  box-shadow: 0 -12px 48px rgba(0,0,0,.28);
+  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  transition: transform 240ms cubic-bezier(.32,.72,0,1);
+  overscroll-behavior: contain;
+}
+#sr50MapTab .handle { width: 36px; height: 4px; margin-bottom: 16px; background: #8092a8; }
+#sr50MapTab .sheet-title { font-size: 23px; letter-spacing: -.65px; }
+#sr50MapTab .sheet-subtitle { line-height: 1.45; color: var(--radar84-muted); }
+#sr50MapTab .eyebrow { font-size: 10px; letter-spacing: .09em; }
+#sr50MapTab .close { width: 40px; height: 40px; border-radius: 50%; }
+#sr50MapTab .station-result { border-color: var(--radar84-line); border-radius: 14px; background: rgba(255,255,255,.035); }
+#sr50MapTab .station-result:active { transform: scale(.985); }
+#sr50MapTab .scrim { transition: opacity 180ms ease-out; }
+
+/* Consistent touch feedback, only transform/opacity are animated for performance. */
+#sr50MapTab button { -webkit-tap-highlight-color: transparent; }
+#sr50MapTab button:active { transform: scale(.975); }
+#sr50MapTab .sheet button:active { transform: scale(.985); }
+#sr50MapTab button:focus-visible, #sr50MapTab input:focus-visible { outline: 2px solid #78b8ff; outline-offset: 2px; }
+@media (hover:hover) and (pointer:fine) {
+  #sr50MapTab .round-action:hover, #sr50MapTab .iconbtn:hover { background: #203752; border-color: rgba(120,184,255,.34); }
+  #sr50MapTab .chip:not(.active):hover { background: rgba(255,255,255,.075); }
+}
+@media (max-width: 420px) {
+  #sr50MapTab .topbar { left: 8px; right: 8px; padding: 10px; border-radius: 19px; }
+  #sr50MapTab .toprow { gap: 7px; }
+  #sr50MapTab .brand-badge { width: 36px; height: 36px; }
+  #sr50MapTab .brand-title { font-size: 15px; }
+  #sr50MapTab .brand-sub { font-size: 9px; letter-spacing: .045em; }
+  #sr50MapTab .status { padding: 6px 7px; font-size: 8px; }
+  #sr50MapTab .iconbtn { width: 36px; height: 36px; }
+  #sr50MapTab .controls { gap: 5px; margin-top: 10px; }
+  #sr50MapTab .segments { gap: 4px; }
+  #sr50MapTab .chip { min-height: 36px; padding: 8px 9px; font-size: 10px; }
+  #sr50MapTab .search-wrap { height: 36px; min-width: 58px; padding: 0 8px; }
+  #sr50MapTab .search-wrap input { font-size: 11px; }
+  #sr50MapTab .stats { left: 8px; right: 8px; padding: 10px; gap: 6px; }
+  #sr50MapTab .stats-counts { gap: 8px; }
+  #sr50MapTab .stat b { font-size: 15px; }
+  #sr50MapTab .stat span, #sr50MapTab .stats-time { font-size: 9px; }
+  #sr50MapTab .map-actions { right: 8px; gap: 6px; }
+  #sr50MapTab .round-action { width: 39px; height: 39px; border-radius: 13px; }
+}
+@media (min-width: 760px) {
+  #sr50MapTab .topbar { top: 16px; left: 16px; right: auto; width: min(490px, calc(100vw - 32px)); }
+  #sr50MapTab .stats { left: 16px; right: auto; bottom: 16px; width: min(460px, calc(100vw - 32px)); }
+  #sr50MapTab .map-actions { right: 16px; bottom: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #sr50MapTab .iconbtn, #sr50MapTab .round-action, #sr50MapTab .chip,
+  #sr50MapTab .sheet, #sr50MapTab .scrim, #sr50MapTab .station-result { transition-duration: 0.01ms !important; }
+}
+
+/* 8.8 - a departure that comes from a fresh GTFS-RT update is marked as live
+   and shows the reported delay. The plan stays unmarked. */
+.sr50-deps .station-result small.sr-dep-live{color:#6fae86}
+.sr50-deps .station-result small.sr-dep-live::before{content:'● ';font-size:9px}
+/* 9.4 - Wenn keine Verbindung da ist, wird das klar gesagt, statt still
+   alte Positionen zu zeigen. */
+.offline-banner{
+  position:absolute;z-index:1001;left:10px;right:10px;
+  top:calc(126px + env(safe-area-inset-top,0px));
+  padding:10px 13px;border-radius:14px;
+  border:1px solid #7a5a2a;background:#2a2013f2;color:#f0d9ae;
+  font-size:12px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,.28);
+}
+@media (max-width:420px){.offline-banner{left:8px;right:8px;top:calc(120px + env(safe-area-inset-top,0px));font-size:11px}}
+/* 9.7 - Feed-Gesundheit: wird angezeigt, wenn ALLE Position-Feeds nicht
+   antworten (anders als offlineBanner, das nur navigator.onLine widerspiegelt). */
+.feed-health-banner{
+  position:absolute;z-index:1001;left:10px;right:10px;
+  top:calc(156px + env(safe-area-inset-top,0px));
+  padding:10px 13px;border-radius:14px;
+  border:1px solid #8a4a12;background:#3a2413f2;color:#f9d9a8;
+  font-size:12px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,.28);
+}
+.feed-health-banner .banner-retry{
+  margin-left:10px;padding:4px 10px;border:none;border-radius:8px;
+  background:#6fae86;color:#0b1220;font-weight:bold;cursor:pointer
+}
+@media (max-width:420px){.feed-health-banner{left:8px;right:8px;top:calc(150px + env(safe-area-inset-top,0px));font-size:11px}}
+/* 9.7 - Update-Toast: erscheint, wenn der Service Worker eine neuere
+   Version gefunden hat. Klick auf "Jetzt laden" aktiviert den neuen
+   Worker sofort und ladet die Seite neu. */
+.sr-update-toast{
+  position:fixed;z-index:2000;left:10px;right:10px;bottom:10px;
+  padding:10px 13px;border-radius:14px;border:1px solid #7a5a2a;
+  background:#2a2013f2;color:#f0d9ae;font-size:12px;line-height:1.45;
+  box-shadow:0 8px 24px rgba(0,0,0,.28);display:none;
+}
+.sr-update-toast button{
+  margin-left:10px;padding:4px 10px;border:none;border-radius:8px;
+  background:#6fae86;color:#0b1220;font-weight:bold;cursor:pointer
+}
+/* 9.7 - Farbkodierte Verspätungsanzeige im Fahrzeug-Detail */
+.detail.delay-ok   strong{color:#6fae86}
+.detail.delay-warn strong{color:#ffd166}
+.detail.delay-severe strong{color:#ef476f}
+.detail.delay-none strong{color:var(--radar84-muted)}
+/* 9.7 - Verspätungs-Farben im Abfahrts-Board */
+.sr50-deps .dep-delay-severe{color:#ef476f}
+.sr50-deps .dep-delay-warn{color:#ffd166}
+/* 9.8 - Betriebsstatus-Panel */
+.health-panel{
+  position:fixed;top:60px;right:10px;width:320px;max-width:90vw;
+  background:#0b1220f2;border:1px solid var(--radar84-line);border-radius:14px;
+  padding:12px;box-shadow:0 12px 40px rgba(0,0,0,.4);z-index:1800;
+  color:#f3f7fc;font-size:12px;line-height:1.5;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+}
+.health-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.health-header h3{margin:0;font-size:15px;color:#f3f7fc}
+.health-header .close{background:none;border:none;color:#a4b2c5;font-size:20px;cursor:pointer}
+.health-header .close:hover{color:#fff}
+.health-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--radar84-line)}
+.health-row:last-child{border-bottom:none}
+.health-val{font-weight:600}
+.health-val.ok{color:#6fae86}.health-val.warn{color:#ffd166}.health-val.bad{color:#ef476f}
+#healthBtn .status-dot{background:#6fae86;box-shadow:0 0 8px rgba(111,174,134,.32)}
+/* 9.8 - Favoriten-Panel */
+.fav-panel{
+  position:fixed;top:60px;right:10px;width:340px;max-width:92vw;
+  background:#0b1220f2;border:1px solid var(--radar84-line);border-radius:14px;
+  padding:12px;box-shadow:0 12px 40px rgba(0,0,0,.4);z-index:1800;
+  color:#f3f7fc;font-size:12px;line-height:1.5;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+}
+.fav-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.fav-header h3{margin:0;font-size:15px;color:#f3f7fc}
+.fav-header .close{background:none;border:none;color:#a4b2c5;font-size:20px;cursor:pointer}
+.fav-header .close:hover{color:#fff}
+.fav-body{max-height:400px;overflow-y:auto}
+.fav-empty{padding:20px;color:#a4b2c5;text-align:center;font-size:12px}
+.fav-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--radar84-line);cursor:pointer}
+.fav-item:last-child{border-bottom:none}
+.fav-item:hover{background:rgba(127,214,168,.08)}
+.fav-info{flex:1}
+.fav-info .fav-name{font-weight:600;color:#f3f7fc}
+.fav-info .fav-sub{font-size:11px;color:#a4b2c5}
+.fav-info .fav-delay{font-size:11px;margin-top:2px}
+.fav-delay.ok{color:#6fae86}.fav-delay.warn{color:#ffd166}.fav-delay.bad{color:#ef476f}
+.fav-remove{background:none;border:1px solid var(--radar84-line);color:#a4b2c5;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer}
+.fav-remove:hover{background:#ef476f;color:#fff;border-color:#ef476f}
+#favBtnTop .status-dot{background:#ffd166;box-shadow:0 0 8px rgba(255,209,102,.4)}
+#favBtnTop .status-dot.fav-active{background:#6fae86}
+/* 9.8 - Störungs-Ticker */
+.alert-ticker{
+  position:fixed;top:190px;left:10px;right:10px;z-index:1002;
+  background:#8a4a12;color:#fff;padding:8px 12px;border-radius:8px;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);font-size:12px;line-height:1.3;
+}
+.alert-ticker.hidden{display:none}
+.alert-count{font-weight:bold;margin-bottom:4px}
+.alert-item{margin:2px 0;opacity:.95}
+.alert-item .effect{text-transform:uppercase;font-size:10px;opacity:.7;margin-right:6px}
+.alert-sev{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:bold;margin-right:4px}
+.alert-sev-high{background:#ef476f;color:#fff}
+.alert-sev-medium{background:#ffd166;color:#0b1220}
+.alert-sev-low{background:#6fae86;color:#0b1220}
+.alert-age{font-size:9px;opacity:.6;margin-left:4px}
+.fav-badge{background:#ffd700!important;color:#000!important;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:bold;border:none}
+.badge.fav-badge{background:#ffd700!important;color:#000!important;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:bold;border:none}
+.marker-wrap.favorite .marker-label{color:#ffd700!important}
+.marker-wrap.line-favorite .marker-label{color:#ffd700!important}
+/* 9.8 - Gleiche Linie im Fahrzeug-Detail */
+.line-vehicles{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.line-item{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 10px;border-radius:10px;border:1px solid var(--radar84-line);
+  background:var(--radar84-glass);font-size:12px;cursor:pointer;transition:background 0.2s;
+}
+.line-item:hover{background:rgba(120,184,255,.15)}
+.line-item .delay-ok{color:#6fae86;font-weight:bold}
+.line-item .delay-warn{color:#ffd166;font-weight:bold}
+.line-item .delay-severe{color:#ef476f;font-weight:bold}
+/* 9.7 - Live-Suche: Trefferliste unter dem Suchfeld. Klick springt zum Fahrzeug. */
+#searchResults.search-results{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  max-height:260px;overflow-y:auto;border:1px solid var(--radar84-line);
+  border-top:none;border-radius:0 0 12px 12px;background:var(--radar84-glass-strong);
+  box-shadow:0 8px 24px rgba(0,0,0,.28);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  z-index:150;
+}
+#searchResults.search-results.hidden{display:none}
+#searchResults .search-hit{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 12px;border-bottom:1px solid var(--radar84-line);cursor:pointer;
+  font-size:12px;line-height:1.4
+}
+#searchResults .search-hit:last-child{border-bottom:none}
+#searchResults .search-hit:hover{background:rgba(120,184,255,.15)}
+#searchResults .search-hit strong{color:#6fae86}
+#searchResults .search-hit small{color:var(--radar84-muted)}
+#searchResults .search-hit .kind{font-size:10px;text-transform:uppercase;opacity:.7}
+/* 9.8 - Fahrzeug-Trajektur: rote Linie auf der Karte zeigt die letzte Fahrspur */
+.sr-track-line{
+  stroke:#ff3b30;
+  stroke-width:3;
+  stroke-opacity:0.8;
+  fill:none;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  pointer-events:none;
+}
+.sr-track-dot{
+  fill:#ff3b30;
+  stroke:#ffffff;
+  stroke-width:2;
+  r:6;
+  pointer-events:none;
+}
+/* 9.8 - Gleis/Plattform-Chip im Stations-Board */
+.platform-chip{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:24px;height:20px;padding:0 6px;border-radius:10px;
+  font-size:11px;font-weight:bold;letter-spacing:0.05em;
+}
+.platform-chip.live{background:#6fae86;color:#0b1220}
+.platform-chip.plan{background:rgba(120,184,255,.2);color:#9fc5ff}
+.station-result small{display:flex;align-items:center;gap:6px}
+/* 9.8 - Geschwindigkeit auf Markern (ab Zoom 13) */
+.marker-speed{
+  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  font-size:9px;font-weight:bold;color:#ffffff;
+  background:#0b1220;border:1px solid var(--radar84-line);border-radius:8px;
+  padding:1px 6px;white-space:nowrap;pointer-events:none;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+}
+/* 9.9 - Linien-Status-Panel */
+.lines-panel{
+  position:fixed;top:60px;right:10px;width:360px;max-width:92vw;
+  background:#0b1220f2;border:1px solid var(--radar84-line);border-radius:14px;
+  padding:12px;box-shadow:0 12px 40px rgba(0,0,0,.4);z-index:1800;
+  color:#f3f7fc;font-size:12px;line-height:1.5;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+}
+.lines-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px}
+.lines-header h3{margin:0;font-size:15px;color:#f3f7fc}
+.lines-controls{display:flex;gap:8px;align-items:center;flex:1;max-width:240px}
+.lines-controls input{flex:1;padding:6px 10px;border-radius:8px;border:1px solid var(--radar84-line);background:#0a1018;color:#f3f7fc;font-size:11px}
+.lines-filters{display:flex;gap:4px}
+.lines-close{background:none;border:none;color:#a4b2c5;font-size:20px;cursor:pointer}
+.lines-close:hover{color:#fff}
+.lines-body{max-height:420px;overflow-y:auto}
+.lines-empty{padding:20px;color:#a4b2c5;text-align:center;font-size:12px}
+.lines-item{
+  display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--radar84-line);cursor:pointer
+}
+.lines-item:last-child{border-bottom:none}
+.lines-item:hover{background:rgba(127,214,168,.08)}
+.lines-item .line-name{font-weight:600;color:#f3f7fc}
+.lines-item .line-info{font-size:11px;color:#a4b2c5}
+.lines-item .line-status{font-size:10px;font-weight:bold;padding:2px 6px;border-radius:10px;text-transform:uppercase}
+.lines-item .line-status.ok{background:rgba(111,174,134,.18);color:#6fae86}
+.lines-item .line-status.delayed{background:rgba(255,209,102,.2);color:#ffd166}
+.lines-item .line-status.disturbed{background:rgba(239,71,111,.2);color:#ef476f}
+.lines-item .line-status.unknown{background:rgba(164,181,197,.2);color:#a4b2c5}
+.lines-item .line-chevron{color:#a4b2c5;font-size:10px}
+.lines-item.line-highlight{background:rgba(127,214,168,.15)!important}
+.lines-item.line-highlight .line-name{color:#6fae86}
+.marker-line-highlight{filter:drop-shadow(0 0 6px #6fae86)!important;outline:2px solid #6fae86;outline-offset:2px}
+.alert-item{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;font-size:12px;padding:6px 8px;border-bottom:1px solid var(--radar84-line)}
+.alert-item:last-child{border-bottom:none}
+.alert-chip{display:inline-block;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap}
+.alert-sev-low{background:rgba(111,174,134,.18);color:#6fae86}
+.alert-sev-medium{background:rgba(255,209,102,.2);color:#ffd166}
+.alert-sev-high{background:rgba(239,71,111,.2);color:#ef476f}
+.alert-close-all{
+  width:100%;margin-top:8px;padding:6px 10px;border:1px solid var(--radar84-line);border-radius:8px;
+  background:rgba(239,71,111,.15);color:#ef476f;font-size:12px;font-weight:bold;cursor:pointer;
+}
+.alert-close-all:hover{background:rgba(239,71,111,.3);color:#fff}
+.alert-lines{font-size:11px;color:#9fc5ff;white-space:nowrap}
+.alert-age{font-size:11px;color:#a4b2c5;margin-left:auto;white-space:nowrap}

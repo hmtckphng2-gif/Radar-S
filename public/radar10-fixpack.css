@@ -1,0 +1,22 @@
+/* Radar 10 fixpack: high-contrast map brand and reliable touch targets. */
+.topbar .brand-badge {
+  color: #e5e9ed !important;
+  background: linear-gradient(145deg, #282f37, #11161c) !important;
+  border: 1px solid rgba(225, 232, 238, .38) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.06), 0 5px 14px rgba(0,0,0,.24) !important;
+}
+.topbar .brand-badge svg { color: #e5e9ed !important; stroke: #e5e9ed !important; }
+.topbar .brand-badge svg path { fill: none !important; stroke: #e5e9ed !important; }
+.topbar .brand-badge svg circle { fill: #e5e9ed !important; stroke: none !important; }
+/* The legacy wrapper disabled pointer events; only the inner circle accepted taps. */
+#map .leaflet-marker-icon.leaflet-interactive {
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+#map .leaflet-marker-icon.leaflet-interactive .marker-wrap,
+#map .leaflet-marker-icon.leaflet-interactive .marker-wrap > * { pointer-events: auto !important; }
+#map .leaflet-marker-icon.leaflet-interactive:focus-visible {
+  outline: 2px solid #e5e9ed; outline-offset: 2px; border-radius: 10px;
+}
+@media (prefers-reduced-motion: reduce) { .topbar .brand-badge { transition: none !important; } }

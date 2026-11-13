@@ -1,0 +1,56 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {normalizeSnapshot,buildSnapshot} from '../public/radar66-api.mjs';
+import {sameStaFleet,sourceConflicts,feedDiagnostics,boundedMotionDuration} from '../public/radar66-logic.mjs';
+import {departureDelay,isLiveUpdate} from '../public/core.js';
+const now=Date.parse('2026-10-19T12:00:00Z');const timestamp=now/1000;
+const item=(id,lat=46.5,lon=11.35)=>({id,vehicle:{trip:{trip_id:'trip-'+id,route_id:'route-1',start_date:'20261019'},vehicle:{id},timestamp,position:{latitude:lat,longitude:lon}}});
+const feed=(...list)=>({header:{timestamp},entity:list});
+const raw={sta:{data:feed(item('101'))},sta_direct:{data:feed(item('101'))},trentino:{data:feed(item('222'))},trains:{status:'error'}};
+test('normalized API returns same observed physical STA vehicle only once',()=>{const v=normalizeSnapshot(raw,now);assert.equal(v.schema,'radar.snapshot.v1');assert.equal(v.vehicles.length,2);assert.equal(v.diagnostics.duplicates,1);assert.equal(v.sources.trains,'error');});
+test('API has no invented verified line from an unmapped raw route',()=>{const v=normalizeSnapshot(raw,now);assert.ok(v.vehicles.every(x=>x.verifiedLine===null));assert.ok(v.vehicles.every(x=>x.observedAt&&x.quality==='aktuell'));});
+test('normalized API rejects stale feed rather than pretending positions are live',()=>{const v=normalizeSnapshot({sta:{data:{header:{timestamp:timestamp-900},entity:[item('101')]}}},now);assert.equal(v.vehicles.length,0);assert.equal(v.sources.sta,'old');});
+test('snapshot builder unwraps fetched feed once rather than wrapping it twice',async()=>{const v=await buildSnapshot(async source=>({data:feed(item(source==='sta'?'101':source==='sta_direct'?'101':source==='trentino'?'222':'333'))}),now);assert.ok(v.vehicles.length>=2);assert.equal(v.diagnostics.duplicates,1);});
+test('snapshot builder isolates failing provider from healthy others',async()=>{const v=await buildSnapshot(async s=>{if(s==='trains')throw Error('offline');return {data:feed(item(s))}},now);assert.equal(v.sources.trains,'error');assert.ok(v.vehicles.length>0)});
+const vehicle=(source,lat=46.5,ts=timestamp)=>({source,key:source+':102',kind:'bus',vehicleId:'102',timestamp:ts,lat,lon:11.35,tripStartDate:'20261019',lineVerified:true});
+test('matching fleet requires exact allowed provider pair and vehicle kind',()=>{assert.equal(sameStaFleet(vehicle('sta'),vehicle('sta_direct')),true);assert.equal(sameStaFleet(vehicle('sta'),vehicle('trentino')),false);});
+test('recent conflicting locations are reported, not merged',()=>{const d=sourceConflicts([vehicle('sta'),vehicle('sta_direct',46.51)],now);assert.equal(d.length,1);assert.ok(d[0].differenceMeters>200);});
+test('identical STA observations are not a conflict',()=>assert.equal(sourceConflicts([vehicle('sta'),vehicle('sta_direct')],now).length,0));
+test('asynchronous STA observations over 20 seconds apart are not classified as a position conflict',()=>assert.equal(sourceConflicts([vehicle('sta',46.5,timestamp),vehicle('sta_direct',46.51,timestamp-61)],now).length,0));
+test('closely timed STA observations with materially different positions remain a conflict',()=>assert.equal(sourceConflicts([vehicle('sta',46.5,timestamp),vehicle('sta_direct',46.51,timestamp-10)],now).length,1));
+test('expired observations never produce false current conflict',()=>assert.equal(sourceConflicts([vehicle('sta',46.5,timestamp-500),vehicle('sta_direct',46.51,timestamp-500)],now).length,0));
+test('diagnostics distinguish duplicated IDs, unknown lines and stale reports',()=>{const d=feedDiagnostics([vehicle('sta'),vehicle('sta_direct'),{...vehicle('trentino'),vehicleId:'200',lineVerified:false}],{sta:'ok',trentino:'old'},now);assert.ok(d.duplicates>=1);assert.equal(d.unknownBuses,1);assert.ok(d.sources.some(x=>x.name==='trentino'&&x.status==='old'));});
+test('adaptive interpolation stays bounded and never returns invalid overshoot',()=>{assert.equal(boundedMotionDuration(0,'train'),1200);assert.equal(boundedMotionDuration(10000,'train'),4700);assert.equal(boundedMotionDuration(10000,'bus'),2000);assert.equal(boundedMotionDuration(NaN,'train'),0);});
+
+
+test('snapshot diagnostics expose per-feed request timing and failure reason without breaking healthy feeds',async()=>{
+ const v=await buildSnapshot(async source=>{if(source==='trains'){const error=Error('HTTP 503');error.httpStatus=503;throw error;}return {data:feed(item(source)),httpStatus:200,contentType:'application/json'}},now);
+ const sta=v.diagnostics.sources.find(x=>x.name==='sta');
+ const trains=v.diagnostics.sources.find(x=>x.name==='trains');
+ assert.equal(sta.requestStatus,'ok');assert.equal(sta.httpStatus,200);assert.equal(sta.contentType,'application/json');assert.ok(Number.isFinite(sta.elapsedMs));assert.ok(sta.fetchedAt);
+ assert.equal(trains.requestStatus,'error');assert.equal(trains.httpStatus,503);assert.equal(trains.reason,'upstream-http');assert.equal(v.sources.trains,'error');assert.ok(v.vehicles.length>0);
+});
+
+test('the delay of one departure prefers the stop over the trip', () => {
+  const update = {
+    fetchedAt: Date.now(),
+    delay: 300,
+    stops: [
+      {stop_id: 'A', departure: {delay: 60}},
+      {stop_id: 'B', departure: {delay: null}}
+    ]
+  };
+  assert.equal(departureDelay(update, 'A'), 60, 'der Halt gewinnt');
+  assert.equal(departureDelay(update, 'B'), 300, 'der Fahrtwert ist der Rueckfall');
+  assert.equal(departureDelay(null, 'A'), null);
+  assert.equal(departureDelay({stops: []}, 'A'), null);
+});
+
+test('only a fresh update counts as live', () => {
+  const now = Date.now();
+  assert.equal(isLiveUpdate({fetchedAt: now}, now), true);
+  assert.equal(isLiveUpdate({fetchedAt: now - 5000}, now), true);
+  assert.equal(isLiveUpdate({fetchedAt: now - 200000}, now), false, 'zu alt');
+  assert.equal(isLiveUpdate({fetchedAt: now + 60000}, now), false, 'aus der Zukunft');
+  assert.equal(isLiveUpdate(null, now), false);
+});

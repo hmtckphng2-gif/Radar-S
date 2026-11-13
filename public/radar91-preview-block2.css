@@ -1,0 +1,28 @@
+/* Radar 9.9.5 preview — Block 2: collision-safe clusters and fixed mobile controls. */
+@media (max-width:749px) {
+  #map .sr43-cluster-icon { width:58px!important; height:34px!important; overflow:visible!important; }
+  #map .sr43-cluster-circle.sr80-group-chip { width:58px!important; min-width:58px!important; max-width:58px!important; height:34px!important; min-height:34px!important; box-sizing:border-box!important; display:flex!important; flex-direction:row!important; align-items:center!important; justify-content:center!important; gap:4px!important; padding:2px 4px!important; overflow:visible!important; }
+  #map .sr43-cluster-circle.sr80-group-chip strong { flex:0 0 auto!important; font-size:14px!important; line-height:1!important; }
+  #map .sr43-cluster-kind-icon { display:inline-flex!important; align-items:center!important; font-size:13px!important; line-height:1!important; }
+  #map .sr43-cluster-kind-label { display:none!important; }
+  #map .sr43-cluster-circle.sr80-group-chip .sr431-cluster-stale { right:-4px!important; top:-5px!important; }
+
+  /* Actual language button: visible DE text and a reliable 44px touch area. */
+  #sr50MapTab #langBtn { display:grid!important; flex:0 0 44px!important; width:44px!important; min-width:44px!important; height:44px!important; min-height:44px!important; padding:0!important; place-items:center!important; font-size:12px!important; line-height:1!important; }
+  #sr50MapTab #langBtn span { display:inline!important; font-size:12px!important; }
+  #sr50MapTab #langBtn::after { content:none!important; display:none!important; }
+
+  /* Right-side stack: menu first, layer tools 8px below. */
+  body.sr60.rh-ready #sr60Launch { position:fixed!important; top:calc(env(safe-area-inset-top,0px) + 64px)!important; right:12px!important; bottom:auto!important; left:auto!important; width:44px!important; min-width:44px!important; height:44px!important; min-height:44px!important; margin:0!important; padding:0!important; display:grid!important; place-items:center!important; z-index:10060!important; opacity:1!important; visibility:visible!important; pointer-events:auto!important; border-radius:12px!important; font-size:18px!important; }
+  body.sr60.rh-ready #rhToolsTrigger { position:fixed!important; top:calc(env(safe-area-inset-top,0px) + 116px)!important; right:12px!important; left:auto!important; bottom:auto!important; width:44px!important; min-width:44px!important; height:44px!important; min-height:44px!important; margin:0!important; z-index:10050!important; }
+  body.sr60.rh-ready .rh-tools-panel { top:calc(env(safe-area-inset-top,0px) + 166px)!important; right:12px!important; z-index:10040!important; }
+
+  /* Legacy focus/sheet/3D rules hid the menu. Keep the menu reachable in all three states. */
+  body:has(#sheet.open) #sr60Launch,body:has(#stationSheet.open) #sr60Launch,body.sr83-cinematic #sr60Launch,body.sr71-focusing #sr60Launch,body.sr71-focused #sr60Launch { display:grid!important; opacity:1!important; visibility:visible!important; pointer-events:auto!important; }
+}
+@media (min-width:750px) {
+  #map .sr43-cluster-icon { width:78px!important; height:34px!important; overflow:visible!important; }
+  #map .sr43-cluster-circle.sr80-group-chip { width:78px!important; min-width:78px!important; max-width:78px!important; height:34px!important; min-height:34px!important; box-sizing:border-box!important; display:flex!important; flex-direction:row!important; align-items:center!important; justify-content:center!important; gap:5px!important; padding:2px 5px!important; }
+  #map .sr43-cluster-kind-icon { display:inline-flex!important; font-size:13px!important; }
+  #map .sr43-cluster-kind-label { display:inline!important; font-size:8px!important; white-space:nowrap!important; }
+}

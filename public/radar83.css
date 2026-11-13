@@ -1,0 +1,122 @@
+/* Radar 8.3 â real 3D map only during selected vehicle cinematic view.
+ * Does not rotate/transform Leaflet panes or change normal map interactions.
+ */
+#map .sr83-viewport{
+ position:absolute;inset:0;z-index:835;overflow:hidden;background:#0a1018;
+ opacity:0;pointer-events:none;
+ transition:opacity 1.32s cubic-bezier(.22,.72,.18,1);
+}
+#map .sr83-viewport.sr83-loading{opacity:.42;pointer-events:auto}
+#map .sr83-viewport.sr83-ready{opacity:1;pointer-events:auto}
+#map .sr83-map,#map .sr83-map .maplibregl-map{position:absolute;inset:0;width:100%;height:100%}
+#map .sr83-map .maplibregl-canvas-container,#map .sr83-map .maplibregl-canvas{touch-action:none}
+#map .sr83-toolbar{
+ position:absolute;z-index:10;left:15px;right:15px;
+ top:max(136px,env(safe-area-inset-top,0px));
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ pointer-events:none;
+}
+#map .sr83-label{
+ color:#e3ecf6;letter-spacing:.14em;font-size:10px;font-weight:750;
+ padding:10px 12px;border-radius:11px;
+ background:#101c29e8;border:1px solid #395066bb;box-shadow:0 6px 20px #0008;
+ white-space:nowrap;
+}
+#map .sr83-credit{
+ position:absolute;z-index:10;left:50%;
+ bottom:calc(32dvh + 18px);
+ max-width:calc(100% - 30px);
+ transform:translateX(-50%);
+ text-align:center;
+ border-radius:10px;padding:7px 10px;
+ background:#0b1722d9;border:1px solid #31465a9c;
+ color:#c4d2dd;font-size:10px;font-weight:500;
+ pointer-events:none;
+}
+#map .sr83-viewport .maplibregl-ctrl-bottom-right{bottom:min(32dvh,250px)}
+#map .sr83-viewport .maplibregl-ctrl-attrib{font-size:9px;max-width:45vw}
+body.sr83-cinematic #map .sr71-cinematic{opacity:0!important}
+body.sr83-cinematic #map .sr82-model-canvas{display:none!important}
+body.sr83-cinematic .map-actions,
+body.sr83-cinematic #sr60Launch,
+body.sr83-cinematic .sr40-launch{opacity:0!important;pointer-events:none!important}
+body.sr83-cinematic #sheet.sr42-sheet[data-sr42-snap="peek"].open{max-height:32dvh}
+@media(max-width:390px){
+ #map .sr83-toolbar{top:max(130px,env(safe-area-inset-top,0px))}
+ #map .sr83-label{font-size:9px}
+ #map .sr83-credit{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+ #map .sr83-viewport{transition:none!important}
+}
+
+/* 8.3.11: ensure 3D controls never collide with the map header on iPhone. */
+#map .sr83-toolbar{gap:6px;right:12px;left:12px;top:max(125px,env(safe-area-inset-top,0px))}
+#map .sr83-label{white-space:nowrap;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:10px;padding:9px 8px}
+#map .sr83-replay{pointer-events:auto;touch-action:manipulation;appearance:none;min-height:40px;white-space:nowrap;padding:9px 10px;border-radius:10px;border:1px solid #516c86;background:#162c41ee;color:#e6f1ff;font:650 12px Inter,system-ui,sans-serif}
+#map .sr83-viewport .maplibregl-ctrl-attrib{font-size:9px;max-width:44vw;line-height:1.2}
+#map .sr83-viewport .maplibregl-ctrl-bottom-right{right:8px}
+
+/* Compact, readable attribution; preserve OpenStreetMap/OpenFreeMap credits. */
+#map .sr83-viewport .maplibregl-ctrl-attrib{background:#0c1b2bf0!important;color:#b5c9db!important;border:1px solid #30465c!important;border-radius:10px!important;padding:5px 8px!important}
+#map .sr83-viewport .maplibregl-ctrl-attrib a{color:#a8d6ff!important}
+
+/* 9.1 - Keep the 3D toolbar compact on narrow phones. */
+@media (max-width: 430px){
+  #map .sr83-toolbar{left:8px;right:8px;top:max(118px,env(safe-area-inset-top,0px));gap:6px}
+  #map .sr83-label{font-size:9px;padding:8px 9px;letter-spacing:.1em}
+  #map .sr83-replay{min-height:44px;padding:10px 12px;font-size:12px}
+  #map .sr83-credit{bottom:calc(30dvh + 14px);font-size:9px;padding:6px 9px}
+}
+/* 10.0 motion polish: the camera flight eases into a stable final frame. */
+#map .sr83-map .maplibregl-canvas{transition:filter 1.32s cubic-bezier(.22,.72,.18,1)}
+#map .sr83-viewport.sr83-loading .maplibregl-canvas{filter:saturate(.94) brightness(.96) blur(1.2px)}
+#map .sr83-viewport.sr83-ready .maplibregl-canvas{filter:saturate(1) brightness(1) blur(0)}
+
+/* 9.9.1 Block 5: identify the actual selected feed vehicle in the 3D view. */
+#map .sr83-vehicle-meta{position:absolute;z-index:10;left:15px;top:calc(max(136px,env(safe-area-inset-top,0px)) + 54px);max-width:min(300px,calc(100% - 30px));padding:8px 11px;border:1px solid #34495dba;border-radius:10px;background:#101c29e8;color:#cbd7e2;font:550 11px/1.4 Inter,-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 5px 16px #0007;overflow-wrap:anywhere;pointer-events:none}
+@media(max-width:390px){#map .sr83-vehicle-meta{top:calc(max(130px,env(safe-area-inset-top,0px)) + 52px);font-size:10px;max-width:calc(100% - 30px)}}
+
+/* 10.0.1: the 3D exit is a real control inside the overlay, above the canvas. */
+#map .sr83-exit{pointer-events:auto;touch-action:manipulation;appearance:none;display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;border:1px solid #60758a;border-radius:12px;background:#172638f5;color:#f3f7fc;font:500 30px/1 system-ui,sans-serif;box-shadow:0 5px 18px #0009;cursor:pointer;position:relative;z-index:20}
+#map .sr83-exit:active{background:#29445f;transform:scale(.96)}
+#map .sr83-toolbar{z-index:30}
+
+/* 10.0.1: dedicated exit stays above the 3D canvas and receives taps. */
+#map .sr83-exit{pointer-events:auto;touch-action:manipulation;appearance:none;display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;border:1px solid #60758a;border-radius:12px;background:#172638f5;color:#f3f7fc;font:500 30px/1 system-ui,sans-serif;box-shadow:0 5px 18px #0009;cursor:pointer;position:relative;z-index:20}
+#map .sr83-exit:active{background:#29445f;transform:scale(.96)}
+#map .sr83-toolbar{z-index:30}
+
+/* Radar 10.0.5 — clean cinematic handoff back to the live 2D map. */
+#map .sr83-viewport{will-change:opacity,transform;transform:translateZ(0);}
+#map .sr83-viewport.sr83-closing{opacity:0!important;transform:scale(1.012)!important;filter:blur(2px);transition:opacity .46s cubic-bezier(.22,.72,.18,1),transform .56s cubic-bezier(.22,.72,.18,1),filter .46s ease!important;pointer-events:none!important;}
+body.sr83-returning #map .leaflet-pane,body.sr83-returning #map .leaflet-control-container{transition:filter .52s ease,opacity .42s ease;}
+body.sr83-returning #map .leaflet-tile-pane{filter:saturate(1.02) brightness(1.025);}
+#map .sr83-exit{isolation:isolate;pointer-events:auto!important;touch-action:manipulation!important;-webkit-tap-highlight-color:transparent;}
+@media(prefers-reduced-motion:reduce){#map .sr83-viewport.sr83-closing,body.sr83-returning #map .leaflet-pane,body.sr83-returning #map .leaflet-control-container{transition:none!important;}}
+
+/* X close: 3D is detached synchronously; briefly soften the restored 2D map. */
+body.sr83-returning #map .leaflet-tile-pane{animation:sr83-2d-return .56s cubic-bezier(.22,.72,.18,1) both;}
+@keyframes sr83-2d-return{from{opacity:.72;filter:blur(1.5px) brightness(1.04)}to{opacity:1;filter:blur(0) brightness(1)}}
+@media(prefers-reduced-motion:reduce){body.sr83-returning #map .leaflet-tile-pane{animation:none!important}}
+
+
+/* Preview reliability port: explicit camera controls and a real 3D loading state. */
+#map .sr83-toolbar{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:nowrap;z-index:30}
+#map .sr83-control{min-width:44px;min-height:44px;padding:9px 10px;touch-action:manipulation;white-space:nowrap;border:1px solid rgba(235,243,252,.36);border-radius:10px;background:linear-gradient(180deg,rgba(46,58,72,.97),rgba(19,28,39,.97));color:#f7f9fc;font:650 12px Inter,system-ui,sans-serif;box-shadow:0 5px 18px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.13)}
+#map .sr83-control:active{background:#354455}
+#map .sr83-control:focus-visible{outline:2px solid rgba(255,255,255,.9);outline-offset:3px}
+#map .sr83-loading-state{position:absolute;z-index:8;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:linear-gradient(180deg,#0b1119e8,#111923d9);color:#d8e0e8;font:600 13px/1.4 Inter,-apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:.02em}
+#map .sr83-spinner{width:25px;height:25px;border:2px solid rgba(238,244,250,.22);border-top-color:#f5f8fc;border-radius:50%;animation:sr83-spin .8s linear infinite}
+@keyframes sr83-spin{to{transform:rotate(360deg)}}
+#map .sr83-viewport.sr83-ready .sr83-loading-state{display:none}
+@media(max-width:430px){#map .sr83-toolbar{gap:4px}#map .sr83-control{min-width:44px;min-height:44px;padding:8px 9px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){#map .sr83-spinner{animation:none}}
+
+
+/* Keep Leaflet's live 2D map below the selected cinematic MapLibre canvas. */
+#map{isolation:isolate}
+#map>.leaflet-map-pane{z-index:2!important}
+#map>.leaflet-control-container{z-index:2!important}
+#map>.sr83-viewport{z-index:3!important}
+body.sr83-cinematic #map>.leaflet-control-container{opacity:0!important;pointer-events:none!important}

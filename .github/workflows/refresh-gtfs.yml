@@ -1,0 +1,52 @@
+
+name: Update GTFS timetable indexes
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/build_gtfs.py'
+      - '.github/workflows/refresh-gtfs.yml'
+  schedule:
+    - cron: '20 3 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gtfs-index
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate indexes from matching static GTFS data
+        run: python tools/build_gtfs.py
+
+      - name: Verify generated datasets
+        run: |
+          python - <<'PY'
+          import json
+          for r in ['sta','trentino','trains']:
+            obj=json.load(open('public/data/'+r+'-index.json'))
+            print(r, obj.get('meta',{}).get('ready'), len(obj.get('trips',{})), len(obj.get('routes',{})))
+          assert any(json.load(open('public/data/'+r+'-index.json')).get('meta',{}).get('ready') for r in ['sta','trentino','trains'])
+          PY
+
+      - name: Commit refreshed indexes (only if changed)
+        run: |
+          git config user.name "radar-gtfs-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/*-index.json public/data/*-details.json public/data/*-shapes.json
+          git diff --cached --quiet || (git commit -m "chore: refresh GTFS reference data" && git push)

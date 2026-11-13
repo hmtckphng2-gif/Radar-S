@@ -1,0 +1,168 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {VEHICLE_SPECS,vehicleKind,validHeading,modelYawRadians,makeVehicleMesh} from '../public/radar83-model.mjs';
+import {enabled3D,FEATURE_FLAGS,target3DCamera,start3DCamera,handoff3DCamera,approach3DCamera,cinematicDuration,readProjectionMatrix,MAPLIBRE_VERSION,VECTOR_STYLE,selectedVehicleLabel,selectedVehicleMeta} from '../public/radar83-logic.mjs';
+import {build3DBuildings,enable3DTerrain,make3DVehicleLayer} from '../public/radar83-map.mjs';
+
+const NOW=1760900000000;
+test('cinematic 3D is enabled by default with an emergency URL opt-out',()=>{
+ assert.equal(FEATURE_FLAGS.cinematic3D,true);
+ assert.equal(enabled3D('?radar3d=off'),false);
+ assert.equal(enabled3D('?radar3d=on'),true);
+ assert.equal(enabled3D('?language=de'),true);
+ assert.equal(enabled3D(''),true);
+ assert.equal(MAPLIBRE_VERSION,'4.7.1');
+ assert.ok(VECTOR_STYLE.includes('/styles/dark'));
+});
+test('cinematic approaches from behind over a longer, smooth flight',()=>{
+ const start=start3DCamera({lat:46.5,lng:11.35},90,19);
+ assert.equal(start.pitch,24);
+ assert.equal(start.bearing,323);
+ assert.ok(start.zoom>15, 'closer starting zoom than the old distant shot');
+ assert.ok(start.center[0]<11.35);
+ assert.equal(cinematicDuration(0,4300),6600);
+ assert.equal(cinematicDuration(0,700),6600);
+});
+test('tap-origin handoff preserves the live Leaflet center and scale',()=>{
+ const camera=handoff3DCamera({lat:46.5,lng:11.35},18);
+ assert.deepEqual(camera,{center:[11.35,46.5],zoom:17,pitch:0,bearing:0});
+ assert.equal(handoff3DCamera({lat:90,lng:11.35},18),null);
+});
+test('3D camera starts mostly aligned with the tapped vehicle for a restrained lateral move',()=>{
+ const from=handoff3DCamera({lat:46.5,lng:11.30},18);
+ const to=target3DCamera({lat:46.5,lng:11.35},19,90,4500);
+ const start=approach3DCamera(from,to,.75);
+ assert.ok(start.center[0]>from.center[0]&&start.center[0]<to.center[0]);
+ assert.ok(to.center[0]-start.center[0]<(to.center[0]-from.center[0])*.26);
+ assert.equal(start.zoom,from.zoom);
+ assert.equal(start.pitch,from.pitch);
+ assert.ok(Math.abs(to.bearing-start.bearing)<Math.abs(to.bearing-from.bearing)*.26);
+});
+test('camera rotates the MAP and tilts terrain, no arbitrary model spin',()=>{
+ const camera=target3DCamera({lat:46.498,lng:11.353},17.4,90,4500);
+ assert.deepEqual(camera.center,[11.353,46.498]);
+ assert.equal(camera.pitch,16);
+ assert.equal(camera.bearing,118);
+ assert.equal(camera.duration,4500);
+ assert.equal(target3DCamera({lat:92,lng:11},17,90,3000),null);
+ assert.equal(target3DCamera({lat:46,lng:11},25,null,6000).zoom,19.2);
+});
+test('model is only rotated based on credible fresh heading',()=>{
+ assert.equal(validHeading({bearing:89,timestamp:NOW/1000-30},120,NOW),89);
+ assert.equal(validHeading({bearing:89,timestamp:NOW/1000-240},120,NOW),null);
+ assert.equal(validHeading({bearing:89,timestamp:NOW/1000-30,stale:true},120,NOW),null);
+ assert.equal(validHeading({bearing:null,timestamp:NOW/1000-30},120,NOW),null);
+ assert.equal(modelYawRadians(90),-Math.PI/2);
+ assert.equal(modelYawRadians(null),0);
+ assert.equal(vehicleKind({kind:'bus'}),'bus');
+ assert.equal(vehicleKind({kind:'train'}),'train');
+ assert.ok(VEHICLE_SPECS.train.length>40);
+});
+test('custom WebGL layer is geographically anchored inside 3D MapLibre renderer',()=>{
+ const layer=make3DVehicleLayer({}, {MercatorCoordinate:{}},null,{kind:'train'}, {lat:46.5,lng:11.35},null);
+ assert.equal(layer.type,'custom');
+ assert.equal(layer.renderingMode,'3d');
+ assert.equal(layer.id,'sr83-selected-vehicle');
+ assert.equal(layer.didRender,false);
+ assert.equal(typeof layer.update,'function');
+ assert.equal(typeof layer.render,'function');
+ assert.equal(typeof layer.onAdd,'function');
+ assert.equal(typeof layer.onRemove,'function');
+});
+test('vector buildings are extruded and terrain falls back when DEM unsupported',()=>{
+ const layers=[];const map={
+  getSource:n=>n==='openmaptiles'?{}:null,getLayer:()=>null,
+  getStyle:()=>({layers:[{type:'symbol',id:'labels'}]}),
+  addLayer:(v,before)=>layers.push({v,before})
+ };
+ assert.equal(build3DBuildings(map),true);
+  const building=layers.find(x=>x.v.id==='sr83-buildings');const edges=layers.find(x=>x.v.id==='sr83-building-edges');
+ assert.equal(building.v.type,'fill-extrusion');
+ assert.equal(building.v['source-layer'],'building');
+ assert.equal(building.v.filter[1][1],'hide_3d');
+ assert.equal(building.v.paint['fill-extrusion-color'],'hsl(215, 10%, 72%)');
+ assert.deepEqual(building.v.paint['fill-extrusion-opacity'],['step',['zoom'],.88,18,.72,19.2,.4,20.4,.18]);
+ assert.equal(building.v.paint['fill-extrusion-height'][0],'max');
+ assert.equal(building.before,'labels');
+  assert.equal(edges.v.type,'line');assert.equal(edges.v.id,'sr83-building-edges');
+ let dem,terrain;
+ const terrainMap={getSource:()=>null,addSource:(id,s)=>{dem=s},setTerrain:x=>{terrain=x}};
+ assert.equal(enable3DTerrain(terrainMap),true);
+ assert.equal(dem.type,'raster-dem');
+ assert.equal(dem.encoding,'terrarium');
+ assert.equal(terrain.source,'sr83-dem');
+ assert.equal(enable3DTerrain({getSource:()=>null,addSource:()=>{throw Error('blocked')}}),false);
+});
+test('MapLibre projection matrix from either signature is accepted',()=>{
+ const data=Array.from({length:16},(_,i)=>i===0||i===5||i===10||i===15?1:0);
+ assert.deepEqual(readProjectionMatrix({defaultProjectionData:{mainMatrix:data}}),data);
+ assert.deepEqual(readProjectionMatrix(new Float32Array(data)),new Float32Array(data));
+ assert.equal(readProjectionMatrix([1,2]),null);
+});
+test('FLIRT-inspired train has detailed multipart 3D mesh and bus is separate',()=>{
+ class Group{
+  constructor(){this.children=[];this.userData={}}
+  add(child){this.children.push(child)}
+ }
+ class Mesh{
+  constructor(geometry,material){this.geometry=geometry;this.material=material;this.position={set(){},copy(){return this},add(){return this},multiplyScalar(){return this}};this.rotation={};this.quaternion={setFromUnitVectors(){}}}
+ }
+ class Vector3{
+  constructor(x,y,z){this.x=x;this.y=y;this.z=z}
+  clone(){return new Vector3(this.x,this.y,this.z)}
+  sub(v){this.x-=v.x;this.y-=v.y;this.z-=v.z;return this}
+  length(){return Math.sqrt(this.x*this.x+this.y*this.y+this.z*this.z)}
+  normalize(){return this}
+ }
+ class Material{constructor(opts){this.opts=opts}}
+ const T={Group,Mesh,Vector3,MeshStandardMaterial:Material,BoxGeometry:class{},CylinderGeometry:class{}};
+ const train=makeVehicleMesh(T,'train'),bus=makeVehicleMesh(T,'bus');
+ assert.equal(train.userData.schematic,true);
+ assert.equal(train.userData.kind,'train');
+ assert.equal(bus.userData.kind,'bus');
+ assert.ok(train.children.length>30);
+ assert.ok(bus.children.length>20);
+ assert.equal(train.children.filter(n=>n instanceof Group).length,3);
+});
+
+test('3D overlay identifies the selected vehicle, destination and vehicle ID',()=>{
+ assert.equal(selectedVehicleLabel({kind:'train',name:'REG 16685'}),'Zug Â· REG 16685');
+ assert.equal(selectedVehicleLabel({kind:'bus',name:'5'}),'Bus Â· Linie 5');
+ assert.equal(selectedVehicleLabel({kind:'train',name:'Zugnummer unbekannt'}),'Zug Â· Nummer unbekannt');
+ assert.equal(selectedVehicleMeta({headsign:'MERAN',vehicleId:'STA-17',tripId:'trip-16685',source:'sta_direct'}),'Ziel: Meran Â· Fahrzeug: STA-17 Â· Datenquelle: STA direkt');
+ assert.equal(selectedVehicleMeta({headsign:'Fahrtziel unbekannt',vehicleId:'â'}),'');
+ assert.equal(selectedVehicleMeta({tripId:'trip-2',source:'trentino'}),'Datenquelle: Trentino Trasporti');
+});
+
+test('3D scene updates and delayed model callbacks are scoped to the active vehicle',()=>{
+ const src=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
+ assert.match(src,/this\.makeOverlay\(vehicle\)/);
+ assert.match(src,/this\.vehicleKey=vehicle\?\.key\|\|null/);
+ assert.match(src,/this\.layer!==layer\|\|this\.map!==map/);
+ assert.match(src,/vehicle\?\.key!==this\.vehicleKey/);
+ assert.match(src,/this\.vehicleKey=null/);
+ assert.doesNotMatch(src,/3D Â· FLIRT-Stil/);
+ assert.match(src,/modelCreditText\(info\.credit,info\.kind==='real',vehicle\?\.kind\)/);
+ assert.ok(src.includes("this.vehicleMeta.textContent=meta+(meta?' · ':'')+label;"));
+  assert.match(src,/positionFreshness\(vehicle\)/);
+});
+
+test('first vehicle tap has MapLibre and Three.js warmed before selection',()=>{
+ const mapSource=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
+ const cameraSource=readFileSync(new URL('../public/radar71-camera.mjs',import.meta.url),'utf8');
+ assert.match(mapSource,/loadMapLibre\(\)\.catch/);
+  assert.match(mapSource,/loadThree\(\)\.catch/);
+  assert.match(mapSource,/fetch\(VECTOR_STYLE/);
+ assert.match(cameraSource,/preload3DLibraries\(\);/);
+});
+
+test('preload3DLibraries warms both MapLibre and Three.js before vehicle selection',()=>{
+ const source=readFileSync(new URL('../public/radar83-map.mjs',import.meta.url),'utf8');
+ const start=source.indexOf('export function preload3DLibraries');
+ const end=source.indexOf('// Wait for real vector tiles',start);
+ const preload=source.slice(start,end);
+  assert.match(preload,/loadMapLibre\(\)\.catch/);
+  assert.match(preload,/loadThree\(\)\.catch/);
+  assert.ok(preload.includes('fetch(VECTOR_STYLE'));
+});

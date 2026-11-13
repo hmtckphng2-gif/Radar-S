@@ -1,0 +1,26 @@
+/* Radar 7.2: iPhone map / sheets stabilization. Scoped overrides only. */
+#map .sr71-cinematic{overflow:hidden;contain:layout paint;isolation:isolate}
+#map .sr71-focus-ring{width:78px;height:78px;box-shadow:0 0 0 5px rgba(80,154,238,.04),0 0 16px rgba(67,167,255,.13)}
+#map .sr71-focus-reticle{inset:9px}
+#map .sr71-focus-caption{top:calc(50% + 56px);max-width:min(74vw,280px)}
+body.sr71-focusing #map .leaflet-overlay-pane,
+body.sr72-map-zooming #map .leaflet-overlay-pane{opacity:0!important;visibility:hidden!important}
+body.sr71-focusing #map .leaflet-shadow-pane{opacity:0!important;visibility:hidden!important}
+body.sr71-focusing #map .leaflet-zoom-animated svg{visibility:hidden!important}
+body.sr71-focusing #sr60Launch,body.sr71-focused #sr60Launch,
+body:has(#sheet.open) #sr60Launch,body:has(#stationSheet.open) #sr60Launch{display:none!important}
+/* One actual scroll owner: the sheet-scroll; children must not scroll independently. */
+#sheet.open,#stationSheet.open{overflow:hidden!important;overscroll-behavior:contain}
+#sheet .sheet-scroll,#stationSheet .sheet-scroll{
+ overflow-x:hidden!important;overflow-y:auto!important;min-height:0!important;
+ overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;
+}
+#stationSheet .station-results,#stationSheet #stationBoard,
+#stationSheet #stationDepartures,#stationSheet #stationResults,
+#sheet #details,#sheet #scheduleSection,#sheet #stops{
+ max-height:none!important;height:auto!important;overflow:visible!important;
+ overscroll-behavior:initial!important;touch-action:pan-y;
+}
+#sheet .sheet-scroll::-webkit-scrollbar,#stationSheet .sheet-scroll::-webkit-scrollbar{width:3px}
+#sheet .sheet-scroll::-webkit-scrollbar-thumb,#stationSheet .sheet-scroll::-webkit-scrollbar-thumb{background:rgba(144,176,210,.28);border-radius:5px}
+@media(prefers-reduced-motion:reduce){#map .sr71-cinematic *{animation:none!important;transition:none!important}}

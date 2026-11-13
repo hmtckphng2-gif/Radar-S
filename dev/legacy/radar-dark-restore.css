@@ -1,0 +1,9 @@
+/* Radar dark raster map; do not filter markers or MapLibre vector layers. */
+html[data-theme="dark"]:not(.sr451-vector):not(.sr45-vector) #map img.leaflet-tile,
+html[data-theme="dark"].sr44-classic #map img.leaflet-tile {
+  -webkit-filter: brightness(.79) invert(1) hue-rotate(180deg) saturate(.72) !important;
+  filter: brightness(.79) invert(1) hue-rotate(180deg) saturate(.72) !important;
+}
+html[data-theme="dark"]:not(.sr451-vector):not(.sr45-vector) #map .leaflet-tile-pane,
+html[data-theme="dark"].sr44-classic #map .leaflet-tile-pane {opacity:1!important;}
+html[data-theme="light"] #map img.leaflet-tile {filter:none!important;-webkit-filter:none!important;}

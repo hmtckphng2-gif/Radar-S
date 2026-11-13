@@ -1,0 +1,25 @@
+/* Radar 9.9.1 — Block 2: nearby station orientation. */
+#sr50MapTab .sr86-location-btn{position:absolute;z-index:720;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 154px);width:44px;height:44px;border-radius:14px;border:1px solid rgba(190,202,216,.35);background:rgba(18,23,30,.94);color:#e9eef4;font-size:25px;box-shadow:0 4px 16px #0005;display:grid;place-items:center;touch-action:manipulation}
+#sr50MapTab .sr86-location-btn:disabled{opacity:.65}
+#sr50MapTab .sr86-nearby-panel{position:absolute;z-index:725;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 208px);width:min(290px,calc(100vw - 24px));max-height:42vh;overflow:auto;padding:11px;border:1px solid rgba(190,202,216,.24);border-radius:16px;background:rgba(17,21,27,.97);color:#edf1f5;box-shadow:0 10px 30px #0007;backdrop-filter:blur(16px)}
+#sr50MapTab .sr86-nearby-panel[hidden]{display:none}
+#sr50MapTab .sr86-nearby-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;font-size:13px}
+#sr50MapTab .sr86-nearby-heading button{border:0;background:transparent;color:#cbd4de;font-size:22px;padding:2px 8px}
+#sr50MapTab .sr86-nearby-list{display:grid;gap:5px;font-size:12px;color:#b9c3ce}
+#sr50MapTab .sr86-nearby-stop{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:9px 8px;border:1px solid rgba(190,202,216,.13);border-radius:10px;background:#ffffff08;color:#edf1f5;text-align:left}
+#sr50MapTab .sr86-nearby-stop strong{font-size:12px;font-weight:650}
+#sr50MapTab .sr86-nearby-stop small{font-size:10px;color:#9eabb9}
+@media(max-width:749px){#sr50MapTab .controls .segments{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}#sr50MapTab .controls .segments::-webkit-scrollbar{display:none}#sr50MapTab .controls .chip{flex:0 0 auto}}
+
+/* Block 4 — nearby stops with compact, source-grounded departures. */
+#sr50MapTab .sr86-nearby-panel{width:min(330px,calc(100vw - 24px));max-height:48vh;box-sizing:border-box;}
+#sr50MapTab .sr86-nearby-stop{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:9px;border:1px solid rgba(190,202,216,.16);border-radius:12px;background:#ffffff08;}
+#sr50MapTab .sr86-nearby-open{display:block;width:100%;min-height:44px;padding:7px 4px;border:0;background:transparent;color:#edf1f5;text-align:left;font-size:12px;font-weight:750;line-height:1.35;overflow-wrap:anywhere;}
+#sr50MapTab .sr86-nearby-stop>small{font-size:10px;line-height:1.35;color:#9eabb9;overflow-wrap:anywhere;}
+#sr50MapTab .sr86-nearby-departures{display:grid;gap:4px;min-width:0;}
+#sr50MapTab .sr86-nearby-departure{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:6px 7px;border-radius:8px;background:#111a25;border:1px solid rgba(190,202,216,.1);min-width:0;}
+#sr50MapTab .sr86-nearby-departure-main{display:flex;flex-direction:column;gap:2px;min-width:0;}
+#sr50MapTab .sr86-nearby-departure strong{font-size:10.5px;line-height:1.3;color:#e8edf3;overflow-wrap:anywhere;}
+#sr50MapTab .sr86-nearby-departure small{font-size:9.5px;line-height:1.3;color:#aab6c3;}
+#sr50MapTab .sr86-nearby-empty{font-size:10px;color:#aab6c3;line-height:1.4;}
+@media(max-width:420px){#sr50MapTab .sr86-nearby-panel{left:12px;right:12px;width:auto;max-height:46vh;padding:9px;}#sr50MapTab .sr86-nearby-departure{gap:5px;padding:6px;}#sr50MapTab .sr86-nearby-departure strong{font-size:10px;}}

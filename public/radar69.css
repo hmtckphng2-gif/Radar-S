@@ -1,0 +1,12 @@
+/* Radar 6.9 Horizon Foundation: scoped tokens and unified lightweight views */
+:root{--sr69-bg:#090e15;--sr69-surface:#121b28;--sr69-line:#29394b;--sr69-ink:#f0f5fc;--sr69-muted:#a5b6c9;--sr69-rail:#438ff0;--sr69-bus:#ec9d34}
+body.sr69-ready[data-theme="dark"],html[data-theme="dark"] body.sr69-ready{background:var(--sr69-bg)}
+.sr69-network,.sr69-station-quick{color:var(--sr69-ink);background:var(--sr69-surface);border:1px solid var(--sr69-line);border-radius:12px;padding:14px;margin:12px 10px}
+.sr69-panel-title{display:flex;flex-direction:column;gap:4px}.sr69-panel-title strong{font-size:15px}.sr69-panel-title small,.sr69-note{font-size:11px;color:var(--sr69-muted);line-height:1.5}
+.sr69-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}.sr69-count{border-right:1px solid var(--sr69-line);display:flex;flex-direction:column;gap:3px}.sr69-count:last-child{border:0}.sr69-count strong{font-size:21px;font-variant-numeric:tabular-nums}.sr69-count span{font-size:10px;color:var(--sr69-muted)}
+.sr69-lines h3{font-size:12px;margin:12px 0 7px}.sr69-line{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--sr69-line);min-height:38px;padding:5px 0;font-size:12px}.sr69-line:last-child{border:0}.sr69-line small{color:var(--sr69-muted);font-size:10px}
+.sr69-train{color:#83b9ff;font-weight:700}.sr69-bus{color:#ffbf73;font-weight:700}
+.sr69-connection{position:fixed;z-index:20000;top:calc(env(safe-area-inset-top,0px) + 7px);left:50%;transform:translateX(-50%);padding:8px 12px;background:#6a301d;border:1px solid #efae6b;color:white;border-radius:9px;font-size:12px;font-weight:700;pointer-events:none}
+.sr69-connection[hidden]{display:none!important}
+@media(max-width:749px){.sr69-ready #sr50DeparturesView,.sr69-ready #sr50StatsView,.sr69-ready #sr50FavoritesView{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}.sr69-ready :is(button,input,select){touch-action:manipulation}.sr69-ready :is(button,input,select):focus-visible{outline:2px solid #83b9ff;outline-offset:2px}}
+@media(prefers-reduced-motion:reduce){.sr69-ready *, .sr69-ready *::before,.sr69-ready *::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}

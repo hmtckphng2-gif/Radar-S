@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {collapseEquivalentJourneys} from '../public/radar70-route.mjs';
+const st=(lat,lon)=>({lat,lon}),a=st(46.23,11.21),b=st(46.5,11.35),c=st(46.51,11.36),far=st(46.67,11.15);
+const trip=(line='8',arrival=78000,hub=b,walk=60)=>({departure:75120,arrival,legs:[{type:'train',name:'16720',fromStop:a,toStop:hub},{type:'bus',name:line,fromStop:hub,toStop:c}],transfers:[{status:'possible',meters:walk,margin:420}]});
+test('same visible connection appears only once',()=>{const x=collapseEquivalentJourneys([trip(),trip(),trip()]);assert.equal(x.length,1);assert.equal(x[0].collapsedVariants,2)});
+test('different lines, arrival and departure times remain distinct',()=>{const x=[trip('8'),trip('110'),trip('8',78060),{...trip('8'),departure:75240}];assert.equal(collapseEquivalentJourneys(x).length,4)});
+test('different transfer town is not merged',()=>{assert.equal(collapseEquivalentJourneys([trip(),trip('8',78000,far)]).length,2)});
+test('less risky version wins, even when listed second',()=>{const bad=trip(),good=trip('8',78000,b,20);bad.transfers[0].status='risk';const x=collapseEquivalentJourneys([bad,good]);assert.equal(x[0].transfers[0].status,'possible')});
+test('original timetable rows are not mutated',()=>{const x=trip();collapseEquivalentJourneys([x,trip()]);assert.equal(x.collapsedVariants,undefined)});

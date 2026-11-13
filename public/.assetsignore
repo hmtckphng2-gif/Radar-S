@@ -1,0 +1,11 @@
+# Development preview pages.
+#
+# They stay in the repository so they can be opened locally, but they are
+# never uploaded to the Worker. Before this file existed, 37 stale test pages
+# were publicly reachable under https://radar-s.j9fr2vg4vm.workers.dev/.
+#
+# The small diagnostic pages (diagnose.html, radar-diagnose.html,
+# platform-check.html, radar-check.html, core-test.html, safe.html) stay
+# public on purpose: they are used to check a live device.
+test-*.html
+isolate-*.html

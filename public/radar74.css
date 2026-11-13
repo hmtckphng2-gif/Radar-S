@@ -1,0 +1,4 @@
+/* Radar 7.4: clear separation of model time and actual GTFS-RT delay. */
+#sr51TrainCompare .sr74-time-summary{border:1px solid #426684;border-radius:12px;background:rgba(23,49,72,.82);padding:9px 12px;display:flex;flex-direction:column;gap:5px;margin:8px 0}
+#sr51TrainCompare .sr74-time-label{font-size:14px;font-weight:750;color:#f0c981;line-height:1.4}
+#sr51TrainCompare .sr74-time-caution{font-size:11px;color:#bad0dd;line-height:1.5}

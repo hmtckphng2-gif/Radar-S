@@ -1,0 +1,7 @@
+/* Radar 7.9 — small accessible feed quality disclosure, keeping the map uncluttered */
+.sr79-health-toggle{display:inline-block;padding:4px 8px;margin:5px 0;border:1px solid rgba(149,178,203,.24);border-radius:9px;background:rgba(105,143,178,.09);color:inherit;font-size:11px;cursor:pointer}
+.sr79-health-panel{margin:5px 0 8px;padding:10px;border:1px solid rgba(149,178,203,.18);background:rgba(41,58,77,.22);border-radius:13px;max-width:380px;font-size:11px}
+.sr79-health-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid rgba(145,169,193,.12);padding:7px 0}
+.sr79-health-row span{color:#b4c5d9;text-align:right;line-height:1.4}
+.sr79-health-panel small{display:block;margin-top:8px;color:#b3c5d8;line-height:1.45}
+@media(max-width:750px){.sr79-health-panel{max-width:100%}.sr79-health-row{font-size:10px}}

@@ -1,0 +1,89 @@
+name: Deploy Radar to Cloudflare
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+concurrency:
+  group: radar-cloudflare-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: ${{ vars.CLOUDFLARE_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate app and History Cron safety
+        run: |
+          npm run check
+          node tools/mobile-config-check.mjs
+          npm test
+          node -e "const fs=require('node:fs');const c=JSON.parse(fs.readFileSync('wrangler.jsonc','utf8'));if(c.triggers?.crons?.length)process.exit(1)"
+      - name: Deploy Worker and assets
+        uses: cloudflare/wrangler-action@v3
+        with:
+          wranglerVersion: "4.36.0"
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy worker.js --name radar-s --config wrangler.jsonc
+      - name: Verify live Worker and UI assets
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          const root = 'https://radar-s.j9fr2vg4vm.workers.dev';
+          const expected = JSON.parse(readFileSync('package.json','utf8')).version;
+          const request = async path => {
+            const response = await fetch(root+path+'?release='+Date.now(),{cache:'no-store'});
+            const text = await response.text();
+            if(!response.ok)throw Error(path+' HTTP '+response.status);
+            return text;
+          };
+          const wait = ms => new Promise(r=>setTimeout(r,ms));
+          // Der Deploy ist nicht sofort ueberall sichtbar. Cloudflare braucht
+          // ein paar Sekunden, bis der neue Worker ausgeliefert wird. Ohne
+          // diese Schleife schlug der Deploy im Oktober 2026 zu Unrecht fehl.
+          const retry = async (label,check,attempts=24,gap=5000) => {
+            let last='';
+            for(let attempt=1;attempt<=attempts;attempt++){
+              // "await" ist wichtig: ohne faengt der try-Block die
+              // Rejection der Pruefung nicht ab.
+              try{return await check();}
+              catch(error){last=error.message;}
+              if(attempt<attempts)await wait(gap);
+            }
+            throw Error(label+' failed after '+attempts+' attempts: '+last);
+          };
+          const live = await retry('live version', async () => {
+            const response = JSON.parse(await request('/api/version'));
+            if(response.version!==expected)throw Error('Expected live '+expected+', got '+response.version);
+            return response;
+          });
+          if(live.collectorScheduled!==false)throw Error('History collector unexpectedly scheduled');
+          for(const [path,marker] of [
+            ['/radar43.js','sr80-group-chip'],
+            ['/radar83-map.mjs','Radar 8.3'],
+            ['/radar83-model.mjs','FLIRT-inspired'],
+            ['/radar80.js',"const BUILD='"+expected+"'"]
+          ]){
+            const body=await retry(path,async () => {
+              const text=await request(path);
+              if(!text.includes(marker))throw Error(path+' missing expected content');
+              return text;
+            });
+            console.log('Verified',path);
+          }
+          const assistant = await retry('assistant runtime bindings', async () => {
+            const status = JSON.parse(await request('/api/assistant/status'));
+            if(status.limiterConfigured!==true)throw Error('AI_JOURNEY_LIMITER binding missing');
+            if(!Array.isArray(status.configuredProviders)||!status.configuredProviders.includes('cloudflare'))throw Error('Cloudflare AI provider not configured');
+            if(status.enabled!==true)throw Error('Assistant provider health check failed: '+(status.status||'unavailable'));
+            return status;
+          });
+          console.log('Assistant ready:',assistant.providers.join(', '));
+          console.log('Live Radar '+expected+' confirmed');
+          NODE

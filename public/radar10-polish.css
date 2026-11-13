@@ -1,0 +1,180 @@
+/* Südtirol Radar 10.0 — final visual quality layer.
+   Informed by UI/UX Pro Max and Emil Kowalski's Apple Design skill.
+   Visual-only: preserve all existing IDs, map behavior, data feeds and feature controls. */
+:root {
+  --radar-polish-bg: #0b0d10;
+  --radar-polish-surface: #14171b;
+  --radar-polish-raised: #1b2026;
+  --radar-polish-line: rgba(212, 218, 225, .14);
+  --radar-polish-line-strong: rgba(212, 218, 225, .25);
+  --radar-polish-text: #f2f4f7;
+  --radar-polish-muted: #a1a9b3;
+  --radar-polish-silver: #d4dae1;
+  --radar-polish-train: #78a6ff;
+  --radar-polish-bus: #f2a15e;
+}
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body, button, input, select, textarea {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif !important;
+  font-synthesis: none;
+}
+body { color: var(--radar-polish-text); background: var(--radar-polish-bg); }
+button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--radar-polish-silver) !important;
+  outline-offset: 3px;
+}
+
+.topbar {
+  background: rgba(11, 13, 16, .88) !important;
+  border-color: var(--radar-polish-line) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .20) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(140%) !important;
+  backdrop-filter: blur(24px) saturate(140%) !important;
+}
+.brand-badge {
+  color: #101318 !important;
+  background: linear-gradient(145deg, #e0e5ea, #929ca8) !important;
+  border: 1px solid rgba(255,255,255,.35) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+.brand-title { letter-spacing: -.045em !important; font-weight: 760 !important; }
+.brand-title em {
+  color: var(--radar-polish-silver) !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em !important;
+}
+.brand-sub { letter-spacing: .105em !important; color: var(--radar-polish-muted) !important; }
+.toprow > .status, .toprow > .iconbtn, .round-action, .close {
+  color: var(--radar-polish-text) !important;
+  background: rgba(25, 29, 35, .92) !important;
+  border: 1px solid var(--radar-polish-line) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  backdrop-filter: blur(18px) saturate(135%);
+}
+.toprow > .status { border-radius: 10px !important; }
+.toprow > .status.ok { border-color: rgba(143,197,162,.28) !important; }
+.toprow > .status.error { border-color: rgba(237,106,112,.34) !important; }
+#statusBtn::after { color: #aeb6bf !important; }
+#statusBtn.ok::after { color: #8fc5a2 !important; }
+#statusBtn.error::after { color: #ed6a70 !important; }
+
+.controls { gap: 7px !important; }
+.search-wrap {
+  border: 1px solid var(--radar-polish-line) !important;
+  border-radius: 12px !important;
+  background: var(--radar-polish-surface) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.025);
+}
+.search-wrap:focus-within { border-color: var(--radar-polish-line-strong) !important; }
+.search-wrap input { color: var(--radar-polish-text) !important; }
+.search-wrap input::placeholder { color: #89929d !important; }
+.segments .chip, .chip {
+  border: 1px solid var(--radar-polish-line) !important;
+  border-radius: 10px !important;
+  background: var(--radar-polish-raised) !important;
+  color: #c0c6ce !important;
+  box-shadow: none !important;
+}
+.segments .chip.active, .chip.active {
+  background: var(--radar-polish-silver) !important;
+  border-color: var(--radar-polish-silver) !important;
+  color: #11151a !important;
+}
+
+.stats, .info-banner, .offline-banner, .feed-health-banner, .alert-ticker {
+  border: 1px solid var(--radar-polish-line) !important;
+  background: rgba(17, 20, 25, .94) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,.22) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(130%) !important;
+  backdrop-filter: blur(20px) saturate(130%) !important;
+}
+.stats { border-radius: 14px !important; }
+.stat b { font-variant-numeric: tabular-nums; letter-spacing: -.025em; }
+.stats-time, .stat span { color: var(--radar-polish-muted) !important; }
+
+.sheet {
+  color: var(--radar-polish-text) !important;
+  background: rgba(19, 22, 27, .985) !important;
+  border-color: var(--radar-polish-line) !important;
+  border-radius: 22px 22px 0 0 !important;
+  box-shadow: 0 -16px 42px rgba(0,0,0,.30) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(135%);
+  backdrop-filter: blur(24px) saturate(135%);
+}
+.handle { width: 34px !important; height: 4px !important; border-radius: 999px !important; background: #69727d !important; }
+.sheet-title { letter-spacing: -.035em !important; line-height: 1.15 !important; }
+.sheet-subtitle, .section-sub, .note { color: var(--radar-polish-muted) !important; }
+.sheet-heading, .health-header, .lines-header { border-color: var(--radar-polish-line) !important; }
+.detail, .model-card, .stop, .health-row, .lines-row, .sr50-card, .sr70-tile {
+  background: var(--radar-polish-surface) !important;
+  border: 1px solid var(--radar-polish-line) !important;
+  border-radius: 13px !important;
+  box-shadow: none !important;
+}
+.detail, .health-row, .lines-row { color: var(--radar-polish-text) !important; }
+
+.sr50-bottom-nav, .sr70-dock {
+  background: rgba(17, 20, 25, .94) !important;
+  border: 1px solid var(--radar-polish-line) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.30) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(145%) !important;
+  backdrop-filter: blur(24px) saturate(145%) !important;
+}
+.sr50-nav-btn.active, .sr50-bottom-nav button.active {
+  color: #11151a !important;
+  background: var(--radar-polish-silver) !important;
+  border-color: transparent !important;
+}
+.sr70-home, .sr70-more { background: var(--radar-polish-bg) !important; }
+.sr70-title h1 { letter-spacing: -.045em !important; font-weight: 760 !important; }
+.sr70-tile { color: var(--radar-polish-text) !important; }
+
+button { transition: background-color 120ms ease-out, border-color 120ms ease-out, transform 100ms ease-out; }
+button:active { transform: scale(.985); }
+
+@media (max-width: 520px) {
+  .topbar {
+    padding: calc(7px + env(safe-area-inset-top)) 10px 10px !important;
+    border-radius: 0 0 14px 14px !important;
+  }
+  .toprow { gap: 4px !important; }
+  .toprow > .status, .toprow > .iconbtn {
+    min-width: 32px !important; width: 32px !important; height: 34px !important;
+    border-radius: 10px !important;
+  }
+  .controls { flex-direction: column !important; align-items: stretch !important; gap: 7px !important; }
+  .search-wrap { order: -1; min-height: 39px !important; border-radius: 12px !important; }
+  .segments {
+    display: flex !important; width: 100% !important; max-width: 100% !important;
+    overflow-x: auto; overflow-y: hidden; scrollbar-width: none; gap: 5px !important;
+    overscroll-behavior-x: contain;
+  }
+  .segments::-webkit-scrollbar { display: none; }
+  .segments .chip { flex: 0 0 auto; min-height: 34px !important; padding: 0 11px !important; }
+  .info-banner { top: calc(148px + env(safe-area-inset-top)) !important; }
+  .stats { left: 8px !important; right: 8px !important; padding: 9px 10px !important; }
+  .sheet { max-height: min(86dvh, 760px) !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button { transition: none !important; }
+  button:active { transform: none !important; }
+  .sr70-home, .sr70-more, .sr50-tab-view, .sheet { scroll-behavior: auto !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .topbar, .toprow > .status, .toprow > .iconbtn, .round-action, .stats,
+  .sheet, .sr50-bottom-nav, .sr70-dock {
+    background: #111419 !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+@media (prefers-contrast: more) {
+  .topbar, .search-wrap, .segments .chip, .sheet, .detail, .sr50-bottom-nav, .sr70-dock {
+    border-color: var(--radar-polish-line-strong) !important;
+  }
+}
