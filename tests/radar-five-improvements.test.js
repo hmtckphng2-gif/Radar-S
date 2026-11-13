@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {parseVehicles, nextStopFromRows, SOURCES} from '../public/core.js';
-import {sourceLabel} from '../public/radar92-details.mjs';
+import {sourceLabel, feedSourceLabel} from '../public/radar92-details.mjs';
 import {groupNearby, resolveClusterCollisions} from '../public/radar44-logic.mjs';
 
 const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
@@ -28,10 +28,14 @@ test('next stop uses current_status semantics and refuses mismatched stop identi
 });
 
 test('source labels identify the operator and feed transport accurately',()=>{
-  assert.equal(sourceLabel('sta'),'südtirolmobil (STA · BusOne)');
-  assert.equal(sourceLabel('sta_direct'),'südtirolmobil (STA · Open Data Hub)');
-  assert.equal(sourceLabel('trentino'),'Trentino Trasporti (BusOne)');
-  assert.equal(sourceLabel('trains'),'Trenitalia (BusOne)');
+  assert.equal(sourceLabel('sta'),'STA');
+  assert.equal(sourceLabel('sta_direct'),'STA direkt');
+  assert.equal(sourceLabel('trentino'),'Trentino Trasporti');
+  assert.equal(sourceLabel('trains'),'Zug');
+  assert.equal(feedSourceLabel('sta'),'südtirolmobil / STA · BusOne');
+  assert.equal(feedSourceLabel('sta_direct'),'südtirolmobil / STA · Open Data Hub');
+  assert.equal(feedSourceLabel('trentino'),'Trentino Trasporti · BusOne');
+  assert.equal(feedSourceLabel('trains'),'Trenitalia · BusOne');
 });
 
 test('all requested realtime feed families are wired once through the current endpoints',()=>{

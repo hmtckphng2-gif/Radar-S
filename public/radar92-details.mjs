@@ -18,15 +18,22 @@ export function sameStationName(a,b){
 }
 export function sourceLabel(source){
  const key=String(source??'').trim().toLowerCase();
- if(key==='trains')return 'Trenitalia (BusOne)';
- if(key==='train')return 'Zug';
- if(key==='sta')return 'südtirolmobil (STA · BusOne)';
- if(key==='sta_direct')return 'südtirolmobil (STA · Open Data Hub)';
- if(key==='trentino')return 'Trentino Trasporti (BusOne)';
+ if(key==='trains'||key==='train')return 'Zug';
+ if(key==='sta')return 'STA';
+ if(key==='sta_direct')return 'STA direkt';
+ if(key==='trentino')return 'Trentino Trasporti';
  if(key==='rfi')return 'RFI';
  if(key==='gtfs')return 'Fahrplandaten';
  if(key==='gtfs-rt')return 'Echtzeitdaten';
  return key?key.charAt(0).toUpperCase()+key.slice(1):'Unbekannt';
+}
+export function feedSourceLabel(source){
+ const key=String(source??'').trim().toLowerCase();
+ if(key==='sta')return 'südtirolmobil / STA · BusOne';
+ if(key==='sta_direct')return 'südtirolmobil / STA · Open Data Hub';
+ if(key==='trentino')return 'Trentino Trasporti · BusOne';
+ if(key==='trains')return 'Trenitalia · BusOne';
+ return sourceLabel(key);
 }
 export function formatRelativeAge(seconds){
  if(seconds===null||seconds===undefined||seconds==='')return 'Unbekannt';
