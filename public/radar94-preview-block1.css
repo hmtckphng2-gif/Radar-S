@@ -136,3 +136,6 @@
 .sr-delay-legend{display:none!important}
 body.sr60.rh-ready .rh-tools-panel{background:transparent!important;border:0!important;border-radius:0!important;padding:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 .mf-quickrow{display:none!important}
+
+/* 10.0 polish: keep the map canvas clear of the incident ticker and delay legend. */
+#alertTicker,.sr-delay-legend{display:none!important}
