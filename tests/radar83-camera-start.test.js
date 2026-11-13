@@ -121,7 +121,7 @@ test('cinematic 3D stays enabled by default and all camera modules bypass stale 
   const html=read('index.html');
   const camera=read('radar71-camera.mjs');
   const map=read('radar83-map.mjs');
-  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=first-tap-preload-1'));
+  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=original-preview-3d-restore-1'));
   assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
   assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
   assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
