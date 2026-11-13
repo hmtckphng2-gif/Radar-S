@@ -18,31 +18,28 @@ import {start3DCamera,target3DCamera,handoff3DCamera,approach3DCamera,use3DTerra
 const root = fileURLToPath(new URL('../', import.meta.url));
 const read = name => readFileSync(root + 'public/' + name, 'utf8');
 
-test('the camera flight starts after style load and before tile/model completion', () => {
+test('the camera flight starts after the scene and model are rendered', () => {
   const src = read('radar83-map.mjs');
-  const style = src.indexOf("map.on('load',loaded);map.on('error',failed);");
-  const flight = src.indexOf('this.flight={origin:');
-  const reveal = src.indexOf("this.overlay.classList.add('sr83-ready')");
-  const replay = src.indexOf('this.replay();',flight);
+  const flight = src.indexOf('this.replay();');
   const scene = src.indexOf('await waitFor3DScene(map);');
   const model = src.indexOf('await waitFor3DModel(map,this.layer);');
-  assert.ok(style>0&&flight>style&&reveal>flight&&replay>reveal&&scene>replay&&model>scene);
+  assert.ok(flight > 0 && scene > 0 && model > 0, 'the three steps must exist');
+  assert.ok(flight > scene, 'the flight must start after the vector scene is ready');
+  assert.ok(flight > model, 'the flight must start after the vehicle layer renders');
 });
 
-test('the 3D overlay is revealed when the style is ready, before tiles and model', () => {
-  const src = read('radar83-map.mjs'),css=read('radar83.css');
-  const reveal=src.indexOf("this.overlay.classList.add('sr83-ready')");
-  const scene=src.indexOf('await waitFor3DScene(map);');
-  const model=src.indexOf('await waitFor3DModel(map,this.layer);');
-  assert.ok(reveal>0&&reveal<scene&&scene<model);
-  assert.match(css,/\.sr83-viewport\.sr83-ready\{opacity:1;pointer-events:auto\}/);
-  assert.match(css,/transition:opacity 1\.32s cubic-bezier\(\.22,\.72,\.18,1\)/);
+test('the overlay becomes visible only after the scene and vehicle layer are ready', () => {
+  const src = read('radar83-map.mjs');
+  assert.doesNotMatch(src, /classList\.add\('sr83-loading'\)/);
+  const css = read('radar83.css');
+  assert.match(css, /\.sr83-viewport\.sr83-ready\{opacity:1;pointer-events:auto\}/);
+  assert.match(css, /transition:opacity 1\.32s cubic-bezier\(\.22,\.72,\.18,1\)/);
+  assert.ok(src.indexOf("this.overlay.classList.add('sr83-ready')") > src.indexOf('await waitFor3DModel(map,this.layer);'));
 });
 
 test('the follow never fights the running flight', () => {
   const src = read('radar83-map.mjs');
-  assert.match(src, /if\(this\.touched\|\|this\.flying\|\|!this\.map\|\|!quality\.fresh\)return;/);
-  assert.match(src, /const quality=positionFreshness\(vehicle\)/);
+  assert.match(src, /if\(this\.touched\|\|this\.flying\|\|!this\.map\)return;/);
   assert.match(src, /this\.flying=true;/);
   assert.match(src, /this\.flying=false;clearTimeout\(this\.flightTimer\)/);
 });
@@ -57,10 +54,10 @@ test('replay works before the model is ready', () => {
 test('3D camera travel adapts to zoom and distance instead of forcing a long flight', () => {
   const near=cinematicDuration(0.2, 430);
   const far=cinematicDuration(30, 2200);
-  assert.ok(near>=6600 && near<=6900, 'a nearby selection uses the preview cinematic pacing');
-  assert.ok(far>near && far<=7600, 'a distant vehicle may take longer');
-  assert.ok(cinematicDuration(0.2, 9000) <= 7600);
-  assert.equal(cinematicDuration(0.2, 100), 6600);
+  assert.ok(near>=650 && near<=750, 'a nearby tap while zoomed in stays quick');
+  assert.ok(far>near && far<=5200, 'a distant vehicle may take longer');
+  assert.ok(cinematicDuration(0.2, 9000) <= 4850);
+  assert.equal(cinematicDuration(0.2, 100), 650);
 });
 
 test('the default live camera flight uses the slower cinematic timing', () => {
@@ -74,13 +71,13 @@ test('the flight still ends on the vehicle', () => {
   const start = start3DCamera(p, 90, end.zoom);
   assert.deepEqual(end.center, [p.lng, p.lat]);
   assert.equal(end.zoom, 19);
-  assert.equal(end.pitch, 16);
-  assert.equal(end.bearing, 118);
+  assert.equal(end.pitch, 48);
+  assert.equal(end.bearing, 98);
   assert.ok(start.zoom < end.zoom);
-  assert.equal(start.pitch, 24);
+  assert.equal(start.pitch, 68);
   assert.ok(start.pitch > end.pitch, 'the camera descends to a steeper view');
-  assert.equal(start.bearing, 323);
-  assert.equal((start.bearing - end.bearing + 360) % 360, 205, 'the camera starts from the preview rear-quarter pose');
+  assert.equal(start.bearing, 202);
+  assert.equal((start.bearing - end.bearing + 360) % 360, 104, 'the camera makes a controlled 104-degree turn');
   assert.notEqual(start.bearing, end.bearing, 'the camera rotates during the approach');
   assert.ok(start.zoom > 15, 'the approach starts closer than the wide establishing shot');
 });
@@ -92,23 +89,19 @@ test('the handoff continues the camera from the exact live map view', () => {
   const src=read('radar83-map.mjs');
   const tapFlow=src.slice(src.indexOf('async open('),src.indexOf('await waitFor3DScene(map);'));
   assert.doesNotMatch(tapFlow,/this\.leaflet\.(?:flyTo|setView)\(/,'2D stays still; the zoom belongs only to 3D');
-  const target={center:[11.45,46.5],zoom:19,pitch:16,bearing:28};
+  const target={center:[11.45,46.5],zoom:19,pitch:48,bearing:8};
   const approach=approach3DCamera(live,target,.75);
   assert.ok(approach.center[0]>live.center[0]&&approach.center[0]<target.center[0]);
-  const flightStart=approach;
-  assert.deepEqual(flightStart.center,approach.center,'the camera starts from the interpolated approach position');
-  assert.notDeepEqual(flightStart.center,target.center,'the camera must not snap to the target before animating');
-  assert.ok(flightStart.zoom<target.zoom,'the camera still performs the zoom-in');
-  assert.equal(flightStart.bearing,approach.bearing,'the cinematic bearing turn is preserved');
+  const framedStart={...approach,center:[...target.center]};
+  assert.deepEqual(framedStart.center,target.center,'the selected vehicle stays centered from the first frame');
+  assert.ok(framedStart.zoom<target.zoom,'the camera still performs the zoom-in');
+  assert.equal(framedStart.bearing,approach.bearing,'the cinematic bearing turn is preserved');
   assert.ok(src.includes('approach3DCamera(handoff,target,.75)'));
-  assert.ok(src.includes('const flightStart=approachStart;'));
-  const cameraController=read('radar71-camera.mjs');
-  assert.match(cameraController,/focusDuration\(false,Math\.max\(3,map\.getZoom\(\)-1\),cinematicZoom,remaining3DDistanceKm\)/);
-  assert.match(cameraController,/cinema3d\.open\(vehicle,pos,heading,duration3D,cinematicZoom\)/);
+  assert.ok(src.includes('const flightStart={...approachStart,center:[...target.center]};'));
   assert.ok(src.indexOf('this.flight={start:flightStart,target:continuedTarget};') < src.indexOf('await waitFor3DScene(map);'));
-  assert.ok(src.indexOf('this.replay();') < src.indexOf('await waitFor3DScene(map);'));
+  assert.ok(src.indexOf('this.replay();') > src.indexOf('await waitFor3DModel(map,this.layer);'));
   const ready=src.indexOf("this.overlay.classList.add('sr83-ready')");
-  assert.ok(ready>0&&ready<src.indexOf('await waitFor3DScene(map);'));
+  assert.ok(ready>src.indexOf('await waitFor3DModel(map,this.layer);'));
   assert.match(src.slice(ready,src.indexOf('return true;',ready)),/this\.replay\(\)/);
 });
 
@@ -128,10 +121,10 @@ test('cinematic 3D stays enabled by default and all camera modules bypass stale 
   const html=read('index.html');
   const camera=read('radar71-camera.mjs');
   const map=read('radar83-map.mjs');
-  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=preview-3d-reliability-1'));
-  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=preview-3d-reliability-1'));
-  assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=preview-3d-reliability-1'));
-  assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=preview-3d-reliability-1'));
+  assert.ok(html.includes('radar71-camera.mjs?v=9.9.5&rev=first-tap-preload-1'));
+  assert.ok(camera.includes('radar83-map.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
+  assert.ok(camera.includes('radar83-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
+  assert.ok(map.includes('radar83-logic.mjs?v=9.9.5&rev=adaptive-camera-travel-1'));
   assert.ok(map.includes('const exitCamera={...flight.target,center:[...flight.target.center],zoom:flight.origin.zoom}'));
   assert.ok(map.includes('const returnView=null'));
   assert.ok(map.includes('map.easeTo({...exitCamera,duration'));

@@ -35,7 +35,14 @@ export function enabled3D(search=''){
 export function target3DCamera(point,zoom,heading=null,duration=4300){
  const lng=Number(point?.lng??point?.lon),lat=Number(point?.lat);
  if(!Number.isFinite(lng)||!Number.isFinite(lat)||lat< -85||lat>85||lng< -180||lng>180)return null;
- return {center:[lng,lat],zoom:Math.max(18.2,Math.min(19.2,Number(zoom)||18.8)),pitch:16,bearing:Number.isFinite(heading)?((heading+28)%360+360)%360:28,duration:Math.max(0,Math.min(5000,Number(duration)||0))};
+ return {
+  center:[lng,lat],
+  zoom:Math.max(18.6,Math.min(20.4,Number(zoom)||19.0)),
+  pitch:48,
+   // Finish in a steeper rear-quarter view, without a near half-turn.
+   bearing:Number.isFinite(heading)?((heading+8)%360+360)%360:8,
+  duration:Math.max(0,Math.min(8000,Number(duration)||0))
+ };
 }
 export function readProjectionMatrix(input){
  const matrix=input?.defaultProjectionData?.mainMatrix??input?.modelViewProjectionMatrix??input;
@@ -71,11 +78,19 @@ export function approach3DCamera(start,target,progress=.75){
 export function start3DCamera(point, heading=null, finalZoom=17){
  const lat=Number(point?.lat),lng=Number(point?.lng??point?.lon);
  if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -85||lat > 85)return null;
- const finalBearing=Number.isFinite(heading)?((heading+28)%360+360)%360:28;
+ const finalBearing=Number.isFinite(heading)?((heading%360)+360)%360:0;
  const direction=finalBearing*Math.PI/180;
- const meters=680,latOffset=meters/111320,lngOffset=latOffset/Math.max(.2,Math.cos(lat*Math.PI/180));
- return {center:[lng-Math.sin(direction)*lngOffset,lat-Math.cos(direction)*latOffset],zoom:Math.max(12,Math.min(16,Number(finalZoom)-3.2)),pitch:24,bearing:(finalBearing+205)%360};
+ const meters=450,latOffset=meters/111320;
+ const lngOffset=latOffset/Math.max(.2,Math.cos(lat*Math.PI/180));
+ return {
+  center:[lng-Math.sin(direction)*lngOffset,lat-Math.cos(direction)*latOffset],
+   zoom:Math.max(13.2,Math.min(16.8,Number(finalZoom)-2.2)),
+   pitch:68,
+   bearing:(finalBearing+112)%360
+ };
 }
+// DEM tiles consume substantial GPU memory on mobile Safari. The real pitched
+// vector map and Three.js train work without DEM; terrain is opt-in.
 export function use3DTerrain(search=''){
  try{return new URLSearchParams(search).get('terrain')==='on'}catch{return false}
 }
@@ -98,19 +113,15 @@ export function followDecision({touched=false,center=null,point=null,thresholdMe
 // The 3D cinematic is a camera move, not a page transition. It has to feel
 // A deliberate cinematic approach: begin well behind the vehicle and ease
 // into a rear-follow composition. Scene/model loading continues in parallel.
-export function cinematicDuration(distanceKm=0,base=4700){
- const d=Number(distanceKm),extra=Number.isFinite(d)&&d>2?300:0;
- const duration=Math.max(6600,Math.min(7200,Number(base)||6900));
- return Math.min(7600,Math.round(duration+extra));
+export function cinematicDuration(distanceKm=0,base=4300){
+  const d=Number(distanceKm);
+  const extra=Number.isFinite(d)&&d>2?Math.min(350,Math.sqrt(d-2)*45):0;
+  const requested=Number(base);
+  const duration=Math.max(650,Math.min(4850,Number.isFinite(requested)&&requested>0?requested:4300));
+  return Math.round(Math.max(650,Math.min(5200,duration+extra)));
 }
-
-export function positionFreshness(vehicle,now=Date.now(),maxAgeSeconds=180){
- const timestamp=Number(vehicle?.timestamp);
- const ageSeconds=Number.isFinite(timestamp)&&timestamp>1e9?Math.max(0,Math.round(now/1000-timestamp)):null;
- const fresh=!vehicle?.stale&&ageSeconds!==null&&ageSeconds<=maxAgeSeconds&&now/1000-timestamp>=-30;
- const estimated=vehicle?.estimated===true||vehicle?.positionEstimated===true||vehicle?.positionType==='estimated';
- return {fresh,ageSeconds,estimated,label:ageSeconds===null?'Zeit unbekannt':ageSeconds<60?ageSeconds+' s alt':Math.round(ageSeconds/60)+' min alt'};
-}
+// If the system asks for less motion, the cinematic camera must not fly.
+// It jumps straight to the vehicle instead.
 export function prefersReducedMotion(){
   try{return typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches}
   catch{return false}
