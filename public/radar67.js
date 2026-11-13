@@ -12,6 +12,7 @@ trigger=button('Suchen und filtern',ICON.search,()=>toggle('search'),'rhSearchTr
 actions=document.createElement('section');actions.className='rh-tools-panel';actions.id='rhToolsPanel';actions.hidden=true;actions.setAttribute('aria-label','Kartenwerkzeuge');actions.append(originalActions);
 const delayLegend=document.createElement('section');delayLegend.className='sr-delay-legend';delayLegend.setAttribute('aria-label','Legende zur Verspätung');
 delayLegend.innerHTML='<strong>Verspätung</strong><div class=\"sr-delay-legend__grid\"><div><i class=\"sr-delay-legend__swatch is-green\"></i><span>Pünktlich / früher</span></div><div><i class=\"sr-delay-legend__swatch is-amber\"></i><span>1–14 Min.</span></div><div><i class=\"sr-delay-legend__swatch is-red\"></i><span>Ab 15 Min.</span></div><div><i class=\"sr-delay-legend__swatch is-grey\"></i><span>Unbekannt</span></div></div><small>Gestrichelt = geschätzte oder veraltete Position · keine Aura.</small>';
+delayLegend.hidden=true;
 actions.append(delayLegend);
 toolsTrigger=button('Kartenwerkzeuge öffnen',ICON.layers,()=>toggle('tools'),'rhToolsTrigger');toolsTrigger.setAttribute('aria-controls',actions.id);toolsTrigger.setAttribute('aria-expanded','false');document.getElementById('sr50MapTab').append(toolsTrigger,actions);
 // Maintain all existing feature endpoints, only rename visible entrypoint.

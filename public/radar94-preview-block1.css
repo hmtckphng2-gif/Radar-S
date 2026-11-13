@@ -20,13 +20,13 @@
 #map .marker-wrap .marker-circle::before{
   content:"";
   position:absolute;
-  inset:-10px;
+  inset:-4px;
   box-sizing:border-box;
-  border:2.5px solid var(--sr-delay-ring,var(--sr-delay-grey));
-  border-radius:calc(var(--sr-marker-radius,9px) + 10px);
+  border:2px solid var(--sr-delay-ring,var(--sr-delay-grey));
+  border-radius:calc(var(--sr-marker-radius,9px) + 4px);
   pointer-events:none;
   z-index:2;
-  box-shadow:0 0 8px var(--sr-delay-glow,transparent),0 0 14px var(--sr-delay-glow-soft,transparent);
+  box-shadow:0 0 5px var(--sr-delay-glow,transparent),0 0 8px var(--sr-delay-glow-soft,transparent);
 }
 #map .marker-wrap.delay-ontime .marker-circle{--sr-delay-ring:var(--sr-delay-green);--sr-delay-glow:var(--sr-delay-green-glow);--sr-delay-glow-soft:rgba(127,159,134,.12);}
 #map .marker-wrap.delay-delayed .marker-circle{--sr-delay-ring:var(--sr-delay-amber);--sr-delay-glow:var(--sr-delay-amber-glow);--sr-delay-glow-soft:rgba(196,154,85,.13);}
