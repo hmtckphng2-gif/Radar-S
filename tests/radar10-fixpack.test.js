@@ -31,7 +31,7 @@ test('dash-only or empty vehicle detail fields show a truthful fallback', () => 
   assert.ok(app.includes("info?delayView.label:'Unbekannt'"));
 });
 test('Service Worker cache matches app version and live APIs bypass caching', () => {
-  assert.ok(sw.includes("const CACHE='radar-shell-v" + version + "-scrollcraft';"));
+  assert.ok(sw.includes("const CACHE='radar-shell-v" + version + "-original-preview-3d-restore-1';"));
   const apiGuard = sw.indexOf('if(isApi(url))return;');
   const assetCache = sw.indexOf('if(isAsset(url))');
   assert.ok(apiGuard >= 0 && assetCache > apiGuard, 'API bypass must occur before asset caching');

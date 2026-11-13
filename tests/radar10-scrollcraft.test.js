@@ -21,6 +21,6 @@ test("mobile targets and safe-area padding remain accessible",()=>{
  assert.match(css,/env\(safe-area-inset-bottom\)/);
 });
 test("new shell cache is activated and API bypass remains unchanged",()=>{
- assert.match(sw,/radar-shell-v9\.9\.5-scrollcraft/);
+ assert.match(sw,/radar-shell-v9\.9\.5-original-preview-3d-restore-1/);
  assert.ok(sw.indexOf("if(isApi(url))return;") < sw.indexOf("if(isAsset(url))"));
 });
