@@ -7,7 +7,7 @@ test('vehicle details distinguish schedule-point distance from reported delay an
  assert.ok(app.includes("import {trainScheduledPosition,buildDepartureRows,romeSeconds}"));
  assert.ok(app.includes("detail('Abstand zum Fahrplanpunkt'"));
  assert.ok(app.includes("detail('Positionsalter',formatRelativeAge(feedAgeSeconds(v)))"));
- assert.ok(app.includes("detail('Datenquelle',sourceLabel(v.source)+' · Echtzeitdaten')"));
+ assert.ok(app.includes("detail('Datenquelle',feedSourceLabel(v.source)+' · Echtzeitdaten')"));
  assert.ok(app.includes("detail('Unterschied der Angaben'"));
  assert.ok(app.includes('trainScheduledPosition(v,state.indexes,state.details,state.shapes)'));
 });

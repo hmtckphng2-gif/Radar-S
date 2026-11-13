@@ -221,6 +221,28 @@ export function stopRows(details, tripId, maxRows=120) {
   return entries.slice(0,maxRows).map(([stopId, arr, dep, seq])=>({stopId, name:details.stops?.[stopId]?.[0] || 'Haltestelle '+stopId,
     arrival:formatClock(arr), departure:formatClock(dep), seq}));
 }
+// Resolve the next stop only when GTFS-RT current_status and stop_sequence
+// have an unambiguous meaning. Never infer a stop from coordinates or line alone.
+export function nextStopFromRows(rows, vehicle={}) {
+  if(!Array.isArray(rows)||!rows.length)return null;
+  const status=txt(vehicle.currentStatus).toUpperCase();
+  const incoming=status==='INCOMING_AT'||status==='0';
+  const stopped=status==='STOPPED_AT'||status==='1';
+  const inTransit=status==='IN_TRANSIT_TO'||status==='2';
+  if(!incoming&&!stopped&&!inTransit)return null;
+  const currentId=normalizeStopId(vehicle.currentStopId);
+  const currentById=currentId?rows.find(row=>normalizeStopId(row.stopId)===currentId):null;
+  if(currentId&&!currentById)return null;
+  const sequence=Number(vehicle.currentStopSequence);
+  const hasSequence=Number.isFinite(sequence)&&sequence>0;
+  if(hasSequence&&currentById&&Number(currentById.seq)!==sequence)return null;
+  const baseSequence=hasSequence?sequence:Number(currentById?.seq);
+  if(!Number.isFinite(baseSequence)||baseSequence<=0)return null;
+  if(incoming||inTransit)return rows.find(row=>Number(row.seq)===baseSequence)||null;
+  return rows.filter(row=>Number.isFinite(Number(row.seq))&&Number(row.seq)>baseSequence)
+    .sort((a,b)=>Number(a.seq)-Number(b.seq))[0]||null;
+}
+
 // Project a GPS/estimated point onto its own GTFS trip shape; no nearest arbitrary railway.
 export function shapeProject(path, lat, lon) {
   if (!Array.isArray(path) || path.length < 2) return null;
