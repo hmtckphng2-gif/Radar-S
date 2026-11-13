@@ -18,5 +18,5 @@ test('the map incident ticker and delay legend do not cover the live map',()=>{
 test('changed map and overlay assets have fresh cache keys',()=>{
  const html=read('index.html');
  assert.ok(html.includes('rev6=dark-base-map-2'));
- assert.ok(html.includes('rev=dark-map-clean-ui-1'));
+ assert.ok(html.includes('rev=dark-map-clean-ui-2'));
 });
