@@ -14,3 +14,9 @@ body.sr-chat-open{overflow:hidden}body.sr-chat-open footer.stats{visibility:hidd
 
 body.sr-chat-open.sr-chat-keyboard-open .sr-chat-main{padding-bottom:0}
 @media(prefers-reduced-motion:reduce){body.sr-chat-open #sr70Dock{transition:none!important}}
+
+
+/* Keep every assistant reply as one continuous text column, even if global layout styles add columns or grids. */
+#srChatLog .sr-chat-message.assistant{display:block!important;grid-template-columns:minmax(0,1fr)!important;column-count:1!important;column-width:auto!important;columns:1 auto!important;inline-size:100%;max-inline-size:100%;white-space:normal;overflow-wrap:anywhere}
+#srChatLog .sr-chat-message.assistant>*{grid-column:1/-1!important;column-span:none!important;max-inline-size:100%;white-space:normal}
+#srChatLog .sr-chat-message.assistant .sr-chat-summary{display:block!important;column-count:1!important;columns:1 auto!important;white-space:normal;overflow-wrap:anywhere}
