@@ -184,7 +184,7 @@ async function assistantRequest(request,env,url){
   const result=await runFreeAssistantProviders(env,[{role:'system',content:instructions},{role:'user',content:userContent}],facts,request.signal);
   if(result?.errorCode==='invalid_answer'){
     const verifiedFacts=facts.slice(0,4);
-    return fail({summary:'Ich konnte die KI-Erklärung nicht sicher zuordnen. Diese Angaben sind jedoch direkt durch aktuelle Live-Daten belegt:',reasons:verifiedFacts.map(item=>({text:item.text,evidence:[item.id],confidence:'medium'})),options:[],evidenceFacts:verifiedFacts,provider:null,mode:'verified-fallback'},200);
+    return fail({summary:'Ich konnte die KI-Erklärung nicht zuverlässig einer konkreten Fahrt zuordnen. Bitte wähle ein bestimmtes Fahrzeug oder eine Haltestelle und frage erneut.',reasons:[],options:[],evidenceFacts:[],provider:null,mode:'verified-fallback'},200);
   }
   if(!result?.summary){const errors={cancelled:{status:499,message:'Anfrage abgebrochen.'},timeout:{status:504,message:'Die Antwort dauert gerade zu lange. Bitte versuche es erneut.'},model_quota:{status:503,message:'Das KI-Kontingent ist gerade ausgeschöpft. Bitte versuche es später erneut.'},model_unavailable:{status:503,message:'Der Antwortdienst ist gerade nicht erreichbar. Bitte versuche es später erneut.'}};const issue=errors[result?.errorCode]||errors.model_unavailable;return fail({errorCode:result?.errorCode||'model_unavailable',message:issue.message},issue.status);}
   return fail({summary:result.summary,reasons:result.reasons,options:result.options,evidenceFacts:result.evidenceFacts,provider:result.provider,mode:'free-only'},200);
