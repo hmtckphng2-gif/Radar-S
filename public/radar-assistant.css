@@ -20,3 +20,13 @@ body.sr-chat-open.sr-chat-keyboard-open .sr-chat-main{padding-bottom:0}
 #srChatLog .sr-chat-message.assistant{display:block!important;grid-template-columns:minmax(0,1fr)!important;column-count:1!important;column-width:auto!important;columns:1 auto!important;inline-size:100%;max-inline-size:100%;white-space:normal;overflow-wrap:anywhere}
 #srChatLog .sr-chat-message.assistant>*{grid-column:1/-1!important;column-span:none!important;max-inline-size:100%;white-space:normal}
 #srChatLog .sr-chat-message.assistant .sr-chat-summary{display:block!important;column-count:1!important;columns:1 auto!important;white-space:normal;overflow-wrap:anywhere}
+
+/* Force the complete assistant card and its evidence stack into one mobile-safe column. */
+#srChatLog{display:flex!important;flex-direction:column!important;grid-template-columns:minmax(0,1fr)!important;column-count:1!important;column-width:auto!important;columns:1 auto!important;width:100%!important;min-width:0!important}
+#srChatLog>.sr-chat-message{display:block!important;float:none!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;column-count:1!important;columns:1 auto!important}
+#srChatLog>.sr-chat-message.assistant{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:0!important}
+#srChatLog>.sr-chat-message.assistant>*{display:block!important;float:none!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;grid-column:auto!important;column-count:1!important;columns:1 auto!important;writing-mode:horizontal-tb!important}
+#srChatLog .sr-chat-evidence-list{display:flex!important;flex-direction:column!important;gap:10px!important;width:100%!important;min-width:0!important}
+#srChatLog .sr-chat-evidence-list li{display:block!important;width:100%!important;min-width:0!important;overflow-wrap:anywhere!important}
+#srChatLog .sr-chat-followups{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-start!important;gap:8px!important;width:100%!important}
+#srChatLog .sr-chat-chip{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 1 auto!important;width:auto!important;max-width:100%!important;min-width:0!important;white-space:normal!important;word-break:normal!important;overflow-wrap:anywhere!important;writing-mode:horizontal-tb!important;text-align:center!important}
