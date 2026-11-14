@@ -1,0 +1,29 @@
+name: History Collector
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call protected Radar history collector
+        env:
+          HISTORY_COLLECTOR_SECRET: ${{ secrets.HISTORY_COLLECTOR_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HISTORY_COLLECTOR_SECRET}" ]; then
+            echo "Missing repository secret: HISTORY_COLLECTOR_SECRET"
+            exit 1
+          fi
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-all-errors --retry-delay 10 --max-time 120 \
+            --request POST \
+            --header "Authorization: Bearer ${HISTORY_COLLECTOR_SECRET}" \
+            https://radar-s.onrender.com/internal/collect-history
