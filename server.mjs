@@ -2,8 +2,10 @@ import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import { Readable } from 'node:stream';
+import { timingSafeEqual } from 'node:crypto';
 import { createClient } from '@libsql/client';
 import { createTursoD1Adapter } from './db/turso-d1-adapter.mjs';
+import { collectHistory } from './public/radar-history-worker.mjs';
 import worker from './worker.js';
 
 const ROOT = resolve('public');
@@ -108,6 +110,15 @@ async function readBody(request, maxBytes = 1_000_000) {
   return Buffer.concat(chunks);
 }
 
+function validCollectorSecret(request) {
+  const expected = String(process.env.HISTORY_COLLECTOR_SECRET || '');
+  const supplied = String(request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  if (!expected || !supplied) return false;
+  const a = Buffer.from(expected);
+  const b = Buffer.from(supplied);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 const server = createServer(async (incoming, outgoing) => {
   try {
     const host = incoming.headers.host || 'localhost';
@@ -120,6 +131,36 @@ const server = createServer(async (incoming, outgoing) => {
       else if (value !== undefined) headers.set(name, String(value));
     }
     const body = ['GET', 'HEAD'].includes(method) ? undefined : await readBody(incoming);
+
+    if (new URL(url).pathname === '/internal/collect-history') {
+      let status = 200;
+      let payload;
+      if (method !== 'POST') {
+        status = 405;
+        payload = { ok: false, error: 'Method not allowed' };
+      } else if (!validCollectorSecret(new Request(url, { method, headers }))) {
+        status = 401;
+        payload = { ok: false, error: 'Unauthorized' };
+      } else if (env.HISTORY_COLLECTOR_ENABLED !== 'true') {
+        status = 503;
+        payload = { ok: false, error: 'History collector is disabled' };
+      } else if (env.HISTORY_DB_STATUS !== 'ready' || !env.HISTORY_DB) {
+        status = 503;
+        payload = { ok: false, error: 'History database is not ready' };
+      } else {
+        try {
+          payload = await collectHistory(env);
+          if (!payload?.ok) status = 503;
+        } catch (error) {
+          status = 500;
+          payload = { ok: false, error: 'Collection failed', type: error?.name || 'Error' };
+          console.error('History collection failed:', error?.name || 'Error');
+        }
+      }
+      outgoing.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' });
+      return outgoing.end(JSON.stringify(payload));
+    }
+
     const request = new Request(url, { method, headers, body: body?.length ? body : undefined });
     const response = await worker.fetch(request, env);
     outgoing.statusCode = response.status;
