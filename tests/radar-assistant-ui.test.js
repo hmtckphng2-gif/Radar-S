@@ -18,7 +18,7 @@ test('GPS requires explicit one-time permission and confirms a nearby vehicle be
  const ui=read('radar-assistant-ui.mjs');assert.match(ui,/Standort einmalig freigeben/);assert.match(ui,/getCurrentPosition/);assert.match(ui,/Welches dieser Fahrzeuge ist deins/);assert.match(ui,/vehicleTripId/);assert.doesNotMatch(ui,/latitude:pos\.coords|longitude:pos\.coords|localStorage|sessionStorage/);
 });
 test('answers hide raw evidence text and can open a matching vehicle on the map',()=>{
- const ui=read('radar-assistant-ui.mjs');assert.doesNotMatch(ui,/Woher\s+weiß\s+ich\s+das\?/);assert.ok(ui.includes('function ageLabel(value)'));assert.match(ui,/Auf Karte zeigen/);assert.match(ui,/SuedtirolRadar50\?\.openVehicle/);assert.match(ui,/Alternativen zeigen/);assert.match(ui,/getStationList/);assert.match(ui,/openStationFromMap/);
+ const ui=read('radar-assistant-ui.mjs');assert.doesNotMatch(ui,/Woher\s+weiß\s+ich\s+das\?/);assert.ok(ui.includes('function ageLabel(value)'));assert.match(ui,/SuedtirolRadar50\?\.openVehicle/);assert.match(ui,/Alternativen zeigen/);assert.match(ui,/getStationList/);assert.match(ui,/openStationFromMap/);
 });
 test('chat history is memory-only and API requests bypass browser cache',()=>{
  const ui=read('radar-assistant-ui.mjs');assert.match(ui,/history=\[\]/);assert.match(ui,/cache:'no-store'/);assert.doesNotMatch(ui,/localStorage|sessionStorage|indexedDB/);
