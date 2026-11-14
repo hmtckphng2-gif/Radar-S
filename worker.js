@@ -138,12 +138,18 @@ async function assistantRequest(request,env,url){
   let facts=buildAssistantEvidence({positions,updates,alerts:alertResult,indexes,question:input.question,now:Date.now()});
   if(vehicleTripId){facts=facts.filter(item=>(item.tripId===vehicleTripId&&(!vehicleSource||item.source===vehicleSource))||(item.type==='service-alert'&&vehicleRouteId&&Array.isArray(item.routeIds)&&item.routeIds.includes(vehicleRouteId)));}
   let historicalData=null;
-  if(vehicleTripId&&env.HISTORY_DB){
+  if(vehicleTripId){
     try{
       const historySource=({sta:'sta',sta_direct:'sta',trentino:'trentino',trains:'trains'})[vehicleSource]||vehicleSource;
-      const historyUrl=new URL('/api/history/analytics?trip='+encodeURIComponent(vehicleTripId)+'&hours=168'+(historySource?'&source='+encodeURIComponent(historySource):''),url.origin);
-      const historyResponse=await historyApi(new Request(historyUrl.toString()),env);
-      if(historyResponse.ok)historicalData=await historyResponse.json();
+      const historyPath='/api/history/analytics?trip='+encodeURIComponent(vehicleTripId)+'&hours=168'+(historySource?'&source='+encodeURIComponent(historySource):'');
+      let historyResponse;
+      if(env.HISTORY_DB){
+        historyResponse=await historyApi(new Request(new URL(historyPath,url.origin).toString()),env);
+      }else{
+        const historyBase=String(env.HISTORY_API_BASE||'https://radar-s.onrender.com').replace(/\/+$/,'');
+        historyResponse=await fetch(new URL(historyPath,historyBase),{headers:{accept:'application/json'},cache:'no-store',signal:request.signal?AbortSignal.any([request.signal,AbortSignal.timeout(9000)]):AbortSignal.timeout(9000)});
+      }
+      if(historyResponse?.ok)historicalData=await historyResponse.json();
     }catch{historicalData=null;}
   }
   const historySamples=Number(historicalData?.uniqueForecasts)||0;
