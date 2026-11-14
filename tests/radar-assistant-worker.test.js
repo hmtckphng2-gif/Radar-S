@@ -25,10 +25,10 @@ test('assistant uses fresh live facts, falls back from Groq quota to Cloudflare,
  try{const response=await worker.fetch(request(),env),body=await response.json();assert.equal(response.status,200);assert.equal(body.provider,'cloudflare');assert.equal(mocks.groqCalls(),1);assert.equal(cloudflareCalls,1);assert.equal(body.evidenceFacts.length,1)}finally{mocks.restore()}
 });
 
-test('assistant falls back to directly verified live facts when model citations fail validation',async()=>{
+test('assistant returns a concise unassigned-vehicle fallback when model citations fail validation',async()=>{
  const mocks=mockFetch();const oldFetch=globalThis.fetch;globalThis.fetch=async url=>{if(String(url).includes('api.groq.com'))return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify({summary:'Zug 16685 hat +99 Minuten.',evidence:['invented-id'],reasons:[],options:[]})}}]}),{status:200,headers:{'content-type':'application/json'}});return oldFetch(url)};
  const env={ASSISTANT_ENABLED:'true',GROQ_FREE_TIER_ONLY:'true',GROQ_API_KEY:'test-key',AI_JOURNEY_LIMITER:limiter,ASSETS:mockAssets()};
- try{const response=await worker.fetch(request(),env),body=await response.json();assert.equal(response.status,200);assert.equal(body.mode,'verified-fallback');assert.equal(body.provider,null);assert.match(body.summary,/direkt durch aktuelle Live-Daten belegt/);assert.ok(body.evidenceFacts.length>0);assert.ok(body.reasons.every(reason=>reason.evidence.every(id=>body.evidenceFacts.some(fact=>fact.id===id))));assert.equal(JSON.stringify(body).includes('99 Minuten'),false)}finally{globalThis.fetch=oldFetch;mocks.restore()}
+ try{const response=await worker.fetch(request(),env),body=await response.json();assert.equal(response.status,200);assert.equal(body.mode,'verified-fallback');assert.equal(body.provider,null);assert.match(body.summary,/nicht zuverlässig einer konkreten Fahrt zuordnen/);assert.equal(body.evidenceFacts,undefined);assert.equal(body.reasons,undefined);assert.equal(body.options,undefined);assert.equal(JSON.stringify(body).includes('99 Minuten'),false)}finally{globalThis.fetch=oldFetch;mocks.restore()}
 });
 
 test('assistant does not call a model when no current GTFS evidence exists',async()=>{
@@ -49,12 +49,12 @@ test('assistant never invents a delay cause when no official alert supports it',
  const oldFetch=globalThis.fetch;globalThis.fetch=async url=>{const u=String(url);if(u.includes('api.groq.com'))groqCalls++;return mocksFetch(u)};
  function mocksFetch(u){if(u.includes('service-alerts'))return new Response(JSON.stringify(emptyFeed),{headers:{'content-type':'application/json'}});if(u.includes('trip-updates'))return new Response(JSON.stringify(u.includes('trenitalia')?updateFeed:emptyFeed),{headers:{'content-type':'application/json'}});return new Response(JSON.stringify(u.includes('trenitalia')?positionFeed:emptyFeed),{headers:{'content-type':'application/json'}})}
  const env={ASSISTANT_ENABLED:'true',GROQ_FREE_TIER_ONLY:'true',GROQ_API_KEY:'test-key',CLOUDFLARE_AI_FREE_TIER_ONLY:'true',AI_JOURNEY_LIMITER:limiter,ASSETS:mockAssets(),AI:{run:async()=>{cloudflareCalls++;throw Error('Model must not be called for unsupported cause')}}};
- try{const response=await worker.fetch(request('/api/assistant',{question:'Warum ist Zug 16685 verspätet?'}),env),body=await response.json();assert.equal(response.status,200);assert.equal(body.provider,null);assert.equal(body.mode,'rule-based');assert.match(body.summary,/Grund unbekannt/);assert.equal(groqCalls,0);assert.equal(cloudflareCalls,0)}finally{globalThis.fetch=oldFetch;mocks.restore()}
+ try{const response=await worker.fetch(request('/api/assistant',{question:'Warum ist Zug 16685 verspÃ¤tet?'}),env),body=await response.json();assert.equal(response.status,200);assert.equal(body.provider,null);assert.equal(body.mode,'rule-based');assert.match(body.summary,/Grund unbekannt/);assert.equal(groqCalls,0);assert.equal(cloudflareCalls,0)}finally{globalThis.fetch=oldFetch;mocks.restore()}
 });
 
 test('assistant fails closed with a friendly message when the rate-limit binding is missing',async()=>{
  let calls=0;const old=globalThis.fetch;globalThis.fetch=async()=>{calls++;throw Error('must not fetch')};
- try{const env={ASSISTANT_ENABLED:'true',GROQ_FREE_TIER_ONLY:'true',GROQ_API_KEY:'key'};const response=await worker.fetch(request(),env);const body=await response.json();assert.equal(response.status,503);assert.equal(body.errorCode,'assistant_unavailable');assert.match(body.message,/gerade nicht verfügbar/i);assert.equal(body.message.includes('Free rate limiter'),false);assert.equal(calls,0);assert.equal(response.headers.get('cache-control'),'no-store')}finally{globalThis.fetch=old}
+ try{const env={ASSISTANT_ENABLED:'true',GROQ_FREE_TIER_ONLY:'true',GROQ_API_KEY:'key'};const response=await worker.fetch(request(),env);const body=await response.json();assert.equal(response.status,503);assert.equal(body.errorCode,'assistant_unavailable');assert.match(body.message,/gerade nicht verfÃ¼gbar/i);assert.equal(body.message.includes('Free rate limiter'),false);assert.equal(calls,0);assert.equal(response.headers.get('cache-control'),'no-store')}finally{globalThis.fetch=old}
 });
 
 test('assistant reports a retry window when its rate limit is reached',async()=>{
@@ -95,7 +95,7 @@ test('assistant status and every assistant response are never cacheable',async()
 
 test('live-source explanation distinguishes real-time feeds from estimated Trenitalia positions',async()=>{
  const mocks=mockFetch();const env={ASSISTANT_ENABLED:'true',GROQ_FREE_TIER_ONLY:'true',GROQ_API_KEY:'key',AI_JOURNEY_LIMITER:limiter,ASSETS:mockAssets()};
- try{const response=await worker.fetch(request('/api/assistant',{question:'Welche Daten sind wirklich live?'}),env),body=await response.json();assert.equal(response.status,200);assert.match(body.summary,/STA und Trentino liefern GTFS-Realtime-Fahrzeugpositionen/);assert.match(body.summary,/Trenitalia-Positionen behandle ich nicht als verlässlichen GPS-Nachweis/);assert.equal(body.provider,null)}finally{mocks.restore()}
+ try{const response=await worker.fetch(request('/api/assistant',{question:'Welche Daten sind wirklich live?'}),env),body=await response.json();assert.equal(response.status,200);assert.match(body.summary,/STA und Trentino liefern GTFS-Realtime-Fahrzeugpositionen/);assert.match(body.summary,/Trenitalia-Positionen behandle ich nicht als verlÃ¤sslichen GPS-Nachweis/);assert.equal(body.provider,null)}finally{mocks.restore()}
 });
 
 test('assistant rate limit uses the random session cookie, not a shared IP address',async()=>{
