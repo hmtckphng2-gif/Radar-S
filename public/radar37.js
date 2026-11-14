@@ -197,6 +197,12 @@
       const fav=make('button','radar37-smallbtn',isFavorite(entry)?'★ Linie gespeichert':'☆ Linie merken');
       fav.type='button';fav.onclick=()=>toggleFavorite(entry);buttons.append(fav);
     }
+    if(v.tripId&&v.source){
+      const ai=make('button','radar37-smallbtn','✦ Mit Radar AI analysieren');
+      ai.type='button';
+      ai.onclick=()=>window.SuedtirolRadarAssistant?.open?.({tripId:String(v.tripId),routeId:String(v.routeId||''),source:String(v.source),name:text(v.name),kind:v.kind});
+      buttons.append(ai);
+    }
     el.append(buttons);
   }
   let trackIsDrawn = false;
