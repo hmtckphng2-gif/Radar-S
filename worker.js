@@ -1,4 +1,5 @@
 import {collectHistory,historyApi} from './public/radar-history-worker.mjs';
+import {parseSuedtirolRss,parseTrenitaliaNotices} from './public/traffic-alerts.mjs';
 import {resolveTrain,normalizeTrain,romeTime} from './public/train-platforms-logic.mjs';
 import {rfiStation,parseMonitor} from './public/rfi-platforms-logic.mjs';
 import {buildSnapshot} from './public/radar66-api.mjs';
@@ -214,6 +215,39 @@ async function trainPlatforms(request,url,name){
     return new Response(request.method==='HEAD'?null:JSON.stringify({...data,diagnostic:{version:'5.4.3',stage:'complete',elapsedMs:Date.now()-started}}),{headers:{...JSON_HEADERS,'cache-control':'no-store','x-radar-platform-source':'ViaggiaTreno'}});
   }catch(error){return failed(error?.name==='TimeoutError'?'timeout':diagnostic.stage==='parse'?'invalid-json':'network',502,String(error?.message||'Request failed').replace(/[\r\n]+/g,' ').slice(0,180))}
 }
+async function fetchNoticeText(url){
+  const response=await fetch(url,{headers:{accept:'application/rss+xml, application/xml, text/html, text/plain, */*'},
+    signal:AbortSignal.timeout(9000),cf:{cacheEverything:true,cacheTtl:30}});
+  if(!response.ok)throw new Error('HTTP '+response.status);
+  return await response.text();
+}
+async function trafficAlerts(request){
+  const feeds=[
+    {key:'vmz',url:'https://api.integrations.services.siag.it/sa04/aprov/vmz/rss/v1?lang=de&type=10'},
+    {key:'trenitalia',url:'https://www.viaggiatreno.it/infomobilita/resteasy/viaggiatreno/infomobilitaRSS/false'},
+    {key:'works',url:'https://www.viaggiatreno.it/infomobilita/resteasy/viaggiatreno/infomobilitaRSS/true'}
+  ];
+  const results=await Promise.allSettled(feeds.map(feed=>fetchNoticeText(feed.url)));
+  const items=[],sources={};
+  results.forEach((result,index)=>{
+    const key=feeds[index].key;
+    if(result.status!=='fulfilled'){sources[key]={status:'error'};return;}
+    sources[key]={status:'ok'};
+    const parsed=key==='vmz'?parseSuedtirolRss(result.value):
+      parseTrenitaliaNotices(result.value,key==='works'?'works':'circulation');
+    items.push(...parsed);
+  });
+  const unique=[...new Map(items.map(item=>[item.id,item])).values()]
+    .sort((a,b)=>Number(Boolean(b.priority))-Number(Boolean(a.priority))||
+      (Date.parse(b.publishedAt||'')||0)-(Date.parse(a.publishedAt||'')||0));
+  const payload={schema:'radar.traffic-alerts.v1',generatedAt:new Date().toISOString(),
+    header:{timestamp:Math.floor(Date.now()/1000)},sources,items:unique};
+  return new Response(request.method==='HEAD'?null:JSON.stringify(payload),{
+    status:results.every(r=>r.status!=='fulfilled')?502:200,
+    headers:{...JSON_HEADERS,'cache-control':'no-store','x-radar-platform-source':'VMZ+ViaggiaTreno'}
+  });
+}
+
 export default {
   async scheduled(event,env,ctx){
     if(!env.HISTORY_DB)return;
@@ -277,6 +311,7 @@ export default {
     if (request.method !== 'GET' && request.method !== 'HEAD') return respond({ error: 'Method not allowed' }, 405);
     if(url.pathname.startsWith('/api/history/'))return historyApi(request,env);
     const name = url.pathname.substring(5);
+    if(name==='traffic-alerts')return trafficAlerts(request);
     if(name==='v1/collector/sta'){
       const started=Date.now();
       try{

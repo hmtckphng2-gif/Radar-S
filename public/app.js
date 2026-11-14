@@ -23,7 +23,7 @@ const DIRECT_POSITION_SOURCES=['sta_direct'];
 const POSITION_SOURCES=[...SOURCES,...DIRECT_POSITION_SOURCES];
 const DIRECT_UPDATE_SOURCES=['sta_direct_updates'];
 const ALL_UPDATE_SOURCES=[...UPDATE_SOURCES,...DIRECT_UPDATE_SOURCES];
-const ALERT_SOURCES=['sta_alerts'];
+const ALERT_SOURCES=['sta_alerts','traffic_alerts'];
 const ENDPOINTS=[...POSITION_SOURCES,...ALL_UPDATE_SOURCES,...ALERT_SOURCES];
 let lastMotionFrame = 0;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -252,26 +252,28 @@ function updateAlertTicker(){
   const all=[];
   for(const source of Object.keys(state.alerts)){
     for(const a of state.alerts[source]){
-      all.push({...a, source});
+      all.push({...a, source:a.sourceName||source});
     }
   }
   if(all.length===0){ticker.hidden=true;return;}
   ticker.hidden=false;
-  countEl.textContent=all.length+' Störung'+(all.length>1?'en':'')+' im System';
+  countEl.textContent=all.length+' Verkehrsmeldung'+(all.length>1?'en':'')+' im System';
   listEl.innerHTML='';
   const causeNames={1:'Verspätung',2:'Verspätung',3:'Ausfall',4:'Ausfall',5:'Verspätung',6:'Verspätung',7:'Verspätung',8:'Störung',9:'Störung'};
   const nowSec=Date.now()/1000;
   for(const a of all.slice(0,8)){
     const item=document.createElement('div');
     item.className='alert-item';
-    const cName=causeNames[a.cause]||'Störung';
+    const cName=a.category||causeNames[a.cause]||'Störung';
     const effName=a.effect===1?'Verspätung':a.effect===2?'Ausfall':a.effect===3?'Verspätung':a.effect===4?'Ausfall':a.effect===5?'Verspätung':a.effect===6?'Verspätung':'Störung';
     // Datenaktualität berechnen
-    const ageSec=a.fetchedAt?Math.max(0,Math.floor(nowSec-a.fetchedAt/1000)):null;
+    const publishedMs=a.publishedAt?Date.parse(a.publishedAt):NaN;
+    const ageBase=Number.isFinite(publishedMs)?publishedMs:(a.fetchedAt||0);
+    const ageSec=ageBase?Math.max(0,Math.floor(nowSec-ageBase/1000)):null;
     const ageStr=ageSec!==null?ageSec<60?'gerade':ageSec<3600?Math.floor(ageSec/60)+' Min.':Math.floor(ageSec/3600)+' Std.':'-';
     // Schweregrad-Farbe
     let sevClass='alert-sev-medium';
-    if(a.cause===3||a.cause===4||a.effect===2||a.effect===4)sevClass='alert-sev-high';
+    if(a.priority||a.cause===3||a.cause===4||a.effect===2||a.effect===4)sevClass='alert-sev-high';
     else if(a.cause===1||a.cause===2||a.cause===5||a.effect===1||a.effect===5)sevClass='alert-sev-low';
     // Betroffene Linien aus informed_entity (route_id)
     // route_id aus dem GTFS-RT Feed sind technische IDs, keine lesbaren Liniennummern.
@@ -281,7 +283,8 @@ function updateAlertTicker(){
       if(ent.route_id)lineCount++;
     }
     const lineStr=lineCount?'Betroffene Linien: '+lineCount:'';
-    item.innerHTML='<span class="alert-chip alert-sev '+sevClass+'">'+cName+'</span>'+escapeHtml(a.header)+(a.description?': '+escapeHtml(a.description.substring(0,70)):'')+(lineStr?' <span class="alert-lines">'+lineStr+'</span>':'')+'<span class="alert-age">'+ageStr+' · '+sourceLabel(a.source)+'</span>';
+    const detailUrl=typeof a.url==='string'&&a.url.startsWith('https://')?a.url:'';
+    item.innerHTML='<span class="alert-chip alert-sev '+sevClass+'">'+escapeHtml(cName)+'</span>'+escapeHtml(a.header)+(a.description?': '+escapeHtml(a.description.substring(0,130)):'')+(lineStr?' <span class="alert-lines">'+lineStr+'</span>':'')+'<span class="alert-age">'+escapeHtml(ageStr)+' · '+escapeHtml(a.source)+'</span>'+(detailUrl?' <a class="alert-details" href="'+escapeHtml(detailUrl)+'" target="_blank" rel="noopener noreferrer">Details ↗</a>':'');
     listEl.appendChild(item);
   }
   // Einzelner Schließen-Button für das gesamte Ticker-Panel
@@ -794,7 +797,12 @@ async function refreshFeeds(){
     // Alerts verarbeiten (gelöschte Alert-IDs werden ausgefiltert)
     for(const source of ALERT_SOURCES){
       if(!ok[source])continue;
-      const parsed=parseAlerts(ok[source],source,now);
+      const parsed=source==='traffic_alerts'
+        ? (Array.isArray(ok[source]?.items)?ok[source].items:[]).map(item=>({
+            ...item,header:item.title||'Verkehrsmeldung',cause:null,effect:null,
+            fetchedAt:now
+          }))
+        : parseAlerts(ok[source],source,now);
       state.alerts[source]=parsed.filter(a=>!state.dismissedAlerts.has(a.id));
     }
     // Alte Alerts entfernen wenn Feed nicht mehr antwortet
