@@ -561,6 +561,7 @@ function mapTarget(v){
   return {lat:v.lat,lon:v.lon,path:null,along:null};
 }
 function stopJob(key){state.jobs.delete(key);}
+let frameId = 0;
 function requestMotionFrame(){if(!frameId)frameId=requestAnimationFrame(animationLoop);}
 function animationLoop(now){
   frameId=0;
