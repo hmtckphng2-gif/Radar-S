@@ -66,7 +66,7 @@ async function healthyAssistantProviders(env){
 
 async function assistantJson(url,source,signal){
   const headers=source==='sta_direct'||source==='sta_direct_updates'||source==='sta_alerts'?{accept:'application/json'}:{accept:'application/json','X-BusOne-Client':'Suedtirol Radar read-only assistant','X-BusOne-Use':'personal'};
-  const requestSignal=signal?AbortSignal.any([signal,AbortSignal.timeout(7000)]):AbortSignal.timeout(7000);
+  const requestSignal=signal?AbortSignal.any([signal,AbortSignal.timeout(10000)]):AbortSignal.timeout(10000);
   const response=await fetch(url,{headers,signal:requestSignal,cf:{cacheEverything:true,cacheTtl:5}});
   if(!response.ok)throw Error('Feed HTTP '+response.status);
   if(!(response.headers.get('content-type')||'').toLowerCase().includes('json'))throw Error('Feed JSON required');
@@ -87,7 +87,7 @@ async function runFreeAssistantProviders(env,messages,facts,signal){
     try{
       let answer='';
       if(provider==='groq'){
-        const response=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{authorization:'Bearer '+env.GROQ_API_KEY,'content-type':'application/json'},body:JSON.stringify({model:'openai/gpt-oss-20b',messages,temperature:0.15,max_tokens:360,response_format:{type:'json_object'}}),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(12000)]):AbortSignal.timeout(12000)});
+        const response=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{authorization:'Bearer '+env.GROQ_API_KEY,'content-type':'application/json'},body:JSON.stringify({model:'openai/gpt-oss-20b',messages,temperature:0.15,max_tokens:360,response_format:{type:'json_object'}}),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(20000)]):AbortSignal.timeout(20000)});
         if(response.status===429){sawQuota=true;continue;}
         if(!response.ok){sawFailure=true;continue;}
         const result=await response.json();answer=result?.choices?.[0]?.message?.content||'';
@@ -147,7 +147,7 @@ async function assistantRequest(request,env,url){
         historyResponse=await historyApi(new Request(new URL(historyPath,url.origin).toString()),env);
       }else{
         const historyBase=String(env.HISTORY_API_BASE||'https://radar-s.onrender.com').replace(/\/+$/,'');
-        historyResponse=await fetch(new URL(historyPath,historyBase),{headers:{accept:'application/json'},cache:'no-store',signal:request.signal?AbortSignal.any([request.signal,AbortSignal.timeout(9000)]):AbortSignal.timeout(9000)});
+        historyResponse=await fetch(new URL(historyPath,historyBase),{headers:{accept:'application/json'},cache:'no-store',signal:request.signal?AbortSignal.any([request.signal,AbortSignal.timeout(45000)]):AbortSignal.timeout(45000)});
       }
       if(historyResponse?.ok)historicalData=await historyResponse.json();
     }catch{historicalData=null;}
