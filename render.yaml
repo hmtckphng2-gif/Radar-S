@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: suedtirol-radar-backend
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npm run check && npm test
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: false
+    envVars:
+      - key: ASSISTANT_ENABLED
+        value: "true"
+      - key: GROQ_FREE_TIER_ONLY
+        value: "true"
+      - key: GROQ_API_KEY
+        sync: false
