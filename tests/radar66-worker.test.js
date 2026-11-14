@@ -7,3 +7,18 @@ test('v1 vehicles returns a source-labelled normalized read-only snapshot',async
 test('v1 diagnostics provides counts but does not require unbounded telemetry',async()=>{const old=globalThis.fetch;globalThis.fetch=async()=>reply();try{const r=await worker.fetch(new Request('https://radar.test/api/v1/diagnostics'),{});assert.equal(r.status,200);const d=await r.json();assert.ok(d.diagnostics.count>=1);assert.equal(d.vehicles,undefined)}finally{globalThis.fetch=old}});
 test('v1 vehicles fails closed when no current upstream works',async()=>{const old=globalThis.fetch;globalThis.fetch=async()=>new Response('{}',{status:503,headers:{'content-type':'application/json'}});try{const r=await worker.fetch(new Request('https://radar.test/api/v1/vehicles'),{});assert.equal(r.status,503);assert.equal((await r.json()).error,'No current vehicle feeds available')}finally{globalThis.fetch=old}});
 test('model API excludes guesses and serves documented train types separately',async()=>{const assets={fetch:async(req)=>new Response(req.url.endsWith('train-model-catalog.json')?JSON.stringify({types:[{id:'sample',name:'Example',source:'https://example.com'}]}):JSON.stringify({by_train:{'101':{confidence:'confirmed',name:'Known',source:'https://provider.example'},'999':{confidence:'guessed',name:'Unverified',source:'https://untrusted.example'}}}),{headers:{'content-type':'application/json'}})};const r=await worker.fetch(new Request('https://radar.test/api/v1/models'),{ASSETS:assets});assert.equal(r.status,200);const d=await r.json();assert.equal(d.count,1);assert.equal(d.byTrain['999'],undefined);assert.equal(d.types.length,1)});
+
+test('v1 snapshot identifies BusOne requests with a project contact',async()=>{
+ const old=globalThis.fetch,calls=[];
+ globalThis.fetch=async(url,init)=>{calls.push({url:String(url),init});return reply()};
+ try{
+  const r=await worker.fetch(new Request('https://radar.test/api/v1/vehicles'),{});
+  assert.equal(r.status,200);
+  const busone=calls.filter(call=>call.url.includes('proxy.busone.app'));
+  assert.equal(busone.length,3);
+  for(const call of busone){
+   assert.match(call.init.headers['X-BusOne-Client'],/github\.com\/hmtckphng2-gif\/Radar-S/);
+   assert.equal(call.init.headers['X-BusOne-Use'],'personal');
+  }
+ }finally{globalThis.fetch=old}
+});

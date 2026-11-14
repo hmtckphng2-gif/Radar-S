@@ -6,6 +6,11 @@ import {buildSnapshot} from './public/radar66-api.mjs';
 import {buildAssistantEvidence,validateAssistantResult,romeServiceDay} from './public/radar-assistant-logic.mjs';
 import {normalizeStaVehicleFeed,STA_VEHICLE_POSITIONS_URL} from './public/radar10-collector.mjs';
 /** Read-only transit proxies, with fixed upstream hosts and bounded caching. */
+const BUSONE_CONTACT='https://github.com/hmtckphng2-gif/Radar-S';
+function busOneClient(env){
+  const configured=String(env.BUSONE_CLIENT||'Suedtirol Radar').trim();
+  return (/(?:https?:\/\/|mailto:|@)/i.test(configured)?configured:configured+'; '+BUSONE_CONTACT).slice(0,180);
+}
 const FEEDS = Object.freeze({
   sta: 'https://proxy.busone.app/sta/gtfs-rt/vehicle-positions.json',
   sta_direct: 'https://gtfs.api.opendatahub.com/v1/realtime/sta-time-tables/vehicle-positions',
@@ -326,11 +331,11 @@ export default {
       }
     }
     if(name==='v1/vehicles'||name==='v1/diagnostics'){
-      const client=String(env.BUSONE_CLIENT||'Suedtirol Radar read-only transit viewer').slice(0,180);
+      const client=busOneClient(env);
       const snapshot=await buildSnapshot(async source=>{
         const upstream=await fetch(FEEDS[source],{
           headers:source==='sta_direct'?{'accept':'application/json'}:{'accept':'application/json','X-BusOne-Client':client,'X-BusOne-Use':'personal'},
-          signal:AbortSignal.timeout(9000),cf:{cacheEverything:true,cacheTtl:15}});
+          signal:AbortSignal.timeout(20000),cf:{cacheEverything:true,cacheTtl:10}});
         const contentType=upstream.headers.get('content-type')||'';
         if(!upstream.ok){const error=Error('HTTP '+upstream.status);error.httpStatus=upstream.status;error.contentType=contentType;throw error;}
         if(!contentType.toLowerCase().includes('json')){const error=Error('Invalid JSON content type');error.httpStatus=upstream.status;error.contentType=contentType;throw error;}
@@ -365,7 +370,7 @@ export default {
     if(name.startsWith('train-platforms/'))return trainPlatforms(request,url,name);
     if (name === 'health') return respond({ ok: true, version:'5.4.3', status: 'Proxy bereit (kein Live-Feed-Test)', feeds: Object.keys(FEEDS), time: new Date().toISOString() }, 200, { 'cache-control': 'no-store' });
     if (!Object.hasOwn(FEEDS, name)) return respond({ error: 'Unknown feed' }, 404);
-    const client = String(env.BUSONE_CLIENT || 'Suedtirol Radar / personal transit viewer; https://github.com/hmtckphng2-gif/Radar-S').slice(0, 180);
+    const client = busOneClient(env);
     try {
       const upstream = await fetch(FEEDS[name], {
         headers: name.startsWith('sta_direct') ? { 'accept': 'application/json' } : { 'accept': 'application/json', 'X-BusOne-Client': client, 'X-BusOne-Use': 'personal' },
