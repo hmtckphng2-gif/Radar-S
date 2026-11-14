@@ -252,7 +252,7 @@ function updateAlertTicker(){
   const all=[];
   for(const source of Object.keys(state.alerts)){
     for(const a of state.alerts[source]){
-      all.push({...a, source:a.sourceName||source});
+      all.push({...a, source:a.sourceName||sourceLabel(source)});
     }
   }
   if(all.length===0){ticker.hidden=true;return;}
