@@ -28,6 +28,7 @@
   "vars": {
     "ASSISTANT_ENABLED": "true",
     "GROQ_FREE_TIER_ONLY": "true",
-    "CLOUDFLARE_AI_FREE_TIER_ONLY": "true"
+    "CLOUDFLARE_AI_FREE_TIER_ONLY": "true",
+    "HISTORY_API_BASE": "https://radar-s.onrender.com"
   }
 }
