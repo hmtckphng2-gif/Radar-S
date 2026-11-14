@@ -140,7 +140,7 @@ async function assistantRequest(request,env,url){
   let historicalData=null;
   if(vehicleTripId&&env.HISTORY_DB){
     try{
-      const historySource=({sta:'sta_updates',sta_direct:'sta_direct_updates',trentino:'trentino_updates',trains:'trains_updates'})[vehicleSource]||vehicleSource;
+      const historySource=({sta:'sta',sta_direct:'sta',trentino:'trentino',trains:'trains'})[vehicleSource]||vehicleSource;
       const historyUrl=new URL('/api/history/analytics?trip='+encodeURIComponent(vehicleTripId)+'&hours=168'+(historySource?'&source='+encodeURIComponent(historySource):''),url.origin);
       const historyResponse=await historyApi(new Request(historyUrl.toString()),env);
       if(historyResponse.ok)historicalData=await historyResponse.json();
