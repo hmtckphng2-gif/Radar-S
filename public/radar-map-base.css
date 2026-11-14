@@ -1,0 +1,10 @@
+/* Darken only the OSM raster tiles. S-Radar's own vehicle, stop, route,
+   selection and track overlays live in separate Leaflet panes and stay crisp. */
+#map .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(.82) saturate(.72) contrast(.92);
+}
+#map .leaflet-control-attribution {
+  color: #c7d0dc;
+  background: rgba(12, 17, 25, .78);
+}
+#map .leaflet-control-attribution a { color: #dce8f5; }
