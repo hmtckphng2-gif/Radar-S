@@ -40,19 +40,15 @@ const manualRefreshDelayMs=3000;
 let selectionRenderToken=0; // Invalidates stale async timetable renders after a new selection.
 let tileErrorCount=0;
 let tileLoadedCount=0;
-let fallbackTilesUsed=false;
 let tileLastHealthyAt=0;
 let initiallyLocated=false;
 const MAP_PLACES={
   sterzing:[46.895,11.433,12], bozen:[46.498,11.354,12], brixen:[46.717,11.485,12],
   meran:[46.670,11.160,12], bruneck:[46.797,11.940,12], trento:[46.068,11.122,12]
 };
-const TILE_PROVIDERS=[
-  {name:'CARTO Dark',url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',options:{subdomains:'abcd',attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a> · © <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>'}},
-  {name:'OpenStreetMap',url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',options:{attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a>'}},
-  {name:'OSM HOT',url:'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',options:{subdomains:'abc',attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a> · Tiles © Humanitarian OpenStreetMap Team'}}
-];
-let tileProviderIndex=0;
+const MAP_BASE_NAME='OpenStreetMap · S-Radar Dark';
+const MAP_BASE_URL='https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const MAP_BASE_ATTRIBUTION='© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a>';
 const RT_MAX_AGE_SEC=15*60;
 
 function safeText(value) { return txt(value); }
@@ -312,7 +308,7 @@ function updateAlertTicker(){
 function showSourceStatus(){
   const lines=ENDPOINTS.map(ep=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0"><b>'+escapeHtml(ep)+'</b><span>'+ (state.statuses[ep]==='ok'?'✓ '+t('status.feedsOk'):'↻ '+(state.statuses[ep]==='old'?t('status.old'):t('status.error')))+'</span></div>').join('');
   const g=SOURCES.filter(indexReady).length;
-  setNotice('<strong>Datenquellen · Südtirol Radar '+(window.SuedtirolRadar80?.version?.()||'')+'</strong><div style="margin:7px 0">'+lines+'</div><div>GTFS-Fahrplandaten: <b>'+g+'/3</b> Regionen geladen.</div><div style="margin-top:5px">'+mapMetrics().inside+' Fahrzeuge hier, '+state.markers.size+' Marker geladen, '+state.vehicles.size+' Positionen im Feed. Kartenanbieter: '+escapeHtml(TILE_PROVIDERS[tileProviderIndex].name)+' ('+tileLoadedCount+' Kacheln geladen, '+tileErrorCount+' Fehler).</div><div style="margin-top:5px">Kartenebenen: <b>'+escapeHtml(leafletLayoutHealth())+'</b>.</div><div style="margin-top:5px">STA/südtirolmobil: BusOne-Positionsfeed plus direkter Open-Data-Hub-Feed. Trentino Trasporti und Trenitalia kommen über BusOne-GTFS-RT; ihre Positionen können geschätzt sein. RFI-Daten sind nur in speziellen Stationsfunktionen verfügbar. Feed-Erreichbarkeit bedeutet nicht bestätigtes GPS.</div>');
+  setNotice('<strong>Datenquellen · Südtirol Radar '+(window.SuedtirolRadar80?.version?.()||'')+'</strong><div style="margin:7px 0">'+lines+'</div><div>GTFS-Fahrplandaten: <b>'+g+'/3</b> Regionen geladen.</div><div style="margin-top:5px">'+mapMetrics().inside+' Fahrzeuge hier, '+state.markers.size+' Marker geladen, '+state.vehicles.size+' Positionen im Feed. Kartenbasis: '+escapeHtml(MAP_BASE_NAME)+' ('+tileLoadedCount+' Kacheln geladen, '+tileErrorCount+' Fehler).</div><div style="margin-top:5px">Kartenebenen: <b>'+escapeHtml(leafletLayoutHealth())+'</b>.</div><div style="margin-top:5px">STA/südtirolmobil: BusOne-Positionsfeed plus direkter Open-Data-Hub-Feed. Trentino Trasporti und Trenitalia kommen über BusOne-GTFS-RT; ihre Positionen können geschätzt sein. RFI-Daten sind nur in speziellen Stationsfunktionen verfügbar. Feed-Erreichbarkeit bedeutet nicht bestätigtes GPS.</div>');
 }
 async function loadIndexes(){
   await Promise.all(SOURCES.map(async source => {
@@ -406,38 +402,17 @@ async function loadDetails(source){
 }
 // Key-free raster sources. Respect cache headers and provider usage terms.
 // Tiles load only for the user's current viewport (no bulk prefetch).
-function createTileLayer(which=0){
-  const provider=TILE_PROVIDERS[which];
-  return L.tileLayer(provider.url,{
+function createTileLayer(){
+  return L.tileLayer(MAP_BASE_URL,{
     minZoom:3,maxZoom:19,maxNativeZoom:19,
     keepBuffer:2,updateWhenIdle:true,updateWhenZooming:false,
-    ...provider.options
+    attribution:MAP_BASE_ATTRIBUTION
   });
-}
-function switchTileProvider(which,reason='manuell'){
-  if(!state.map||which===tileProviderIndex||which<0||which>=TILE_PROVIDERS.length)return;
-  const previous=state.tiles;
-  // Critical: NEVER overlay two partly loaded basemap layers. Their independent
-  // tile containers can create black checkerboard gaps in mobile Safari.
-  if(previous&&state.map.hasLayer(previous))state.map.removeLayer(previous);
-  tileProviderIndex=which;fallbackTilesUsed=true;
-  tileLoadedCount=0;tileErrorCount=0;
-  const next=createTileLayer(which);
-  next.on('tileload',()=>{tileLoadedCount++;tileLastHealthyAt=Date.now()});
-  next.on('tileerror',onTileError);
-  state.tiles=next;
-  next.addTo(state.map);
-  if(state.map.getPane('markerPane'))state.map.getPane('markerPane').style.zIndex='650';
-  state.map.invalidateSize({pan:false});
-  console.info('Radar Kartenquelle:',TILE_PROVIDERS[which].name,reason);
-  setNotice('<strong>Kartenanbieter gewechselt:</strong> '+escapeHtml(TILE_PROVIDERS[which].name)+'. Wenn Kacheln fehlen, tippe auf ↻ oder wechsle mit 🗺 zurück.');
 }
 function onTileError(){
   tileErrorCount++;
-  // Provider changes are only made by the user. Automatic failover previously
-  // mixed tiles from separate layers before either provider had fully loaded.
   if(tileErrorCount===5){
-    setNotice('<strong>Kartenbilder fehlen.</strong> Der Kartenserver liefert einzelne Kacheln nicht. Tippe auf 🗺, um zum anderen Kartenanbieter zu wechseln. Zug- und Busdaten bleiben unabhängig erreichbar.');
+    setNotice('<strong>Kartenbilder fehlen.</strong> OpenStreetMap liefert einzelne Kacheln nicht. Tippe auf ↻, um die aktuelle Ansicht erneut zu laden. Zug- und Busdaten bleiben davon unabhängig.');
   }
 }
 function leafletLayoutHealth(){
@@ -1461,7 +1436,6 @@ function setupControls(){
     renderLinesPanel();
   });
   $('refreshBtnFromBanner').onclick=()=>refreshFeeds();
-  $('tileBtn').onclick=()=>switchTileProvider((tileProviderIndex+1)%TILE_PROVIDERS.length,'Benutzerwahl');
   document.addEventListener('click',e=>{
     if(!e.target.closest('#search')&&!e.target.closest('#searchResults'))$('searchResults')?.classList.add('hidden');
     if($('healthPanel')&&!$('healthPanel').hidden)$('healthPanel').hidden=true;
