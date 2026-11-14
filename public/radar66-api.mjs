@@ -3,6 +3,19 @@ import {parseVehicles} from './core.js';
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs';
 import {feedDiagnostics} from './radar66-logic.mjs';
 const SOURCES=['sta','sta_direct','trentino','trains'];
+const COVERAGE_PROVIDERS=Object.freeze({sta:'STA · BusOne',sta_direct:'STA · Open Data Hub',trentino:'Trentino Trasporti · BusOne',trains:'Trenitalia · BusOne'});
+export function feedCoverage(feeds,status={}){
+ const sources={};
+ for(const [source,provider] of Object.entries(COVERAGE_PROVIDERS)){
+  const feed=feeds[source]?.data;
+  const entities=Array.isArray(feed?.entity)?feed.entity:[];
+  const vehicles=entities.filter(entity=>entity?.vehicle?.position);
+  const trips=[...new Set(vehicles.map(entity=>String(entity?.vehicle?.trip?.tripId||'').trim()).filter(Boolean))].slice(0,20);
+  sources[source]={provider,status:status[source]||feeds[source]?.status||'unknown',vehiclePositions:vehicles.length,tripIds:trips,tripIdCount:new Set(vehicles.map(entity=>String(entity?.vehicle?.trip?.tripId||'').trim()).filter(Boolean)).size,feedTimestamp:Number(feed?.header?.timestamp)||null};
+ }
+ return {sources,notConfigured:[{operator:'ÖBB',reason:'Kein ÖBB-Echtzeitfeed in Radar konfiguriert'},{operator:'RFI',reason:'Nur separate Bahnhof-/Monitorfunktionen; kein zusammengeführter Fahrzeugfeed'}],note:'Feed-Einträge zählen empfangene GTFS-RT-Positionen, nicht zwingend eindeutige Züge oder bestätigte GPS-Standorte.'};
+}
+
 export function normalizeSnapshot(feeds,now=Date.now()){
  const status={},vehicles=[];
  for(const source of SOURCES){const record=feeds[source];if(!record?.data){status[source]=record?.status||'error';continue}
@@ -16,7 +29,7 @@ export function normalizeSnapshot(feeds,now=Date.now()){
   vehicles.push(v);
  }
  }
- const fusion=selectRepresentatives(vehicles);const visible=vehicles.filter(v=>fusion.keys.has(v.key));const diagnostics=feedDiagnostics(vehicles,status,now,fusion);
+ const fusion=selectRepresentatives(vehicles);const visible=vehicles.filter(v=>fusion.keys.has(v.key));const diagnostics=feedDiagnostics(vehicles,status,now,fusion);diagnostics.coverage=feedCoverage(feeds,status);
  return {schema:'radar.snapshot.v1',version:'6.6',generatedAt:new Date(now).toISOString(),positionDisclaimer:'Nur empfangene Feedpositionen, keine extrapolierten GPS-Positionen. Linienbezeichnungen ohne statischen GTFS-Abgleich nicht verifiziert.',sources:status,diagnostics,vehicles:visible.map(v=>({id:v.key,kind:v.kind,lat:v.lat,lon:v.lon,observedAt:v.timestamp?new Date(v.timestamp*1000).toISOString():null,routeId:v.routeId||null,tripId:v.tripId||null,tripStartDate:v.tripStartDate||null,vehicleId:v.vehicleId||null,source:v.source,sourceCount:fusion.sources.get(v.key)?.length||1,positionType:v.positionType,quality:observationQuality(v,now).status,trainNumber:v.kind==='train'&&v.nameVerified?v.name:null,verifiedLine:null}))};
 }
 export async function buildSnapshot(fetchFeed,now=Date.now()){
