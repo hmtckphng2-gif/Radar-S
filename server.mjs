@@ -2,6 +2,8 @@ import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import { Readable } from 'node:stream';
+import { createClient } from '@libsql/client';
+import { createTursoD1Adapter } from './db/turso-d1-adapter.mjs';
 import worker from './worker.js';
 
 const ROOT = resolve('public');
@@ -60,9 +62,40 @@ const env = {
   GROQ_FREE_TIER_ONLY: process.env.GROQ_FREE_TIER_ONLY || 'true',
   GROQ_API_KEY: process.env.GROQ_API_KEY || '',
   BUSONE_CLIENT: process.env.BUSONE_CLIENT || 'Suedtirol Radar read-only transit viewer',
+  HISTORY_COLLECTOR_ENABLED: process.env.HISTORY_COLLECTOR_ENABLED || 'false',
+  HISTORY_DB: null,
+  HISTORY_DB_STATUS: 'not_configured',
   AI_JOURNEY_LIMITER: limiter,
   ASSETS: { fetch: assetFetch }
 };
+
+async function initializeHistoryStorage() {
+  const url = String(process.env.TURSO_DATABASE_URL || '').trim();
+  const authToken = String(process.env.TURSO_AUTH_TOKEN || '').trim();
+  if (!url || !authToken) {
+    env.HISTORY_DB_STATUS = url || authToken ? 'incomplete_configuration' : 'not_configured';
+    console.log('Turso history storage not configured; collector remains disabled.');
+    return;
+  }
+
+  let client;
+  try {
+    client = createClient({ url, authToken, intMode: 'number', concurrency: 5 });
+    const schema = await readFile(resolve('db/history-schema.sql'), 'utf8');
+    await client.executeMultiple(schema);
+    await client.execute('SELECT 1 AS turso_connection_ok');
+    env.HISTORY_DB = createTursoD1Adapter(client);
+    env.HISTORY_DB_STATUS = 'ready';
+    console.log('Turso history database connected; schema verified. Collector remains disabled unless explicitly enabled.');
+  } catch (error) {
+    try { client?.close(); } catch {}
+    env.HISTORY_DB = null;
+    env.HISTORY_DB_STATUS = 'connection_failed';
+    console.error('Turso history initialization failed:', error?.name || 'Error');
+  }
+}
+
+await initializeHistoryStorage();
 
 async function readBody(request, maxBytes = 1_000_000) {
   const chunks = [];
