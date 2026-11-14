@@ -47,14 +47,17 @@ export async function historyApi(request,env){
   catch{return response({enabled:false,reason:'History tables not initialized'},503)}
  }
  if(kind==='analytics'){
-  const stopId=url.searchParams.get('stop');const tripId=url.searchParams.get('trip');
+  const stopId=url.searchParams.get('stop');const tripId=url.searchParams.get('trip');const source=url.searchParams.get('source');
   if(!stopId&&!tripId)return response({error:'stop or trip parameter required'},400);
-  if(stopId&&stopId.length>120||tripId&&tripId.length>120)return response({error:'Invalid identifier'},400);
+  if(stopId&&stopId.length>120||tripId&&tripId.length>120||source&&source.length>50)return response({error:'Invalid identifier'},400);
   const hours=Math.min(168,Math.max(1,Number(url.searchParams.get('hours'))||48));
   const since=Math.floor(Date.now()/1000-hours*3600);
-  const sql=stopId?'SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,collected_at,delay_seconds FROM stop_delay_events WHERE stop_id=? AND collected_at>=? AND delay_seconds IS NOT NULL ORDER BY collected_at DESC LIMIT 1000':'SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,collected_at,delay_seconds FROM stop_delay_events WHERE trip_id=? AND collected_at>=? AND delay_seconds IS NOT NULL ORDER BY collected_at DESC LIMIT 1000';
-  const result=await env.HISTORY_DB.prepare(sql).bind(stopId||tripId,since).all();
-  return response({scope:stopId?'stop':'trip',id:stopId||tripId,hours,...delayTrend(result.results||[]),warning:'One latest feed forecast per trip/stop/event, not independently verified arrivals. Trend days reflect collection time, not travel time.'});
+  const sql=stopId?'SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,collected_at,delay_seconds FROM stop_delay_events WHERE stop_id=? AND collected_at>=?'+(source?' AND source=?':'')+' AND delay_seconds IS NOT NULL ORDER BY collected_at DESC LIMIT 1000':'SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,collected_at,delay_seconds FROM stop_delay_events WHERE trip_id=? AND collected_at>=?'+(source?' AND source=?':'')+' AND delay_seconds IS NOT NULL ORDER BY collected_at DESC LIMIT 1000';
+  const result=await env.HISTORY_DB.prepare(sql).bind(...[stopId||tripId,since,...(source?[source]:[])]).all();
+  const rows=result.results||[];
+  const distinctServiceDays=new Set(rows.map(row=>String(row.trip_start_date||'')).filter(Boolean)).size;
+  const distinctStops=new Set(rows.map(row=>String(row.stop_id||'')).filter(Boolean)).size;
+  return response({scope:stopId?'stop':'trip',id:stopId||tripId,source:source||null,hours,...delayTrend(rows),distinctServiceDays,distinctStops,warning:'One latest feed forecast per trip/stop/event, not independently verified arrivals. Trend days reflect collection time, not travel time.'});
  }
  if(kind==='vehicle'){
   const key=url.searchParams.get('id');if(!key||key.length>160)return response({error:'Valid vehicle id required'},400);
