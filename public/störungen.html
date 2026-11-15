@@ -1,1 +1,271 @@
-<html><body><h1>Test</h1></body></html>
+<!doctype html>
+<html lang="de" data-theme="dark" data-locale="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090e15">
+<meta name="description" content="Südtirol Radar Störungszentrale – Aktive GTFS-RT Service Alerts für Busse und Züge in Südtirol und Trentino.">
+<title>Störungszentrale – Südtirol Radar</title>
+<link rel="caonical" href="https://radar-s.j9fr2vg4vm.workers.dev/störungen.html">
+<link rel="icon" type="image/png" href="/radar60-icon-192.png">
+<link rel="stylesheet" href="/vendor/leaflet-1.9.4.css?v=9.9.5">
+<link rel="stylesheet" href="/styles.css?v=9.9.5&palette=1">
+<link rel="stylesheet" href="/radar-ui.css?v=9.9.5&rev=delay-ring-block-1">
+<link rel="stylesheet" href="/radar10-shell.css?v=9.9.5">
+<style>
+  .störung-page { max-width: 720px; margin: 0 auto; padding: 12px; font-family: system-ui, -apple-system, sans-serif; }
+  .störung-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #343b44; }
+  .störung-header h1 { font-size: 18px; margin: 0; }
+  .störung-badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #1c232c; color: #e4e8ec; border: 1px solid #343b44; }
+  .störung-update { font-size: 12px; color: #8a93a0; margin-left: auto; }
+  .störung-filter { display: flex; x:mode: auto; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #242a32; }
+  .störung-chip { border: 1px solid #343b44; background: #10151c; color: #ab2bd; padding: 6px 12px; border-radius: 20px; font-size: 13px; white-space: nowrap; cursor: pointer; }
+  .störung-chip.active { border-color: #0ea5e9; color: #0ea5e9; }
+  .störung-chip:hover { border-color: 343b44; color: #e4e8ec; }
+  .störung-empty { text-align: center; padding: 40px 16px; color: #8a93a0; }
+  .störung-list { display: flex; flex-direction: column; gap: 10px; }
+  .störung-item { border: 1px solid #343b44; border-radius: 12px; padding: 12px; background: #0f141c; display: flex; flex-direction: column; gap: 8px; }
+  .störung-item.high { border-left: 4px solid #ef4444; }
+  .störung-item.medium { border-left: 4px solid #f59e0b; }
+  .störung-item.low { border-left: 4px solid #22c55e; }
+  .störung-item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .störung-title { font-weight: 700; font-size: 15px; color: #e4e8ec; margin: 0; }
+  .störung-sev { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 6px; font-weight: 700; flex-shrink: 0; }
+  .störung-sev.high { background: #7f1d1d; color: #fecaca; }
+  .störung-sev.medium { background: #78350f; color: #fed7aa; }
+  .störung-sev.low { background: #14532d; color: #bbf7d0; }
+  .störung-desc { font-size: 14px; color: #c7cfda; line-height: 1.5; margin: 0; }
+  .störung-meta { display: flex; gap: 12px; font-size: 12px; color: #8a93a0; margin-top: 6px; }
+  .störung-meta .line-group { font-weight: 600; color: #0ea5e9; }
+  .störung-meta .stop-group { color: #a78bfa; }
+  .störung-map-link { font-size: 12px; color: #0ea5e9; cursor: pointer; text-decoration: underline; margin-top: 6px; }
+  .störung-map { height: 200px; border: 1px solid #343b44; border-radius: 12px; margin-top: 10px; background: #0b1018; }
+  .störung-map-marker { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+  .störung-map-marker.high { background: #ef4444; }
+  .störung-map-marker.medium { background: #f59e0b; }
+  .störung-map-marker.low { background: #22c55e; }
+  .störung-back { margin-top: 16px; }
+  .störung-back button { background: transparent; border: 1px solid #343b44; color: #e4e8ec; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  .störung-back button:hover { border-color: #0ea5e9; }
+  @media (max-width: 480px) {
+    .störung-page { padding: 8px; }
+    .störung-map { height: 160px; }
+  }
+</style>
+</head>
+<body>
+<div class="störung-page">
+  <div class="störung-header">
+    <h1>Störungszentrale</h1>
+    <span class="störung-badge" id="alertCount">0 Meldungen</span>
+    <span class="störung-update" id="alertUpdate">–</span>
+  </div>
+
+  <div class="störung-filter">
+    <button class="störung-chip active" data-sev="all">Alle</button>
+    <button class="störung-chip" data-sev="high">Ausfall / Störung</button>
+    <button class="störung-chip" data-sev="medium">Verspätung</button>
+    <button class="störung-chip" data-sev="low">Gering</button>
+  </div>
+
+  <div id="alertEmpty" class="störung-empty" hidden>
+    <p>Keine aktiven Störungsmeldungen.</p>
+    <p style="font-size:12px;opacity:0.7">Datenquelle: GTFS-RT Service Alerts (STA Open Data Hub)</p>
+  </div>
+
+  <div id="alertList" class="störung-list"></div>
+
+  <div class="störung-back">
+    <button onclick="location.href='/'">← Zurück zur Karte</button>
+  </div>
+</div>
+
+<div id="alertMap" class="störung-map" hidden></div>
+
+<script src="/vendor/leaflet-1.9.4.js?v=9.9.5" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script>
+<script type="module">
+import { filterActiveAlerts, mergeDuplicateAlerts, resolveAlertDetails, groupBySeverity, formatAlertAge, severityLabel, severityClass } from './störungen-logic.mjs?v=9.9.5';
+
+const $ = id => document.getElementById(id);
+const alertList = $('alertList');
+const alertEmpty = $('alertEmpty');
+const alertCount = $('alertCount');
+const alertUpdate = $('alertUpdate');
+const alertMap = $('alertMap');
+
+let allAlerts = [];
+let map = null;
+let markers = [];
+
+async function load() {
+  try {
+    const res = await fetch('/api/sta_alerts', { cache: 'no-store' });
+    if (!res.ok) throw new Error('Feed nicht verfügbar');
+    const feed = await res.json();
+    const now = Date.now();
+    const parsed = parseAlerts(feed, 'sta_alerts', now);
+    const active = filterActiveAlerts(parsed, now);
+    const merged = mergeDuplicateAlerts(active);
+    allAlerts = merged;
+    render(allAlerts);
+    alertCount.textContent = allAlerts.length + ' Meldung' + (allAlerts.length > 1 ? 'en' : '');
+    alertUpdate.textContent = 'Aktualisiert: ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    alertEmpty.hidden = false;
+    alertEmpty.innerHTML = '<p>Störungsdaten konnten nicht geladen werden.</p><p style="font-size:12px;opacity:0.7">' + e.message + '</p>';
+    alertCount.textContent = '0 Meldungen';
+    alertUpdate.textContent = '–';
+  }
+}
+
+function render(alerts) {
+  alertList.innerHTML = '';
+  if (alerts.length === 0) {
+    alertEmpty.hidden = false;
+    alertMap.hidden = true;
+    return;
+  }
+  alertEmpty.hidden = true;
+
+  // Try to load static index for stop/line resolution
+  let indexes = null;
+  fetch('/data/sta-index.json?v=9.9.5', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => { indexes = d; renderWithIndex(alerts, indexes); })
+    .catch(() => renderWithIndex(alerts, null));
+}
+
+function renderWithIndex(alerts, indexes) {
+  alertList.innerHTML = '';
+  const groups = groupBySeverity(alerts);
+  const order = ['high', 'medium', 'low'];
+  const sevTitles = { high: 'Ausfälle & Störungen', medium: 'Verspätungen', low: 'Geringe Beeinträchtigungen' };
+
+  for (const sev of order) {
+    const items = groups[sev];
+    if (!items.length) continue;
+
+    const groupEl = document.createElement('div');
+    groupEl.style.marginBottom = '14px';
+    const groupTitle = document.createElement('h3');
+    groupTitle.textContent = sevTitles[sev] + ' (' + items.length + ')';
+    groupTitle.style.fontSize = '13px';
+    groupTitle.style.textTransform = 'uppercase';
+    groupTitle.style.letterSpacing = '0.06em';
+    groupTitle.style.color = '#8a93a0';
+    groupTitle.style.margin = '0 0 8px 0';
+    groupEl.appendChild(groupTitle);
+
+    for (const a of items) {
+      const details = resolveAlertDetails(a, indexes);
+      const item = document.createElement('div');
+      item.className = 'störung-item ' + sev;
+
+      const head = document.createElement('div');
+      head.className = 'störung-item-head';
+      const title = document.createElement('h2');
+      title.className = 'störung-title';
+      title.textContent = a.header || 'Störung';
+      const sevBadge = document.createElement('span');
+      sevBadge.className = 'störung-sev ' + sev;
+      sevBadge.textContent = severityLabel(a.cause, a.effect);
+      head.appendChild(title, sevBadge);
+
+      const desc = document.createElement('p');
+      desc.className = 'störung-desc';
+      desc.textContent = a.description || 'Keine Beschreibung verfügbar.';
+
+      const meta = document.createElement('div');
+      meta.className = 'störung-meta';
+      if (details.affectedLines.length) {
+        const lines = document.createElement('span');
+        lines.className = 'line-group';
+        lines.textContent = 'Linien: ' + details.affectedLines.map(l => l.display).join(', ');
+        meta.appendChild(lines);
+      }
+      if (details.affectedStops.length) {
+        const stops = document.createElement('span');
+        stops.className = 'stop-group';
+        stops.textContent = 'Haltestellen: ' + details.affectedStops.map(s => s.name).join(', ');
+        meta.appendChild(stops);
+      }
+      const age = document.createElement('span');
+      age.textContent = 'Aktualisiert: ' + formatAlertAge(a.fetchedAt);
+      meta.appendChild(age);
+
+      const mapLink = document.createElement('div');
+      mapLink.className = 'störung-map-link';
+      mapLink.textContent = 'Auf Karte anzeigen';
+      mapLink.onclick = () => showMap([{ lat: details.affectedStops[0]?.lat, lon: details.affectedStops[0]?.lon, sev, header: a.header }].filter(m => m.lat && m.lon));
+
+      item.appendChild(head);
+      item.appendChild(desc);
+      item.appendChild(meta);
+      item.appendChild(mapLink);
+      groupEl.appendChild(item);
+    }
+
+    alertList.appendChild(groupEl);
+  }
+
+  // Show map if any alert has location data
+  const mapPoints = [];
+  for (const a of alerts) {
+    const details = resolveAlertDetails(a, indexes);
+    for (const s of details.affectedStops) {
+      if (s.lat && s.lon) {
+        mapPoints.push({ lat: s.lat, lon: s.lon, sev: severityClass(a.cause, a.effect), header: a.header });
+      }
+    }
+  }
+  if (mapPoints.length) {
+    alertMap.hidden = false;
+    initMap(mapPoints);
+  } else {
+    alertMap.hidden = true;
+  }
+}
+
+function initMap(points) {
+  if (map) {
+    map.remove();
+    markers = [];
+  }
+  map = L.map('alertMap', { zoomControl: false }).setView([points[0].lat, points[0].lon], 12);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap-Mitwirkende',
+    maxZoom: 19
+  }).addTo(map);
+  const group = L.featureGroup();
+  for (const p of points) {
+    const marker = L.circleMarker([p.lat, p.lon], {
+      radius: 8,
+      fillColor: p.sev === 'störung-sev-high' ? '#ef4444' : p.sev === 'störung-sev-medium' ? '#f59e0b' : '#22c55e',
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.8
+    }).bindPopup('<strong>' + p.header + '</strong>');
+    group.addLayer(marker);
+    markers.push(marker);
+  }
+  group.addTo(map);
+  map.fitBounds(group.getBounds(), { padding: [40, 40] });
+}
+
+// Severity filter chips
+for (const btn of document.querySelectorAll('.störung-chip')) {
+  btn.onclick = () => {
+    document.querySelectorAll('.störung-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const sev = btn.dataset.sev;
+    const filtered = sev === 'all' ? allAlerts : allAlerts.filter(a => severityClass(a.cause, a.effect) === ('störung-sev-' + sev));
+    render(filtered);
+  };
+}
+
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
