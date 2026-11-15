@@ -172,10 +172,11 @@ function renderMonitor(){
   $('monitorVehicles').textContent=state.vehicles.size;
   $('monitorUpdated').textContent=lastUpd;
   list.innerHTML='';
-  const allEndpoints=[...ENDPOINTS, ...NOT_INTEGRATED.map(n=>n.key)];
+  const allEndpoints=[...ENDPOINTS, 'siri_vm', ...NOT_INTEGRATED.map(n=>n.key)];
   for(const ep of allEndpoints){
-    const integrated=ENDPOINTS.includes(ep);
+    const integrated=ENDPOINTS.includes(ep) || ep === 'siri_vm';
     const ni=NOT_INTEGRATED.find(n=>n.key===ep);
+    const labelName = ep === 'siri_vm' ? 'SIRI Vehicle Monitoring' : (ni?ni.name:ep);
     const status = integrated ? state.statuses[ep] : null;
     const label = integrated ? monitorStatusLabel(status) : {label: 'Nicht integriert', cls: 'unknown'};
     const ms = integrated ? state.responseTimes[ep] : null;
@@ -186,7 +187,7 @@ function renderMonitor(){
     row.className='monitor-row';
     row.innerHTML=
       '<div class="monitor-row-head">'+
-        '<strong>'+escapeHtml(ni?ni.name:ep)+'</strong>'+
+        '<strong>'+escapeHtml(labelName)+'</strong>'+
         '<span class="monitor-badge '+label.cls+'">'+escapeHtml(label.label)+'</span>'+
       '</div>'+
       '<div class="monitor-row-body">'+
@@ -927,6 +928,35 @@ async function refreshFeeds(){
     // Alte Alerts entfernen wenn Feed nicht mehr antwortet
     for(const s of Object.keys(state.alerts))if(!ok[s])delete state.alerts[s];
     state.failCount=ENDPOINTS.filter(s=>state.statuses[s]!=='ok').length;
+    // SIRI Vehicle Monitoring als eigene Datenquelle in den Fahrzeug-State einbinden
+    const siriResult = await fetchJsonTimed('/api/v1/siri/vehicles', 16000);
+    state.responseTimes['siri_vm'] = siriResult.ms;
+    state.fetchErrors['siri_vm'] = siriResult.error || null;
+    if (siriResult.error) {
+      state.statuses['siri_vm'] = 'error';
+    } else {
+      state.statuses['siri_vm'] = 'ok';
+      state.lastSuccess['siri_vm'] = Date.now();
+      const siriVehicles = siriResult.data?.vehicles || [];
+      // Deduplizierungsstrategie: Ein SIRI-Fahrzeug wird übersprungen, wenn bereits ein
+      // GTFS-RT-Fahrzeug mit derselben vehicleId im State existiert (GTFS nimmt Vorrang,
+      // da es mehr Metadaten wie Linien, Fahrtziel, Shape liefert). Fahrzeug-IDs werden
+      // quellenübergreifend verglichen; die Key-Präfixe (siri_vm: vs sta: etc.) verhindern
+      // Key-Kollisionen im Map-State.
+      const gtfsVehicleIds = new Set();
+      for (const v of state.vehicles.values()) {
+        if (v.vehicleId && v.vehicleId !== 'Nicht verfügbar') gtfsVehicleIds.add(v.vehicleId);
+      }
+      const siriLatest = new Map();
+      let siriCount = 0;
+      for (const v of siriVehicles) {
+        if (gtfsVehicleIds.has(v.vehicleId)) continue; // Doppelt über GTFS bereits erfasst
+        siriLatest.set(v.key, v);
+        siriCount++;
+      }
+      state.counts['siri_vm'] = siriCount;
+      mergePositionVehicles(state.vehicles, siriLatest, 'siri_vm', now, false);
+    }
     statusLabel();updateFeedHealthBanner();updateFavPanel();updateAlertTicker();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);displayStats();refreshScheduleMatches();renderMonitorIfOpen();
     // Bus-shape fetching happens after the live updates; do not delay feed painting.
     loadBusShapesForVehicles().catch(e=>console.info('Bus shape preload:',e));

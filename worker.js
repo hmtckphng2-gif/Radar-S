@@ -15,6 +15,25 @@ const FEEDS = Object.freeze({
   trentino_updates: 'https://proxy.busone.app/trentino/gtfs-rt/trip-updates.json',
   trains_updates: 'https://proxy.busone.app/trenitalia/gtfs-rt/trip-updates.json'
 });
+// Feste, vertrauenswürdige STA-SIRI-VM-Quelle (keine beliebigen Query-Parameter)
+const SIRI_URL = 'https://efa.sta.bz.it/siri-lite/vehicle-monitoring';
+const SIRI_ALLOWED_HOSTS = ['efa.sta.bz.it'];
+const SIRI_MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+// Prüft ob ein Hostname auf eine private/lokale/reservierte Adresse auflösen könnte.
+function isPrivateHost(host) {
+  const h = host.toLowerCase();
+  if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '::' ||
+      h.startsWith('10.') || h.startsWith('172.16.') || h.startsWith('172.17.') ||
+      h.startsWith('172.18.') || h.startsWith('172.19.') || h.startsWith('172.20.') ||
+      h.startsWith('172.21.') || h.startsWith('172.22.') || h.startsWith('172.23.') ||
+      h.startsWith('172.24.') || h.startsWith('172.25.') || h.startsWith('172.26.') ||
+      h.startsWith('172.27.') || h.startsWith('172.28.') || h.startsWith('172.29.') ||
+      h.startsWith('172.30.') || h.startsWith('172.31.') || h.startsWith('192.168.') ||
+      h.endsWith('.local') || h.endsWith('.internal')) return true;
+  // Link-Local IPv4 (169.254.x.x), IPv6 Link-Local (fe80::), IPv6 Unique Local (fc00::/7, fd00::/8)
+  if (h.startsWith('169.254.') || h.startsWith('fe80') || h.startsWith('fc00') || h.startsWith('fd')) return true;
+  return false;
+}
 const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8',
   'cache-control': 'public, max-age=15, stale-while-revalidate=15',
@@ -133,36 +152,66 @@ export default {
       return respond({schema:'radar.models.v1',version:'6.6',byTrain:Object.fromEntries(entries),types:Array.isArray(catalog.types)?catalog.types:[],count:entries.length,note:'Nur explizit belegte Zuordnungen; leere Liste bedeutet, dass keine bestätigt sind.'},200,{'cache-control':'public, max-age=300'});
     }
     if(name==='v1/siri/vehicles') {
-      const siriUrl = url.searchParams.get('url');
-      if (!siriUrl || !/^https:\/\//.test(siriUrl)) {
-        return respond({error: 'SIRI-VM-Endpunkt-URL erforderlich (https)', schema: 'radar.siri.v1'}, 400, {'cache-control': 'no-store'});
-      }
-      // SSRF-Schutz: keine localhost/privaten Adressen ansprechen
+      // Feste, vertrauenswürdige STA-SIRI-VM-Quelle (keine beliebigen Query-Parameter)
       try {
-        const parsed = new URL(siriUrl);
+        const parsed = new URL(SIRI_URL);
         const host = parsed.hostname.toLowerCase();
-        if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '::' ||
-            host.startsWith('10.') || host.startsWith('172.16.') || host.startsWith('172.17.') ||
-            host.startsWith('172.18.') || host.startsWith('172.19.') || host.startsWith('172.20.') ||
-            host.startsWith('172.21.') || host.startsWith('172.22.') || host.startsWith('172.23.') ||
-            host.startsWith('172.24.') || host.startsWith('172.25.') || host.startsWith('172.26.') ||
-            host.startsWith('172.27.') || host.startsWith('172.28.') || host.startsWith('172.29.') ||
-            host.startsWith('172.30.') || host.startsWith('172.31.') || host.startsWith('192.168.') ||
-            host.endsWith('.local') || host.endsWith('.internal')) {
-          return respond({error: 'SIRI-VM-Endpunkt-URL nicht zulässig (private Adresse)', schema: 'radar.siri.v1'}, 403, {'cache-control': 'no-store'});
+        // Allowlist: nur vertrauenswürdige öffentliche Hosts
+        if (!SIRI_ALLOWED_HOSTS.includes(host)) {
+          return respond({error: 'SIRI-VM-Quelle nicht in Allowlist', schema: 'radar.siri.v1'}, 403, {'cache-control': 'no-store'});
+        }
+        // DNS-Rebinding-Schutz: Hostname auf private/lokale/reservierte Adressen prüfen
+        if (isPrivateHost(host)) {
+          return respond({error: 'SIRI-VM-Quelle auflöst auf private Adresse', schema: 'radar.siri.v1'}, 403, {'cache-control': 'no-store'});
         }
       } catch (e) {
         return respond({error: 'Ungültige SIRI-VM-Endpunkt-URL', schema: 'radar.siri.v1'}, 400, {'cache-control': 'no-store'});
       }
       try {
-        const upstream = await fetch(siriUrl, {signal: AbortSignal.timeout(9000), headers: {accept: 'application/xml, text/xml'}});
+        const upstream = await fetch(SIRI_URL, {
+          signal: AbortSignal.timeout(9000),
+          headers: {accept: 'application/xml, text/xml'},
+          redirect: 'manual'
+        });
+        // Bei Redirect: Ziel-URL erneut vollständig validieren
+        if (upstream.status >= 300 && upstream.status < 400) {
+          const location = upstream.headers.get('location');
+          if (!location) return respond({error: 'SIRI-VM-Redirect ohne Ziel', schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
+          try {
+            const redirectUrl = new URL(location, SIRI_URL);
+            const redirectHost = redirectUrl.hostname.toLowerCase();
+            if (!SIRI_ALLOWED_HOSTS.includes(redirectHost)) {
+              return respond({error: 'SIRI-VM-Redirect auf nicht erlaubten Host', schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
+            }
+            if (isPrivateHost(redirectHost)) {
+              return respond({error: 'SIRI-VM-Redirect auf private Adresse', schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
+            }
+          } catch (e) {
+            return respond({error: 'Ungültige SIRI-VM-Redirect-URL', schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
+          }
+        }
         if (!upstream.ok) return respond({error: 'SIRI-VM-Quelle nicht erreichbar', upstreamStatus: upstream.status, schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
         const type = upstream.headers.get('content-type') || '';
         if (!type.includes('xml')) return respond({error: 'Unerwartetes SIRI-Format (XML erwartet)', schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
-        const xml = await upstream.text();
+        // Maximale Antwortgröße: 2 MB (SSRF/DoS-Schutz)
+        const reader = upstream.body.getReader();
+        const decoder = new TextDecoder();
+        let receivedLength = 0;
+        let xmlParts = [];
+        while (true) {
+          const {done, value} = await reader.read();
+          if (done) break;
+          receivedLength += value.length;
+          if (receivedLength > SIRI_MAX_SIZE) {
+            return respond({error: 'SIRI-VM-Antwort zu groß', schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
+          }
+          xmlParts.push(decoder.decode(value, { stream: true }));
+        }
+        xmlParts.push(decoder.decode()); // verbleibende Bytes flushen
+        const xml = xmlParts.join('');
         const result = parseSiriVm(xml);
         if (result.error) return respond({error: result.error, schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
-        return respond({schema: 'radar.siri.v1', version: '1.0', source: siriUrl, generatedAt: new Date().toISOString(), vehicles: result.vehicles, invalid: result.invalid, totalEntities: result.totalEntities}, 200, {'cache-control': 'public, max-age=15, stale-while-revalidate=15'});
+        return respond({schema: 'radar.siri.v1', version: '1.0', source: SIRI_URL, generatedAt: new Date().toISOString(), vehicles: result.vehicles, invalid: result.invalid, totalEntities: result.totalEntities}, 200, {'cache-control': 'public, max-age=15, stale-while-revalidate=15'});
       } catch (error) {
         return respond({error: 'SIRI-VM-Anfrage fehlgeschlagen', reason: String(error?.message || error).slice(0, 180), schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
       }
