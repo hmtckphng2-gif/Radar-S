@@ -5,6 +5,7 @@ import {rfiStation,parseMonitor} from './public/rfi-platforms-logic.mjs';
 import {buildSnapshot} from './public/radar66-api.mjs';
 import {buildAssistantEvidence,validateAssistantResult,romeServiceDay} from './public/radar-assistant-logic.mjs';
 import {normalizeStaVehicleFeed,STA_VEHICLE_POSITIONS_URL} from './public/radar10-collector.mjs';
+import {parseSiriVehicleMonitoring,SIRI_VM_URL} from './public/siri-vm.mjs';
 /** Read-only transit proxies, with fixed upstream hosts and bounded caching. */
 const BUSONE_CONTACT='https://github.com/hmtckphng2-gif/Radar-S';
 function busOneClient(env){
@@ -317,6 +318,19 @@ export default {
     if(url.pathname.startsWith('/api/history/'))return historyApi(request,env);
     const name = url.pathname.substring(5);
     if(name==='traffic-alerts')return trafficAlerts(request);
+    if(name==='v1/siri/vehicles'){
+      const started=Date.now();
+      try{
+        const upstream=await fetch(SIRI_VM_URL,{headers:{accept:'application/json'},signal:AbortSignal.timeout(12000),cf:{cacheEverything:true,cacheTtl:5}});
+        const contentType=upstream.headers.get('content-type')||'';
+        if(!upstream.ok)return respond({error:'STA SIRI-VM source unavailable',source:'sta-siri-vm',upstreamStatus:upstream.status},502,{'cache-control':'no-store'});
+        if(!contentType.toLowerCase().includes('json'))return respond({error:'STA SIRI-VM returned unexpected content type',source:'sta-siri-vm'},502,{'cache-control':'no-store'});
+        const snapshot=parseSiriVehicleMonitoring(await upstream.json(),Date.now());
+        return respond({...snapshot,elapsedMs:Date.now()-started},200,{'cache-control':'no-store','x-radar-source':'sta-siri-vm'});
+      }catch(error){
+        return respond({error:'STA SIRI-VM request failed',source:'sta-siri-vm',reason:error?.name==='TimeoutError'?'timeout':String(error?.message||'').includes('Unsupported SIRI')?'format':'network'},502,{'cache-control':'no-store'});
+      }
+    }
     if(name==='v1/collector/sta'){
       const started=Date.now();
       try{
