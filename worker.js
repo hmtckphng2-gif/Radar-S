@@ -2,6 +2,7 @@ import {collectHistory,historyApi} from './public/radar-history-worker.mjs';
 import {resolveTrain,normalizeTrain,romeTime} from './public/train-platforms-logic.mjs';
 import {rfiStation,parseMonitor} from './public/rfi-platforms-logic.mjs';
 import {buildSnapshot} from './public/radar66-api.mjs';
+import {parseSiriVm} from './public/siri-vm.mjs';
 /** Read-only transit proxies, with fixed upstream hosts and bounded caching. */
 const FEEDS = Object.freeze({
   sta: 'https://proxy.busone.app/sta/gtfs-rt/vehicle-positions.json',
@@ -130,6 +131,41 @@ export default {
       if(!stored.ok)return respond({error:'Models database unavailable'},503,{'cache-control':'no-store'});
       const data=await stored.json();const catalogAsset=await env.ASSETS.fetch(new Request(new URL('/train-model-catalog.json',url.origin)));const catalog=catalogAsset.ok?await catalogAsset.json():{types:[]};const entries=Object.entries(data?.by_train||{}).filter(([key,v])=>key&&v&&['confirmed','planned'].includes(v.confidence)&&typeof v.source==='string'&&v.source.trim()&&typeof v.name==='string'&&v.name.trim());
       return respond({schema:'radar.models.v1',version:'6.6',byTrain:Object.fromEntries(entries),types:Array.isArray(catalog.types)?catalog.types:[],count:entries.length,note:'Nur explizit belegte Zuordnungen; leere Liste bedeutet, dass keine bestätigt sind.'},200,{'cache-control':'public, max-age=300'});
+    }
+    if(name==='v1/siri/vehicles') {
+      const siriUrl = url.searchParams.get('url');
+      if (!siriUrl || !/^https:\/\//.test(siriUrl)) {
+        return respond({error: 'SIRI-VM-Endpunkt-URL erforderlich (https)', schema: 'radar.siri.v1'}, 400, {'cache-control': 'no-store'});
+      }
+      // SSRF-Schutz: keine localhost/privaten Adressen ansprechen
+      try {
+        const parsed = new URL(siriUrl);
+        const host = parsed.hostname.toLowerCase();
+        if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '::' ||
+            host.startsWith('10.') || host.startsWith('172.16.') || host.startsWith('172.17.') ||
+            host.startsWith('172.18.') || host.startsWith('172.19.') || host.startsWith('172.20.') ||
+            host.startsWith('172.21.') || host.startsWith('172.22.') || host.startsWith('172.23.') ||
+            host.startsWith('172.24.') || host.startsWith('172.25.') || host.startsWith('172.26.') ||
+            host.startsWith('172.27.') || host.startsWith('172.28.') || host.startsWith('172.29.') ||
+            host.startsWith('172.30.') || host.startsWith('172.31.') || host.startsWith('192.168.') ||
+            host.endsWith('.local') || host.endsWith('.internal')) {
+          return respond({error: 'SIRI-VM-Endpunkt-URL nicht zulässig (private Adresse)', schema: 'radar.siri.v1'}, 403, {'cache-control': 'no-store'});
+        }
+      } catch (e) {
+        return respond({error: 'Ungültige SIRI-VM-Endpunkt-URL', schema: 'radar.siri.v1'}, 400, {'cache-control': 'no-store'});
+      }
+      try {
+        const upstream = await fetch(siriUrl, {signal: AbortSignal.timeout(9000), headers: {accept: 'application/xml, text/xml'}});
+        if (!upstream.ok) return respond({error: 'SIRI-VM-Quelle nicht erreichbar', upstreamStatus: upstream.status, schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
+        const type = upstream.headers.get('content-type') || '';
+        if (!type.includes('xml')) return respond({error: 'Unerwartetes SIRI-Format (XML erwartet)', schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
+        const xml = await upstream.text();
+        const result = parseSiriVm(xml);
+        if (result.error) return respond({error: result.error, schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
+        return respond({schema: 'radar.siri.v1', version: '1.0', source: siriUrl, generatedAt: new Date().toISOString(), vehicles: result.vehicles, invalid: result.invalid, totalEntities: result.totalEntities}, 200, {'cache-control': 'public, max-age=15, stale-while-revalidate=15'});
+      } catch (error) {
+        return respond({error: 'SIRI-VM-Anfrage fehlgeschlagen', reason: String(error?.message || error).slice(0, 180), schema: 'radar.siri.v1'}, 502, {'cache-control': 'no-store'});
+      }
     }
     if(name.startsWith('station-platforms/')){
       const id=name.slice('station-platforms/'.length),arrivals=url.searchParams.get('arrivals')||'0';

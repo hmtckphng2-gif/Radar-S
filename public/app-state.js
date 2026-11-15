@@ -6,6 +6,7 @@ export const state = {
   filter: 'all', query: '', busy: false, statuses: {},
   vehicles: new Map(), markers: new Map(), jobs: new Map(), updates: new Map(),
   indexes: {}, details: {}, shapes: {}, models: {}, counts: {}, lastSuccess: {},
+  responseTimes: {}, fetchErrors: {},
   stationChoice: null, stationList: [], fetchedAt: 0, failCount: 0, scheduledSearch: null,
   busShapeManifests: {}, busShapePending: new Set(), busShapeLoaded: new Set(),
   busShapeFailures: new Set(),
@@ -13,6 +14,7 @@ export const state = {
   favorites: new Set(),
   lineFavorites: new Set(),
   journeyFavorites: new Set(),
+  stationFavorites: new Set(),
   alerts: {},
   dismissedAlerts: new Set(),
   vehicleTracks: new Map()
@@ -59,6 +61,7 @@ export function dismissAlert(id){
 
 // Schaltet ein Fahrzeug als Favorit um. Gibt den neuen Zustand zurück.
 export function toggleFavorite(key){
+  if(!key)return state.favorites.has(key);
   if(state.favorites.has(key)){state.favorites.delete(key);}else{state.favorites.add(key);}
   saveFavorites();
   return state.favorites.has(key);
@@ -70,6 +73,7 @@ export function isFavorite(key){return state.favorites.has(key);}
 // Schaltet eine Linie als Favorit um. Schlüssel: source:routeId.
 // Gibt den neuen Zustand zurück.
 export function toggleLineFavorite(lineKey){
+  if(!lineKey)return state.lineFavorites.has(lineKey);
   if(state.lineFavorites.has(lineKey)){state.lineFavorites.delete(lineKey);}
   else{state.lineFavorites.add(lineKey);}
   saveLineFavorites();
@@ -98,6 +102,7 @@ export function saveLineFavorites(){
 // Schaltet eine Verbindung als Favorit um. Schlüssel: source:routeId:fromStop:toStop:departureTime.
 // Gibt den neuen Zustand zurück.
 export function toggleJourneyFavorite(key){
+  if(!key)return state.journeyFavorites.has(key);
   if(state.journeyFavorites.has(key)){state.journeyFavorites.delete(key);}
   else{state.journeyFavorites.add(key);}
   saveJourneyFavorites();
@@ -121,6 +126,35 @@ export function loadJourneyFavorites(){
 // Speichert Verbindungs-Favoriten in LocalStorage.
 export function saveJourneyFavorites(){
   try{localStorage.setItem('sr-journey-favorites',JSON.stringify([...state.journeyFavorites]))}catch{}
+}
+
+// Schaltet eine Haltestelle als Favorit um. Schlüssel: source:stopId.
+// Gibt den neuen Zustand zurück.
+export function toggleStationFavorite(stationKey){
+  if(!stationKey)return state.stationFavorites.has(stationKey);
+  if(state.stationFavorites.has(stationKey)){state.stationFavorites.delete(stationKey);}
+  else{state.stationFavorites.add(stationKey);}
+  saveStationFavorites();
+  return state.stationFavorites.has(stationKey);
+}
+
+// Prüft ob eine Haltestelle favorisiert ist.
+export function isStationFavorite(stationKey){return state.stationFavorites.has(stationKey);}
+
+// Lädt gespeicherte Haltestellen-Favoriten aus LocalStorage.
+export function loadStationFavorites(){
+  try{
+    const raw=localStorage.getItem('sr-station-favorites');
+    if(raw){
+      const arr=JSON.parse(raw);
+      if(Array.isArray(arr))for(const k of arr)state.stationFavorites.add(k);
+    }
+  }catch{}
+}
+
+// Speichert Haltestellen-Favoriten in LocalStorage.
+export function saveStationFavorites(){
+  try{localStorage.setItem('sr-station-favorites',JSON.stringify([...state.stationFavorites]))}catch{}
 }
 
 // Boot-Phase für den Startsequenz-Status (wird im data-Attribut gespiegelt).

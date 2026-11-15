@@ -168,6 +168,8 @@ const T = {
   'fav.lineBtnAdd': { de: 'Linie favorisieren', it: 'Aggiungi linea ai preferiti' },
   'fav.lineBtnRemove': { de: 'Linie aus Favoriten entfernen', it: 'Rimuovi linea dai preferiti' },
   'fav.status': { de: 'Favoriten', it: 'Preferiti' },
+  'fav.stationBtnAdd': { de: 'Haltestelle favorisieren', it: 'Aggiungi fermata ai preferiti' },
+  'fav.stationBtnRemove': { de: 'Haltestelle aus Favoriten entfernen', it: 'Rimuovi fermata dai preferiti' },
 
   // Linien-Status (neu 9.9)
   'lines.title': { de: 'Linien-Status', it: 'Stato linee' },
@@ -181,6 +183,17 @@ const T = {
   'lines.status.old': { de: 'Veraltet', it: 'Datato' },
   'status.old': { de: 'veraltet', it: 'datato' },
   'status.notLive': { de: 'NICHT LIVE', it: 'NON LIVE' },
+  'monitor.title': { de: 'Datenquellen-Monitor', it: 'Monitor fonti dati' },
+  'monitorBtn.aria': { de: 'Datenquellen-Monitor öffnen', it: 'Apri monitor fonti dati' },
+  'monitorBtn.title': { de: 'Datenquellen-Monitor öffnen', it: 'Apri monitor fonti dati' },
+  'monitorPanel.aria': { de: 'Datenquellen-Monitor', it: 'Monitor fonti dati' },
+  'monitor.feeds': { de: 'Live-Feeds', it: 'Feed live' },
+  'monitor.errors': { de: 'Fehlerhafte', it: 'Con errori' },
+  'monitor.vehicles': { de: 'Fahrzeuge', it: 'Veicoli' },
+  'monitor.updated': { de: 'Letzte Aktualisierung', it: 'Ultimo aggiornamento' },
+  'monitor.sources': { de: 'Datenquellen', it: 'Fonti dati' },
+  'monitor.ms': { de: 'Antwortzeit', it: 'Tempo di risposta' },
+  'monitor.lastSuccess': { de: 'Letzter Erfolg', it: 'Ultimo successo' },
   'gtfs.indexStale': { de: 'Veralteter GTFS-Index', it: 'Indice GTFS obsoleto' },
   'detail.label.unknownTarget': { de: 'Ziel unbekannt', it: 'Destinazione sconosciuta' },
   'lines.vehicles': { de: 'Fahrzeuge', it: 'Veicoli' },
@@ -327,6 +340,7 @@ const T = {
   // Alert-Ticker Übersetzungen
   'alert.count.one': { de: '1 Störung im System', it: '1 segnalazione nel sistema' },
   'alert.count.many': { de: '{n} Störungen im System', it: '{n} segnalazioni nel sistema' },
+  'alert.cause.0': { de: 'Unbekannt', it: 'Sconosciuto' },
   'alert.cause.1': { de: 'Verspätung', it: 'Ritardo' },
   'alert.cause.2': { de: 'Verspätung', it: 'Ritardo' },
   'alert.cause.3': { de: 'Ausfall', it: 'Soppressione' },
@@ -359,6 +373,55 @@ const T = {
   'stationSheet.aria': { de: 'Haltestellensuche', it: 'Ricerca fermate' },
   'stationSheet.close': { de: 'Haltestellensuche schließen', it: 'Chiudi ricerca fermate' },
   'stationSheet.scroll': { de: 'Haltestellenliste scrollen', it: 'Scorri elenco fermate' },
+
+  // Feature A: Live Journey Intelligence (Trust / Forecast Quality)
+  'journey.trust.current': { de: 'aktuell', it: 'attuale' },
+  'journey.trust.estimated': { de: 'geschätzt', it: 'stimato' },
+  'journey.trust.stale': { de: 'veraltet', it: 'datato' },
+  'journey.trust.conflicting': { de: 'widersprüchlich', it: 'contrastante' },
+  'journey.trust.unknown': { de: 'unbekannt', it: 'sconosciuto' },
+  'journey.forecast.high': { de: 'hoch', it: 'alta' },
+  'journey.forecast.medium': { de: 'mittel', it: 'media' },
+  'journey.forecast.low': { de: 'niedrig', it: 'bassa' },
+  'journey.forecast.none': { de: 'keine', it: 'nessuna' },
+  'journey.delay.basis.stop': { de: 'Haltestellen-Meldung (GTFS-RT)', it: 'Segnalazione fermata (GTFS-RT)' },
+  'journey.delay.basis.trip': { de: 'Fahrtwert (GTFS-RT)', it: 'Valore corsa (GTFS-RT)' },
+  'journey.delay.basis.position': { de: 'Positions-Sätzung', it: 'Stima posizione' },
+  'journey.delay.basis.none': { de: 'keine verlässliche Basis', it: 'nessuna base affidabile' },
+  'journey.spatial.deviation': { de: 'räumliche Abweichung zum Soll-Punkt', it: 'scostamento spaziale dal punto previsto' },
+  'journey.spatial.ahead': { de: 'vor dem Soll-Punkt', it: 'prima del punto previsto' },
+  'journey.spatial.behind': { de: 'hinter dem Soll-Punkt', it: 'dopo il punto previsto' },
+  'journey.noForecast': { de: 'Keine verlässliche Prognose', it: 'Nessuna prognosi affidabile' },
+  'journey.cancelled': { de: 'Fahrt entfällt', it: 'Corsa soppressa' },
+
+  // Feature B: Network / Disruption Intelligence
+  'network.title': { de: 'Netzwerk-Übersicht', it: 'Panoramica rete' },
+  'network.subtitle': { de: 'Verifizierte Störungen aus GTFS-RT-Feeds', it: 'Segnalazioni verificate dai feed GTFS-RT' },
+  'network.noIssues': { de: 'Keine aktuellen Störungen im Netzwerk', it: 'Nessuna segnalazione attiva nella rete' },
+  'network.feedAvailable': { de: 'Feed-Verfügbarkeit', it: 'Disponibilità feed' },
+  'network.feedOk': { de: 'alle Feed-Quellen erreichbar', it: 'tutte le fonti feed raggiungibili' },
+  'network.feedDegraded': { de: 'einige Feed-Quellen nicht erreichbar', it: 'alcune fonti feed non raggiungibili' },
+  'network.totalDelay': { de: 'Gesamtverspätung (Minuten)', it: 'Ritardo totale (minuti)' },
+  'network.maxDelay': { de: 'Maximale Verspätung (Minuten)', it: 'Ritardo massimo (minuti)' },
+  'network.affectedLines': { de: 'betroffene Linien', it: 'linee coinvolte' },
+
+  // Feature E: Transit Analytics
+  'analytics.title': { de: 'Transit Analytics', it: 'Analisi trasporti' },
+  'analytics.delayDistribution': { de: 'Verspätungsverteilung', it: 'Distribuzione ritardi' },
+  'analytics.delayNone': { de: 'ohne Verspätung', it: 'senza ritardo' },
+  'analytics.delay0to5': { de: '0–5 Min.', it: '0–5 min.' },
+  'analytics.delay5to15': { de: '5–15 Min.', it: '5–15 min.' },
+  'analytics.delay15plus': { de: 'über 15 Min.', it: 'oltre 15 min.' },
+  'analytics.cancelled': { de: 'Ausfälle', it: 'soppressioni' },
+
+  // Feature F: Premium UI/UX (i18n improvements)
+  'ux.premium': { de: 'Premium-Ansicht', it: 'Vista premium' },
+  'ux.delayBadge': { de: 'Verspätung', it: 'Ritardo' },
+  'ux.onTimeBadge': { de: 'Pünktlich', it: 'In orario' },
+  'ux.disturbedBadge': { de: 'Gestört', it: 'Interrotto' },
+  'ux.feedStatus': { de: 'Feed-Status', it: 'Stato feed' },
+  'ux.refreshAll': { de: 'Alle Daten aktualisieren', it: 'Aggiorna tutti i dati' },
+  'ux.showOnMap': { de: 'Auf Karte anzeigen', it: 'Mostra sulla mappa' }
 };
 
 export function t(key, params = {}) {

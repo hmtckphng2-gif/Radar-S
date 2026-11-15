@@ -1,7 +1,8 @@
-import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite,loadJourneyFavorites,saveJourneyFavorites,toggleJourneyFavorite,isJourneyFavorite,addTrackPoint,getTrackPoints,clearTrack,loadDismissedAlerts,saveDismissedAlerts,dismissAlert} from './app-state.js?v=9.9.0';
+import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite,loadJourneyFavorites,saveJourneyFavorites,toggleJourneyFavorite,isJourneyFavorite,loadStationFavorites,saveStationFavorites,toggleStationFavorite,isStationFavorite,addTrackPoint,getTrackPoints,clearTrack,loadDismissedAlerts,saveDismissedAlerts,dismissAlert} from './app-state.js?v=9.9.0';
 import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.9.0';
 import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.9.0';
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.9.0';
+import {collectTrafficIssues,networkOverview,delayDistribution} from './radar58-logic.mjs?v=9.9.0';
 import {enrichTrainPlatform} from './train-platforms.js?v=9.9.0';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, formatDelay,
@@ -12,6 +13,7 @@ import {playbackLag} from './radar45-logic.mjs?v=9.9.0';
 import {trainReplayDuration} from './radar705-motion.mjs?v=9.9.0';
 import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.9.0';
 import {trainScheduledPosition} from './radar51-logic.mjs?v=9.9.0';
+import {buildJourney,TRUST,FORECAST_QUALITY,formatJourneyDelay,journeyFavoriteStatus} from './radar57-journey.mjs?v=9.9.0';
 import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.0';
 import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.9.0';
 
@@ -71,6 +73,18 @@ async function fetchJson(url, timeout=12500) {
   } finally {clearTimeout(timer);}
 }
 
+// Misst die Antwortzeit eines einzelnen existierenden API-Abrufs (kein zusätzlicher Fetch).
+// Gibt {data, ms, error} zurück; data ist null bei Fehler.
+async function fetchJsonTimed(url, timeout=12500) {
+  const start = performance.now();
+  try {
+    const data = await fetchJson(url, timeout);
+    return { data, ms: Math.round(performance.now() - start), error: null };
+  } catch (e) {
+    return { data: null, ms: Math.round(performance.now() - start), error: String(e?.message || e).slice(0, 200) };
+  }
+}
+
 function gtfsLocalDate() {
   const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
   const values=Object.fromEntries(parts.map(p=>[p.type,p.value]));
@@ -118,44 +132,163 @@ function updateHealthPanel(){
   $('healthTiles').textContent=tileLoadedCount+' '+t('misc.loaded')+(tileErrorCount>0?' · '+tileErrorCount+' '+t('misc.errors'):'');
   $('healthTiles').className='health-val '+(tileErrorCount===0?'ok':'warn');
 }
+
+// Datenquellen-Monitor: nicht integrierte Quellen (bekannt, aber nicht im Feed aktiv)
+const NOT_INTEGRATED = [
+  {key: 'sad_buses', name: 'SAD Busse', type: 'bus'},
+  {key: 'sad_trains', name: 'SAD Züge', type: 'train'},
+  {key: 'oebb', name: 'ÖBB', type: 'train'}
+];
+
+function monitorStatusLabel(status){
+  if(status === 'ok') return {label: t('misc.ok'), cls: 'ok'};
+  if(status === 'old') return {label: 'veraltet', cls: 'warn'};
+  if(status === 'error') return {label: 'Fehler', cls: 'bad'};
+  return {label: 'unbekannt', cls: 'unknown'};
+}
+
+function monitorFormatMs(ms){
+  if(ms === null || ms === undefined || !Number.isFinite(ms)) return '–';
+  return ms + ' ms';
+}
+
+function monitorFormatLast(ts){
+  if(!ts) return '–';
+  return new Date(ts).toLocaleTimeString(getLocale()==='it'?'it-IT':'de-IT',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderMonitor(){
+  const panel=$('feedMonitorPanel');
+  if(!panel || panel.hidden) return;
+  const list=$('monitorList');
+  if(!list) return;
+  const okCount=ENDPOINTS.filter(s=>state.statuses[s]==='ok').length;
+  const errorCount=ENDPOINTS.filter(s=>state.statuses[s]!=='ok').length;
+  const lastUpd=state.fetchedAt ? monitorFormatLast(state.fetchedAt) : '–';
+  $('monitorFeedsOk').textContent=okCount+'/'+ENDPOINTS.length;
+  $('monitorFeedsOk').className='monitor-val '+(okCount===ENDPOINTS.length?'ok':okCount>0?'warn':'bad');
+  $('monitorErrors').textContent=errorCount;
+  $('monitorErrors').className='monitor-val '+(errorCount===0?'ok':'bad');
+  $('monitorVehicles').textContent=state.vehicles.size;
+  $('monitorUpdated').textContent=lastUpd;
+  list.innerHTML='';
+  const allEndpoints=[...ENDPOINTS, ...NOT_INTEGRATED.map(n=>n.key)];
+  for(const ep of allEndpoints){
+    const integrated=ENDPOINTS.includes(ep);
+    const ni=NOT_INTEGRATED.find(n=>n.key===ep);
+    const status = integrated ? state.statuses[ep] : null;
+    const label = integrated ? monitorStatusLabel(status) : {label: 'Nicht integriert', cls: 'unknown'};
+    const ms = integrated ? state.responseTimes[ep] : null;
+    const lastOk = integrated ? state.lastSuccess[ep] : null;
+    const count = integrated ? (state.counts[ep] || 0) : 0;
+    const err = integrated ? state.fetchErrors[ep] : null;
+    const row=document.createElement('div');
+    row.className='monitor-row';
+    row.innerHTML=
+      '<div class="monitor-row-head">'+
+        '<strong>'+escapeHtml(ni?ni.name:ep)+'</strong>'+
+        '<span class="monitor-badge '+label.cls+'">'+escapeHtml(label.label)+'</span>'+
+      '</div>'+
+      '<div class="monitor-row-body">'+
+        '<div class="monitor-detail"><span>'+escapeHtml(t('monitor.ms'))+'</span><span class="monitor-detail-val">'+monitorFormatMs(ms)+'</span></div>'+
+        '<div class="monitor-detail"><span>'+escapeHtml(t('monitor.lastSuccess'))+'</span><span class="monitor-detail-val">'+monitorFormatLast(lastOk)+'</span></div>'+
+        '<div class="monitor-detail"><span>'+escapeHtml(t('monitor.vehicles'))+'</span><span class="monitor-detail-val">'+count+'</span></div>'+
+        (err?'<div class="monitor-detail monitor-error"><span>Fehler</span><span class="monitor-detail-val">'+escapeHtml(err)+'</span></div>':'')+
+      '</div>';
+    list.appendChild(row);
+  }
+}
+
+function renderMonitorIfOpen(){
+  const panel=$('feedMonitorPanel');
+  if(panel && !panel.hidden) renderMonitor();
+}
 function updateFavPanel(){
   const panel=$('favPanel');
   const body=$('favBody');
   if(!panel||!body||panel.hidden)return;
-  const favs=[...state.favorites].filter(k=>state.vehicles.has(k));
   body.innerHTML='';
-  if(favs.length===0){
+
+  // Fahrzeug-Favoriten
+  const vehicleFavs=[...state.favorites].filter(k=>state.vehicles.has(k));
+  // Linien-Favoriten
+  const lineFavs=[...state.lineFavorites];
+  // Haltestellen-Favoriten
+  const stationFavs=[...state.stationFavorites];
+
+  const total=vehicleFavs.length+lineFavs.length+stationFavs.length;
+  if(total===0){
     body.innerHTML='<div class="fav-empty" data-t="fav.empty">Keine favorisierten Fahrzeuge. Tippe in einem Fahrzeug-Detail auf „★ Favorit“.</div>';
     return;
   }
-  for(const key of favs){
-    const v=state.vehicles.get(key);
-    if(!v)continue;
-    const item=document.createElement('div');
-    item.className='fav-item';
-    const info=document.createElement('div');
-    info.className='fav-info';
-    const name=document.createElement('div');
-    name.className='fav-name';
-    name.textContent=v.name;
-    const sub=document.createElement('div');
-    sub.className='fav-sub';
-    sub.textContent=v.headsign||t('detail.trainLineUnverified')+' · '+v.source.toUpperCase();
-    const delay=document.createElement('div');
-    delay.className='fav-delay';
-    const info2=currentVehicleDelay(v);
-    const d=info2?Math.abs(info2.delay||0):0;
-    delay.textContent=d>0?'+'+Math.round(d/60)+' '+t('misc.minutes'):t('lines.onTimeShort');
-    delay.className='fav-delay '+(d>=900?'bad':d>=120?'warn':'ok');
-    info.append(name,sub,delay);
-    const remove=document.createElement('button');
-    remove.className='fav-remove';
-    remove.textContent='✕';
-    remove.title=t('fav.btnRemove');
-    remove.onclick=(e)=>{e.stopPropagation();toggleFavorite(v.key);updateFavPanel();refreshMarkers();statusLabel();};
-    item.append(info,remove);
-    item.onclick=()=>{selectVehicle(v.key);$('favPanel').hidden=true;};
-    body.appendChild(item);
+
+  // Sektion: Fahrzeuge
+  if(vehicleFavs.length){
+    const h=document.createElement('div');h.className='fav-section-header';h.textContent=t('misc.vehicles');body.append(h);
+    for(const key of vehicleFavs){
+      const v=state.vehicles.get(key);
+      if(!v)continue;
+      const item=document.createElement('div');item.className='fav-item';
+      const info=document.createElement('div');info.className='fav-info';
+      const name=document.createElement('div');name.className='fav-name';name.textContent=v.name;
+      const sub=document.createElement('div');sub.className='fav-sub';sub.textContent=v.headsign||t('detail.trainLineUnverified')+' · '+v.source.toUpperCase();
+      const delay=document.createElement('div');delay.className='fav-delay';
+      const info2=currentVehicleDelay(v);
+      const d=info2?Math.abs(info2.delay||0):0;
+      delay.textContent=d>0?'+'+Math.round(d/60)+' '+t('misc.minutes'):t('lines.onTimeShort');
+      delay.className='fav-delay '+(d>=900?'bad':d>=120?'warn':'ok');
+      info.append(name,sub,delay);
+      const remove=document.createElement('button');remove.className='fav-remove';remove.textContent='✕';remove.title=t('fav.btnRemove');
+      remove.onclick=(e)=>{e.stopPropagation();toggleFavorite(key);updateFavPanel();refreshMarkers();statusLabel();};
+      item.append(info,remove);
+      item.onclick=()=>{selectVehicle(key);$('favPanel').hidden=true;};
+      body.appendChild(item);
+    }
+  }
+
+  // Sektion: Linien
+  if(lineFavs.length){
+    const h=document.createElement('div');h.className='fav-section-header';h.textContent=t('filter.linefav');body.append(h);
+    for(const lineKey of lineFavs){
+      const i=lineKey.indexOf(':');if(i<=0)continue;
+      const source=lineKey.slice(0,i),routeId=lineKey.slice(i+1);
+      const db=state.indexes?.[source];
+      const route=db?.routes?.[routeId];
+      const lineName=route?route[0]:routeId;
+      const lineVehicles=[...state.vehicles.values()].filter(v=>v.source===source&&v.routeId===routeId&&visible(v));
+      const item=document.createElement('div');item.className='fav-item';
+      const info=document.createElement('div');info.className='fav-info';
+      const name=document.createElement('div');name.className='fav-name';name.textContent=lineName;
+      const sub=document.createElement('div');sub.className='fav-sub';sub.textContent=lineVehicles.length+' '+t('misc.vehicles')+' · '+source.toUpperCase();
+      info.append(name,sub);
+      const remove=document.createElement('button');remove.className='fav-remove';remove.textContent='✕';remove.title=t('fav.lineBtnRemove');
+      remove.onclick=(e)=>{e.stopPropagation();toggleLineFavorite(lineKey);updateFavPanel();refreshMarkers();statusLabel();};
+      item.append(info,remove);
+      item.onclick=()=>{setFilter('linefav');$('favPanel').hidden=true;};
+      body.appendChild(item);
+    }
+  }
+
+  // Sektion: Haltestellen
+  if(stationFavs.length){
+    const h=document.createElement('div');h.className='fav-section-header';h.textContent=t('station.title');body.append(h);
+    for(const stationKey of stationFavs){
+      const i=stationKey.indexOf(':');if(i<=0)continue;
+      const source=stationKey.slice(0,i),stopId=stationKey.slice(i+1);
+      const db=state.indexes?.[source];
+      const stop=db?.stops?.[stopId];
+      const stopName=stop?String(stop[0]||stopId):stopId;
+      const item=document.createElement('div');item.className='fav-item';
+      const info=document.createElement('div');info.className='fav-info';
+      const name=document.createElement('div');name.className='fav-name';name.textContent=stopName;
+      const sub=document.createElement('div');sub.className='fav-sub';sub.textContent=stopId+' · '+source.toUpperCase();
+      info.append(name,sub);
+      const remove=document.createElement('button');remove.className='fav-remove';remove.textContent='✕';remove.title=t('fav.btnRemove');
+      remove.onclick=(e)=>{e.stopPropagation();toggleStationFavorite(stationKey);updateFavPanel();refreshMarkers();statusLabel();};
+      item.append(info,remove);
+      item.onclick=()=>{/* Haltestelle im Karten-/Suchkontext anzeigen */$('favPanel').hidden=true;};
+      body.appendChild(item);
+    }
   }
 }
 function buildLineStatus(){
@@ -731,12 +864,39 @@ function displayStats(){
   const staleCount=all.filter(v=>v.stale || (v.timestamp && Date.now()/1000-v.timestamp>300)).length;
   const localeDate=getLocale()==='it'?'it-IT':'de-IT';
   $('lastUpdate').textContent=state.fetchedAt?t('time.lastUpdate')+' '+new Date(state.fetchedAt).toLocaleString(localeDate,{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+(staleCount?' · '+staleCount+' '+t('status.notLive'):''):t('time.noData');
+  // Feature B/E: Netzwerkübersicht und Verspätungsverteilung (nur wenn Daten verfügbar)
+  const issues=collectTrafficIssues(state,Date.now(),80);
+  const net=networkOverview(state,Date.now(),80,issues);
+  const dist=delayDistribution(issues);
+  const footer=$('lastUpdate').parentElement;
+  const oldNet=footer.querySelector('.network-stats');
+  if(oldNet)oldNet.remove();
+  if(net.totalIssues>0||net.feedAvailability!==null){
+    const netSec=document.createElement('div');netSec.className='network-stats';
+    netSec.append(E('strong',t('network.title')));
+    netSec.append(document.createTextNode(' · '+net.summary));
+    if(net.feedAvailability!==null){
+      netSec.append(document.createTextNode(' · '+t('network.feedAvailable')+': '+net.feedAvailability+'% '));
+    }
+    if(dist.cancelled>0||dist['15plus']>0||dist['5-15']>0){
+      const distSec=document.createElement('div');distSec.className='delay-dist';
+      distSec.textContent=t('analytics.delayDistribution')+': '+(dist['0-5']||0)+' '+t('analytics.delay0to5')+', '+(dist['5-15']||0)+' '+t('analytics.delay5to15')+', '+(dist['15plus']||0)+' '+t('analytics.delay15plus')+(dist.cancelled?', '+dist.cancelled+' '+t('analytics.cancelled'):'');
+      netSec.append(distSec);
+    }
+    footer.append(netSec);
+  }
 }
 async function refreshFeeds(){
   if(state.busy)return;
   state.busy=true;$('statusText').textContent=t('status.loading');
   try{
-    const results=await Promise.allSettled(ENDPOINTS.map(name=>fetchJson('/api/'+name,16000)));
+    const results = await Promise.all(ENDPOINTS.map(async name => {
+      const result = await fetchJsonTimed('/api/' + name, 16000);
+      state.responseTimes[name] = result.ms;
+      state.fetchErrors[name] = result.error || null;
+      if (result.error) return { status: 'rejected', reason: new Error(result.error) };
+      return { status: 'fulfilled', value: result.data };
+    }));
     const {ok, oldFeeds, statuses}=buildFeedStatus(results, ENDPOINTS);
     state.statuses=statuses;
     for(const [name, feed] of Object.entries(ok)){
@@ -767,7 +927,7 @@ async function refreshFeeds(){
     // Alte Alerts entfernen wenn Feed nicht mehr antwortet
     for(const s of Object.keys(state.alerts))if(!ok[s])delete state.alerts[s];
     state.failCount=ENDPOINTS.filter(s=>state.statuses[s]!=='ok').length;
-    statusLabel();updateFeedHealthBanner();updateFavPanel();updateAlertTicker();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);displayStats();refreshScheduleMatches();
+    statusLabel();updateFeedHealthBanner();updateFavPanel();updateAlertTicker();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);displayStats();refreshScheduleMatches();renderMonitorIfOpen();
     // Bus-shape fetching happens after the live updates; do not delay feed painting.
     loadBusShapesForVehicles().catch(e=>console.info('Bus shape preload:',e));
     if(!initiallyLocated && state.vehicles.size && state.map){
@@ -801,15 +961,20 @@ function openSheet(which){
   // 9.5: Der Fokus wandert in das Panel und kommt beim Schliessen zurueck.
   try{sheet.focus({preventScroll:true})}catch{}
   $('scrim').classList.add('show');
+  // Karte neu rendern, da sich das sichtbare Viewport geaendert hat (Sheet-Overlay)
+  setTimeout(()=>{state.map?.invalidateSize?.()},0);
 }
 function closeSheets(resetSelection=true){
   for(const id of ['sheet','stationSheet']){$(id).classList.remove('open');$(id).setAttribute('aria-hidden','true');}
   // 9.5: Der Fokus geht zurueck auf die Karte.
   try{$('map')?.focus({preventScroll:true})}catch{}
+  document.body.classList.remove('sr71-focusing');
   $('scrim').classList.remove('show');state.activeSheet=null;
   if(resetSelection){state.selectedKey=null;refreshMarkers();}
   state.trackLayer.clearLayers();
   document.dispatchEvent(new Event('sr37:sheet-closed'));
+  // Karte neu rendern, da sich das sichtbare Viewport geaendert hat (Sheet-Overlay geschlossen)
+  setTimeout(()=>{state.map?.invalidateSize?.()},0);
 }
 function badge(text,style=''){const el=document.createElement('span');el.className='mini-badge '+style;el.textContent=text;return el;}
 function detail(name,value,cls=''){const el=document.createElement('div');el.className='detail'+(cls?' '+cls:'');const small=document.createElement('small');small.textContent=name;const strong=document.createElement('strong');strong.textContent=value;el.append(small,strong);$('details').append(el);}
@@ -830,7 +995,7 @@ function renderModel(v){const model=modelFor(v),card=$('modelCard'),img=$('model
 function drawVehicleDetails(key,fetchSchedule){
   const v=state.vehicles.get(key);if(!v)return;
   $('sheetKind').textContent=v.kind==='train'?t('detail.train')+' · '+v.source.toUpperCase():t('detail.bus')+' · '+v.source.toUpperCase();
-  $('sheetTitle').textContent=(v.kind==='train'?'🚆 ':'🚌 ')+v.name;
+  $('sheetTitle').textContent=(v.kind==='train'?'🚆 ':'🚌 ')+(v.name||t('detail.label.unknownTarget'));
   $('sheetSub').textContent=v.headsign;
   const badges=$('sheetBadges');badges.replaceChildren();
   badges.append(badge(v.kind==='train'?t('detail.kind.train'):t('detail.kind.bus')));
@@ -863,6 +1028,63 @@ function drawVehicleDetails(key,fetchSchedule){
   // Die eine ist eine Zeitangabe, die andere eine Ortsangabe.
   const schedule=trainScheduledPosition(v,state.indexes,state.details,state.shapes);
   if(schedule)detail(t('detail.label.planDeviation'),'~'+schedule.differenceKm.toFixed(1)+t('detail.delay.km')+' '+schedule.relative+' ('+schedule.from+' - '+schedule.to+')');
+  // Feature A: Live Journey Intelligence – nächste und kommende Haltestellen, Verspätungsentwicklung, Datenvertrauen
+  const journey=buildJourney(v,state.indexes,state.details,state.shapes,state.updates,state.statuses,Date.now());
+  if(journey){
+    const jSec=document.createElement('div');jSec.className='detail-section journey-section';
+    jSec.append(E('strong',t('journey.title')));
+    if(journey.nextStop){
+      const stopRow=document.createElement('div');stopRow.className='journey-stop';
+      const stopName=document.createElement('b');stopName.textContent=t('board.stop')+': '+journey.nextStop.name;
+      stopRow.append(stopName);
+      const stopInfo=document.createElement('span');
+      if(journey.nextStop.delaySec!==null){
+        stopInfo.textContent=formatJourneyDelay(journey.nextStop.delaySec)+' · '+t('journey.delay.basis.'+journey.nextStop.forecastBasis)+' · '+t('journey.forecast.'+journey.nextStop.forecastQuality);
+      } else {
+        stopInfo.textContent=t('journey.noForecast');
+      }
+      stopRow.append(stopInfo);
+      jSec.append(stopRow);
+    }
+    if(journey.upcoming&&journey.upcoming.length>0){
+      const up=document.createElement('div');up.className='journey-upcoming';
+      up.append(E('small',t('station.schedule')));
+      for(const st of journey.upcoming.slice(0,4)){
+        const li=document.createElement('div');li.className='journey-stop-upcoming';
+        li.textContent=st.name+(st.plannedArr!==null?' · '+formatClock(st.plannedArr):'');
+        up.append(li);
+      }
+      jSec.append(up);
+    }
+    const trustRow=document.createElement('div');trustRow.className='journey-trust';
+    trustRow.textContent=t('detail.label.reliability')+': '+t('journey.trust.'+journey.trust);
+    jSec.append(trustRow);
+    // Feature C: Journey-Favorit (Trip-basiert, konsistent mit app-state.js journeyFavorites)
+    if(journey.tripId){
+      const jFavKey=v.source+':'+journey.tripId;
+      const jFavBtn=document.createElement('button');
+      jFavBtn.className='badge journey-fav-badge';
+      jFavBtn.textContent=isJourneyFavorite(jFavKey)?t('fav.btnRemove'):t('fav.btnAdd');
+      jFavBtn.title=isJourneyFavorite(jFavKey)?t('fav.btnRemove'):t('fav.btnAdd');
+      jFavBtn.onclick=()=>{
+        const nowFav=toggleJourneyFavorite(jFavKey);
+        jFavBtn.textContent=nowFav?t('fav.btnRemove'):t('fav.btnAdd');
+        jFavBtn.title=nowFav?t('fav.btnRemove'):t('fav.btnAdd');
+        refreshMarkers();statusLabel();
+      };
+      jSec.append(jFavBtn);
+    }
+    // Linien- und Haltestellen-Favoriten anzeigen (Read-Only über journeyFavoriteStatus)
+    const favs=[...state.lineFavorites].map(k=>{const i=k.indexOf(':');return{type:'line',value:k.slice(i+1),source:k.slice(0,i)}})
+      .concat([...state.favorites].map(k=>state.vehicles.get(k)?.tripId?{type:'train',value:state.vehicles.get(k).tripId,source:state.vehicles.get(k).source}:null).filter(Boolean));
+    const favStatus=journeyFavoriteStatus(journey,favs);
+    if(favStatus){
+      const favHint=document.createElement('div');favHint.className='journey-fav-hint';
+      favHint.textContent=t('fav.status');
+      jSec.append(favHint);
+    }
+    $('details').append(jSec);
+  }
   detail(t('detail.label.positionAge'),feedAgeSeconds(v)===null?t('detail.label.notAvailable'):duration(feedAgeSeconds(v)*1000)+t('detail.delay.sec'));
   detail(t('detail.label.speed'),v.speed===null?t('detail.label.notAvailable'):v.speed+t('detail.delay.kmh'));
   detail(t('detail.label.source'),v.source.toUpperCase()+' / GTFS-RT');
@@ -1225,6 +1447,14 @@ function setupControls(){
     if(!hidden)updateHealthPanel();
   };
   $('closeHealth').onclick=()=>$('healthPanel').hidden=true;
+  $('monitorBtn').onclick=()=>{
+    const panel=$('feedMonitorPanel');
+    const hidden=panel.hidden;
+    closeSheets();$('searchResults')?.classList.add('hidden');if($('healthPanel'))$('healthPanel').hidden=true;if($('favPanel'))$('favPanel').hidden=true;if($('linesPanel'))$('linesPanel').hidden=true;
+    panel.hidden=!hidden;
+    if(!hidden)renderMonitor();
+  };
+  $('closeMonitor').onclick=()=>$('feedMonitorPanel').hidden=true;
   $('favBtnTop').onclick=()=>{
     const panel=$('favPanel');
     const hidden=panel.hidden;
@@ -1263,6 +1493,7 @@ function setupControls(){
     if(!e.target.closest('#search')&&!e.target.closest('#searchResults'))$('searchResults')?.classList.add('hidden');
     if($('healthPanel')&&!$('healthPanel').hidden)$('healthPanel').hidden=true;
     if($('favPanel')&&!$('favPanel').hidden)$('favPanel').hidden=true;
+    if($('feedMonitorPanel')&&!$('feedMonitorPanel').hidden)$('feedMonitorPanel').hidden=true;
   });
   $('refreshBtn').onclick=()=>{
     if(Date.now()-state.fetchedAt>=manualRefreshDelayMs)refreshFeeds();
@@ -1282,7 +1513,7 @@ function setupControls(){
   for(const btn of document.querySelectorAll('[data-place]'))btn.onclick=()=>moveToPlace(btn.dataset.place);
   $('stationSearch').oninput=renderStationResults;$('backStations').onclick=()=>{$('stationBoard').hidden=true;$('stationResults').hidden=false};
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){closeSheets();$('healthPanel').hidden=true;$('favPanel').hidden=true;}
+    if(e.key==='Escape'){closeSheets();$('healthPanel').hidden=true;$('favPanel').hidden=true;$('feedMonitorPanel').hidden=true;}
     // Tastatur-Shortcuts (nur außerhalb von Eingabefeldern):
     if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
     if(e.key==='r'||e.key==='R'){e.preventDefault();refreshFeeds();}
@@ -1322,6 +1553,7 @@ async function init(){
   loadFavorites();
   loadLineFavorites();
   loadJourneyFavorites();
+  loadStationFavorites();
   loadDismissedAlerts();
   initLocale();
   applyTranslations();
