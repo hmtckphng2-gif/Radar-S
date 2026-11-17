@@ -16,6 +16,7 @@ const FEEDS = Object.freeze({
   trentino_updates: 'https://proxy.busone.app/trentino/gtfs-rt/trip-updates.json',
   trains_updates: 'https://proxy.busone.app/trenitalia/gtfs-rt/trip-updates.json'
 });
+const TRAIN_SIRI_URL='https://proxy.busone.app/trenitalia/siri-et.xml';
 const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8',
   'cache-control': 'no-store',
@@ -265,11 +266,16 @@ export default {
     if(name==='v1/vehicles'||name==='v1/diagnostics'){
       const client=String(env.BUSONE_CLIENT||'Suedtirol Radar read-only transit viewer').slice(0,180);
       const snapshot=await buildSnapshot(async source=>{
-        const upstream=await fetch(FEEDS[source],{
-          headers:source==='sta_direct'?{'accept':'application/json'}:{'accept':'application/json','X-BusOne-Client':client,'X-BusOne-Use':'personal'},
-          signal:AbortSignal.timeout(9000),cf:{cacheEverything:true,cacheTtl:15}});
+        const upstream=await fetch(source==='trains'?TRAIN_SIRI_URL:FEEDS[source],{
+          headers:source==='sta_direct'?{'accept':'application/json'}:source==='trains'?{'accept':'application/xml','X-BusOne-Client':client,'X-BusOne-Use':'personal'}:{'accept':'application/json','X-BusOne-Client':client,'X-BusOne-Use':'personal'},
+          signal:AbortSignal.timeout(12000),cf:{cacheEverything:true,cacheTtl:10}});
         const contentType=upstream.headers.get('content-type')||'';
         if(!upstream.ok){const error=Error('HTTP '+upstream.status);error.httpStatus=upstream.status;error.contentType=contentType;throw error;}
+        if(source==='trains'){
+          if(!contentType.toLowerCase().includes('xml')){const error=Error('Invalid SIRI XML content type');error.httpStatus=upstream.status;error.contentType=contentType;throw error;}
+          const data=await upstream.text();
+          return {data,httpStatus:upstream.status,contentType};
+        }
         if(!contentType.toLowerCase().includes('json')){const error=Error('Invalid JSON content type');error.httpStatus=upstream.status;error.contentType=contentType;throw error;}
         let data;
         try{data=await upstream.json();}catch{const error=Error('Invalid JSON response');error.httpStatus=upstream.status;error.contentType=contentType;throw error;}

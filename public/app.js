@@ -883,7 +883,8 @@ function drawVehicleDetails(key,fetchSchedule){
   badges.append(badge(v.kind==='train'?'Zug':'Bus'));
   badges.append(badge(v.stale?'Letzte bekannte Position':'Aktueller Feed',v.stale?'warn':'ok'));
   const estimatedPosition=/simuliert|geschätzt|interpoliert|berechnet/i.test(v.positionType||'');
-  badges.append(badge(estimatedPosition?'Geschätzte Position':'Feedposition · GPS nicht bestätigt',estimatedPosition?'sr86-position-estimated':'sr86-position-feed'));
+  const observedTrainStop=v.kind==='train'&&/Letzter bestätigter Halt/i.test(v.positionType||'');
+  badges.append(badge(observedTrainStop?'Letzter bestätigter Halt':estimatedPosition?'Geschätzte Position':'Feedposition · GPS nicht bestätigt',observedTrainStop?'sr86-position-feed':estimatedPosition?'sr86-position-estimated':'sr86-position-feed'));
   if(v.kind==='bus') badges.append(badge(v.lineVerified?'GTFS-Linie geprüft':'Linie unbekannt',v.lineVerified?'ok':'warn'));
   const favBtn=document.createElement('button');
   favBtn.className='badge fav-badge';
@@ -894,6 +895,7 @@ function drawVehicleDetails(key,fetchSchedule){
   renderModel(v);
   $('details').replaceChildren();
   detail('Zug / Linie',v.name);
+  if(observedTrainStop)detail('Letzter bestätigter Standort',v.lastObservedStop||'Unbekannt');
   const update=state.updates.get(v.source+':'+v.tripId);
   const cancelled=/^(?:CANCELED|CANCELLED|3)$/i.test(update?.scheduleRelationship||'');
   detail('Status',cancelled?'Fahrt entfällt':update?'Echtzeitdaten vorhanden':'Keine Echtzeitdaten zur Fahrt');

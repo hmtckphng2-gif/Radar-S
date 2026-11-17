@@ -2,22 +2,27 @@
 import {parseVehicles} from './core.js';
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs';
 import {feedDiagnostics} from './radar66-logic.mjs';
+import {parseSiriTrainPositions} from './train-live-logic.mjs';
 const SOURCES=['sta','sta_direct','trentino','trains'];
 export function normalizeSnapshot(feeds,now=Date.now()){
  const status={},vehicles=[];
- for(const source of SOURCES){const record=feeds[source];if(!record?.data){status[source]=record?.status||'error';continue}
- const timestamp=Number(record.data.header?.timestamp);const age=Number.isFinite(timestamp)&&timestamp>1e9?now/1000-timestamp:null;
- const fresh=age!==null&&age<=300&&age>=-30;
- status[source]=fresh?(source==='trains'?'simulated':'ok'):'old';
- if(!fresh || source==='trains')continue; // Trenitalia coordinates are estimated, not live GPS
- for(const v of parseVehicles(record.data,source,{},now).vehicles){
-  if(!v.timestamp||now/1000-v.timestamp>300||now/1000-v.timestamp< -30)continue;
-  if(source==='sta_direct')v.positionType='STA Open Data Hub (GPS nicht unabhängig bestätigt)';
-  vehicles.push(v);
- }
+ for(const source of SOURCES){
+  const record=feeds[source]; if(!record?.data){status[source]=record?.status||'error';continue;}
+  const trainFeed=source==='trains'?parseSiriTrainPositions(record.data,now):null;
+  const timestamp=source==='trains'?Number(trainFeed?.timestamp):Number(record.data.header?.timestamp);
+  const age=Number.isFinite(timestamp)&&timestamp>1e9?now/1000-timestamp:null;
+  const fresh=age!==null&&age<=300&&age>=-30;
+  status[source]=fresh?'ok':'old';
+  if(!fresh)continue;
+  if(source==='trains'){vehicles.push(...(trainFeed?.vehicles||[]));continue;}
+  for(const v of parseVehicles(record.data,source,{},now).vehicles){
+   if(!v.timestamp||now/1000-v.timestamp>300||now/1000-v.timestamp< -30)continue;
+   if(source==='sta_direct')v.positionType='STA Open Data Hub (GPS nicht unabhängig bestätigt)';
+   vehicles.push(v);
+  }
  }
  const fusion=selectRepresentatives(vehicles);const visible=vehicles.filter(v=>fusion.keys.has(v.key));const diagnostics=feedDiagnostics(vehicles,status,now,fusion);
- return {schema:'radar.snapshot.v1',version:'6.6',generatedAt:new Date(now).toISOString(),positionDisclaimer:'Nur vertrauenswürdige empfangene Feedpositionen. Trenitalia-Koordinaten sind geschätzt und werden nicht als Live-Zugpositionen angezeigt; Verspätungs-/Fahrtdaten aus Trip-Updates bleiben separat verfügbar.',sources:status,diagnostics,vehicles:visible.map(v=>({id:v.key,kind:v.kind,lat:v.lat,lon:v.lon,observedAt:v.timestamp?new Date(v.timestamp*1000).toISOString():null,routeId:v.routeId||null,tripId:v.tripId||null,tripStartDate:v.tripStartDate||null,vehicleId:v.vehicleId||null,source:v.source,sourceCount:fusion.sources.get(v.key)?.length||1,positionType:v.positionType,quality:observationQuality(v,now).status,trainNumber:v.kind==='train'&&v.nameVerified?v.name:null,verifiedLine:null}))};
+ return {schema:'radar.snapshot.v1',version:'6.6',generatedAt:new Date(now).toISOString(),positionDisclaimer:'Zugmarker zeigen den letzten vom Trenitalia-Realtime-Datensatz bestätigten Halt, nicht eine GPS-Liveposition. Der Zeitstempel des letzten tatsächlichen Halts wird je Zug angezeigt. Keine simulierten Streckenpositionen.',sources:status,diagnostics,vehicles:visible.map(v=>({id:v.key,kind:v.kind,lat:v.lat,lon:v.lon,name:v.name||null,headsign:v.headsign||null,lastObservedStop:v.lastObservedStop||null,observedAt:v.timestamp?new Date(v.timestamp*1000).toISOString():null,routeId:v.routeId||null,tripId:v.tripId||null,tripStartDate:v.tripStartDate||null,vehicleId:v.vehicleId||null,source:v.source,sourceCount:fusion.sources.get(v.key)?.length||1,positionType:v.positionType,quality:v.source==='trains'?(v.quality||observationQuality(v,now).status):observationQuality(v,now).status,trainNumber:v.kind==='train'?(v.vehicleId||null):null,verifiedLine:null}))};
 }
 export async function buildSnapshot(fetchFeed,now=Date.now()){
  const response=await Promise.allSettled(SOURCES.map(async source=>{
