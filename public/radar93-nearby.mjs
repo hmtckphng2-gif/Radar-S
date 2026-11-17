@@ -1,4 +1,4 @@
-import {sameStationName} from './radar92-details.mjs?v=9.9.6&rev=details-1';
+import {sameStationName} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 function metersBetween(a,b){
  const lat1=Number(a?.lat),lat2=Number(b?.lat),lon1=Number(a?.lon),lon2=Number(b?.lon);
  if(![lat1,lat2,lon1,lon2].every(Number.isFinite))return Infinity;

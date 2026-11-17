@@ -1,9 +1,9 @@
-import {sourceLabel,formatStationName} from './radar92-details.mjs?v=9.9.6&rev=station-labels-2';
+import {sourceLabel,formatStationName} from './radar92-details.mjs?v=9.9.5&rev=station-labels-2';
 /* Radar 5.4 — openable timetable journeys and honest device-local delay history. */
-import {aggregateDays,recordObservation,trainNumber,platformInfo} from './radar54-logic.mjs?v=9.9.6';
-import {enrichTrainPlatform} from './train-platforms.js?v=9.9.6';
-import {romeDay,dateGTFSValid} from './radar51-logic.mjs?v=9.9.6';
-import {isRailRoute,formatClock,vehicleDelayInfo,delayPresentation} from './core.js?v=9.9.6&rev=delay-copy-2';
+import {aggregateDays,recordObservation,trainNumber,platformInfo} from './radar54-logic.mjs?v=9.9.5';
+import {enrichTrainPlatform} from './train-platforms.js?v=9.9.5';
+import {romeDay,dateGTFSValid} from './radar51-logic.mjs?v=9.9.5';
+import {isRailRoute,formatClock,vehicleDelayInfo,delayPresentation} from './core.js?v=9.9.5&rev=delay-copy-2';
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),mk=(tag,cls,text)=>{const e=document.createElement(tag);e.className=cls||'';if(text!==undefined)e.textContent=text;return e};

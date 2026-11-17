@@ -1,8 +1,8 @@
 // Pendler-Assistent: Verwaltung von Fahrten, Überwachung und Benachrichtigungs-Architektur.
 // Reine Logik ohne DOM-Abhängigkeit, unit-tested.
 
-import { findConnections } from './verbindungen-logic.mjs?v=9.9.6';
-import { getStopAlerts } from './haltestelle-logic.mjs?v=9.9.6';
+import { findConnections } from './verbindungen-logic.mjs?v=9.9.5';
+import { getStopAlerts } from './haltestelle-logic.mjs?v=9.9.5';
 
 export const PROFILES_KEY = 'sueRtirol-radar-pendler-profiles';
 export const DELAY_THRESHOLD_SEC = 300; // 5 Min = erhebliche Verspätung

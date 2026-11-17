@@ -1,6 +1,6 @@
 /* Radar 7.8 — additive Live Intelligence, station favorites, vehicle data clarity. */
-import {vehicleLiveQuality,sourceHealth,delayDiscrepancy} from './radar78-logic.mjs?v=9.9.6';
-import {formatRelativeAge,sourceLabel} from './radar92-details.mjs?v=9.9.6&rev=details-1';
+import {vehicleLiveQuality,sourceHealth,delayDiscrepancy} from './radar78-logic.mjs?v=9.9.5';
+import {formatRelativeAge,sourceLabel} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 (()=>{'use strict';const FAVORITES='sr77-favorite-stations';
  const $=id=>document.getElementById(id);
  const el=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e};

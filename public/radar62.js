@@ -1,8 +1,8 @@
 /* Südtirol Radar 6.2 — Train Experience, additive, no feed or map changes. */
-import {romeSeconds,dateGTFSValid,trainScheduledPosition} from './radar51-logic.mjs?v=9.9.6';
-import {displayDelay} from './radar53-logic.mjs?v=9.9.6';
-import {journeyProgress} from './radar56-logic.mjs?v=9.9.6';
-import {formatRelativeAge,sourceLabel} from './radar92-details.mjs?v=9.9.6&rev=details-1';
+import {romeSeconds,dateGTFSValid,trainScheduledPosition} from './radar51-logic.mjs?v=9.9.5';
+import {displayDelay} from './radar53-logic.mjs?v=9.9.5';
+import {journeyProgress} from './radar56-logic.mjs?v=9.9.5';
+import {formatRelativeAge,sourceLabel} from './radar92-details.mjs?v=9.9.5&rev=details-1';
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const node=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=String(text);return e};

@@ -1,6 +1,6 @@
 // Intelligente Haltestellen: Detailansicht für eine einzelne Haltestelle.
 // Reine Logik ohne DOM-Abhängigkeit, unit-tested.
-import { stopRows, normalizeStopId, numericDelay, feedAgeSeconds, positionValid } from './core.js?v=9.9.6&rev=haltestelle-1';
+import { stopRows, normalizeStopId, numericDelay, feedAgeSeconds, positionValid } from './core.js?v=9.9.5&rev=haltestelle-1';
 
 export const FAVORITES_KEY = 'sueRtirol-radar-favorites';
 
