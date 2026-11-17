@@ -54,6 +54,7 @@ const ALLOWED = new Set([
   'resolve', 'reject',                    // new Promise((resolve, reject) => ...)
   'favoriteId', 'action', 'cell',         // Objekt-Kurzformen
   'fetchFeed', 'onModel',                 // Parameter
+  'EstimatedVehicleJourney', 'RecordedCall', // XML element names in SIRI regexes
 ]);
 
 // Strings, Template-Literale und Kommentare entfernen: dort steht Text,
