@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="de" data-theme="dark" data-locale="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090e15">
+<meta name="description" content="Südtirol Radar Historische Verspätungsanalyse – Durchschnittliche Verspätung, Linienvergleich und Datenqualität für eine Haltestelle.">
+<title>Verspätungsanalyse – Südtirol Radar</title>
+<link rel="canonical" href="https://radar-s.j9fr2vg4vm.workers.dev/historie.html">
+<link rel="icon" type="image/png" href="/radar60-icon-192.png">
+<link rel="stylesheet" href="/styles.css?v=9.9.5&palette=1">
+<link rel="stylesheet" href="/radar-ui.css?v=9.9.5&rev=delay-ring-block1-1">
+<link rel="stylesheet" href="/radar10-shell.css?v=9.9.5">
+<style>
+  .hv-page { max-width: 720px; margin: 0 auto; padding: 12px; font-family: system-ui, -apple-system, sans-serif; }
+  .hv-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #343b44; flex-wrap: wrap; }
+  .hv-header h1 { font-size: 18px; margin: 0; flex: 1; }
+  .hv-badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #1c232c; color: #e4e8ec; border: 1px solid #343b44; }
+  .hv-update { font-size: 12px; color: #8a93a0; margin-left: auto; }
+  .hv-back { background: none; border: 1px solid #343b44; color: #e4e8ec; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+  .hv-back:hover { border-color: #0ea5e9; }
+  .hv-empty { text-align: center; padding: 40px 16px; color: #8a93a0; }
+  .hv-empty p { margin: 6px 0; }
+  .hv-section { margin-bottom: 14px; background: #0f141c; border: 1px solid #343b44; border-radius: 12px; padding: 12px; }
+  .hv-section h2 { font-size: 14px; color: #8a93a0; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid #1c232c; }
+  .hv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .hv-card { background: #0b1018; border: 1px solid #343b44; border-radius: 10px; padding: 10px; text-align: center; }
+  .hv-card .hv-value { font-size: 24px; font-weight: 700; color: #e4e8ec; display: block; }
+  .hv-card .hv-label { font-size: 11px; color: #8a93a0; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+  .hv-card.ok .hv-value { color: #22c55e; }
+  .hv-card.warn .hv-value { color: #f59e0b; }
+  .hv-card.severe .hv-value { color: #ef4444; }
+  .hv-card.neutral .hv-value { color: #94a3b8; }
+  .hv-ai { background: #1c232c; border: 1px solid #343b44; border-radius: 10px; padding: 12px; margin-bottom: 14px; }
+  .hv-ai h3 { font-size: 13px; color: #0ea5e9; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.06em; }
+  .hv-ai ul { margin: 0; padding-left: 16px; color: #e4e8ec; font-size: 13px; line-height: 1.5; }
+  .hv-ai li { margin-bottom: 4px; }
+  .hv-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .hv-table th { text-align: left; color: #8a93a0; padding: 6px 8px; border-bottom: 1px solid #1c232c; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .hv-table td { padding: 6px 8px; border-bottom: 1px solid #1c232c; color: #c7cfda; }
+  .hv-table tr:last-child td { border-bottom: none; }
+  .hv-delay-ok { color: #22c55e; }
+  .hv-delay-warn { color: #f59e0b; }
+  .hv-delay-severe { color: #ef4444; }
+  .hv-delay-none { color: #94a3b8; }
+  .hv-trend { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid #1c232c; }
+  .hv-trend-day { min-width: 60px; text-align: center; }
+  .hv-trend-bar { height: 6px; background: #343b44; border-radius: 3px; margin-top: 4px; overflow: hidden; }
+  .hv-trend-fill { height: 100%; background: #0ea5e9; border-radius: 3px; }
+  .hv-warning { background: #451a03; border: 1px solid #7c3a0e; border-radius: 8px; padding: 10px; color: #fbbf24; font-size: 13px; margin-bottom: 14px; }
+  .hv-note { font-size: 11px; color: #8a93a0; font-style: italic; margin-top: 6px; }
+  .hv-loading { text-align: center; padding: 20px; color: #8a93a0; }
+  @media (max-width: 480px) {
+    .hv-page { padding: 8px; }
+    .hv-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="hv-page">
+  <div class="hv-header">
+    <h1 id="hvStopName">Verspätungsanalyse</h1>
+    <button class="hv-back" onclick="location.href='/'">← Zurück zur Karte</button>
+    <span class="hv-badge" id="hvStopId">–</span>
+    <span class="hv-update" id="hvUpdate">–</span>
+  </div>
+
+  <div id="hvEmpty" class="hv-empty" hidden>
+    <p>Keine Haltestelle angegeben.</p>
+    <p style="font-size:12px;opacity:0.7">Bitte über die Hauptkarte oder Haltestellenansicht eine Haltestelle auswählen.</p>
+  </div>
+
+  <div id="hvContent" hidden>
+    <div id="hvWarning" class="hv-warning" hidden></div>
+
+    <div class="hv-ai">
+      <h3>KI-Zusammenfassung</h3>
+      <ul id="hvAiSummary"></ul>
+    </div>
+
+    <div class="hv-section">
+      <h2>Verspätungsübersicht</h2>
+      <div class="hv-grid">
+        <div class="hv-card neutral" id="hvCardAvg">
+          <span class="hv-value" id="hvAvgValue">–</span>
+          <span class="hv-label">Ø Verspätung</span>
+        </div>
+        <div class="hv-card neutral" id="hvCardMedian">
+          <span class="hv-value" id="hvMedianValue">–</span>
+          <span class="hv-label">Median</span>
+        </div>
+        <div class="hv-card neutral" id="hvCardLate">
+          <span class="hv-value" id="hvLateValue">–</span>
+          <span class="hv-label">>5 Min. verspätet</span>
+        </div>
+        <div class="hv-card neutral" id="hvCardCount">
+          <span class="hv-value" id="hvCountValue">–</span>
+          <span class="hv-label">Messungen</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hv-section">
+      <h2>Verspätungsentwicklung über die Zeit</h2>
+      <div id="hvTrend" class="hv-trend"></div>
+      <p class="hv-note" id="hvTrendNote"></p>
+    </div>
+
+    <div class="hv-section">
+      <h2>Aufholen oder Aufbauen von Verspätung</h2>
+      <div class="hv-grid">
+        <div class="hv-card neutral" id="hvCardCatchUp">
+          <span class="hv-value" id="hvCatchUpValue">–</span>
+          <span class="hv-label">Ø aufgeholt (Min.)</span>
+        </div>
+        <div class="hv-card neutral" id="hvCardBuildUp">
+          <span class="hv-value" id="hvBuildUpValue">–</span>
+          <span class="hv-label">Ø aufgebaut (Min.)</span>
+        </div>
+        <div class="hv-card neutral" id="hvCardTrips">
+          <span class="hv-value" id="hvTripsValue">–</span>
+          <span class="hv-label">Beobachtete Fahrten</span>
+        </div>
+      </div>
+      <p id="hvCatchUpText" class="hv-note"></p>
+    </div>
+
+    <div class="hv-section">
+      <h2>Zuverlässigkeit der Linien</h2>
+      <table class="hv-table">
+        <thead>
+          <tr><th>Linie</th><th>Messungen</th><th>Ø Verspätung</th><th>Median</th><th>>5 Min. verspätet</th></tr>
+        </thead>
+        <tbody id="hvLinesTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { computeDelayStats, hasEnoughData, analyzeCatchUpBuildup, compareLinesByStop, generateAISummary, assessDataQuality, MIN_SAMPLES_FOR_RELIABLE_STATS } from './historie-logic.mjs?v=9.9.5';
+
+const $ = id => document.getElementById(id);
+const hvContent = $('hvContent');
+const hvEmpty = $('hvEmpty');
+const hvStopName = $('hvStopName');
+const hvStopId = $('hvStopId');
+const hvUpdate = $('hvUpdate');
+const hvWarning = $('hvWarning');
+const hvAiSummary = $('hvAiSummary');
+
+// Stop ID aus URL-Parameter lesen
+const urlParams = new URLSearchParams(location.search);
+const stopId = urlParams.get('stop');
+
+if (!stopId) {
+  hvEmpty.hidden = false;
+} else {
+  hvStopId.textContent = stopId;
+  load();
+}
+
+let staticData = null;
+
+async function load() {
+  try {
+    // Statische GTFS-Daten für Linien-Mapping laden
+    const res = await fetch('/data/sta-index.json?v=9.9.5', { cache: 'no-store' });
+    if (res.ok) staticData = { sta: await res.json() };
+
+    // Haltestellenname
+    const name = getStopName(stopId, staticData, 'sta');
+    hvStopName.textContent = name + ' – Verspätungsanalyse';
+
+    // Historische Daten laden
+    const [analyticsRes, stopRes] = await Promise.all([
+      fetch('/api/history/analytics?stop=' + encodeURIComponent(stopId) + '&hours=48', { cache: 'no-store' }),
+      fetch('/api/history/stop?id=' + encodeURIComponent(stopId), { cache: 'no-store' })
+    ]);
+
+    let analytics = null;
+    let stopEvents = [];
+
+    if (analyticsRes.ok) analytics = await analyticsRes.json();
+    if (stopRes.ok) {
+      const stopData = await stopRes.json();
+      stopEvents = stopData.updates || [];
+    }
+
+    // Datenqualität prüfen
+    const stats = computeDelayStats(stopEvents);
+    const quality = assessDataQuality(stats);
+
+    // Warnung bei unzureichenden Daten
+    if (!hasEnoughData(stats)) {
+      hvWarning.hidden = false;
+      hvWarning.textContent = quality.message + ' Die Analyse basiert auf Feed-Prognosen, nicht auf bestätigten Ankünften.';
+    }
+
+    // KI-Zusammenfassung
+    const catchUpBuildup = analyzeCatchUpBuildup(stopEvents);
+    const lines = compareLinesByStop(stopEvents, staticData, 'sta');
+    const summary = generateAISummary(stats, catchUpBuildup, lines);
+    renderAiSummary(summary);
+
+    // Verspätungsübersicht
+    renderOverview(stats);
+
+    // Trend über die Zeit
+    renderTrend(analytics);
+
+    // Aufholen/Aufbauen
+    renderCatchUpBuildup(catchUpBuildup);
+
+    // Linienvergleich
+    renderLines(lines);
+
+    hvUpdate.textContent = 'Aktualisiert: ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    hvEmpty.hidden = true;
+    hvContent.hidden = false;
+  } catch (e) {
+    hvEmpty.hidden = false;
+    hvEmpty.innerHTML = '<p>Analysedaten konnten nicht geladen werden.</p><p style="font-size:12px;opacity:0.7">' + e.message + '</p>';
+  }
+}
+
+function renderAiSummary(lines) {
+  hvAiSummary.innerHTML = '';
+  for (const line of lines) {
+    const li = document.createElement('li');
+    li.textContent = line;
+    hvAiSummary.appendChild(li);
+  }
+}
+
+function renderOverview(stats) {
+  const delayClass = stats.averageMinutes === null ? 'neutral' : (stats.averageMinutes >= 15 ? 'severe' : stats.averageMinutes >= 5 ? 'warn' : 'ok');
+  $('hvCardAvg').className = 'hv-card ' + delayClass;
+  $('hvAvgValue').textContent = stats.averageMinutes === null ? '–' : stats.averageMinutes + ' Min.';
+  $('hvMedianValue').textContent = stats.medianMinutes === null ? '–' : stats.medianMinutes + ' Min.';
+  $('hvLateValue').textContent = stats.latePercent === null ? '–' : stats.latePercent + '%';
+  $('hvCountValue').textContent = stats.sampleCount;
+}
+
+function renderTrend(analytics) {
+  const trendDiv = $('hvTrend');
+  const note = $('hvTrendNote');
+  trendDiv.innerHTML = '';
+
+  if (!analytics || !analytics.trend || analytics.trend.length === 0) {
+    note.textContent = 'Keine Zeitreihendaten verfügbar.';
+    return;
+  }
+
+  let maxCount = 1;
+  for (const d of analytics.trend) if (d.count > maxCount) maxCount = d.count;
+
+  for (const d of analytics.trend) {
+    const day = document.createElement('div');
+    day.className = 'hv-trend-day';
+    const label = document.createElement('div');
+    label.textContent = d.date.slice(5).replace('-', '.');
+    label.style.fontSize = '11px';
+    label.style.color = '#8a93a0';
+    day.appendChild(label);
+
+    const bar = document.createElement('div');
+    bar.className = 'hv-trend-bar';
+    const fill = document.createElement('div');
+    fill.className = 'hv-trend-fill';
+    fill.style.width = Math.round((d.count / maxCount) * 100) + '%';
+    fill.style.backgroundColor = d.averageMinutes && d.averageMinutes >= 5 ? '#f59e0b' : '#0ea5e9';
+    bar.appendChild(fill);
+    day.appendChild(bar);
+
+    const count = document.createElement('div');
+    count.textContent = d.count;
+    count.style.fontSize = '10px';
+    count.style.color = '#8a93a0';
+    day.appendChild(count);
+
+    trendDiv.appendChild(day);
+  }
+
+  note.textContent = analytics.trend.length + ' Tage mit Daten (Jeder Tag = Feed-Prognosen, keine bestätigten Ankünfte).';
+}
+
+function renderCatchUpBuildup(cub) {
+  const catchUpClass = cub.trend === 'catching_up' ? 'ok' : cub.trend === 'building_up' ? 'severe' : 'neutral';
+  $('hvCardCatchUp').className = 'hv-card ' + catchUpClass;
+  $('hvCatchUpValue').textContent = cub.catchUpMinutes === undefined ? '–' : cub.catchUpMinutes + ' Min.';
+  $('hvBuildUpValue').textContent = cub.buildUpMinutes === undefined ? '–' : cub.buildUpMinutes + ' Min.';
+  $('hvTripsValue').textContent = cub.tripsAnalyzed;
+
+  const text = $('hvCatchUpText');
+  if (cub.trend === 'catching_up') {
+    text.textContent = 'Bei ' + cub.tripsAnalyzed + ' beobachteten Fahrten wurde durchschnittlich ' + cub.catchUpMinutes + ' Minute(n) Verspätung an dieser Haltestelle aufgeholt.';
+    text.style.color = '#22c55e';
+  } else if (cub.trend === 'building_up') {
+    text.textContent = 'Bei ' + cub.tripsAnalyzed + ' beobachteten Fahrten baute sich durchschnittlich ' + cub.buildUpMinutes + ' Minute(n) zusätzliche Verspätung an dieser Haltestelle auf.';
+    text.style.color = '#ef4444';
+  } else if (cub.trend === 'stable') {
+    text.textContent = 'Bei ' + cub.tripsAnalyzed + ' beobachteten Fahrten blieb die Verspätung an dieser Haltestelle weitgehend stabil.';
+    text.style.color = '#94a3b8';
+  } else {
+    text.textContent = 'Zu wenige Fahrten (' + cub.tripsAnalyzed + ') für eine Aussage zum Aufholen oder Aufbauen von Verspätung.';
+    text.style.color = '#94a3b8';
+  }
+}
+
+function renderLines(lines) {
+  const tbody = $('hvLinesTable');
+  tbody.innerHTML = '';
+  if (lines.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="color:#8a93a0">Keine Linienvergleichsdaten verfügbar.</td></tr>';
+    return;
+  }
+  for (const l of lines) {
+    const tr = document.createElement('tr');
+    const lateClass = l.latePercent >= 50 ? 'hv-delay-severe' : l.latePercent >= 20 ? 'hv-delay-warn' : 'hv-delay-ok';
+    tr.innerHTML =
+      '<td><strong>' + l.line + '</strong></td>' +
+      '<td>' + l.sampleCount + '</td>' +
+      '<td>' + (l.averageMinutes === null ? '–' : l.averageMinutes + ' Min.') + '</td>' +
+      '<td>' + (l.medianMinutes === null ? '–' : l.medianMinutes + ' Min.') + '</td>' +
+      '<td class="' + lateClass + '">' + (l.latePercent === null ? '–' : l.latePercent + '%') + '</td>';
+    tbody.appendChild(tr);
+  }
+}
+
+// Hilfsfunktion: Haltestellenname aus statischen Daten
+function getStopName(stopId, staticData, source = 'sta') {
+  const db = staticData[source] || {};
+  const stop = db.stops?.[stopId];
+  return stop ? stop[0] : 'Haltestelle ' + stopId;
+}
+
+// Automatische Aktualisierung alle 5 Minuten
+setInterval(load, 300000);
+</script>
+</body>
+</html>

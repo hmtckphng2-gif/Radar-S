@@ -29,7 +29,7 @@ const GLOBALS = new Set([
   'String', 'Number', 'Boolean', 'Object', 'Array', 'Math', 'JSON', 'Date', 'Promise',
   'Map', 'Set', 'WeakMap', 'WeakSet', 'Symbol', 'Error', 'TypeError', 'RangeError', 'SyntaxError',
   'RegExp', 'Intl', 'URL', 'URLSearchParams', 'Blob', 'File', 'FileReader', 'FormData',
-  'Headers', 'Request', 'Response', 'TextEncoder', 'TextDecoder', 'AbortController',
+  'Headers', 'Request', 'Response', 'TextEncoder', 'TextDecoder', 'Uint8Array', 'AbortController',
   'DOMParser', 'XMLHttpRequest', 'Image', 'Audio', 'Worker', 'MessageChannel',
   'MutationObserver', 'ResizeObserver', 'IntersectionObserver', 'matchMedia',
   'window', 'document', 'navigator', 'location', 'history', 'localStorage', 'sessionStorage',
