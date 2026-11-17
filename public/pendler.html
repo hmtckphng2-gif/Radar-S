@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="de" data-theme="dark" data-locale="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090e15">
+<meta name="description" content="Südtirol Radar Pendler-Assistent – Regelmäßige Fahrten speichern, Verspätungen und Ausfälle überwachen, Benachrichtigungen erhalten.">
+<title>Pendler-Assistent – Südtirol Radar</title>
+<link rel="canonical" href="https://radar-s.j9fr2vg4vm.workers.dev/pendler.html">
+<link rel="icon" type="image/png" href="/radar60-icon-192.png">
+<link rel="stylesheet" href="/styles.css?v=9.9.5&palette=1">
+<link rel="stylesheet" href="/radar-ui.css?v=9.9.5&rev=delay-ring-block1-1">
+<link rel="stylesheet" href="/radar10-shell.css?v=9.9.5">
+<style>
+  .pd-page { max-width: 720px; margin: 0 auto; padding: 12px; font-family: system-ui, -apple-system, sans-serif; }
+  .pd-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #343b44; }
+  .pd-header h1 { font-size: 18px; margin: 0; }
+  .pd-badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #1c232c; color: #e4e8ec; border: 1px solid #343b44; }
+  .pd-update { font-size: 12px; color: #8a93a0; margin-left: auto; }
+  .pd-empty { text-align: center; padding: 40px 16px; color: #8a93a0; }
+  .pd-empty p { margin: 6px 0; }
+  .pd-section { margin-bottom: 14px; background: #0f141c; border: 1px solid #343b44; border-radius: 12px; padding: 12px; }
+  .pd-section h2 { font-size: 14px; color: #8a93a0; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid #1c232c; }
+  .pd-form { display: flex; flex-direction: column; gap: 10px; }
+  .pd-form-row { display: flex; flex-direction: column; gap: 6px; }
+  @media (min-width: 480px) { .pd-form-row { flex-direction: row; align-items: end; } }
+  .pd-label { font-size: 12px; color: #8a93a0; text-transform: uppercase; letter-spacing: 0.06em; }
+  .pd-input { background: #10151c; border: 1px solid #343b44; border-radius: 8px; color: #e4e8ec; padding: 8px 12px; font-size: 14px; }
+  .pd-input:focus { border-color: #0ea5e9; outline: none; }
+  .pd-weekdays { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pd-day { border: 1px solid #343b44; background: #10151c; color: #aab2bd; padding: 4px 10px; border-radius: 20px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+  .pd-day.active { border-color: #0ea5e9; color: #0ea5e9; }
+  .pd-btn { background: #0ea5e9; border: none; border-radius: 8px; color: #fff; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .pd-btn:hover { background: #0dc1f1; }
+  .pd-btn.secondary { background: #1c232c; border: 1px solid #343b44; }
+  .pd-btn.secondary:hover { border-color: #0ea5e9; }
+  .pd-btn:disabled { background: #343b44; color: #8a93a0; cursor: not-allowed; }
+  .pd-profile { border: 1px solid #343b44; border-radius: 12px; padding: 12px; background: #0f141c; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; }
+  .pd-profile-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .pd-profile-name { font-weight: 700; color: #e4e8ec; font-size: 15px; }
+  .pd-profile-meta { font-size: 12px; color: #8a93a0; }
+  .pd-profile-route { font-size: 13px; color: #c7cfda; }
+  .pd-profile-weekdays { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #0ea5e9; }
+  .pd-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .pd-actions button { flex: 1; }
+  .pd-issues { display: flex; flex-direction: column; gap: 6px; }
+  .pd-issue { border: 1px solid #343b44; border-radius: 8px; padding: 8px; background: #0f141c; font-size: 13px; }
+  .pd-issue.high { border-left: 3px solid #ef4444; }
+  .pd-issue.medium { border-left: 3px solid #f59e0b; }
+  .pd-issue-title { font-weight: 700; color: #e4e8ec; margin-bottom: 2px; }
+  .pd-issue-desc { color: #c7cfda; margin-bottom: 4px; }
+  .pd-issue-type { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .pd-push { border: 1px solid #343b44; border-radius: 8px; padding: 10px; background: #0f141c; margin-top: 8px; }
+  .pd-push.available { border-color: #22c55e; }
+  .pd-push.unavailable { border-color: #343b44; opacity: 0.7; }
+  .pd-push h3 { font-size: 13px; color: #e4e8ec; margin: 0 0 6px 0; }
+  .pd-push p { font-size: 12px; color: #8a93a0; margin: 0 0 8px 0; }
+  .pd-back { margin-top: 16px; }
+  .pd-back button { background: transparent; border: 1px solid #343b44; color: #e4e8ec; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  .pd-back button:hover { border-color: #0ea5e9; }
+  @media (max-width: 480px) {
+    .pd-page { padding: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="pd-page">
+  <div class="pd-header">
+    <h1>Pendler-Assistent</h1>
+    <span class="pd-badge" id="pdProfileCount">0 Fahrten</span>
+    <span class="pd-update" id="pdUpdate">–</span>
+  </div>
+
+  <div class="pd-section">
+    <h2>Neue Fahrt speichern</h2>
+    <form id="pdForm" class="pd-form">
+      <div class="pd-form-row">
+        <span class="pd-label">Name</span>
+        <input type="text" id="pdName" class="pd-input" placeholder="z. B. Fahrt zur Arbeit" required>
+      </div>
+      <div class="pd-form-row">
+        <span class="pd-label">Von Haltestelle</span>
+        <input type="text" id="pdFrom" class="pd-input" placeholder="Haltestellenname" required>
+      </div>
+      <div class="pd-form-row">
+        <span class="pd-label">Nach Haltestelle</span>
+        <input type="text" id="pdTo" class="pd-input" placeholder="Haltestellenname" required>
+      </div>
+      <div class="pd-form-row">
+        <span class="pd-label">Wochentage</span>
+        <div class="pd-weekdays" id="pdWeekdays">
+          <button type="button" class="pd-day" data-day="mo">Mo</button>
+          <button type="button" class="pd-day" data-day="di">Di</button>
+          <button type="button" class="pd-day" data-day="mi">Mi</button>
+          <button type="button" class="pd-day" data-day="do">Do</button>
+          <button type="button" class="pd-day" data-day="fr">Fr</button>
+          <button type="button" class="pd-day" data-day="sa">Sa</button>
+          <button type="button" class="pd-day" data-day="so">So</button>
+        </div>
+      </div>
+      <button type="submit" class="pd-btn" id="pdSaveBtn">Speichern</button>
+    </form>
+  </div>
+
+  <div class="pd-section">
+    <h2>Meine Fahrten</h2>
+    <div id="pdProfiles"></div>
+    <button class="pd-btn secondary" id="pdCheckBtn">Jetzt prüfen</button>
+  </div>
+
+  <div class="pd-section">
+    <h2>Erkannte Änderungen &amp; Störungen</h2>
+    <div id="pdIssues" class="pd-issues"></div>
+  </div>
+
+  <div class="pd-push" id="pdPush">
+    <h3>Web-Push-Benachrichtigungen</h3>
+    <p id="pdPushStatus">Prüfe Verfügbarkeit…</p>
+    <button class="pd-btn" id="pdPushBtn" hidden>Aktivieren</button>
+  </div>
+
+  <div class="pd-back">
+    <button onclick="location.href='/'">← Zurück zur Karte</button>
+  </div>
+</div>
+
+<script type="module">
+import { createProfile, loadProfiles, saveProfile, removeProfile, isProfileActiveToday, isPushAvailable, subscribePush, VAPID_PUBLIC_KEY } from './pendler-logic.mjs?v=9.9.5';
+
+const $ = id => document.getElementById(id);
+const pdForm = $('pdForm');
+const pdProfiles = $('pdProfiles');
+const pdCheckBtn = $('pdCheckBtn');
+const pdIssues = $('pdIssues');
+const pdPush = $('pdPush');
+const pdPushStatus = $('pdPushStatus');
+const pdPushBtn = $('pdPushBtn');
+const pdProfileCount = $('pdProfileCount');
+const pdUpdate = $('pdUpdate');
+
+let selectedDays = [];
+
+// Wochentage-Toggle
+for (const btn of document.querySelectorAll('.pd-day')) {
+  btn.onclick = () => {
+    const day = btn.dataset.day;
+    btn.classList.toggle('active');
+    if (selectedDays.includes(day)) selectedDays = selectedDays.filter(d => d !== day);
+    else selectedDays.push(day);
+  };
+}
+
+// Form submit
+pdForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const name = $('pdName').value.trim();
+  const from = $('pdFrom').value.trim();
+  const to = $('pdTo').value.trim();
+  if (!name || !from || !to || selectedDays.length === 0) return;
+
+  // Haltestellen-ID aus Namen ableiten (vereinfacht: Name als ID)
+  const profile = createProfile(
+    'p-' + Date.now(),
+    name,
+    from,
+    to,
+    selectedDays
+  );
+  if (saveProfile(profile)) {
+    pdForm.reset();
+    selectedDays = [];
+    for (const b of document.querySelectorAll('.pd-day')) b.classList.remove('active');
+    renderProfiles();
+  }
+};
+
+// Profile rendern
+function renderProfiles() {
+  const profiles = loadProfiles();
+  pdProfileCount.textContent = profiles.length + ' Fahrt' + (profiles.length > 1 ? 'en' : '');
+  pdProfiles.innerHTML = '';
+
+  for (const p of profiles) {
+    const el = document.createElement('div');
+    el.className = 'pd-profile';
+    const activeToday = isProfileActiveToday(p);
+
+    const header = document.createElement('div');
+    header.className = 'pd-profile-header';
+    const name = document.createElement('div');
+    name.className = 'pd-profile-name';
+    name.textContent = p.name;
+    const active = document.createElement('span');
+    active.className = activeToday ? 'pd-profile-weekdays' : '';
+    active.textContent = activeToday ? 'aktiv heute' : 'inaktiv heute';
+    header.appendChild(name);
+    header.appendChild(active);
+
+    const route = document.createElement('div');
+    route.className = 'pd-profile-route';
+    route.textContent = p.fromStopId + ' → ' + p.toStopId + ' · ' + p.weekdays.join(', ');
+
+    const actions = document.createElement('div');
+    actions.className = 'pd-actions';
+    const delBtn = document.createElement('button');
+    delBtn.className = 'pd-btn secondary';
+    delBtn.textContent = 'Löschen';
+    delBtn.onclick = () => { removeProfile(p.id); renderProfiles(); };
+    actions.appendChild(delBtn);
+
+    el.appendChild(header);
+    el.appendChild(route);
+    el.appendChild(actions);
+    pdProfiles.appendChild(el);
+  }
+}
+
+// Jetzt prüfen
+pdCheckBtn.onclick = async () => {
+  pdCheckBtn.disabled = true;
+  pdCheckBtn.textContent = 'Prüfe…';
+  try {
+    await checkAllProfiles();
+  } finally {
+    pdCheckBtn.disabled = false;
+    pdCheckBtn.textContent = 'Jetzt prüfen';
+  }
+};
+
+async function checkAllProfiles() {
+  // Lade statische Daten
+  let staticData = null;
+  try {
+    const res = await fetch('/data/sta-index.json?v=9.9.5', { cache: 'no-store' });
+    if (res.ok) staticData = { sta: await res.json() };
+  } catch { }
+
+  // Lade Echtzeit-Daten
+  let allUpdates = new Map();
+  try {
+    const res = await fetch('/api/sta_updates', { cache: 'no-store' });
+    if (res.ok) {
+      const feed = await res.json();
+      const { parseUpdates } = await import('./core.js?v=9.9.5');
+      const updates = parseUpdates(feed, 'sta', Date.now());
+      for (const [k, v] of updates) allUpdates.set(k, v);
+    }
+  } catch { }
+
+  // Lade Alerts
+  let alerts = [];
+  try {
+    const res = await fetch('/api/sta_alerts', { cache: 'no-store' });
+    if (res.ok) {
+      const feed = await res.json();
+      const { parseAlerts } = await import('./feed-process.mjs?v=9.9.5');
+      alerts = parseAlerts(feed, 'sta_alerts', Date.now());
+    }
+  } catch { }
+
+  // Prüfe alle Profile
+  const profiles = loadProfiles();
+  const allIssues = [];
+  for (const p of profiles) {
+    const issues = await checkProfile(p, staticData, [], allUpdates, alerts, Date.now());
+    allIssues.push(...issues);
+  }
+
+  renderIssues(allIssues);
+  pdUpdate.textContent = 'Letzte Prüfung: ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderIssues(issues) {
+  pdIssues.innerHTML = '';
+  if (issues.length === 0) {
+    pdIssues.innerHTML = '<p style="font-size:12px;color:#8a93a0">Keine Änderungen oder Störungen erkannt.</p>';
+    return;
+  }
+  for (const issue of issues) {
+    const el = document.createElement('div');
+    el.className = 'pd-issue ' + issue.severity;
+    const type = document.createElement('div');
+    type.className = 'pd-issue-type';
+    type.textContent = issue.type === 'delay' ? 'Verspätung' : issue.type === 'cancellation' ? 'Ausfall' : 'Änderung';
+    const title = document.createElement('div');
+    title.className = 'pd-issue-title';
+    title.textContent = issue.message;
+    el.appendChild(type);
+    el.appendChild(title);
+    pdIssues.appendChild(el);
+  }
+}
+
+// Push-Benachrichtigungen
+async function initPush() {
+  if (!isPushAvailable()) {
+    pdPushStatus.textContent = 'Web-Push nicht verfügbar in diesem Browser.';
+    pdPush.className = 'pd-push unavailable';
+    return;
+  }
+  if (!VAPID_PUBLIC_KEY) {
+    pdPushStatus.textContent = 'VAPID-Schlüssel nicht konfiguriert – Push-Benachrichtigungen sind vorbereitet, aber nicht aktiv.';
+    pdPush.className = 'pd-push unavailable';
+    return;
+  }
+  pdPushStatus.textContent = 'Web-Push verfügbar. Klicken Sie auf Aktivieren, um Benachrichtigungen zu erhalten.';
+  pdPush.className = 'pd-push available';
+  pdPushBtn.hidden = false;
+
+  pdPushBtn.onclick = async () => {
+    const result = await subscribePush();
+    if (result.success) {
+      pdPushStatus.textContent = 'Push-Benachrichtigungen aktiviert.';
+      pdPushBtn.hidden = true;
+    } else {
+      pdPushStatus.textContent = 'Fehler: ' + result.error;
+    }
+  };
+}
+
+renderProfiles();
+initPush();
+pdUpdate.textContent = 'Bereit: ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+</script>
+</body>
+</html>

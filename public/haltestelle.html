@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="de" data-theme="dark" data-locale="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090e15">
+<meta name="description" content="Südtirol Radar Haltestelle – Echtzeit-Abfahrten, Fahrplan, Linien und Störungen für eine Haltestelle in Südtirol.">
+<title>Haltestelle – Südtirol Radar</title>
+<link rel="canonical" href="https://radar-s.j9fr2vg4vm.workers.dev/haltestelle.html">
+<link rel="icon" type="image/png" href="/radar60-icon-192.png">
+<link rel="stylesheet" href="/vendor/leaflet-1.9.4.css?v=9.9.5">
+<link rel="stylesheet" href="/styles.css?v=9.9.5&palette=1">
+<link rel="stylesheet" href="/radar-ui.css?v=9.9.5&rev=delay-ring-block1-1">
+<link rel="stylesheet" href="/radar10-shell.css?v=9.9.5">
+<style>
+  .hs-page { max-width: 720px; margin: 0 auto; padding: 12px; font-family: system-ui, -apple-system, sans-serif; }
+  .hs-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #343b44; flex-wrap: wrap; }
+  .hs-header h1 { font-size: 18px; margin: 0; flex: 1; }
+  .hs-badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #1c232c; color: #e4e8ec; border: 1px solid #343b44; }
+  .hs-update { font-size: 12px; color: #8a93a0; margin-left: auto; }
+  .hs-fav { background: none; border: 1px solid #343b44; color: #e4e8ec; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+  .hs-fav.active { color: #fbbf24; border-color: #fbbf24; }
+  .hs-fav:hover { border-color: #0ea5e9; }
+  .hs-empty { text-align: center; padding: 40px 16px; color: #8a93a0; }
+  .hs-empty p { margin: 6px 0; }
+  .hs-section { margin-bottom: 14px; background: #0f141c; border: 1px solid #343b44; border-radius: 12px; padding: 12px; }
+  .hs-section h2 { font-size: 14px; color: #8a93a0; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid #1c232c; }
+  .hs-departures { display: flex; flex-direction: column; gap: 6px; }
+  .hs-dep-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid #1c232c; font-size: 13px; }
+  .hs-dep-row:last-child { border-bottom: none; }
+  .hs-dep-time { font-weight: 700; color: #e4e8ec; min-width: 55px; }
+  .hs-dep-line { font-weight: 700; color: #0ea5e9; min-width: 45px; }
+  .hs-dep-dest { flex: 1; color: #c7cfda; }
+  .hs-dep-type { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 1px 6px; border-radius: 4px; }
+  .hs-dep-type.scheduled { background: #1c232c; color: #8a93a0; border: 1px solid #343b44; }
+  .hs-dep-type.realtime { background: #0ea5e9; color: #0b1018; font-weight: 700; }
+  .hs-dep-delay { font-size: 11px; font-weight: 700; }
+  .hs-dep-delay.ok { color: #22c55e; }
+  .hs-dep-delay.warn { color: #f59e0b; }
+  .hs-dep-delay.severe { color: #ef4444; }
+  .hs-lines { display: flex; flex-wrap: wrap; gap: 6px; }
+  .hs-line-chip { border: 1px solid #343b44; background: #10151c; color: #aab2bd; padding: 4px 10px; border-radius: 20px; font-size: 13px; white-space: nowrap; }
+  .hs-line-chip.active { border-color: #0ea5e9; color: #0ea5e9; }
+  .hs-alerts { display: flex; flex-direction: column; gap: 8px; }
+  .hs-alert { border: 1px solid #343b44; border-radius: 8px; padding: 8px; background: #0f141c; font-size: 13px; }
+  .hs-alert.high { border-left: 3px solid #ef4444; }
+  .hs-alert.medium { border-left: 3px solid #f59e0b; }
+  .hs-alert-title { font-weight: 700; color: #e4e8ec; margin-bottom: 2px; }
+  .hs-alert-desc { color: #a78bfa; font-size: 12px; margin-bottom: 4px; }
+  .hs-alert-meta { font-size: 11px; color: #8a93a0; }
+  .hs-map { height: 180px; border: 1px solid #343b44; border-radius: 12px; margin-top: 10px; background: #0b1018; }
+  .hs-back { margin-top: 16px; }
+  .hs-back button { background: transparent; border: 1px solid #343b44; color: #e4e8ec; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  .hs-back button:hover { border-color: #0ea5e9; }
+  .hs-loading { text-align: center; padding: 20px; color: #8a93a0; }
+  @media (max-width: 480px) {
+    .hs-page { padding: 8px; }
+    .hs-map { height: 150px; }
+  }
+</style>
+</head>
+<body>
+<div class="hs-page">
+  <div class="hs-header">
+    <h1 id="hsStopName">Haltestelle</h1>
+    <button class="hs-fav" id="hsFavBtn" title="Zu Favoriten hinzufügen">★</button>
+    <span class="hs-badge" id="hsStopId">–</span>
+    <span class="hs-update" id="hsUpdate">–</span>
+  </div>
+
+  <div id="hsEmpty" class="hs-empty" hidden>
+    <p>Haltestelle nicht gefunden.</p>
+    <p style="font-size:12px;opacity:0.7">Bitte über die Hauptkarte eine Haltestelle auswählen.</p>
+  </div>
+
+  <div id="hsContent" hidden>
+    <div class="hs-section">
+      <h2>Planmäßige Abfahrten</h2>
+      <div id="hsScheduled" class="hs-departures"></div>
+    </div>
+
+    <div class="hs-section">
+      <h2>Echtzeit-Abfahrten</h2>
+      <div id="hsRealtime" class="hs-departures"></div>
+    </div>
+
+    <div class="hs-section">
+      <h2>Linien an dieser Haltestelle</h2>
+      <div id="hsLines" class="hs-lines"></div>
+    </div>
+
+    <div class="hs-section">
+      <h2>Aktuelle Störungen</h2>
+      <div id="hsAlerts"></div>
+    </div>
+
+    <div class="hs-section">
+      <h2>Nächste Fahrzeuge auf der Karte</h2>
+      <div id="hsMap" class="hs-map"></div>
+    </div>
+  </div>
+
+  <div class="hs-back">
+    <button onclick="location.href='/'">← Zurück zur Karte</button>
+  </div>
+</div>
+
+<script src="/vendor/leaflet-1.9.4.js?v=9.9.5" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script>
+<script type="module">
+import { getStopDepartures, getStopLines, getVehiclesAtStop, getVehiclesNearStop, getStopAlerts, getFavorites, isFavorite, toggleFavorite, formatTime, getStopName } from './haltestelle-logic.mjs?v=9.9.5';
+import { delayPresentation, vehicleDelayInfo } from './core.js?v=9.9.5';
+
+const $ = id => document.getElementById(id);
+const hsContent = $('hsContent');
+const hsEmpty = $('hsEmpty');
+const hsStopName = $('hsStopName');
+const hsStopId = $('hsStopId');
+const hsFavBtn = $('hsFavBtn');
+const hsUpdate = $('hsUpdate');
+const hsScheduled = $('hsScheduled');
+const hsRealtime = $('hsRealtime');
+const hsLines = $('hsLines');
+const hsAlerts = $('hsAlerts');
+const hsMapDiv = $('hsMap');
+
+let stopId = null;
+let staticData = null;
+let map = null;
+let markers = [];
+
+// Stop ID aus URL-Parameter lesen
+const urlParams = new URLSearchParams(location.search);
+stopId = urlParams.get('stop');
+
+if (!stopId) {
+  hsEmpty.hidden = false;
+} else {
+  hsStopId.textContent = stopId;
+  load();
+}
+
+async function load() {
+  try {
+    // Statische Daten laden
+    const res = await fetch('/data/sta-index.json?v=9.9.5', { cache: 'no-store' });
+    if (res.ok) staticData = { sta: await res.json() };
+
+    // Haltestellenname
+    const name = getStopName(stopId, staticData, 'sta');
+    hsStopName.textContent = name;
+
+    // Favoriten-Status
+    updateFavButton();
+
+    // Planmäßige Abfahrten
+    const scheduled = getStopDepartures(stopId, staticData, 'sta');
+    renderScheduled(scheduled);
+
+    // Linien
+    const lines = getStopLines(stopId, staticData, 'sta');
+    renderLines(lines);
+
+    // Echtzeit-Daten laden (Vehicle Positions + Updates)
+    await loadRealtime();
+
+    // Störungen laden
+    await loadAlerts();
+
+    hsUpdate.textContent = 'Aktualisiert: ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    hsEmpty.hidden = true;
+    hsContent.hidden = false;
+
+    // Karte initialisieren (nachdem Content sichtbar ist)
+    setTimeout(initMap, 100);
+  } catch (e) {
+    hsEmpty.hidden = false;
+    hsEmpty.innerHTML = '<p>Haltestellendaten konnten nicht geladen werden.</p><p style="font-size:12px;opacity:0.7">' + e.message + '</p>';
+  }
+}
+
+async function loadRealtime() {
+  const now = Date.now();
+  const sources = ['sta', 'trentino', 'trains'];
+  let allVehicles = [];
+  let allUpdates = new Map();
+
+  for (const source of sources) {
+    try {
+      const res = await fetch('/api/' + source, { cache: 'no-store' });
+      if (!res.ok) continue;
+      const feed = await res.json();
+      // Einfaches Parsing der Fahrzeugpositionen
+      const entities = feed?.entity || [];
+      for (const ent of entities) {
+        const v = ent.vehicle;
+        if (!v || !v.position) continue;
+        const lat = Number(v.position.latitude), lon = Number(v.position.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+        allVehicles.push({
+          key: source + ':' + (ent.id || ''),
+          source,
+          lat, lon,
+          tripId: v.trip?.tripId || '',
+          routeId: v.trip?.routeId || '',
+          vehicleId: v.vehicle?.id || '',
+          currentStopId: v.stopId || '',
+          currentStopSequence: v.currentStopSequence || null,
+          currentStatus: v.currentStatus || '',
+          timestamp: v.timestamp || 0,
+          bearing: v.position.bearing || null
+        });
+      }
+    } catch (e) { console.warn('Feed ' + source + ' failed:', e.message); }
+
+    try {
+      const res = await fetch('/api/' + source + '_updates', { cache: 'no-store' });
+      if (!res.ok) continue;
+      const feed = await res.json();
+      const { parseUpdates } = await import('./core.js?v=9.9.5');
+      const updates = parseUpdates(feed, source, now);
+      for (const [key, val] of updates) allUpdates.set(key, val);
+    } catch (e) { console.warn('Updates ' + source + ' failed:', e.message); }
+  }
+
+  // Fahrzeuge an dieser Haltestelle
+  const atStop = getVehiclesAtStop(allVehicles, stopId);
+  renderRealtime(atStop, allUpdates, now);
+
+  // Fahrzeuge in der Nähe für Karte
+  const stopInfo = staticData?.sta?.stops?.[stopId];
+  if (stopInfo) {
+    const near = getVehiclesNearStop(allVehicles, stopInfo[1], stopInfo[2]);
+    window.hsNearVehicles = near;
+  }
+}
+
+function renderScheduled(deps) {
+  hsScheduled.innerHTML = '';
+  if (deps.length === 0) {
+    hsScheduled.innerHTML = '<p style="font-size:12px;color:#8a93a0">Keine planmäßigen Abfahrten gefunden.</p>';
+    return;
+  }
+  for (const d of deps.slice(0, 15)) {
+    const row = document.createElement('div');
+    row.className = 'hs-dep-row';
+    const time = document.createElement('span');
+    time.className = 'hs-dep-time';
+    time.textContent = formatTime(d.departure);
+    const line = document.createElement('span');
+    line.className = 'hs-dep-line';
+    line.textContent = d.line || '–';
+    const dest = document.createElement('span');
+    dest.className = 'hs-dep-dest';
+    dest.textContent = d.headsign || 'Ziel unbekannt';
+    const type = document.createElement('span');
+    type.className = 'hs-dep-type scheduled';
+    type.textContent = 'Fahrplan';
+    row.appendChild(time);
+    row.appendChild(line);
+    row.appendChild(dest);
+    row.appendChild(type);
+    hsScheduled.appendChild(row);
+  }
+}
+
+function renderRealtime(vehicles, updates, now) {
+  hsRealtime.innerHTML = '';
+  if (vehicles.length === 0) {
+    hsRealtime.innerHTML = '<p style="font-size:12px;color:#8a93a0">Keine Echtzeit-Fahrzeuge an dieser Haltestelle.</p>';
+    return;
+  }
+  for (const v of vehicles.slice(0, 15)) {
+    const row = document.createElement('div');
+    row.className = 'hs-dep-row';
+
+    // Verspätung aus Trip Updates
+    const updateKey = v.source + ':' + v.tripId;
+    const update = updates.get(updateKey);
+    const delayInfo = update ? vehicleDelayInfo(update, v) : null;
+    const delaySec = delayInfo ? delayInfo.delay : null;
+    const delayPres = delayPresentation(delaySec);
+
+    const time = document.createElement('span');
+    time.className = 'hs-dep-time';
+    const ts = v.timestamp ? new Date(v.timestamp * 1000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '–';
+    time.textContent = ts;
+
+    const line = document.createElement('span');
+    line.className = 'hs-dep-line';
+    line.textContent = v.routeId || '–';
+
+    const dest = document.createElement('span');
+    dest.className = 'hs-dep-dest';
+    dest.textContent = v.headsign || 'Ziel unbekannt';
+
+    const type = document.createElement('span');
+    type.className = 'hs-dep-type realtime';
+    type.textContent = 'Echtzeit';
+
+    const delay = document.createElement('span');
+    delay.className = 'hs-dep-delay ' + (delayPres.className === 'delay-none' ? 'ok' : delayPres.className === 'delay-ok' ? 'ok' : delayPres.className === 'delay-warn' ? 'warn' : 'severe'));
+    delay.textContent = delaySec === null ? '–' : (delaySec > 0 ? '+' + Math.round(delaySec / 60) + ' Min' : Math.round(delaySec / 60) + ' Min');
+
+    row.appendChild(time);
+    row.appendChild(line);
+    row.appendChild(dest);
+    row.appendChild(type);
+    row.appendChild(delay);
+    hsRealtime.appendChild(row);
+  }
+}
+
+function renderLines(lines) {
+  hsLines.innerHTML = '';
+  if (lines.length === 0) {
+    hsLines.innerHTML = '<p style="font-size:12px;color:#8a93a0">Keine Linien gefunden.</p>';
+    return;
+  }
+  for (const l of lines) {
+    const chip = document.createElement('span');
+    chip.className = 'hs-line-chip';
+    chip.textContent = l.line + (l.tripCount > 1 ? ' (' + l.tripCount + ')' : '');
+    hsLines.appendChild(chip);
+  }
+}
+
+async function loadAlerts() {
+  try {
+    const res = await fetch('/api/sta_alerts', { cache: 'no-store' });
+    if (!res.ok) return;
+    const feed = await res.json();
+    const { parseAlerts } = await import('./feed-process.mjs?v=9.9.5');
+    const now = Date.now();
+    const alerts = parseAlerts(feed, 'sta_alerts', now);
+    const stopAlerts = getStopAlerts(stopId, alerts);
+    renderAlerts(stopAlerts);
+  } catch (e) {
+    console.warn('Alerts failed:', e.message);
+    hsAlerts.innerHTML = '<p style="font-size:12px;color:#8a93a0">Störungsdaten nicht verfügbar.</p>';
+  }
+}
+
+function renderAlerts(alerts) {
+  hsAlerts.innerHTML = '';
+  if (alerts.length === 0) {
+    hsAlerts.innerHTML = '<p style="font-size:12px;color:#8a93a0">Keine aktuellen Störungen an dieser Haltestelle.</p>';
+    return;
+  }
+  for (const a of alerts) {
+    const el = document.createElement('div');
+    el.className = 'hs-alert';
+    const sev = (a.cause === 3 || a.cause === 4 || a.effect === 2 || a.effect === 4) ? 'high' : (a.cause === 1 || a.cause === 2 || a.cause === 5 || a.effect === 1 || a.effect === 5) ? 'low' : 'medium';
+    el.classList.add(sev);
+    const title = document.createElement('div');
+    title.className = 'hs-alert-title';
+    title.textContent = a.header || 'Störung';
+    const desc = document.createElement('div');
+    desc.className = 'hs-alert-desc';
+    desc.textContent = a.description || 'Keine Beschreibung verfügbar.';
+    const meta = document.createElement('div');
+    meta.className = 'hs-alert-meta';
+    meta.textContent = 'Aktualisiert vor ca. ' + Math.max(0, Math.floor((Date.now() - a.fetchedAt) / 60000)) + ' Min.';
+    el.appendChild(title);
+    el.appendChild(desc);
+    el.appendChild(meta);
+    hsAlerts.appendChild(el);
+  }
+}
+
+function updateFavButton() {
+  if (isFavorite(stopId)) {
+    hsFavBtn.classList.add('active');
+    hsFavBtn.textContent = '★';
+  } else {
+    hsFavBtn.classList.remove('active');
+    hsFavBtn.textContent = '☆';
+  }
+}
+
+hsFavBtn.onclick = () => {
+  const nowFav = toggleFavorite(stopId);
+  updateFavButton();
+};
+
+function initMap() {
+  const stopInfo = staticData?.sta?.stops?.[stopId];
+  if (!stopInfo) return;
+
+  if (map) {
+    map.remove();
+    markers = [];
+  }
+
+  map = L.map('hsMap', { zoomControl: false }).setView([stopInfo[1], stopInfo[2]], 15);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap-Mitwirkende',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Haltestellen-Marker
+  L.marker([stopInfo[1], stopInfo[2]]).bindPopup('<strong>' + stopInfo[0] + '</strong>').addTo(map);
+
+  // Fahrzeuge in der Nähe
+  const near = window.hsNearVehicles || [];
+  for (const v of near.slice(0, 10)) {
+    L.circleMarker([v.lat, v.lon], {
+      radius: 6,
+      fillColor: '#0ea5e9',
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.8
+    }).bindPopup('<strong>' + (v.routeId || 'Fahrzeug') + '</strong><br>' + (v.tripId || '')).addTo(map);
+  }
+}
+
+// Automatische Aktualisierung alle 60 Sekunden
+setInterval(load, 60000);
+</script>
+</body>
+</html>

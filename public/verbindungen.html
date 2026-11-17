@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="de" data-theme="dark" data-locale="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090e15">
+<meta name="description" content="Südtirol Radar Alternativverbindungen – Verbindungs­suche mit GTFS Static und Echtzeitdaten für Busse und Züge in Südtirol.">
+<title>Alternativverbindungen – Südtirol Radar</title>
+<link rel="canonical" href="https://radar-s.j9fr2vg4vm.workers.dev/verbindungen.html">
+<link rel="icon" type="image/png" href="/radar60-icon-192.png">
+<link rel="stylesheet" href="/styles.css?v=9.9.5&palette=1">
+<link rel="stylesheet" href="/radar-ui.css?v=9.9.5&rev=delay-ring-block1-1">
+<link rel="stylesheet" href="/radar10-shell.css?v=9.9.5">
+<style>
+  .vb-page { max-width: 720px; margin: 0 auto; padding: 12px; font-family: system-ui, -apple-system, sans-serif; }
+  .vb-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #343b44; }
+  .vb-header h1 { font-size: 18px; margin: 0; }
+  .vb-badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #1c232c; color: #e4e8ec; border: 1px solid #343b44; }
+  .vb-update { font-size: 12px; color: #8a93a0; margin-left: auto; }
+  .vb-search { display: flex; flex-direction: column; gap: 10px; background: #0f141c; border: 1px solid #343b44; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+  .vb-search-row { display: flex; flex-direction: column; gap: 6px; }
+  @media (min-width: 480px) {
+    .vb-search-row { flex-direction: row; align-items: end; }
+  }
+  .vb-search-label { font-size: 12px; color: #8a93a0; text-transform: uppercase; letter-spacing: 0.06em; }
+  .vb-search-input { flex: 1; background: #10151c; border: 1px solid #343b44; border-radius: 8px; color: #e4e8ec; padding: 8px 12px; font-size: 14px; }
+  .vb-search-input:focus { border-color: #0ea5e9; outline: none; }
+  .vb-search-btn { background: #0ea5e9; border: none; border-radius: 8px; color: #fff; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .vb-search-btn:hover { background: #0dc1f1; }
+  .vb-search-btn:disabled { background: #343b44; color: #8a93a0; cursor: not-allowed; }
+  .vb-empty { text-align: center; padding: 40px 16px; color: #8a93a0; }
+  .vb-empty p { margin: 6px 0; }
+  .vb-list { display: flex; flex-direction: column; gap: 10px; }
+  .vb-conn { border: 1px solid #343b44; border-radius: 12px; padding: 12px; background: #0f141c; cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
+  .vb-conn.selected { border-color: #0ea5e9; background: #141c28; }
+  .vb-conn-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .vb-conn-line { font-weight: 700; font-size: 16px; color: #0ea5e9; }
+  .vb-conn-times { display: flex; gap: 8px; font-size: 13px; color: #8a93a0; }
+  .vb-conn-time { font-weight: 700; color: #e4e8ec; }
+  .vb-conn-duration { font-size: 12px; color: #8a93a0; }
+  .vb-conn-legs { display: flex; flex-direction: column; gap: 6px; }
+  .vb-leg { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid #1c232c; font-size: 13px; }
+  .vb-leg:last-child { border-bottom: none; }
+  .vb-leg-line { font-weight: 700; color: #e4e8ec; min-width: 70px; }
+  .vb-leg-route { flex: 1; color: #c7cfda; }
+  .vb-leg-times { font-size: 12px; color: #8a93a0; white-space: nowrap; }
+  .vb-leg-transfer { color: #f59e0b; font-size: 12px; font-weight: 700; }
+  .vb-conn-cancelled { border-left-color: #ef4444; opacity: 0.6; }
+  .vb-missing { color: #8a93a0; font-style: italic; }
+  .vb-back { margin-top: 16px; }
+  .vb-back button { background: transparent; border: 1px solid #343b44; color: #e4e8ec; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  .vb-back button:hover { border-color: #0ea5e9; }
+  @media (max-width: 480px) {
+    .vb-page { padding: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="vb-page">
+  <div class="vb-header">
+    <h1>Alternativverbindungen</h1>
+    <span class="vb-badge" id="vbCount">0 Verbindungen</span>
+    <span class="vb-update" id="vbUpdate">–</span>
+  </div>
+
+  <div class="vb-search">
+    <div class="vb-search-row">
+      <span class="vb-search-label">Von</span>
+      <input type="text" id="vbFrom" class="vb-search-input" placeholder="Haltestelle eingeben…">
+    </div>
+    <div class="vb-search-row">
+      <span class="vb-search-label">Nach</span>
+      <input type="text" id="vbTo" class="vb-search-input" placeholder="Haltestelle eingeben…">
+    </div>
+    <button class="vb-search-btn" id="vbSearchBtn">Suchen</button>
+  </div>
+
+  <div id="vbEmpty" class="vb-empty" hidden>
+    <p>Keine Verbindungen gefunden.</p>
+    <p style="font-size:12px;opacity:0.7">Geben Sie Start- und Zielhaltestelle ein und klicken Sie auf Suchen.</p>
+  </div>
+
+  <div id="vbList" class="vb-list"></div>
+
+  <div class="vb-back">
+    <button onclick="location.href='/'">← Zurück zur Karte</button>
+  </div>
+</div>
+
+<script type="module">
+import { findConnections, formatTime, connectionDuration, isConnectionFuture, buildStopTripIndex } from './verbindungen-logic.mjs?v=9.9.5';
+
+const $ = id => document.getElementById(id);
+const vbList = $('vbList');
+const vbEmpty = $('vbEmpty');
+const vbCount = $('vbCount');
+const vbUpdate = $('vbUpdate');
+const vbFrom = $('vbFrom');
+const vbTo = $('vbTo');
+const vbSearchBtn = $('vbSearchBtn');
+
+let staticData = null;
+let stopIndex = null;
+let stopNames = []; // für Vorschläge
+
+async function loadStaticData() {
+  try {
+    const res = await fetch('/data/sta-index.json?v=9.9.5', { cache: 'no-store' });
+    if (res.ok) {
+      staticData = { sta: await res.json() };
+      stopIndex = buildStopTripIndex(staticData, 'sta');
+      // Sammle alle Haltestellennamen für Eingabehilfe
+      const stops = staticData.sta.stops || {};
+      stopNames = Object.entries(stops).map(([id, data]) => ({ id, name: data[0] }));
+    }
+  } catch (e) {
+    console.warn('Static data failed:', e.message);
+  }
+}
+
+function findStopIdByName(name) {
+  if (!name) return null;
+  const n = name.trim().toLowerCase();
+  const exact = stopNames.find(s => s.name.toLowerCase() === n);
+  if (exact) return exact.id;
+  const partial = stopNames.find(s => s.name.toLowerCase().includes(n));
+  return partial ? partial.id : null;
+}
+
+async function search() {
+  const fromName = vbFrom.value.trim();
+  const toName = vbTo.value.trim();
+  if (!fromName || !toName) return;
+
+  const fromId = findStopIdByName(fromName);
+  const toId = findStopIdByName(toName);
+  if (!fromId || !toId) {
+    vbEmpty.hidden = false;
+    vbEmpty.innerHTML = '<p>Eine oder beide Haltestellen wurden nicht gefunden.</p>';
+    vbList.innerHTML = '';
+    vbCount.textContent = '0 Verbindungen';
+    return;
+  }
+
+  vbEmpty.hidden = true;
+  vbList.innerHTML = '';
+
+  try {
+    const now = Date.now();
+    const updates = { sta: new Map() }; // Echtzeit-Updates würden hier geladen
+    const conns = findConnections(fromId, toId, staticData, 'sta', updates, now);
+
+    vbCount.textContent = conns.length + ' Verbindung' + (conns.length > 1 ? 'en' : '');
+    vbUpdate.textContent = 'Suchen: ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+    if (conns.length === 0) {
+      vbEmpty.hidden = false;
+      vbEmpty.innerHTML = '<p>Keine Verbindungen zwischen diesen Haltestellen gefunden.</p>';
+      return;
+    }
+
+    for (const conn of conns) {
+      const el = document.createElement('div');
+      el.className = 'vb-conn' + (conn.cancelled ? ' vb-conn-cancelled' : '');
+      el._conn = conn;
+      el.onclick = () => selectConnection(conn);
+
+      const header = document.createElement('div');
+      header.className = 'vb-conn-header';
+
+      const line = document.createElement('div');
+      line.className = 'vb-conn-line';
+      line.textContent = conn.line || '–';
+
+      const times = document.createElement('div');
+      times.className = 'vb-conn-times';
+      const dep = document.createElement('span');
+      dep.className = 'vb-conn-time';
+      dep.textContent = formatTime(conn.departure);
+      const arr = document.createElement('span');
+      arr.className = 'vb-conn-time';
+      arr.textContent = formatTime(conn.arrival);
+      const separator = document.createElement('span');
+      separator.textContent = ' → ';
+      times.appendChild(dep);
+      times.appendChild(separator);
+      times.appendChild(arr);
+
+      const duration = document.createElement('div');
+      duration.className = 'vb-conn-duration';
+      const mins = Math.round(conn.arrival - conn.departure) / 60;
+      duration.textContent = Math.round(mins) + ' Min';
+
+      header.appendChild(line);
+      header.appendChild(times);
+      header.appendChild(duration);
+
+      const legs = document.createElement('div');
+      legs.className = 'vb-conn-legs';
+
+      if (conn.type === 'direct') {
+        const leg = document.createElement('div');
+        leg.className = 'vb-leg';
+        const lineEl = document.createElement('div');
+        lineEl.className = 'vb-leg-line';
+        lineEl.textContent = conn.line || '–';
+        const route = document.createElement('div');
+        route.className = 'vb-leg-route';
+        route.textContent = conn.fromStop + ' → ' + conn.toStop + ' · ' + (conn.headsign || '');
+        const time = document.createElement('div');
+        time.className = 'vb-leg-times';
+        time.textContent = formatTime(conn.departure) + ' → ' + formatTime(conn.arrival);
+        leg.appendChild(lineEl);
+        leg.appendChild(route);
+        leg.appendChild(time);
+        legs.appendChild(leg);
+      } else if (conn.type === 'transfer') {
+        // Erstes Bein
+        const leg1 = document.createElement('div');
+        leg1.className = 'vb-leg';
+        const l1line = document.createElement('div');
+        l1line.className = 'vb-leg-line';
+        l1line.textContent = conn.lineA || '–';
+        const l1route = document.createElement('div');
+        l1route.className = 'vb-leg-route';
+        l1route.textContent = conn.fromStop + ' → ' + conn.transferStop + ' · ' + (conn.headsignA || '');
+        const l1time = document.createElement('div');
+        l1time.className = 'vb-leg-times';
+        l1time.textContent = formatTime(conn.departure) + ' → ' + formatTime(getStopDepartureHelper(conn.tripA, conn.transferStopId));
+        leg1.appendChild(l1line);
+        leg1.appendChild(l1route);
+        leg1.appendChild(l1time);
+        legs.appendChild(leg1);
+
+        // Umstieg
+        const transfer = document.createElement('div');
+        transfer.className = 'vb-leg';
+        transfer.style.fontSize = '11px';
+        transfer.style.color = '#f59e0b';
+        transfer.textContent = '↻ Umsteigen in ' + conn.transferStop + ' (' + Math.round(conn.waitSec / 60) + ' Min Wartezeit)';
+        legs.appendChild(transfer);
+
+        // Zweites Bein
+        const leg2 = document.createElement('div');
+        leg2.className = 'vb-leg';
+        const l2line = document.createElement('div');
+        l2line.className = 'vb-leg-line';
+        l2line.textContent = conn.lineB || '–';
+        const l2route = document.createElement('div');
+        l2route.className = 'vb-leg-route';
+        l2route.textContent = conn.transferStop + ' → ' + conn.toStop + ' · ' + (conn.headsignB || '');
+        const l2time = document.createElement('div');
+        l2time.className = 'vb-leg-times';
+        l2time.textContent = formatTime(getStopArrivalHelper(conn.tripB, conn.transferStopId)) + ' → ' + formatTime(conn.arrival);
+        leg2.appendChild(l2line);
+        leg2.appendChild(l2route);
+        leg2.appendChild(l2time);
+        legs.appendChild(leg2);
+      }
+
+      el.appendChild(header);
+      el.appendChild(legs);
+      vbList.appendChild(el);
+    }
+  } catch (e) {
+    vbEmpty.hidden = false;
+    vbEmpty.innerHTML = '<p>Suche fehlgeschlagen: ' + e.message + '</p>';
+  }
+}
+
+function getStopDepartureHelper(tripId, stopId) {
+  // Simple fallback using static data directly
+  const times = staticData?.sta?.times?.[tripId];
+  if (!Array.isArray(times)) return 0;
+  const row = times.find(r => String(r[0]) === stopId);
+  return row ? Number(row[2]) : 0;
+}
+
+function getStopArrivalHelper(tripId, stopId) {
+  const times = staticData?.sta?.times?.[tripId];
+  if (!Array.isArray(times)) return 0;
+  const row = times.find(r => String(r[0]) === stopId);
+  return row ? Number(row[1]) : 0;
+}
+
+function selectConnection(conn) {
+  for (const el of vbList.querySelectorAll('.vb-conn')) {
+    el.classList.toggle('selected', el._conn === conn);
+  }
+}
+
+vbSearchBtn.onclick = search;
+[vbFrom, vbTo].forEach(input => {
+  input.addEventListener('keypress', (e) => { if (e.key === 'Enter') search(); });
+});
+
+loadStaticData();
+</script>
+</body>
+</html>

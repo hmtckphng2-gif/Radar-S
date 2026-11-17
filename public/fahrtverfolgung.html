@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="de" data-theme="dark" data-locale="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090e15">
+<meta name="description" content="Südtirol Radar Live-Fahrtverfolgung – Fahrzeugposition, Verspätung und nächste Haltestelle für Busse und Züge in Echtzeit.">
+<title>Live-Fahrtverfolgung – Südtirol Radar</title>
+<link rel="canonical" href="https://radar-s.j9fr2vg4vm.workers.dev/fahrtverfolgung.html">
+<link rel="icon" type="image/png" href="/radar60-icon-192.png">
+<link rel="stylesheet" href="/vendor/leaflet-1.9.4.css?v=9.9.5">
+<link rel="stylesheet" href="/styles.css?v=9.9.5&palette=1">
+<link rel="stylesheet" href="/radar-ui.css?v=9.9.5&rev=delay-ring-block1-1">
+<link rel="stylesheet" href="/radar10-shell.css?v=9.9.5">
+<style>
+  .fv-page { max-width: 720px; margin: 0 auto; padding: 12px; font-family: system-ui, -apple-system, sans-serif; }
+  .fv-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #343b44; }
+  .fv-header h1 { font-size: 18px; margin: 0; }
+  .fv-badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #1c232c; color: #e4e8ec; border: 1px solid #343b44; }
+  .fv-update { font-size: 12px; color: #8a93a0; margin-left: auto; }
+  .fv-empty { text-align: center; padding: 40px 16px; color: #8a93a0; }
+  .fv-empty p { margin: 6px 0; }
+  .fv-list { display: flex; flex-direction: column; gap: 8px; }
+  .fv-item { border: 1px solid #343b44; border-radius: 12px; padding: 12px; background: #0f141c; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .fv-item.selected { border-color: #0ea5e9; background: #141c28; }
+  .fv-item-info { flex: 1; min-width: 0; }
+  .fv-item-line { font-weight: 700; font-size: 15px; color: #0ea5e9; margin: 0 0 2px 0; }
+  .fv-item-headsign { font-size: 13px; color: #c7cfda; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fv-item-age { font-size: 11px; color: #8a93a0; margin-top: 4px; }
+  .fv-item-delay { font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .fv-item-delay.ok { color: #22c55e; }
+  .fv-item-delay.warn { color: #f59e0b; }
+  .fv-item-delay.severe { color: #ef4444; }
+  .fv-item-delay.none { color: #8a93a0; }
+  .fv-item-arrow { font-size: 18px; color: #8a93a0; }
+  .fv-detail { border: 1px solid #343b44; border-radius: 12px; padding: 14px; background: #0f141c; margin-top: 14px; display: none; }
+  .fv-detail.visible { display: block; }
+  .fv-detail-row { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 8px; font-size: 14px; }
+  .fv-detail-label { color: #8a93a0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .fv-detail-value { color: #e4e8ec; font-weight: 600; text-align: right; }
+  .fv-detail-value.pos { color: #0ea5e9; }
+  .fv-stops { margin-top: 12px; border-top: 1px solid #242a32; padding-top: 10px; }
+  .fv-stops h3 { font-size: 13px; color: #8a93a0; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 8px 0; }
+  .fv-stop-row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid #1c232c; font-size: 13px; }
+  .fv-stop-row:last-child { border-bottom: none; }
+  .fv-stop-name { color: #c7cfda; flex: 1; }
+  .fv-stop-time { color: #8a93a0; white-space: nowrap; }
+  .fv-stop-time.now { color: #0ea5e9; font-weight: 700; }
+  .fv-stop-delay { font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .fv-stop-delay.ok { color: #22c55e; }
+  .fv-stop-delay.warn { color: #f59e0b; }
+  .fv-stop-delay.severe { color: #ef4444; }
+  .fv-map { height: 200px; border: 1px solid #343b44; border-radius: 12px; margin-top: 12px; background: #0b1018; }
+  .fv-back { margin-top: 16px; }
+  .fv-back button { background: transparent; border: 1px solid #343b44; color: #e4e8ec; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  .fv-back button:hover { border-color: #0ea5e9; }
+  .fv-missing { color: #8a93a0; font-style: italic; }
+  @media (max-width: 480px) {
+    .fv-page { padding: 8px; }
+    .fv-map { height: 160px; }
+  }
+</style>
+</head>
+<body>
+<div class="fv-page">
+  <div class="fv-header">
+    <h1>Live-Fahrtverfolgung</h1>
+    <span class="fv-badge" id="fvCount">0 Fahrten</span>
+    <span class="fv-update" id="fvUpdate">–</span>
+  </div>
+
+  <div id="fvEmpty" class="fv-empty" hidden>
+    <p>Keine aktiven Fahrzeugpositionen verfügbar.</p>
+    <p style="font-size:12px;opacity:0.7">Datenquelle: GTFS-RT Vehicle Positions (STA, Trentino, Trenitalia)</p>
+  </div>
+
+  <div id="fvList" class="fv-list"></div>
+
+  <div id="fvDetail" class="fv-detail">
+    <div class="fv-detail-row">
+      <span class="fv-detail-label">Linie</span>
+      <span class="fv-detail-value" id="fvLine">–</span>
+    </div>
+    <div class="fv-detail-row">
+      <span class="fv-detail-label">Fahrtziel</span>
+      <span class="fv-detail-value" id="fvHeadsign">–</span>
+    </div>
+    <div class="fv-detail-row">
+      <span class="fv-detail-label">Fahrzeug</span>
+      <span class="fv-detail-value" id="fvVehicleId">–</span>
+    </div>
+    <div class="fv-detail-row">
+      <span class="fv-detail-label">Position</span>
+      <span class="fv-detail-value pos" id="fvPosition">–</span>
+    </div>
+    <div class="fv-detail-row">
+      <span class="fv-detail-label">Datenalter</span>
+      <span class="fv-detail-value" id="fvAge">–</span>
+    </div>
+    <div class="fv-detail-row">
+      <span class="fv-detail-label">Verspätung</span>
+      <span class="fv-detail-value" id="fvDelay" class="delay-none">–</span>
+    </div>
+    <div class="fv-detail-row">
+      <span class="fv-detail-label">Nächste Haltestelle</span>
+      <span class="fv-detail-value" id="fvNextStop">–</span>
+    </div>
+    <div class="fv-detail-row">
+      <span class="fv-detail-label">Quelle</span>
+      <span class="fv-detail-value" id="fvSource">–</span>
+    </div>
+
+    <div class="fv-stops">
+      <h3>Haltestellen dieser Fahrt</h3>
+      <div id="fvStopsList"></div>
+    </div>
+
+    <div id="fvMap" class="fv-map"></div>
+  </div>
+
+  <div class="fv-back">
+    <button onclick="location.href='/'">← Zurück zur Karte</button>
+  </div>
+</div>
+
+<script src="/vendor/leaflet-1.9.4.js?v=9.9.5" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script>
+<script type="module">
+import { vehicleToTripEntry, groupVehiclesByTrip, sortTripEntries, getTripStops, getStopDelay, isUpdateFresh } from './fahrtverfolgung-logic.mjs?v=9.9.5';
+import { parseVehicles, parseUpdates } from './core.js?v=9.9.5';
+
+const $ = id => document.getElementById(id);
+const fvList = $('fvList');
+const fvEmpty = $('fvEmpty');
+const fvCount = $('fvCount');
+const fvUpdate = $('fvUpdate');
+const fvDetail = $('fvDetail');
+
+let allVehicles = [];
+let allUpdates = new Map();
+let staticData = null;
+let selectedEntry = null;
+
+async function load() {
+  try {
+    const now = Date.now();
+    const sources = ['sta', 'trentino', 'trains'];
+    allVehicles = [];
+    allUpdates = new Map();
+
+    // Lade Vehicle Positions
+    for (const source of sources) {
+      try {
+        const res = await fetch('/api/' + source, { cache: 'no-store' });
+        if (!res.ok) continue;
+        const feed = await res.json();
+        const parsed = parseVehicles(feed, source, {}, now);
+        const entries = parsed.vehicles.map(v => vehicleToTripEntry(v, staticData || {}, allUpdates)).filter(Boolean);
+        allVehicles.push(...entries);
+      } catch (e) {
+        console.warn('Feed ' + source + ' failed:', e.message);
+      }
+    }
+
+    // Lade Trip Updates
+    for (const source of sources) {
+      try {
+        const res = await fetch('/api/' + source + '_updates', { cache: 'no-store' });
+        if (!res.ok) continue;
+        const feed = await res.json();
+        const updates = parseUpdates(feed, source, now);
+        for (const [key, val] of updates) allUpdates.set(key, val);
+      } catch (e) {
+        console.warn('Updates ' + source + ' failed:', e.message);
+      }
+    }
+
+    // Lade statische Indexdaten
+    try {
+      const res = await fetch('/data/sta-index.json?v=9.9.5', { cache: 'no-store' });
+      if (res.ok) staticData = { sta: await res.json() };
+    } catch (e) {
+      console.warn('Static index failed:', e.message);
+    }
+
+    render();
+  } catch (e) {
+    fvEmpty.hidden = false;
+    fvEmpty.innerHTML = '<p>Fahrzeugdaten konnten nicht geladen werden.</p><p style="font-size:12px;opacity:0.7">' + e.message + '</p>';
+    fvCount.textContent = '0 Fahrten';
+    fvUpdate.textContent = '–';
+  }
+}
+
+function render() {
+  fvList.innerHTML = '';
+  if (allVehicles.length === 0) {
+    fvEmpty.hidden = false;
+    fvDetail.classList.remove('visible');
+    selectedEntry = null;
+    fvCount.textContent = '0 Fahrten';
+    fvUpdate.textContent = '–';
+    return;
+  }
+  fvEmpty.hidden = true;
+
+  // Gruppiere nach Trip ID
+  const byTrip = groupVehiclesByTrip(allVehicles);
+  const entries = [];
+  for (const [tripId, vehicles] of byTrip) {
+    const v = vehicles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
+    const entry = vehicleToTripEntry(v, staticData || {}, allUpdates);
+    if (entry) entries.push(entry);
+  }
+
+  const sorted = sortTripEntries(entries);
+  fvCount.textContent = sorted.length + ' Fahrt' + (sorted.length > 1 ? 'en' : '');
+  fvUpdate.textContent = 'Aktualisiert: ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+  for (const entry of sorted) {
+    const item = document.createElement('div');
+    item.className = 'fv-item' + (selectedEntry && selectedEntry.key === entry.key ? ' selected' : '');
+    item._entry = entry;
+    item.onclick = () => selectEntry(entry);
+
+    const info = document.createElement('div');
+    info.className = 'fv-item-info';
+    const line = document.createElement('div');
+    line.className = 'fv-item-line';
+    line.textContent = entry.line;
+    const headsign = document.createElement('div');
+    headsign.className = 'fv-item-headsign';
+    headsign.textContent = entry.headsign;
+    const age = document.createElement('div');
+    age.className = 'fv-item-age';
+    age.textContent = entry.ageLabel + ' alt';
+    info.appendChild(line);
+    info.appendChild(headsign);
+    info.appendChild(age);
+
+    const delay = document.createElement('div');
+    delay.className = 'fv-item-delay ' + (entry.delay.className === 'delay-none' ? 'none' : entry.delay.className === 'delay-ok' ? 'ok' : entry.delay.className === 'delay-warn' ? 'warn' : 'severe');
+    delay.textContent = entry.delay.label;
+
+    const arrow = document.createElement('div');
+    arrow.className = 'fv-item-arrow';
+    arrow.textContent = '›';
+
+    item.appendChild(info);
+    item.appendChild(delay);
+    item.appendChild(arrow);
+    fvList.appendChild(item);
+  }
+}
+
+function selectEntry(entry) {
+  selectedEntry = entry;
+  // Update selection visuals
+  for (const el of fvList.querySelectorAll('.fv-item')) {
+    el.classList.toggle('selected', el._entry === entry);
+  }
+
+  fvDetail.classList.add('visible');
+  $('fvLine').textContent = entry.line;
+  $('fvHeadsign').textContent = entry.headsign;
+  $('fvVehicleId').textContent = entry.vehicleId;
+  $('fvPosition').textContent = entry.lat.toFixed(4) + ', ' + entry.lon.toFixed(4);
+  $('fvAge').textContent = entry.ageLabel;
+  $('fvDelay').textContent = entry.delay.label;
+  $('fvDelay').className = 'fv-detail-value ' + (entry.delay.className === 'delay-none' ? 'none' : entry.delay.className === 'delay-ok' ? 'ok' : entry.delay.className === 'delay-warn' ? 'warn' : 'severe');
+  $('fvNextStop').textContent = entry.nextStop ? entry.nextStop.name + ' (' + entry.nextStop.arrival + ')' : 'Nicht verfügbar';
+  $('fvSource').textContent = entry.source.toUpperCase() + ' · ' + entry.positionType;
+
+  // Stops list
+  const stopsList = $('fvStopsList');
+  stopsList.innerHTML = '';
+  if (entry.allStops.length) {
+    for (const stop of entry.allStops.slice(0, 20)) {
+      const row = document.createElement('div');
+      row.className = 'fv-stop-row';
+      const isNext = entry.nextStop && entry.nextStop.stopId === stop.stopId;
+      const name = document.createElement('span');
+      name.className = 'fv-stop-name';
+      name.textContent = stop.name;
+      if (isNext) { name.style.color = '#0ea5e9'; name.style.fontWeight = '700'; }
+      const time = document.createElement('span');
+      time.className = 'fv-stop-time ' + (isNext ? 'now' : '');
+      time.textContent = stop.departure;
+      const dsec = getStopDelay(entry.tripId, stop.stopId, staticData || {}, entry.source, allUpdates);
+      const delayEl = document.createElement('span');
+      delayEl.className = 'fv-stop-delay ' + (dsec === null ? 'none' : dsec >= 900 ? 'severe' : dsec >= 60 ? 'warn' : 'ok');
+      delayEl.textContent = dsec === null ? '–' : (dsec > 0 ? '+' + Math.round(dsec / 60) + ' Min' : Math.round(dsec / 60) + ' Min');
+      row.appendChild(name);
+      row.appendChild(time);
+      row.appendChild(delayEl);
+      stopsList.appendChild(row);
+    }
+  } else {
+    const empty = document.createElement('div');
+    empty.className = 'fv-missing';
+    empty.textContent = 'Keine Haltestellendaten verfügbar.';
+    stopsList.appendChild(empty);
+  }
+
+  // Map
+  const mapEl = $('fvMap');
+  if (window.fvMap) {
+    window.fvMap.remove();
+  }
+  window.fvMap = L.map('fvMap', { zoomControl: false }).setView([entry.lat, entry.lon], 14);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap-Mitwirkende',
+    maxZoom: 19
+  }).addTo(window.fvMap);
+  L.circleMarker([entry.lat, entry.lon], {
+    radius: 10,
+    fillColor: entry.delay.className === 'delay-severe' ? '#ef4444' : entry.delay.className === 'delay-warn' ? '#f59e0b' : '#0ea5e9',
+    color: '#fff',
+    weight: 2,
+    opacity: 1,
+    fillOpacity: 0.9
+  }).bindPopup('<strong>' + entry.line + '</strong><br>' + entry.headsign).addTo(window.fvMap);
+}
+
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
