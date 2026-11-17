@@ -76,6 +76,21 @@ test('processPositionFeed: parst Fahrzeuge und berechnet Bus-Kandidaten', () => 
   assert.ok(latest.has('sta:v1'));
 });
 
+test('processPositionFeed: veröffentlicht simulierte Trenitalia-Positionen nicht als Live-Marker', () => {
+  const now = Date.now();
+  const feed = {entity:[{id:'train-1',vehicle:{trip:{tripId:'trip-1'},vehicle:{id:'t1'},position:{latitude:46.5,longitude:11.35},timestamp:Math.floor(now/1000)}}]};
+  const {parsed,latest} = processPositionFeed('trains',feed,now,{trains:{}},'2026-11-17');
+  assert.equal(parsed.vehicles.length,1);
+  assert.equal(parsed.vehicles[0].positionType,'Simulierte Position');
+  assert.equal(latest.size,0);
+});
+
+test('mergePositionVehicles: entfernt zuvor gecachte simulierte Zugpositionen', () => {
+  const vehicles = new Map([['trains:t1',{key:'trains:t1',source:'trains'}]]);
+  mergePositionVehicles(vehicles,new Map(),'trains',Date.now(),false);
+  assert.equal(vehicles.size,0);
+});
+
 test('mergePositionVehicles: behält neueste Beobachtung', () => {
   const vehicles = new Map();
   const latest = new Map([['k1', {key: 'k1', source: 'sta', timestamp: Math.floor(Date.now()/1000), kind: 'bus', name: 'Zug'} ]]);

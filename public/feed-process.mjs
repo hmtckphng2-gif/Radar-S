@@ -53,7 +53,9 @@ export function processPositionFeed(source, feed, now, indexes, today){
       ? v.tripStartDate.slice(0,4) + '-' + v.tripStartDate.slice(4,6) + '-' + v.tripStartDate.slice(6,8) : '';
     v.routeShapeCandidates = deriveCandidates(indexes[source], day, today, v.routeId, v.directionId);
   }
-  const latest = new Map(parsed.vehicles.filter(v =>
+  // Trenitalia's proxy feed contains estimated/simulated coordinates, not verified
+  // live train locations. Keep parsed diagnostics, but never publish these as map markers.
+  const latest = new Map(source === 'trains' ? [] : parsed.vehicles.filter(v =>
     (!v.timestamp || nowSec - v.timestamp < MARKER_MAX_AGE_SEC)
   ).map(v => [v.key, v]));
   return {parsed, latest};
@@ -76,6 +78,11 @@ function preserveKnownDetails(next, previous){
 
 // Mergt gelesene Fahrzeuge in den State und entfernt veraltete des gleichen Sources.
 export function mergePositionVehicles(vehicles, latest, source, now, staleFeed){
+  // Remove previously cached train markers from the simulated Trenitalia source.
+  if(source === 'trains'){
+    for(const [key, old] of vehicles) if(old.source === source) vehicles.delete(key);
+    return;
+  }
   for(const [key, old] of vehicles){
     if(old.source !== source) continue;
     if(latest.has(key)) continue;
