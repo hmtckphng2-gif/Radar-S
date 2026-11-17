@@ -1,7 +1,7 @@
 // Störungszentrale: Verarbeitet GTFS-RT Service Alerts für die Störungsanzeige.
 // Reine Logik ohne DOM-Abhängigkeit, unit-tested.
-import { parseAlerts } from './feed-process.mjs?v=9.9.5&rev=feed-timestamp-truth-1';
-import { txt, normalizeStopId } from './core.js?v=9.9.5&rev=next-stop-details-1';
+import { parseAlerts } from './feed-process.mjs?v=9.9.6&rev=feed-timestamp-truth-1';
+import { txt, normalizeStopId } from './core.js?v=9.9.6&rev=next-stop-details-1';
 
 export const CAUSE_LABELS = {
   1: 'Verspätung', 2: 'Verspätung', 3: 'Ausfall', 4: 'Ausfall',

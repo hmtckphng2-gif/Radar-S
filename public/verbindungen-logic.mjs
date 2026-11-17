@@ -1,6 +1,6 @@
 // Alternativverbindungen: Verbindungs­suche mit GTFS Static + GTFS-RT Echtzeit.
 // Reine Logik ohne DOM-Abhängigkeit, unit-tested.
-import { stopRows, normalizeStopId, numericDelay, isLiveUpdate } from './core.js?v=9.9.5&rev=verbindungen-1';
+import { stopRows, normalizeStopId, numericDelay, isLiveUpdate } from './core.js?v=9.9.6&rev=verbindungen-1';
 
 // Baut einen umgekehrten Index: stopId -> Array von Trip-IDs, die diese Haltestelle bedienen.
 // Einmalig aus den statischen GTFS-Zeitdaten aufgebaut.
