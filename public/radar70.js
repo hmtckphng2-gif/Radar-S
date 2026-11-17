@@ -1,11 +1,11 @@
-import {formatStationName,sourceLabel,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=details-1';
+import {formatStationName,sourceLabel,hasKnownPlatform} from './radar92-details.mjs?v=9.9.6&rev=details-1';
 /* Südtirol Radar 7.0 – Horizon Home, search, journey and menu architecture.
  * Existing Leaflet, GTFS, Ist/Soll, favorites and analysis modules are not replaced. */
-import {findStations,romeDay,romeSeconds} from './radar51-logic.mjs?v=9.9.5';
-import {buildTimetable,searchJourneys,walkEstimate,transferAssessment} from './radar70-route.mjs?v=9.9.5';
-import {assessJourneys,orderJourneys,explainRecommendation,answerLocally,summarizeJourneyOptions} from './radar703-advisor.mjs?v=9.9.5';
-import {groupJourneyChoices} from './radar705-groups.mjs?v=9.9.5';
-import {toggleJourneyFavorite,isJourneyFavorite} from './app-state.js?v=9.9.5';
+import {findStations,romeDay,romeSeconds} from './radar51-logic.mjs?v=9.9.6';
+import {buildTimetable,searchJourneys,walkEstimate,transferAssessment} from './radar70-route.mjs?v=9.9.6';
+import {assessJourneys,orderJourneys,explainRecommendation,answerLocally,summarizeJourneyOptions} from './radar703-advisor.mjs?v=9.9.6';
+import {groupJourneyChoices} from './radar705-groups.mjs?v=9.9.6';
+import {toggleJourneyFavorite,isJourneyFavorite} from './app-state.js?v=9.9.6';
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const E=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e};

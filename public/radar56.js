@@ -1,10 +1,10 @@
 /* Südtirol Radar 5.6 — additive intelligence, mobile UI, no map renderer changes.
    All "live" labels require fresh matching GTFS-RT. No fabricated GPS or delay. */
-import {freshUpdate,stopDelay,tripCancelled,findConnections,feedQuality,spatialWarning,journeyProgress,aggregateHistory,readableTime} from './radar56-logic.mjs?v=9.9.5&rev=position-language-2';
-import {romeDay,romeSeconds,findStations,nearbyStationGroup,buildDepartureRows,dateGTFSValid,trainScheduledPosition} from './radar51-logic.mjs?v=9.9.5';
-import {displayDelay} from './radar53-logic.mjs?v=9.9.5';
-import {isRailRoute,feedAgeSeconds} from './core.js?v=9.9.5';
-import {formatStationName,sameStationName,sourceLabel,formatRelativeAge} from './radar92-details.mjs?v=9.9.5&rev=details-1';
+import {freshUpdate,stopDelay,tripCancelled,findConnections,feedQuality,spatialWarning,journeyProgress,aggregateHistory,readableTime} from './radar56-logic.mjs?v=9.9.6&rev=position-language-2';
+import {romeDay,romeSeconds,findStations,nearbyStationGroup,buildDepartureRows,dateGTFSValid,trainScheduledPosition} from './radar51-logic.mjs?v=9.9.6';
+import {displayDelay} from './radar53-logic.mjs?v=9.9.6';
+import {isRailRoute,feedAgeSeconds} from './core.js?v=9.9.6';
+import {formatStationName,sameStationName,sourceLabel,formatRelativeAge} from './radar92-details.mjs?v=9.9.6&rev=details-1';
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);

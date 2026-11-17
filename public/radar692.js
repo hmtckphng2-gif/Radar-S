@@ -1,6 +1,6 @@
-import {formatStationName,sourceLabel} from './radar92-details.mjs?v=9.9.5&rev=station-labels-2';
-import {findStations,romeDay,romeSeconds} from './radar51-logic.mjs?v=9.9.5';
-import {findItineraries,groupStationChoices,formatConnectionStationChoice} from './radar692-journey.mjs?v=9.9.5&rev=grouped-stations-1';
+import {formatStationName,sourceLabel} from './radar92-details.mjs?v=9.9.6&rev=station-labels-2';
+import {findStations,romeDay,romeSeconds} from './radar51-logic.mjs?v=9.9.6';
+import {findItineraries,groupStationChoices,formatConnectionStationChoice} from './radar692-journey.mjs?v=9.9.6&rev=grouped-stations-1';
 (()=>{'use strict';const $=id=>document.getElementById(id),el=(t,c,s)=>{const x=document.createElement(t);if(c)x.className=c;if(s!==undefined)x.textContent=s;return x};
 let bridge,stations=[],chosen={a:null,b:null},fields={},out;const fmt=v=>String(Math.floor(v/3600)%24).padStart(2,'0')+':'+String(Math.floor(v%3600/60)).padStart(2,'0');
 function field(k,title){const box=el('label','sr692-field'),input=el('input'),items=el('div','sr692-options');input.type='search';input.autocomplete='off';input.placeholder=title+' wählen';items.hidden=true;fields[k]={input,items};box.append(el('span','',title),input,items);

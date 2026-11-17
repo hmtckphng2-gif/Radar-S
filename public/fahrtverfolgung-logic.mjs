@@ -1,6 +1,6 @@
 // Live-Fahrtverfolgung: Verarbeitet GTFS-RT Fahrzeugpositionen und Trip Updates.
 // Reine Logik ohne DOM-Abhängigkeit, unit-tested.
-import { parseVehicles, parseUpdates, delayForVehicle, nextStopFromRows, stopRows, delayPresentation, formatClock, feedAgeSeconds, tripLookup, positionValid } from './core.js?v=9.9.5&rev=fahrverfolgung-1';
+import { parseVehicles, parseUpdates, delayForVehicle, nextStopFromRows, stopRows, delayPresentation, formatClock, feedAgeSeconds, tripLookup, positionValid } from './core.js?v=9.9.6&rev=fahrverfolgung-1';
 
 export const UPDATE_SOURCES = ['sta', 'trentino', 'trains'];
 

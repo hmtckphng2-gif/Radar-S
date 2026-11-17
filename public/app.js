@@ -1,22 +1,22 @@
-import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite,loadJourneyFavorites,saveJourneyFavorites,toggleJourneyFavorite,isJourneyFavorite,addTrackPoint,getTrackPoints,clearTrack,loadDismissedAlerts,saveDismissedAlerts,dismissAlert} from './app-state.js?v=9.9.5';
-import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.9.5';
-import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.9.5';
-import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.9.5';
-import {enrichTrainPlatform} from './train-platforms.js?v=9.9.5';
+import {state,bootPhase,loadFavorites,saveFavorites,toggleFavorite,isFavorite,loadLineFavorites,saveLineFavorites,toggleLineFavorite,isLineFavorite,loadJourneyFavorites,saveJourneyFavorites,toggleJourneyFavorite,isJourneyFavorite,addTrackPoint,getTrackPoints,clearTrack,loadDismissedAlerts,saveDismissedAlerts,dismissAlert} from './app-state.js?v=9.9.6';
+import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.9.6';
+import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.9.6';
+import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.9.6';
+import {enrichTrainPlatform} from './train-platforms.js?v=9.9.6';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, delayPresentation,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, nextStopFromRows, formatClock, delayForVehicle,
   vehicleDelayInfo, markerDelayState, markerDelayBadge, bufferedAlong, departureDelay, isLiveUpdate, normalizeStopId
-} from './core.js?v=9.9.5&rev=next-stop-details-1';
-import {playbackLag} from './radar45-logic.mjs?v=9.9.5';
-import {trainReplayDuration} from './radar705-motion.mjs?v=9.9.5';
-import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.9.5';
-import {trainScheduledPosition,buildDepartureRows,romeSeconds} from './radar51-logic.mjs?v=9.9.5';
-import {mergeStationDepartures} from './radar53-logic.mjs?v=9.9.5';
-import {groupNearbyStops,nextNearbyDepartures} from './radar93-nearby.mjs?v=9.9.5';
-import {formatStationName,formatRelativeAge,sourceLabel,feedSourceLabel,expectedStopTime,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=source-provenance-1';
-import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.5&rev=feed-timestamp-truth-1';
-import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.9.5';
+} from './core.js?v=9.9.6&rev=next-stop-details-1';
+import {playbackLag} from './radar45-logic.mjs?v=9.9.6';
+import {trainReplayDuration} from './radar705-motion.mjs?v=9.9.6';
+import {deriveCandidates,withinShapeBounds,chooseVerifiedCandidate} from './radar451-logic.mjs?v=9.9.6';
+import {trainScheduledPosition,buildDepartureRows,romeSeconds} from './radar51-logic.mjs?v=9.9.6';
+import {mergeStationDepartures} from './radar53-logic.mjs?v=9.9.6';
+import {groupNearbyStops,nextNearbyDepartures} from './radar93-nearby.mjs?v=9.9.6';
+import {formatStationName,formatRelativeAge,sourceLabel,feedSourceLabel,expectedStopTime,hasKnownPlatform} from './radar92-details.mjs?v=9.9.6&rev=source-provenance-1';
+import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.6&rev=feed-timestamp-truth-1';
+import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.9.6';
 
 const $ = id => document.getElementById(id);
 const DIRECT_POSITION_SOURCES=['sta_direct'];
@@ -1543,7 +1543,7 @@ async function init(){
   // Der Scope muss ausdruecklich auf '/' stehen, sonst waere er '/sw.js'.
   if('serviceWorker' in navigator){
    try{
-    navigator.serviceWorker.register('/sw.js?v=9.9.5',{scope:'/'}).then(reg=>{
+    navigator.serviceWorker.register('/sw.js?v=9.9.6',{scope:'/'}).then(reg=>{
      reg.addEventListener('updatefound',()=>{
       const w=reg.installing;
       if(!w)return;
