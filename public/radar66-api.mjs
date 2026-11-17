@@ -8,8 +8,8 @@ export function normalizeSnapshot(feeds,now=Date.now()){
  for(const source of SOURCES){const record=feeds[source];if(!record?.data){status[source]=record?.status||'error';continue}
  const timestamp=Number(record.data.header?.timestamp);const age=Number.isFinite(timestamp)&&timestamp>1e9?now/1000-timestamp:null;
  const fresh=age!==null&&age<=300&&age>=-30;
- status[source]=fresh?'ok':'old';
- if(!fresh)continue; // never represent stale feed as a live snapshot
+ status[source]=fresh?(source==='trains'?'simulated':'ok'):'old';
+ if(!fresh || source==='trains')continue; // Trenitalia coordinates are estimated, not live GPS
  for(const v of parseVehicles(record.data,source,{},now).vehicles){
   if(!v.timestamp||now/1000-v.timestamp>300||now/1000-v.timestamp< -30)continue;
   if(source==='sta_direct')v.positionType='STA Open Data Hub (GPS nicht unabhängig bestätigt)';
