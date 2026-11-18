@@ -15,7 +15,7 @@ import {trainScheduledPosition,buildDepartureRows,romeSeconds} from './radar51-l
 import {mergeStationDepartures} from './radar53-logic.mjs?v=9.9.5';
 import {groupNearbyStops,nextNearbyDepartures} from './radar93-nearby.mjs?v=9.9.5';
 import {formatStationName,formatRelativeAge,sourceLabel,feedSourceLabel,expectedStopTime,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=source-provenance-1';
-import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.5&rev=feed-timestamp-truth-1';
+import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.5&rev=feed-timestamp-truth-1&rev=train-stop-snapshot-1';
 import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.9.5';
 
 const $ = id => document.getElementById(id);
