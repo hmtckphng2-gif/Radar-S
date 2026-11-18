@@ -769,8 +769,11 @@ async function refreshFeeds(){
   if(state.busy)return;
   state.busy=true;$('statusText').textContent=t('status.loading');
   try{
-    const results=await Promise.allSettled(ENDPOINTS.map(name=>fetchJson('/api/'+name,16000)));
-    const {ok, oldFeeds, unknownFeeds, statuses}=buildFeedStatus(results, ENDPOINTS);
+    const results=await Promise.allSettled([...ENDPOINTS.map(name=>fetchJson('/api/'+name,16000)),fetchJson('/api/v1/vehicles',16000)]);
+    const {ok, oldFeeds, unknownFeeds, statuses}=buildFeedStatus(results.slice(0,ENDPOINTS.length), ENDPOINTS);
+    const trainSnapshot=results[ENDPOINTS.length].status==='fulfilled'?results[ENDPOINTS.length].value:null;
+    const trainSnapshotOk=Boolean(trainSnapshot?.schema==='radar.snapshot.v1'&&Array.isArray(trainSnapshot.vehicles));
+    statuses.trains=trainSnapshotOk?(trainSnapshot.sources?.trains==='ok'?'ok':'old'):'error';
     state.statuses=statuses;
     for(const [name, feed] of Object.entries(ok)){
       state.lastSuccess[name]=Date.now();
@@ -782,12 +785,35 @@ async function refreshFeeds(){
     }
     const now=Date.now();state.fetchedAt=now;
     for(const source of POSITION_SOURCES){
+      // Trenitalia's legacy GTFS-RT vehicle positions are simulated and must never be mapped.
+      if(source==='trains')continue;
       if(!ok[source] && !oldFeeds[source] && !unknownFeeds[source])continue;
       // Old or unverified-timestamp data is context only, never live GPS or moving animation.
       const staleFeed=!ok[source];
       const {parsed, latest}=processPositionFeed(source, ok[source]||oldFeeds[source]||unknownFeeds[source], now, state.indexes, gtfsLocalDate());
       state.counts[source]=parsed;
       mergePositionVehicles(state.vehicles, latest, source, now, staleFeed);
+    }
+    // The normalized SIRI snapshot contains only actual last-confirmed train stops.
+    // These are stationary stop markers, never GPS positions or interpolated movement.
+    if(trainSnapshotOk){
+      const latest=new Map();
+      for(const item of trainSnapshot.vehicles){
+        const timestamp=item.observedAt?Date.parse(item.observedAt)/1000:NaN;
+        if(item.kind!=='train'||item.source!=='trains'||!Number.isFinite(timestamp)||!Number.isFinite(Number(item.lat))||!Number.isFinite(Number(item.lon)))continue;
+        const key=String(item.id||'');if(!key)continue;
+        latest.set(key,{key,source:'trains',kind:'train',lat:Number(item.lat),lon:Number(item.lon),rawLat:Number(item.lat),rawLon:Number(item.lon),
+          name:item.name||('Zug '+(item.trainNumber||item.vehicleId||'')),headsign:item.headsign||'',vehicleId:item.vehicleId||item.trainNumber||'',
+          routeId:item.routeId||null,tripId:item.tripId||null,tripStartDate:item.tripStartDate||null,shapeId:null,routeShapeId:null,
+          timestamp,receivedAt:now,fetchedAt:now,speed:null,bearing:null,positionType:item.positionType||'Letzter bestätigter Halt · Trenitalia',
+          lastObservedStop:item.lastObservedStop||null,quality:item.quality||'verzögert',nameVerified:true,estimated:false,positionEstimated:false});
+      }
+      state.counts.trains=latest.size;
+      mergePositionVehicles(state.vehicles,latest,'trains',now,false);
+      state.lastSuccess.trains=Date.now();
+    }else{
+      state.counts.trains=0;
+      mergePositionVehicles(state.vehicles,new Map(),'trains',now,true);
     }
     pruneStaleVehicles(state.vehicles, now, state.statuses);
     processUpdates(ok, state, now);

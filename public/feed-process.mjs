@@ -78,11 +78,6 @@ function preserveKnownDetails(next, previous){
 
 // Mergt gelesene Fahrzeuge in den State und entfernt veraltete des gleichen Sources.
 export function mergePositionVehicles(vehicles, latest, source, now, staleFeed){
-  // Remove previously cached train markers from the simulated Trenitalia source.
-  if(source === 'trains'){
-    for(const [key, old] of vehicles) if(old.source === source) vehicles.delete(key);
-    return;
-  }
   for(const [key, old] of vehicles){
     if(old.source !== source) continue;
     if(latest.has(key)) continue;
