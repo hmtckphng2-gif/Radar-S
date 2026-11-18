@@ -3,6 +3,7 @@ import {motionDuration,platformInfo} from './radar54-logic.mjs?v=9.9.5';
 import {boundedMotionDuration,feedDiagnostics} from './radar66-logic.mjs?v=9.9.5';
 import {selectRepresentatives,observationQuality} from './radar64-logic.mjs?v=9.9.5';
 import {enrichTrainPlatform} from './train-platforms.js?v=9.9.5';
+import {fuseTrainPositionSources} from './train-live-logic.mjs?v=9.9.5&rev=gtfsrt-siri-fusion-1';
 import {
   SOURCES, UPDATE_SOURCES, BBOX, txt, gtfsNumber, parseVehicles, parseUpdates, delayPresentation,
   feedAgeSeconds, shapeProject, pointAtDistance, routeOnlySnap, stopRows, nextStopFromRows, formatClock, delayForVehicle,
@@ -820,8 +821,18 @@ async function refreshFeeds(){
           timestamp,receivedAt:now,fetchedAt:now,speed:null,bearing:null,positionType:item.positionType||'Letzter bestätigter Halt · Trenitalia',
           lastObservedStop:item.lastObservedStop||null,quality:item.quality||'verzögert',nameVerified:true,estimated:false,positionEstimated:false});
       }
-      state.counts.trains=estimatedTrainCount+latest.size;
+      const estimatedVehicles=[...state.vehicles.values()].filter(v=>v.source==='trains'&&v.kind==='train'&&v.positionEstimated===true&&!v.stale);
+      const fused=fuseTrainPositionSources(estimatedVehicles,[...latest.values()]);
+      const fusedEstimates=new Map(fused.estimated.map(v=>[v.key,v]));
+      for(const vehicle of estimatedVehicles){
+        const merged=fusedEstimates.get(vehicle.key);
+        if(!merged){state.vehicles.delete(vehicle.key);continue;}
+        if(merged.lastObservedStop)state.vehicles.set(vehicle.key,{...vehicle,lastObservedStop:merged.lastObservedStop,lastObservedAt:merged.lastObservedAt});
+      }
+      latest.clear();
+      for(const vehicle of fused.observed)latest.set(vehicle.key,vehicle);
       mergePositionVehicles(state.vehicles,latest,'trains',now,trainSiriStatus!=='ok','observed');
+      state.counts.trains=[...state.vehicles.values()].filter(v=>v.source==='trains'&&v.kind==='train'&&!v.stale).length;
       if(trainSiriStatus==='ok')state.lastSuccess.trains=Date.now();
     }else{
       state.counts.trains=estimatedTrainCount;

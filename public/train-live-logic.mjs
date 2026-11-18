@@ -28,3 +28,47 @@ export function parseSiriTrainPositions(xml, now=Date.now()){
  }
  return {timestamp:Math.floor(responseTime/1000),vehicles};
 }
+
+function trainNumberOf(vehicle){
+ const raw=String(vehicle?.vehicleId||vehicle?.trainNumber||vehicle?.name||'');
+ return raw.match(/(?:^|\D)(\d{2,6})(?:\D|$)/)?.[1]||'';
+}
+function distanceBetweenMeters(a,b){
+ const values=[Number(a?.lat),Number(a?.lon),Number(b?.lat),Number(b?.lon)];
+ if(!values.every(Number.isFinite))return Infinity;
+ const [lat1,lon1,lat2,lon2]=values,rad=n=>n*Math.PI/180;
+ const x=rad(lat2-lat1),y=rad(lon2-lon1);
+ const h=Math.sin(x/2)**2+Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(y/2)**2;
+ return 12742000*Math.asin(Math.min(1,Math.sqrt(h)));
+}
+
+// Join the two Trenitalia-derived feeds conservatively by train number, timestamp and proximity.
+// Keep one map marker: newer SIRI stop observation wins; otherwise enrich the newer estimate.
+export function fuseTrainPositionSources(estimatedVehicles=[],observedVehicles=[],options={}){
+ const maxAgeSeconds=Number(options.maxAgeSeconds)||1200;
+ const maxDistanceMeters=Number(options.maxDistanceMeters)||35000;
+ const estimated=new Map((estimatedVehicles||[]).filter(v=>v?.key).map(v=>[v.key,{...v}]));
+ const observed=[];
+ for(const stop of observedVehicles||[]){
+  const number=trainNumberOf(stop),stopTime=Number(stop?.timestamp);
+  if(!number||!Number.isFinite(stopTime)){observed.push(stop);continue;}
+  let best=null,bestScore=Infinity;
+  for(const candidate of estimated.values()){
+   if(trainNumberOf(candidate)!==number)continue;
+   const age=Math.abs(Number(candidate.timestamp)-stopTime);
+   if(!Number.isFinite(age)||age>maxAgeSeconds)continue;
+   const distance=distanceBetweenMeters(candidate,stop);
+   if(distance>maxDistanceMeters)continue;
+   const score=age+distance/1000;
+   if(score<bestScore){best=candidate;bestScore=score;}
+  }
+  if(!best){observed.push(stop);continue;}
+  if(stopTime>Number(best.timestamp)){
+   estimated.delete(best.key);
+   observed.push(stop);
+  }else{
+   estimated.set(best.key,{...best,lastObservedStop:stop.lastObservedStop||best.lastObservedStop||null,lastObservedAt:stopTime});
+  }
+ }
+ return {estimated:[...estimated.values()],observed};
+}
