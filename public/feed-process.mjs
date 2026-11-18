@@ -47,15 +47,25 @@ export function processPositionFeed(source, feed, now, indexes, today){
   if(source === 'sta_direct'){
     for(const v of parsed.vehicles) v.positionType = 'STA Open Data Hub · offizielle Feedposition (GPS nicht garantiert)';
   }
+  if(source === 'trains'){
+    // BusOne derives these Trenitalia GTFS-RT coordinates from journey progress;
+    // they are useful map estimates, never verified onboard GPS.
+    parsed.vehicles = parsed.vehicles.filter(v => v.kind === 'train');
+    for(const v of parsed.vehicles){
+      v.estimated = true;
+      v.positionEstimated = true;
+      v.positionType = 'Geschätzte Streckenposition · Trenitalia GTFS-RT (BusOne)';
+      // Do not present provider-derived speed as an onboard measurement.
+      v.speed = null;
+    }
+  }
   for(const v of parsed.vehicles){
     if(v.kind !== 'bus' || v.shapeId || v.routeShapeId || !v.tripStartDate) continue;
     const day = /^\d{8}$/.test(v.tripStartDate)
       ? v.tripStartDate.slice(0,4) + '-' + v.tripStartDate.slice(4,6) + '-' + v.tripStartDate.slice(6,8) : '';
     v.routeShapeCandidates = deriveCandidates(indexes[source], day, today, v.routeId, v.directionId);
   }
-  // Trenitalia's proxy feed contains estimated/simulated coordinates, not verified
-  // live train locations. Keep parsed diagnostics, but never publish these as map markers.
-  const latest = new Map(source === 'trains' ? [] : parsed.vehicles.filter(v =>
+  const latest = new Map(parsed.vehicles.filter(v =>
     (!v.timestamp || nowSec - v.timestamp < MARKER_MAX_AGE_SEC)
   ).map(v => [v.key, v]));
   return {parsed, latest};
@@ -76,10 +86,17 @@ function preserveKnownDetails(next, previous){
   return out;
 }
 
+function matchesPositionScope(vehicle, scope){
+  if(scope === 'estimated') return vehicle?.positionEstimated === true || vehicle?.estimated === true;
+  if(scope === 'observed') return /Letzter bestätigter Halt/i.test(String(vehicle?.positionType || ''));
+  return true;
+}
+
 // Mergt gelesene Fahrzeuge in den State und entfernt veraltete des gleichen Sources.
-export function mergePositionVehicles(vehicles, latest, source, now, staleFeed){
+// Optional scopes keep separate Trenitalia GTFS-RT estimates and SIRI stop observations independent.
+export function mergePositionVehicles(vehicles, latest, source, now, staleFeed, scope = null){
   for(const [key, old] of vehicles){
-    if(old.source !== source) continue;
+    if(old.source !== source || !matchesPositionScope(old, scope)) continue;
     if(latest.has(key)) continue;
     if(now - (old.lastRealSeen || 0) < VEHICLE_KEEP_MS){
       vehicles.set(key, {...old, stale: true});
@@ -88,6 +105,7 @@ export function mergePositionVehicles(vehicles, latest, source, now, staleFeed){
     }
   }
   for(const [key, v] of latest){
+    if(!matchesPositionScope(v, scope)) continue;
     const old = vehicles.get(key);
     if(old?.timestamp && v.timestamp && old.timestamp > v.timestamp) continue;
     const stale = staleFeed || (v.timestamp && now / 1000 - v.timestamp > 300);

@@ -15,7 +15,7 @@ import {trainScheduledPosition,buildDepartureRows,romeSeconds} from './radar51-l
 import {mergeStationDepartures} from './radar53-logic.mjs?v=9.9.5';
 import {groupNearbyStops,nextNearbyDepartures} from './radar93-nearby.mjs?v=9.9.5';
 import {formatStationName,formatRelativeAge,sourceLabel,feedSourceLabel,expectedStopTime,hasKnownPlatform} from './radar92-details.mjs?v=9.9.5&rev=source-provenance-1';
-import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.5&rev=feed-timestamp-truth-1&rev=train-stop-snapshot-1';
+import {buildFeedStatus, processPositionFeed, mergePositionVehicles, pruneStaleVehicles, processUpdates, parseAlerts} from './feed-process.mjs?v=9.9.5&rev=feed-timestamp-truth-1&rev=trainitalia-gtfsrt-positions-1';
 import {t, setLocale, getLocale, initLocale} from './translations.mjs?v=9.9.5';
 
 const $ = id => document.getElementById(id);
@@ -773,7 +773,12 @@ async function refreshFeeds(){
     const {ok, oldFeeds, unknownFeeds, statuses}=buildFeedStatus(results.slice(0,ENDPOINTS.length), ENDPOINTS);
     const trainSnapshot=results[ENDPOINTS.length].status==='fulfilled'?results[ENDPOINTS.length].value:null;
     const trainSnapshotOk=Boolean(trainSnapshot?.schema==='radar.snapshot.v1'&&Array.isArray(trainSnapshot.vehicles));
-    statuses.trains=trainSnapshotOk?(trainSnapshot.sources?.trains==='ok'?'ok':'old'):'error';
+    const trainGtfsStatus=statuses.trains;
+    const trainSiriSourceStatus=trainSnapshot?.sources?.trains;
+    const trainSiriStatus=trainSnapshotOk?(trainSiriSourceStatus==='ok'?'ok':trainSiriSourceStatus==='old'?'old':'error'):'error';
+    state.trainSourceStatuses={gtfsrt:trainGtfsStatus,siri:trainSiriStatus};
+    // The combined train status stays healthy while either independent train feed works.
+    statuses.trains=trainGtfsStatus==='ok'||trainSiriStatus==='ok'?'ok':trainGtfsStatus==='old'||trainSiriStatus==='old'?'old':'error';
     state.statuses=statuses;
     for(const [name, feed] of Object.entries(ok)){
       state.lastSuccess[name]=Date.now();
@@ -785,17 +790,24 @@ async function refreshFeeds(){
     }
     const now=Date.now();state.fetchedAt=now;
     for(const source of POSITION_SOURCES){
-      // Trenitalia's legacy GTFS-RT vehicle positions are simulated and must never be mapped.
-      if(source==='trains')continue;
-      if(!ok[source] && !oldFeeds[source] && !unknownFeeds[source])continue;
+      if(!ok[source] && !oldFeeds[source] && !unknownFeeds[source]){
+        if(source==='trains'){
+          // If Trenitalia GTFS-RT is down, stale only its estimated markers;
+          // confirmed SIRI stop observations are managed independently below.
+          mergePositionVehicles(state.vehicles,new Map(),'trains',now,true,'estimated');
+          state.counts.trains=0;
+        }
+        continue;
+      }
       // Old or unverified-timestamp data is context only, never live GPS or moving animation.
       const staleFeed=!ok[source];
       const {parsed, latest}=processPositionFeed(source, ok[source]||oldFeeds[source]||unknownFeeds[source], now, state.indexes, gtfsLocalDate());
       state.counts[source]=parsed;
-      mergePositionVehicles(state.vehicles, latest, source, now, staleFeed);
+      mergePositionVehicles(state.vehicles, latest, source, now, staleFeed, source==='trains'?'estimated':null);
     }
     // The normalized SIRI snapshot contains only actual last-confirmed train stops.
     // These are stationary stop markers, never GPS positions or interpolated movement.
+    const estimatedTrainCount=Array.isArray(state.counts.trains?.vehicles)?state.counts.trains.vehicles.length:0;
     if(trainSnapshotOk){
       const latest=new Map();
       for(const item of trainSnapshot.vehicles){
@@ -808,12 +820,13 @@ async function refreshFeeds(){
           timestamp,receivedAt:now,fetchedAt:now,speed:null,bearing:null,positionType:item.positionType||'Letzter bestätigter Halt · Trenitalia',
           lastObservedStop:item.lastObservedStop||null,quality:item.quality||'verzögert',nameVerified:true,estimated:false,positionEstimated:false});
       }
-      state.counts.trains=latest.size;
-      mergePositionVehicles(state.vehicles,latest,'trains',now,false);
-      state.lastSuccess.trains=Date.now();
+      state.counts.trains=estimatedTrainCount+latest.size;
+      mergePositionVehicles(state.vehicles,latest,'trains',now,trainSiriStatus!=='ok','observed');
+      if(trainSiriStatus==='ok')state.lastSuccess.trains=Date.now();
     }else{
-      state.counts.trains=0;
-      mergePositionVehicles(state.vehicles,new Map(),'trains',now,true);
+      state.counts.trains=estimatedTrainCount;
+      // A failed SIRI snapshot must not stale otherwise-current GTFS-RT estimates.
+      mergePositionVehicles(state.vehicles,new Map(),'trains',now,true,'observed');
     }
     pruneStaleVehicles(state.vehicles, now, state.statuses);
     processUpdates(ok, state, now);
@@ -826,7 +839,7 @@ async function refreshFeeds(){
     // Alte Alerts entfernen wenn Feed nicht mehr antwortet
     for(const s of Object.keys(state.alerts))if(!ok[s])delete state.alerts[s];
     state.failCount=ENDPOINTS.filter(s=>state.statuses[s]!=='ok').length;
-    statusLabel();updateFeedHealthBanner();updateFavPanel();updateAlertTicker();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);displayStats();refreshScheduleMatches();
+    statusLabel();updateFeedHealthBanner();updateFavPanel();updateAlertTicker();refreshMarkers();state.diagnostics=feedDiagnostics(state.vehicles.values(),state.statuses,Date.now(),state.fusion);state.diagnostics.trainSources=state.trainSourceStatuses||{};displayStats();refreshScheduleMatches();
     // Bus-shape fetching happens after the live updates; do not delay feed painting.
     loadBusShapesForVehicles().catch(e=>console.info('Bus shape preload:',e));
     if(!initiallyLocated && state.vehicles.size && state.map){
@@ -935,6 +948,7 @@ function drawVehicleDetails(key,fetchSchedule){
    const cachedStops=state.details[v.source]?stopRows(state.details[v.source],v.tripId):[];
    const nextStop=nextStopFromRows(cachedStops,v);
    detail('Nächster Halt',nextStop?formatStationName(nextStop.name):'Unbekannt');
+   if(v.lastObservedStop)detail('Letzter bestätigter Halt',formatStationName(v.lastObservedStop));
   if(v.plannedComposition?.confidence==='planned'){
     detail('Geplantes Rollmaterial 2026',v.plannedComposition.type+' · '+v.plannedComposition.composition);
     detail('Hinweis Rollmaterial','Fahrplanangabe – tatsächlicher Fahrzeugeinsatz kann abweichen');

@@ -76,19 +76,30 @@ test('processPositionFeed: parst Fahrzeuge und berechnet Bus-Kandidaten', () => 
   assert.ok(latest.has('sta:v1'));
 });
 
-test('processPositionFeed: veröffentlicht simulierte Trenitalia-Positionen nicht als Live-Marker', () => {
+test('processPositionFeed: Trenitalia GTFS-RT positions are published only as estimated markers', () => {
   const now = Date.now();
-  const feed = {entity:[{id:'train-1',vehicle:{trip:{tripId:'trip-1'},vehicle:{id:'t1'},position:{latitude:46.5,longitude:11.35},timestamp:Math.floor(now/1000)}}]};
+  const feed = {header:{timestamp:Math.floor(now/1000)},entity:[{id:'train-1',vehicle:{trip:{tripId:'trip-1'},vehicle:{id:'t1'},position:{latitude:46.5,longitude:11.35},timestamp:Math.floor(now/1000)}}]};
   const {parsed,latest} = processPositionFeed('trains',feed,now,{trains:{}},'2026-11-17');
   assert.equal(parsed.vehicles.length,1);
-  assert.equal(parsed.vehicles[0].positionType,'Simulierte Position');
-  assert.equal(latest.size,0);
+  assert.equal(parsed.vehicles[0].estimated,true);
+  assert.equal(parsed.vehicles[0].positionEstimated,true);
+  assert.equal(parsed.vehicles[0].speed,null);
+  assert.match(parsed.vehicles[0].positionType,/geschätzte Streckenposition/i);
+  assert.ok(latest.has('trains:t1'));
 });
 
-test('mergePositionVehicles: entfernt zuvor gecachte simulierte Zugpositionen', () => {
-  const vehicles = new Map([['trains:t1',{key:'trains:t1',source:'trains'}]]);
-  mergePositionVehicles(vehicles,new Map(),'trains',Date.now(),false);
-  assert.equal(vehicles.size,0);
+test('mergePositionVehicles: estimated GTFS-RT and confirmed SIRI stops have independent freshness scopes', () => {
+  const now=Date.now(),vehicles=new Map([
+    ['trains:t1',{key:'trains:t1',source:'trains',positionEstimated:true,lastRealSeen:now,stale:false}],
+    ['trains:observed:t1',{key:'trains:observed:t1',source:'trains',positionType:'Letzter bestätigter Halt · Trenitalia',lastRealSeen:now,stale:false}]
+  ]);
+  const latest=new Map([['trains:t1',{key:'trains:t1',source:'trains',positionEstimated:true,timestamp:Math.floor(now/1000)}]]);
+  mergePositionVehicles(vehicles,latest,'trains',now,false,'estimated');
+  assert.equal(vehicles.get('trains:t1').stale,false);
+  assert.equal(vehicles.get('trains:observed:t1').stale,false);
+  mergePositionVehicles(vehicles,new Map(),'trains',now+1,true,'observed');
+  assert.equal(vehicles.get('trains:t1').stale,false);
+  assert.equal(vehicles.get('trains:observed:t1').stale,true);
 });
 
 test('mergePositionVehicles: behält neueste Beobachtung', () => {
