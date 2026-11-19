@@ -1,16 +1,42 @@
 /* Radar 7.5: conservative D1 write budgets, dedupe and factual delay analytics. */
 export const DAILY_WRITE_BUDGET=15000;
 export const PER_RUN_VEHICLES=18;
-export const PER_RUN_STOP_EVENTS=6;
+export const PER_RUN_STOP_EVENTS=30;
 export function remainingBudget(rowsToday,budget=DAILY_WRITE_BUDGET){return Math.max(0,Math.min(budget,budget-Math.max(0,Number(rowsToday)||0)))}
-export function changedStopEvents(candidates,previous,limit=PER_RUN_STOP_EVENTS){
- const seen=new Set();const out=[];
- for(const row of candidates){
+export function changedStopEvents(candidates,previous,limit=PER_RUN_STOP_EVENTS,rotationSeed=0){
+ const seen=new Set(),bySource=new Map();
+ for(const row of candidates||[]){
   const key=[row.source,row.tripId,row.tripStartDate,row.stopId,row.stopSequence,row.eventType].join('|');
   if(seen.has(key))continue;seen.add(key);
   const old=previous.get(key);
   if(old&&old.delaySeconds===row.delaySeconds&&old.predictedAt===row.predictedAt)continue;
-  out.push(row);if(out.length>=limit)break;
+  const source=String(row.source||'unknown');
+  if(!bySource.has(source))bySource.set(source,new Map());
+  const tripKey=[row.tripId,row.tripStartDate].join('|');
+  const trips=bySource.get(source);
+  if(!trips.has(tripKey))trips.set(tripKey,[]);
+  trips.get(tripKey).push(row);
+ }
+ const seed=Math.abs(Math.trunc(Number(rotationSeed)||0));
+ const sources=[...bySource.entries()].map(([source,trips])=>{
+  const queues=[...trips.values()];
+  return {source,queues,cursor:queues.length?seed%queues.length:0};
+ }).filter(group=>group.queues.length);
+ if(!sources.length||limit<=0)return [];
+ const out=[];let sourceStart=seed%sources.length,progress=true;
+ // One event per source per round, and one event per trip before returning to a trip.
+ // Rotate both cursors between five-minute runs so later feed entities are not starved.
+ while(out.length<limit&&progress){
+  progress=false;
+  for(let offset=0;offset<sources.length&&out.length<limit;offset++){
+   const group=sources[(sourceStart+offset)%sources.length];
+   for(let step=0;step<group.queues.length;step++){
+    const index=(group.cursor+step)%group.queues.length,queue=group.queues[index];
+    if(!queue.length)continue;
+    out.push(queue.shift());group.cursor=(index+1)%group.queues.length;progress=true;break;
+   }
+  }
+  sourceStart=(sourceStart+1)%sources.length;
  }
  return out;
 }
