@@ -3,7 +3,9 @@
   "main": "worker.js",
   "compatibility_date": "2026-10-01",
   "triggers": {
-    "crons": []
+    "crons": [
+      "*/5 * * * *"
+    ]
   },
   "assets": {
     "directory": "./public",
@@ -28,6 +30,7 @@
   "vars": {
     "ASSISTANT_ENABLED": "true",
     "GROQ_FREE_TIER_ONLY": "true",
-    "CLOUDFLARE_AI_FREE_TIER_ONLY": "true"
+    "CLOUDFLARE_AI_FREE_TIER_ONLY": "true",
+    "HISTORY_API_ORIGIN": "https://radar-s.onrender.com"
   }
 }

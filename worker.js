@@ -187,10 +187,36 @@ async function trainPlatforms(request,url,name){
     return new Response(request.method==='HEAD'?null:JSON.stringify({...data,diagnostic:{version:'5.4.3',stage:'complete',elapsedMs:Date.now()-started}}),{headers:{...JSON_HEADERS,'cache-control':'no-store','x-radar-platform-source':'ViaggiaTreno'}});
   }catch(error){return failed(error?.name==='TimeoutError'?'timeout':diagnostic.stage==='parse'?'invalid-json':'network',502,String(error?.message||'Request failed').replace(/[\r\n]+/g,' ').slice(0,180))}
 }
+async function proxyHistoryApi(request,env){
+ if(!['GET','HEAD'].includes(request.method))return respond({error:'Method not allowed'},405);
+ const origin=String(env.HISTORY_API_ORIGIN||'https://radar-s.onrender.com').replace(/\/+$/,'');
+ let target;
+ try{const base=new URL(origin);if(base.protocol!=='https:')throw new Error('HTTPS required');const incoming=new URL(request.url);target=new URL(incoming.pathname+incoming.search,base)}
+ catch{return respond({enabled:false,reason:'History backend URL is invalid'},503)}
+ try{
+  const upstream=await fetch(target.toString(),{method:request.method,headers:{accept:'application/json'},signal:AbortSignal.timeout(25000)});
+  const body=request.method==='HEAD'?null:await upstream.arrayBuffer();
+  return new Response(body,{status:upstream.status,headers:{...JSON_HEADERS,'content-type':upstream.headers.get('content-type')||'application/json; charset=utf-8','cache-control':'no-store'}});
+ }catch(error){return respond({enabled:false,reason:'History backend unavailable',errorType:error?.name||'Error'},503,{'cache-control':'no-store'})}
+}
+
 export default {
   async scheduled(event,env,ctx){
-    if(!env.HISTORY_DB)return;
-    ctx.waitUntil(collectHistory(env).catch(error=>console.warn('History collection failed',String(error?.message||error).slice(0,160))));
+    const secret=String(env.HISTORY_COLLECTOR_SECRET||'');
+    const origin=String(env.HISTORY_API_ORIGIN||'https://radar-s.onrender.com').replace(/\/+$/,'');
+    if(secret){
+      const task=(async()=>{
+        const upstream=await fetch(origin+'/internal/collect-history',{method:'POST',headers:{authorization:'Bearer '+secret,accept:'application/json'},signal:AbortSignal.timeout(120000)});
+        const payload=await upstream.json().catch(()=>null);
+        if(!upstream.ok||payload?.ok!==true)throw new Error('Render collector returned HTTP '+upstream.status);
+        console.log('History collection completed',JSON.stringify({vehicleRecordsProcessed:payload.vehicleRecordsProcessed||0,stopUpdateRecordsProcessed:payload.stopUpdateRecordsProcessed||0,stopSelectedBySource:payload.stopSelectedBySource||{}}));
+      })().catch(error=>console.warn('History collection failed',String(error?.message||error).slice(0,160)));
+      ctx.waitUntil(task);return;
+    }
+    if(env.HISTORY_DB&&env.HISTORY_COLLECTOR_ENABLED==='true'){
+      ctx.waitUntil(collectHistory(env).catch(error=>console.warn('History collection failed',String(error?.message||error).slice(0,160))));return;
+    }
+    console.warn('History collection skipped: set HISTORY_COLLECTOR_SECRET for the Render/Turso backend.');
   },
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -199,7 +225,7 @@ export default {
       return env.ASSETS.fetch(request);
     }
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
-    if(url.pathname==='/api/version'&&request.method==='GET')return respond({version:'9.9.5',release:'Radar 9.9.5',collectorScheduled:false,historyCollectorRequiresOptIn:true},200,{'cache-control':'no-store'});
+    if(url.pathname==='/api/version'&&request.method==='GET')return respond({version:'9.9.5',release:'Radar 9.9.5',collectorScheduled:true,collectorScheduler:'Cloudflare Cron → Render/Turso',historyCollectorRequiresSecret:true},200,{'cache-control':'no-store'});
     if(url.pathname==='/api/assistant/status'&&request.method==='GET'){const limiterConfigured=typeof env.AI_JOURNEY_LIMITER?.limit==='function';const providers=env.ASSISTANT_ENABLED==='true'&&limiterConfigured?await healthyAssistantProviders(env):[];const enabled=env.ASSISTANT_ENABLED==='true'&&limiterConfigured&&providers.length>0;const headers={...assistantNoCache};if(!assistantSessionId(request))headers['set-cookie']='sr_assistant_session='+crypto.randomUUID()+'; Path=/api/assistant; Secure; HttpOnly; SameSite=Lax';return respond({enabled,status:enabled?'ready':'unavailable',limiterConfigured,providers,configuredProviders:assistantProviders(env),mode:'free-only',checkedAt:new Date().toISOString(),message:enabled?'Der Assistent ist bereit.':'Der Assistent ist gerade nicht verfügbar.'},200,headers)}
     if(url.pathname==='/api/assistant'&&request.method==='POST')return assistantRequest(request,env,url);
 
@@ -248,7 +274,7 @@ export default {
       }catch{return respond({error:'Cloudflare AI temporarily unavailable or daily quota exhausted'},503,noCache)}
     }
     if (request.method !== 'GET' && request.method !== 'HEAD') return respond({ error: 'Method not allowed' }, 405);
-    if(url.pathname.startsWith('/api/history/'))return historyApi(request,env);
+    if(url.pathname.startsWith('/api/history/'))return env.HISTORY_DB||env.HISTORY_DB_STATUS?historyApi(request,env):proxyHistoryApi(request,env);
     const name = url.pathname.substring(5);
     if(name==='v1/collector/sta'){
       const started=Date.now();

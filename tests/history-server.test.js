@@ -17,3 +17,12 @@ test('history API refuses to claim storage before binding exists',async()=>{
 test('scheduled collector remains disabled until a D1 binding exists',async()=>{
  const response=await collectHistory({},now);assert.equal(response.ok,false);
 });
+
+test('history status exposes per-source and current-day write diagnostics',async()=>{
+ const db={prepare(sql){let args=[];const statement={bind(...values){args=values;return statement;},async first(){if(sql.includes('vehicle_observations'))return sql.includes('WHERE')?{total:4}:{total:12,latest:now/1000};if(sql.includes('stop_delay_events'))return sql.includes('WHERE')?{total:3}:{total:8,latest:now/1000};return null;},async all(){if(sql.includes('vehicle_observations'))return {results:[{source:'sta',total:7,latest:now/1000},{source:'trains',total:5,latest:now/1000}]};return {results:[{source:'trains',total:8,latest:now/1000}]};}};return statement;}};
+ const response=await historyApi(new Request('https://radar.example/api/history/status'),{HISTORY_DB:db,HISTORY_COLLECTOR_ENABLED:'true'});
+ assert.equal(response.status,200);const body=await response.json();
+ assert.equal(body.today.totalWrites,7);assert.equal(body.today.stopUpdates,3);
+ assert.deepEqual(body.bySource.stopUpdates.map(row=>row.source),['trains']);
+ assert.equal(body.projectedMaxWritesPerDay,13824);
+});
