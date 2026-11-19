@@ -62,8 +62,8 @@ test('the live version check compares against package.json', () => {
   assert.match(workflow, /return await check\(\)/, 'ohne await faengt der try-Block die Rejection nicht');
 });
 
-test('the history collector stays off in the deployed configuration', () => {
-  assert.match(workflow, /triggers\?\.crons\?\.length/);
-  const wrangler = read('wrangler.jsonc');
-  assert.match(wrangler, /"crons"\s*:\s*\[\]/, 'wrangler.jsonc must keep an empty cron list');
+test('history collector uses a protected five-minute Cloudflare Cron', () => {
+  const config = JSON.parse(read('wrangler.jsonc'));
+  assert.deepEqual(config.triggers?.crons, ['*/5 * * * *'], 'history collector must run every five minutes');
+  assert.match(read('worker.js'), /HISTORY_COLLECTOR_SECRET/, 'collector requests must be protected by the shared secret');
 });
