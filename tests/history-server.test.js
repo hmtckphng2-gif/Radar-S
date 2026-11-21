@@ -26,3 +26,16 @@ test('history status exposes per-source and current-day write diagnostics',async
  assert.deepEqual(body.bySource.stopUpdates.map(row=>row.source),['trains']);
  assert.equal(body.projectedMaxWritesPerDay,13824);
 });
+
+test('history diagnostics expose trip ids and forecasts with or without delay values',async()=>{
+ const db={prepare(sql){const statement={bind(){return statement;},async all(){
+  if(sql.includes('GROUP BY source ORDER BY source'))return {results:[{source:'trains',total:95,withDelay:12,withoutDelay:83,missingTripId:0,distinctTrips:4,distinctStops:20,latest:now/1000}]};
+  if(sql.includes('GROUP BY source,trip_id,trip_start_date'))return {results:[{source:'trains',trip_id:'16656',trip_start_date:'20261121',records:10,withDelay:2,withoutDelay:8,distinctStops:5,latest:now/1000}]};
+  return {results:[{source:'trains',trip_id:'16656',trip_start_date:'20261121',stop_id:'A',stop_sequence:1,event_type:'arrival',delay_seconds:null,scheduled_at:1795280000,predicted_at:1795280060,collected_at:now/1000}]};
+ }};return statement;}};
+ const response=await historyApi(new Request('https://radar.example/api/history/diagnostics?source=trains&hours=168'),{HISTORY_DB:db});
+ assert.equal(response.status,200);const body=await response.json();
+ assert.equal(body.scope,'stop-delay-diagnostics');assert.equal(body.bySource[0].total,95);
+ assert.equal(body.bySource[0].withoutDelay,83);assert.equal(body.tripGroups[0].trip_id,'16656');
+ assert.equal(body.latestUpdates[0].delay_seconds,null);
+});

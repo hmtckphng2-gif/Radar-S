@@ -47,6 +47,21 @@ export async function historyApi(request,env){
   try{const utcDay=Math.floor(Date.now()/86400000)*86400;const [vehicles,stops,vehiclesBySource,stopsBySource,todayVehicles,todayStops]=await Promise.all([env.HISTORY_DB.prepare('SELECT COUNT(*) AS total,MAX(collected_at) AS latest FROM vehicle_observations').first(),env.HISTORY_DB.prepare('SELECT COUNT(*) AS total,MAX(collected_at) AS latest FROM stop_delay_events').first(),env.HISTORY_DB.prepare('SELECT source,COUNT(*) AS total,MAX(collected_at) AS latest FROM vehicle_observations GROUP BY source ORDER BY source').all(),env.HISTORY_DB.prepare('SELECT source,COUNT(*) AS total,MAX(collected_at) AS latest FROM stop_delay_events GROUP BY source ORDER BY source').all(),env.HISTORY_DB.prepare('SELECT COUNT(*) AS total FROM vehicle_observations WHERE collected_at>=?').bind(utcDay).first(),env.HISTORY_DB.prepare('SELECT COUNT(*) AS total FROM stop_delay_events WHERE collected_at>=?').bind(utcDay).first()]);return response({enabled:true,vehicleObservations:vehicles,stopUpdates:stops,bySource:{vehicleObservations:vehiclesBySource.results||[],stopUpdates:stopsBySource.results||[]},today:{vehicleObservations:Number(todayVehicles?.total||0),stopUpdates:Number(todayStops?.total||0),totalWrites:Number(todayVehicles?.total||0)+Number(todayStops?.total||0)},dailyWriteBudget:DAILY_WRITE_BUDGET,projectedMaxWritesPerDay:simulateDailyWrites(),collectorEnabled:env.HISTORY_COLLECTOR_ENABLED==='true',note:'Stop updates are not verified arrivals.'})}
   catch{return response({enabled:false,reason:'History tables not initialized'},503)}
  }
+ if(kind==='diagnostics'){
+  const source=url.searchParams.get('source');
+  if(source&&source.length>50)return response({error:'Invalid source'},400);
+  const hours=Math.min(168,Math.max(1,Number(url.searchParams.get('hours'))||48));
+  const since=Math.floor(Date.now()/1000-hours*3600);
+  const limit=Math.min(100,Math.max(1,Number(url.searchParams.get('limit'))||40));
+  const filter=source?' AND source=?':'';
+  const params=source?[since,source]:[since];
+  const [bySource,trips,latest]=await Promise.all([
+   env.HISTORY_DB.prepare('SELECT source,COUNT(*) AS total,SUM(CASE WHEN delay_seconds IS NOT NULL THEN 1 ELSE 0 END) AS withDelay,SUM(CASE WHEN delay_seconds IS NULL THEN 1 ELSE 0 END) AS withoutDelay,SUM(CASE WHEN trip_id IS NULL OR trip_id=\\'\\' THEN 1 ELSE 0 END) AS missingTripId,COUNT(DISTINCT trip_id) AS distinctTrips,COUNT(DISTINCT stop_id) AS distinctStops,MAX(collected_at) AS latest FROM stop_delay_events WHERE collected_at>=?'+filter+' GROUP BY source ORDER BY source').bind(...params).all(),
+   env.HISTORY_DB.prepare('SELECT source,trip_id,trip_start_date,COUNT(*) AS records,SUM(CASE WHEN delay_seconds IS NOT NULL THEN 1 ELSE 0 END) AS withDelay,SUM(CASE WHEN delay_seconds IS NULL THEN 1 ELSE 0 END) AS withoutDelay,COUNT(DISTINCT stop_id) AS distinctStops,MAX(collected_at) AS latest FROM stop_delay_events WHERE collected_at>=?'+filter+' GROUP BY source,trip_id,trip_start_date ORDER BY latest DESC LIMIT ?').bind(...params,limit).all(),
+   env.HISTORY_DB.prepare('SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,delay_seconds,scheduled_at,predicted_at,collected_at FROM stop_delay_events WHERE collected_at>=?'+filter+' ORDER BY collected_at DESC LIMIT ?').bind(...params,limit).all()
+  ]);
+  return response({scope:'stop-delay-diagnostics',source:source||null,hours,bySource:bySource.results||[],tripGroups:trips.results||[],latestUpdates:latest.results||[],note:'Includes forecasts with and without delay_seconds. Analytics currently counts only rows with a non-NULL delay_seconds; updates are predictions, not verified arrivals.'});
+ }
  if(kind==='analytics'){
   const stopId=url.searchParams.get('stop');const tripId=url.searchParams.get('trip');const source=url.searchParams.get('source');
   if(!stopId&&!tripId)return response({error:'stop or trip parameter required'},400);
