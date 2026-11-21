@@ -39,3 +39,22 @@ test('history diagnostics expose trip ids and forecasts with or without delay va
  assert.equal(body.bySource[0].withoutDelay,83);assert.equal(body.tripGroups[0].trip_id,'16656');
  assert.equal(body.latestUpdates[0].delay_seconds,null);
 });
+
+test('train-number analytics resolves GTFS trip_short_name and compares consecutive stop forecasts',async()=>{
+ const collected=Math.floor(Date.now()/1000);
+ const tripId='0083_10083_0_v_1-18367-3CB8-0083_v_1-18367-3CB8-0083';
+ const rows=[
+  {source:'trains',trip_id:tripId,trip_start_date:'20261121',stop_id:'A',stop_sequence:1,event_type:'arrival',collected_at:collected,delay_seconds:300},
+  {source:'trains',trip_id:tripId,trip_start_date:'20261121',stop_id:'A',stop_sequence:1,event_type:'departure',collected_at:collected,delay_seconds:360},
+  {source:'trains',trip_id:tripId,trip_start_date:'20261121',stop_id:'B',stop_sequence:2,event_type:'arrival',collected_at:collected,delay_seconds:180},
+  {source:'trains',trip_id:'0083_10083_0_v_1-16003-3366-0083_v_1-16003-3366-0083',trip_start_date:'20261121',stop_id:'X',stop_sequence:1,event_type:'arrival',collected_at:collected,delay_seconds:0}
+ ];
+ const db={prepare(sql){const statement={bind(){return statement;},async all(){return {results:rows};}};return statement;}};
+ const response=await historyApi(new Request('https://radar.example/api/history/analytics?number=18367&hours=168'),{HISTORY_DB:db});
+ assert.equal(response.status,200);const body=await response.json();
+ assert.equal(body.scope,'train-number');assert.equal(body.id,'18367');
+ assert.deepEqual(body.mappedTripIds,[tripId]);
+ assert.equal(body.routeProgress.length,1);
+ assert.equal(body.routeProgress[0].fromStopId,'A');assert.equal(body.routeProgress[0].toStopId,'B');
+ assert.equal(body.routeProgress[0].changeMinutes,-2);assert.equal(body.routeProgress[0].status,'recovered');
+});
