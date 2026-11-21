@@ -53,6 +53,36 @@ export function uniqueForecasts(rows){
  for(const row of rows){const key=[row.source,row.trip_id,row.trip_start_date,row.stop_id,row.stop_sequence,row.event_type].join('|');if(seen.has(key))continue;seen.add(key);result.push(row)}
  return result;
 }
+
+/* GTFS-Realtime trip_id carries the static GTFS trip_short_name. This pattern
+   was checked against every trip in the generated Trenitalia GTFS index. */
+export function gtfsTripShortName(tripId){
+ const match=String(tripId||'').match(/_[vp]_\d+-([A-Za-z0-9]+)-[A-Fa-f0-9]+-/);
+ return match?match[1]:null;
+}
+
+/* Compare consecutive arrival forecasts within one trip; never infer arrivals. */
+export function routeProgress(rows){
+ const groups=new Map();
+ for(const row of uniqueForecasts(rows||[])){
+  if(row.event_type!=='arrival'||row.delay_seconds===null||row.delay_seconds===undefined||!Number.isFinite(Number(row.delay_seconds)))continue;
+  const key=[row.source,row.trip_id,row.trip_start_date].join('|');
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(row);
+ }
+ const result=[];
+ for(const [key,items] of groups){
+  items.sort((a,b)=>Number(a.stop_sequence)-Number(b.stop_sequence));
+  for(let i=1;i<items.length;i++){
+   const from=items[i-1],to=items[i];
+   if(Number(to.stop_sequence)<=Number(from.stop_sequence)||from.stop_id===to.stop_id)continue;
+   const change=Number(to.delay_seconds)-Number(from.delay_seconds);
+   result.push({tripId:to.trip_id,tripStartDate:to.trip_start_date,fromStopId:from.stop_id,toStopId:to.stop_id,fromSequence:Number(from.stop_sequence),toSequence:Number(to.stop_sequence),fromDelayMinutes:Math.round(Number(from.delay_seconds)/6)/10,toDelayMinutes:Math.round(Number(to.delay_seconds)/6)/10,changeMinutes:Math.round(change/6)/10,status:change < -30?'recovered':change > 30?'lost':'stable'});
+  }
+ }
+ return result;
+}
+
 export function delayTrend(rows){
  const latest=uniqueForecasts(rows);
  const stats=summarizeDelays(latest);
