@@ -29,7 +29,7 @@ test('history status exposes per-source and current-day write diagnostics',async
 
 test('history diagnostics expose trip ids and forecasts with or without delay values',async()=>{
  const db={prepare(sql){const statement={bind(){return statement;},async all(){
-  if(sql.includes('GROUP BY source ORDER BY source'))return {results:[{source:'trains',total:95,withDelay:12,withoutDelay:83,missingTripId:0,distinctTrips:4,distinctStops:20,latest:now/1000}]};
+  if(sql.includes('GROUP BY source ORDER BY source'))return {results:[{source:'trains',total:95,withDelay:12,withoutDelay:83,distinctTrips:4,distinctStops:20,latest:now/1000}]};
   if(sql.includes('GROUP BY source,trip_id,trip_start_date'))return {results:[{source:'trains',trip_id:'16656',trip_start_date:'20261121',records:10,withDelay:2,withoutDelay:8,distinctStops:5,latest:now/1000}]};
   return {results:[{source:'trains',trip_id:'16656',trip_start_date:'20261121',stop_id:'A',stop_sequence:1,event_type:'arrival',delay_seconds:null,scheduled_at:1795280000,predicted_at:1795280060,collected_at:now/1000}]};
  }};return statement;}};
