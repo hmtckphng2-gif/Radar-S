@@ -1,7 +1,7 @@
 /* Two logical services: scheduled feed collector and read-only history API. */
 import {buildSnapshot} from './radar66-api.mjs';
 import {observationRows,stopDelayRows} from './radar-history-logic.mjs';
-import {remainingBudget,changedStopEvents,delayTrend,simulateDailyWrites,PER_RUN_VEHICLES,PER_RUN_STOP_EVENTS,DAILY_WRITE_BUDGET} from './radar75-history-logic.mjs';
+import {remainingBudget,changedStopEvents,delayTrend,routeProgress,gtfsTripShortName,simulateDailyWrites,PER_RUN_VEHICLES,PER_RUN_STOP_EVENTS,DAILY_WRITE_BUDGET} from './radar75-history-logic.mjs';
 const noStore={'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'};
 const response=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:noStore});
 const FEEDS={sta:'https://proxy.busone.app/sta/gtfs-rt/vehicle-positions.json',trentino:'https://proxy.busone.app/trentino/gtfs-rt/vehicle-positions.json',trains:'https://proxy.busone.app/trenitalia/gtfs-rt/vehicle-positions.json',sta_direct:'https://gtfs.api.opendatahub.com/v1/realtime/sta-time-tables/vehicle-positions'};
@@ -63,17 +63,29 @@ export async function historyApi(request,env){
   return response({scope:'stop-delay-diagnostics',source:source||null,hours,bySource:bySource.results||[],tripGroups:trips.results||[],latestUpdates:latest.results||[],note:'Includes forecasts with and without delay_seconds. Analytics currently counts only rows with a non-NULL delay_seconds; updates are predictions, not verified arrivals.'});
  }
  if(kind==='analytics'){
-  const stopId=url.searchParams.get('stop');const tripId=url.searchParams.get('trip');const source=url.searchParams.get('source');
-  if(!stopId&&!tripId)return response({error:'stop or trip parameter required'},400);
-  if(stopId&&stopId.length>120||tripId&&tripId.length>120||source&&source.length>50)return response({error:'Invalid identifier'},400);
+  const stopId=url.searchParams.get('stop');const tripId=url.searchParams.get('trip');const trainNumber=url.searchParams.get('number');const source=url.searchParams.get('source');
+  if(!stopId&&!tripId&&!trainNumber)return response({error:'stop, trip or number parameter required'},400);
+  if([stopId,tripId,trainNumber,source].some(value=>value!==null&&value.length>(value===source?50:120))||[stopId,tripId,trainNumber].filter(Boolean).length>1)return response({error:'Invalid or conflicting identifier'},400);
   const hours=Math.min(168,Math.max(1,Number(url.searchParams.get('hours'))||48));
   const since=Math.floor(Date.now()/1000-hours*3600);
-  const sql=stopId?'SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,collected_at,delay_seconds FROM stop_delay_events WHERE stop_id=? AND collected_at>=?'+(source?' AND source=?':'')+' AND delay_seconds IS NOT NULL ORDER BY collected_at DESC LIMIT 1000':'SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,collected_at,delay_seconds FROM stop_delay_events WHERE trip_id=? AND collected_at>=?'+(source?' AND source=?':'')+' AND delay_seconds IS NOT NULL ORDER BY collected_at DESC LIMIT 1000';
-  const result=await env.HISTORY_DB.prepare(sql).bind(...[stopId||tripId,since,...(source?[source]:[])]).all();
-  const rows=result.results||[];
+  let rows=[],mappedTripIds=[];
+  if(trainNumber){
+   const date=url.searchParams.get('date');
+   if(date&&!/^\d{8}$/.test(date))return response({error:'date must use YYYYMMDD'},400);
+   const sql='SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,collected_at,delay_seconds FROM stop_delay_events WHERE source=\'trains\' AND collected_at>=? AND instr(trip_id, '-' || ? || '-')>0'+(date?' AND trip_start_date=?':'')+' ORDER BY collected_at DESC LIMIT 5000';
+   const params=[since,trainNumber,...(date?[date]:[])];
+   const candidates=await env.HISTORY_DB.prepare(sql).bind(...params).all();
+   rows=(candidates.results||[]).filter(row=>gtfsTripShortName(row.trip_id)===trainNumber);
+   mappedTripIds=[...new Set(rows.map(row=>row.trip_id))];
+   if(!mappedTripIds.length)return response({error:'No stored forecasts matched this GTFS trip_short_name',scope:'train-number',id:trainNumber,hours,date:date||null,note:'Train number is matched against the GTFS trip_short_name encoded in the realtime trip_id. No matching forecast was found in the selected period.'},404);
+  }else{
+   const sql=stopId?'SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,collected_at,delay_seconds FROM stop_delay_events WHERE stop_id=? AND collected_at>=?'+(source?' AND source=?':'')+' AND delay_seconds IS NOT NULL ORDER BY collected_at DESC LIMIT 1000':'SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,collected_at,delay_seconds FROM stop_delay_events WHERE trip_id=? AND collected_at>=?'+(source?' AND source=?':'')+' AND delay_seconds IS NOT NULL ORDER BY collected_at DESC LIMIT 1000';
+   const result=await env.HISTORY_DB.prepare(sql).bind(...[stopId||tripId,since,...(source?[source]:[])]).all();
+   rows=result.results||[];
+  }
   const distinctServiceDays=new Set(rows.map(row=>String(row.trip_start_date||'')).filter(Boolean)).size;
   const distinctStops=new Set(rows.map(row=>String(row.stop_id||'')).filter(Boolean)).size;
-  return response({scope:stopId?'stop':'trip',id:stopId||tripId,source:source||null,hours,...delayTrend(rows),distinctServiceDays,distinctStops,warning:'One latest feed forecast per trip/stop/event, not independently verified arrivals. Trend days reflect collection time, not travel time.'});
+  return response({scope:stopId?'stop':trainNumber?'train-number':'trip',id:stopId||trainNumber||tripId,source:source|| (trainNumber?'trains':null),hours,...delayTrend(rows),distinctServiceDays,distinctStops,...(trainNumber?{mappedTripIds,routeProgress:routeProgress(rows)}:{}),warning:'Forecasts only, not verified arrivals. Route progress compares consecutive arrival forecasts within the same trip and service day.'});
  }
  if(kind==='vehicle'){
   const key=url.searchParams.get('id');if(!key||key.length>160)return response({error:'Valid vehicle id required'},400);
