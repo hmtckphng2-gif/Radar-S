@@ -49,7 +49,7 @@ test('train-number analytics resolves GTFS trip_short_name and compares consecut
   {source:'trains',trip_id:tripId,trip_start_date:'20261121',stop_id:'B',stop_sequence:2,event_type:'arrival',collected_at:collected,delay_seconds:180},
   {source:'trains',trip_id:'0083_10083_0_v_1-16003-3366-0083_v_1-16003-3366-0083',trip_start_date:'20261121',stop_id:'X',stop_sequence:1,event_type:'arrival',collected_at:collected,delay_seconds:0}
  ];
- const db={prepare(sql){const statement={bind(){return statement;},async all(){return {results:rows};}};return statement;}};
+ const db={prepare(sql){let args=[];const statement={bind(...values){args=values;return statement;},async all(){assert.match(sql,/WHERE source = \? AND collected_at >= \? AND instr\(trip_id, \?\) > 0/);assert.equal(args.length,3);assert.equal(args[0],'trains');assert.equal(typeof args[1],'number');assert.equal(args[2],'-18367-');return {results:rows};}};return statement;}};
  const response=await historyApi(new Request('https://radar.example/api/history/analytics?number=18367&hours=168'),{HISTORY_DB:db});
  assert.equal(response.status,200);const body=await response.json();
  assert.equal(body.scope,'train-number');assert.equal(body.id,'18367');

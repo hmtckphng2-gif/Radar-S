@@ -72,8 +72,8 @@ export async function historyApi(request,env){
   if(trainNumber){
    const date=url.searchParams.get('date');
    if(date&&!/^\d{8}$/.test(date))return response({error:'date must use YYYYMMDD'},400);
-   const sql='SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,collected_at,delay_seconds FROM stop_delay_events WHERE source=\'trains\' AND collected_at>=? AND instr(trip_id, '-' || ? || '-')>0'+(date?' AND trip_start_date=?':'')+' ORDER BY collected_at DESC LIMIT 5000';
-   const params=[since,trainNumber,...(date?[date]:[])];
+   const sql='SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,collected_at,delay_seconds FROM stop_delay_events WHERE source = ? AND collected_at >= ? AND instr(trip_id, ?) > 0'+(date?' AND trip_start_date=?':'')+' ORDER BY collected_at DESC LIMIT 5000';
+   const params=['trains',since,'-'+trainNumber+'-',...(date?[date]:[])];
    const candidates=await env.HISTORY_DB.prepare(sql).bind(...params).all();
    rows=(candidates.results||[]).filter(row=>gtfsTripShortName(row.trip_id)===trainNumber);
    mappedTripIds=[...new Set(rows.map(row=>row.trip_id))];
