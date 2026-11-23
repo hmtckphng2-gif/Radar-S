@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {observationRows,stopDelayRows} from '../public/radar-history-logic.mjs';
 import {historyApi,collectHistory} from '../public/radar-history-worker.mjs';
+import {summarizeDelays,routeProgress} from '../public/radar75-history-logic.mjs';
 const now=Date.parse('2026-10-19T19:00:00Z');
 test('only fresh actual feed observations are retained',()=>{
  const rows=observationRows({vehicles:[{id:'sta:1',source:'sta',kind:'bus',lat:46.5,lon:11.3,observedAt:'2026-10-19T18:59:00Z',positionType:'simulated'},{id:'old',source:'sta',kind:'bus',lat:46,lon:11,observedAt:'2026-10-19T17:00:00Z'}]},now);
@@ -57,4 +58,15 @@ test('train-number analytics resolves GTFS trip_short_name and compares consecut
  assert.equal(body.routeProgress.length,1);
  assert.equal(body.routeProgress[0].fromStopId,'A');assert.equal(body.routeProgress[0].toStopId,'B');
  assert.equal(body.routeProgress[0].changeMinutes,-2);assert.equal(body.routeProgress[0].status,'recovered');
+ assert.equal(body.sampleCount,2); // arrival forecasts only; departure is excluded
+ assert.equal(body.excludedForecastCount,0);
+});
+
+test('analytics flags implausible forecast delays and excludes them from summary',()=>{
+ const result=summarizeDelays([{stop_id:'A',event_type:'arrival',delay_seconds:120},{stop_id:'B',event_type:'arrival',delay_seconds:3900},{stop_id:'C',event_type:'arrival',delay_seconds:-2910}]);
+ assert.equal(result.sampleCount,1);assert.equal(result.excludedForecastCount,2);assert.equal(result.averageMinutes,2);
+});
+test('route progress suppresses extreme forecast jumps',()=>{
+ const rows=[{source:'trains',trip_id:'T',trip_start_date:'20261121',stop_id:'A',stop_sequence:1,event_type:'arrival',delay_seconds:0},{source:'trains',trip_id:'T',trip_start_date:'20261121',stop_id:'B',stop_sequence:2,event_type:'arrival',delay_seconds:7200}];
+ assert.deepEqual(routeProgress(rows),[]);
 });

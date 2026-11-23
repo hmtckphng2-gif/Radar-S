@@ -40,11 +40,16 @@ export function changedStopEvents(candidates,previous,limit=PER_RUN_STOP_EVENTS,
  }
  return out;
 }
+export const MAX_PLAUSIBLE_EARLY_SECONDS=15*60;
+export const MAX_PLAUSIBLE_DELAY_SECONDS=45*60;
+export const MAX_ROUTE_CHANGE_SECONDS=30*60;
 export function summarizeDelays(rows){
- const values=rows.filter(x=>x.delay_seconds!==null&&x.delay_seconds!==undefined).map(x=>Number(x.delay_seconds)).filter(Number.isFinite);
- if(!values.length)return {sampleCount:0,averageMinutes:null,medianMinutes:null,latePercent:null};
+ const valid=(rows||[]).filter(x=>x.delay_seconds!==null&&x.delay_seconds!==undefined).map(x=>({...x,seconds:Number(x.delay_seconds)})).filter(x=>Number.isFinite(x.seconds));
+ const excluded=valid.filter(x=>x.seconds < -MAX_PLAUSIBLE_EARLY_SECONDS || x.seconds > MAX_PLAUSIBLE_DELAY_SECONDS);
+ const values=valid.filter(x=>x.seconds >= -MAX_PLAUSIBLE_EARLY_SECONDS && x.seconds <= MAX_PLAUSIBLE_DELAY_SECONDS).map(x=>x.seconds);
+ if(!values.length)return {sampleCount:0,averageMinutes:null,medianMinutes:null,latePercent:null,excludedForecastCount:excluded.length,excludedForecasts:excluded.map(x=>({stopId:x.stop_id,eventType:x.event_type,delayMinutes:Math.round(x.seconds/6)/10,reason:'outside conservative plausibility window'})),kind:'filtered_feed_forecasts_not_confirmed_arrivals'};
  const sorted=[...values].sort((a,b)=>a-b),mid=Math.floor(sorted.length/2);
- return {sampleCount:values.length,averageMinutes:Math.round(values.reduce((a,b)=>a+b,0)/values.length/6)/10,medianMinutes:Math.round((sorted.length%2?sorted[mid]:(sorted[mid-1]+sorted[mid])/2)/6)/10,latePercent:Math.round(values.filter(x=>x>60).length/values.length*100),kind:'feed_forecasts_not_confirmed_arrivals'};
+ return {sampleCount:values.length,averageMinutes:Math.round(values.reduce((a,b)=>a+b,0)/values.length/6)/10,medianMinutes:Math.round((sorted.length%2?sorted[mid]:(sorted[mid-1]+sorted[mid])/2)/6)/10,latePercent:Math.round(values.filter(x=>x>60).length/values.length*100),excludedForecastCount:excluded.length,excludedForecasts:excluded.map(x=>({stopId:x.stop_id,eventType:x.event_type,delayMinutes:Math.round(x.seconds/6)/10,reason:'outside conservative plausibility window'})),kind:'filtered_feed_forecasts_not_confirmed_arrivals'};
 }
 
 /* One latest forecast per source/trip/date/stop/event, not repeated polling samples. */
@@ -76,8 +81,10 @@ export function routeProgress(rows){
   for(let i=1;i<items.length;i++){
    const from=items[i-1],to=items[i];
    if(Number(to.stop_sequence)<=Number(from.stop_sequence)||from.stop_id===to.stop_id)continue;
-   const change=Number(to.delay_seconds)-Number(from.delay_seconds);
-   result.push({tripId:to.trip_id,tripStartDate:to.trip_start_date,fromStopId:from.stop_id,toStopId:to.stop_id,fromSequence:Number(from.stop_sequence),toSequence:Number(to.stop_sequence),fromDelayMinutes:Math.round(Number(from.delay_seconds)/6)/10,toDelayMinutes:Math.round(Number(to.delay_seconds)/6)/10,changeMinutes:Math.round(change/6)/10,status:change < -30?'recovered':change > 30?'lost':'stable'});
+   const fromDelay=Number(from.delay_seconds),toDelay=Number(to.delay_seconds),change=toDelay-fromDelay;
+   // Large jumps between successive feed forecasts are not reliable evidence of recovery/loss.
+   if(fromDelay < -MAX_PLAUSIBLE_EARLY_SECONDS || fromDelay > MAX_PLAUSIBLE_DELAY_SECONDS || toDelay < -MAX_PLAUSIBLE_EARLY_SECONDS || toDelay > MAX_PLAUSIBLE_DELAY_SECONDS || Math.abs(change)>MAX_ROUTE_CHANGE_SECONDS)continue;
+   result.push({tripId:to.trip_id,tripStartDate:to.trip_start_date,fromStopId:from.stop_id,toStopId:to.stop_id,fromSequence:Number(from.stop_sequence),toSequence:Number(to.stop_sequence),fromDelayMinutes:Math.round(fromDelay/6)/10,toDelayMinutes:Math.round(toDelay/6)/10,changeMinutes:Math.round(change/6)/10,status:change < -30?'recovered':change > 30?'lost':'stable'});
   }
  }
  return result;
@@ -87,7 +94,7 @@ export function delayTrend(rows){
  const latest=uniqueForecasts(rows);
  const stats=summarizeDelays(latest);
  const dayBuckets=new Map();
- for(const row of latest){if(row.delay_seconds===null||row.delay_seconds===undefined||!Number.isFinite(Number(row.delay_seconds)))continue;
+ for(const row of latest){if(row.delay_seconds===null||row.delay_seconds===undefined||!Number.isFinite(Number(row.delay_seconds))||Number(row.delay_seconds)<-MAX_PLAUSIBLE_EARLY_SECONDS||Number(row.delay_seconds)>MAX_PLAUSIBLE_DELAY_SECONDS)continue;
   const date=new Date(Number(row.collected_at)*1000).toISOString().slice(0,10);
   const bucket=dayBuckets.get(date)||[];bucket.push(Number(row.delay_seconds));dayBuckets.set(date,bucket);
  }

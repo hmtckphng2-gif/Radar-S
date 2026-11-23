@@ -75,7 +75,7 @@ export async function historyApi(request,env){
    const sql='SELECT source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,collected_at,delay_seconds FROM stop_delay_events WHERE source = ? AND collected_at >= ? AND instr(trip_id, ?) > 0'+(date?' AND trip_start_date=?':'')+' ORDER BY collected_at DESC LIMIT 5000';
    const params=['trains',since,'-'+trainNumber+'-',...(date?[date]:[])];
    const candidates=await env.HISTORY_DB.prepare(sql).bind(...params).all();
-   rows=(candidates.results||[]).filter(row=>gtfsTripShortName(row.trip_id)===trainNumber);
+   rows=(candidates.results||[]).filter(row=>gtfsTripShortName(row.trip_id)===trainNumber&&row.event_type==='arrival');
    mappedTripIds=[...new Set(rows.map(row=>row.trip_id))];
    if(!mappedTripIds.length)return response({error:'No stored forecasts matched this GTFS trip_short_name',scope:'train-number',id:trainNumber,hours,date:date||null,note:'Train number is matched against the GTFS trip_short_name encoded in the realtime trip_id. No matching forecast was found in the selected period.'},404);
   }else{
