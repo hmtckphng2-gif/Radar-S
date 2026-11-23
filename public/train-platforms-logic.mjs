@@ -9,25 +9,44 @@ export function resolveTrain(text,number,day){
  const found=new Map();
  for(const line of String(text).split('\n')){
   const m=line.trim().match(/\|(\d{1,6})-(S\d{5})-(\d{13})$/);
-  if(m&&m[1]===number&&romeTime(Number(m[3]))?.day===day)found.set(m[0],{number,origin:m[2],start:m[3]});
+  if(m&&m[1]===number&&romeTime(Number(m[3]))?.day===day)found.set(m[2],{number,origin:m[2],start:m[3]});
  }
  return found.size===1?[...found.values()][0]:null;
 }
 const roman=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
 const equivalentTrack=s=>roman.includes(s)?String(roman.indexOf(s)+1):String(s).toUpperCase();
 const track=value=>{
- const s=String(value??'').trim();return /^(?:\d{1,3}[A-Za-z]?|[A-Za-z])$/.test(s)||roman.includes(s)?s:null;
+ const s=String(value??'').trim();
+ return /^(?:\d{1,3}[A-Za-z]?|[A-Za-z])$/.test(s)||roman.includes(s)?s:null;
 };
+const epochMs=value=>{
+ const n=Number(value);
+ if(!Number.isFinite(n)||n<=0)return null;
+ if(n>=1e12)return Math.trunc(n);
+ if(n>=1e9)return Math.trunc(n*1000);
+ return null;
+};
+/* ViaggiaTreno's arrivoReale/partenzaReale are actual event timestamps (ms).
+   effettiva is a fallback for the terminal arrival or origin/intermediate departure.
+   It is never used to invent an intermediate arrival. */
+export function actualStopTimes(stop={}){
+ const type=String(stop.tipoFermata||'');
+ return {
+  actualArrivalAt:epochMs(stop.arrivoReale)??(type==='A'?epochMs(stop.effettiva):null),
+  actualDepartureAt:epochMs(stop.partenzaReale)??(['P','F'].includes(type)?epochMs(stop.effettiva):null)
+ };
+}
 export function normalizeTrain(raw,number,day,now=Date.now()){
  if(String(raw?.numeroTreno)!==number||!Array.isArray(raw.fermate))return null;
- return {number,day,fetchedAt:now,source:'Trenitalia · ViaggiaTreno',stops:raw.fermate.slice(0,150).map(s=>({
+ return {number,day,fetchedAt:now,source:'Trenitalia – ViaggiaTreno',stops:raw.fermate.slice(0,150).map(s=>({
   id:String(s.id||''),name:String(s.stazione||''),arrival:s.arrivo_teorico,departure:s.partenza_teorica,
+  ...actualStopTimes(s),
   plannedArrival:track(s.binarioProgrammatoArrivoDescrizione),actualArrival:track(s.binarioEffettivoArrivoDescrizione),
   plannedDeparture:track(s.binarioProgrammatoPartenzaDescrizione),actualDeparture:track(s.binarioEffettivoPartenzaDescrizione)
  }))};
 }
 const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
-const aliases=[['ponte d adige','ponte adige','sigmundskron'],['bolzano','bozen'],['brennero','brenner'],['merano','meran'],['salorno','salurn'],['bressanone','brixen'],['fortezza','franzensfeste'],['chiusa','klausen'],['trento','trient'],['vipiteno','vipiteno val di vizze','sterzing'],['ponte gardena','ponte gardena laion','waidbruck lajen'],['merano maia bassa','merano maia','meran untermais'],['magre cortaccia','margreid kurtatsch']];
+const aliases=[['ponte d adige','ponte adige','sigmundskron'],['bolzano','bozen'],['brennero','brenner'],['merano','meran'],['salorno','salurn'],['bressanone','brixen'],['fortezza','franzensfeste'],['chiusa','klausen'],['trento','trient'],['vipiteno','sterzing'],['ponte gardena','ponte gardena laion','waidbruck lajen'],['merano maia bassa','meran untermais'],['magre cortaccia','margreid kurtatsch']];
 const canonical=s=>{const n=normalize(s);return aliases.find(a=>a.includes(n))?.[0]||n};
 function stationNames(name){
  const station=String(name||'').split(',').at(-1);
@@ -37,12 +56,13 @@ function stationNames(name){
 export function matchPlatform(data,c,now=Date.now()){
  if(!data||data.number!==c.number||data.day!==c.serviceDay||!Number.isFinite(data.fetchedAt)||now-data.fetchedAt>120000||now<data.fetchedAt-30000)return null;
  const departure=c.departure!==null&&c.departure!==undefined&&Number.isFinite(Number(c.departure));
- const seconds=Number(departure?c.departure:c.arrival);if(!Number.isFinite(seconds)||seconds<0||seconds>172800)return null;
+ const seconds=Number(departure?c.departure:c.arrival);
+ if(!Number.isFinite(seconds)||seconds<0||seconds>172800)return null;
  const expected=Date.parse(c.serviceDay+'T00:00:00Z')/1000+seconds;
  const names=stationNames(c.stopName);
  const candidates=data.stops.filter(s=>{
   const id=String(c.stopId||'');
-  const station=c.source==='trains'&&/^S?\d{5}$/.test(id)?s.id==='S'+id.replace(/^S/,''):stationNames(s.name).some(n=>names.includes(n));
+  const station=c.source==='trains'&&/^S?\d{5}$/.test(id)?s.id===('S'+id.replace(/^S/,'')):stationNames(s.name).some(n=>names.includes(n));
   if(!station)return false;
   const terminal=s.departure===null||s.departure===undefined;
   const time=romeTime(departure&&!terminal?s.departure:s.arrival);if(!time)return false;
@@ -53,6 +73,6 @@ export function matchPlatform(data,c,now=Date.now()){
  const s=candidates[0],useDeparture=departure&&s.departure!==null&&s.departure!==undefined;
  const planned=useDeparture?s.plannedDeparture:s.plannedArrival,current=useDeparture?s.actualDeparture:s.actualArrival;
  if(!current&&!planned)return null;
- return {planned,current:current||planned,changed:Boolean(current&&planned&&equivalentTrack(current)!==equivalentTrack(planned)),live:Boolean(current),source:data.source};
+ return {planned,current,changed:Boolean(current&&planned&&equivalentTrack(current)!==equivalentTrack(planned)),live:Boolean(current),source:data.source};
 }
 export {track as displayTrack,stationNames};
