@@ -17,3 +17,12 @@ CREATE TABLE IF NOT EXISTS stop_delay_events (
 );
 CREATE INDEX IF NOT EXISTS idx_stop_delay_history ON stop_delay_events(stop_id,collected_at);
 CREATE INDEX IF NOT EXISTS idx_stop_delay_trip ON stop_delay_events(trip_id,trip_start_date,stop_sequence);
+
+CREATE TABLE IF NOT EXISTS actual_train_arrivals (
+ source TEXT NOT NULL, train_number TEXT NOT NULL, trip_id TEXT NOT NULL, trip_start_date TEXT NOT NULL,
+ stop_id TEXT NOT NULL, stop_name TEXT, stop_sequence INTEGER NOT NULL,
+ actual_arrival_at INTEGER NOT NULL, scheduled_arrival_at INTEGER, collected_at INTEGER NOT NULL,
+ PRIMARY KEY(source,trip_id,trip_start_date,stop_id,actual_arrival_at)
+);
+CREATE INDEX IF NOT EXISTS idx_actual_arrivals_train ON actual_train_arrivals(train_number,actual_arrival_at);
+CREATE INDEX IF NOT EXISTS idx_actual_arrivals_stop ON actual_train_arrivals(stop_id,actual_arrival_at);

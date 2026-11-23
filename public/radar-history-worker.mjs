@@ -1,5 +1,7 @@
 /* Two logical services: scheduled feed collector and read-only history API. */
 import {buildSnapshot} from './radar66-api.mjs';
+import {resolveTrain,normalizeTrain} from './train-platforms-logic.mjs';
+import {actualArrivalRows,trainCandidates} from './actual-arrivals-logic.mjs';
 import {observationRows,stopDelayRows} from './radar-history-logic.mjs';
 import {remainingBudget,changedStopEvents,delayTrend,routeProgress,gtfsTripShortName,simulateDailyWrites,PER_RUN_VEHICLES,PER_RUN_STOP_EVENTS,DAILY_WRITE_BUDGET} from './radar75-history-logic.mjs';
 const noStore={'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'};
@@ -7,6 +9,18 @@ const response=(body,status=200)=>new Response(JSON.stringify(body),{status,head
 const FEEDS={sta:'https://proxy.busone.app/sta/gtfs-rt/vehicle-positions.json',trentino:'https://proxy.busone.app/trentino/gtfs-rt/vehicle-positions.json',trains:'https://proxy.busone.app/trenitalia/gtfs-rt/vehicle-positions.json',sta_direct:'https://gtfs.api.opendatahub.com/v1/realtime/sta-time-tables/vehicle-positions'};
 const UPDATES={sta:'https://proxy.busone.app/sta/gtfs-rt/trip-updates.json',trentino:'https://proxy.busone.app/trentino/gtfs-rt/trip-updates.json',trains:'https://proxy.busone.app/trenitalia/gtfs-rt/trip-updates.json'};
 async function load(url,client){const res=await fetch(url,{headers:{accept:'application/json',...(url.includes('proxy.busone.app')?{'X-BusOne-Client':client,'X-BusOne-Use':'personal'}:{})},signal:AbortSignal.timeout(8500)});if(!res.ok||!(res.headers.get('content-type')||'').includes('json'))throw Error('feed unavailable');return res.json()}
+async function fetchOfficialActualArrivals(candidate,now){
+ const base='https://www.viaggiatreno.it/infomobilita/resteasy/viaggiatreno/';
+ const options={headers:{accept:'application/json, text/plain'},signal:AbortSignal.timeout(9000)};
+ const lookup=await fetch(base+'cercaNumeroTrenoTrenoAutocomplete/'+encodeURIComponent(candidate.number),options);
+ if(!lookup.ok)throw Error('ViaggiaTreno lookup unavailable');
+ const trip=resolveTrain(await lookup.text(),candidate.number,candidate.day);
+ if(!trip)return [];
+ const detail=await fetch(base+`andamentoTreno/${encodeURIComponent(trip.origin)}/${encodeURIComponent(candidate.number)}/${encodeURIComponent(trip.start)}`,options);
+ if(!detail.ok||!(detail.headers.get('content-type')||'').toLowerCase().includes('json'))throw Error('ViaggiaTreno journey unavailable');
+ const normalized=normalizeTrain(await detail.json(),candidate.number,candidate.day,now);
+ return actualArrivalRows(normalized,candidate,now);
+}
 export async function collectHistory(env,now=Date.now()){
  if(!env?.HISTORY_DB)return {ok:false,reason:'HISTORY_DB binding missing'};
  // Fail closed if the history collector is not explicitly enabled after verification.
@@ -26,6 +40,10 @@ export async function collectHistory(env,now=Date.now()){
  const snapshot=await buildSnapshot(async source=>({data:feedMap[source]?.data}),now);
  const vehicles=observationRows(snapshot,now).slice(0,Math.min(PER_RUN_VEHICLES,remaining));
  const stops=[];for(const x of updates)if(x.status==='fulfilled'){const [source,data]=x.value;stops.push(...stopDelayRows(data,source,now))}
+ const trainUpdate=updates.find(x=>x.status==='fulfilled'&&x.value?.[0]==='trains');
+ const candidates=trainUpdate?trainCandidates(trainUpdate.value[1],now,3):[];
+ const actualResults=await Promise.allSettled(candidates.map(candidate=>fetchOfficialActualArrivals(candidate,now)));
+ const actualRows=actualResults.flatMap(result=>result.status==='fulfilled'?result.value:[]);
  // Dedupe against recent snapshots and the last forecast for each trip/stop.
  const recent=await env.HISTORY_DB.prepare('SELECT source,vehicle_key,observed_at FROM vehicle_observations WHERE collected_at>=? ORDER BY collected_at DESC LIMIT 3000').bind(Math.floor(now/1000)-7200).all();
  const existing=new Set((recent.results||[]).map(v=>[v.source,v.vehicle_key,v.observed_at].join('|')));
@@ -37,15 +55,29 @@ export async function collectHistory(env,now=Date.now()){
  // Bound D1 batches to avoid exceeding statement and Worker limits.
  for(let i=0;i<uniqueVehicles.length;i+=80){const batch=uniqueVehicles.slice(i,i+80).map(v=>env.HISTORY_DB.prepare('INSERT OR IGNORE INTO vehicle_observations (source,vehicle_key,observed_at,collected_at,kind,route_id,trip_id,trip_start_date,vehicle_id,latitude,longitude,quality,position_type) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(v.source,v.key,v.observedAt,v.collectedAt,v.kind,v.routeId,v.tripId,v.tripStartDate,v.vehicleId,v.lat,v.lon,v.quality,v.positionType));await env.HISTORY_DB.batch(batch);vehicleSaved+=batch.length}
  for(let i=0;i<safeStops.length;i+=80){const batch=safeStops.slice(i,i+80).map(v=>env.HISTORY_DB.prepare('INSERT OR IGNORE INTO stop_delay_events (source,trip_id,trip_start_date,stop_id,stop_sequence,event_type,feed_observed_at,collected_at,delay_seconds,scheduled_at,predicted_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)').bind(v.source,v.tripId,v.tripStartDate,v.stopId,v.stopSequence,v.eventType,v.feedObservedAt,v.collectedAt,v.delaySeconds,v.scheduledAt,v.predictedAt));await env.HISTORY_DB.batch(batch);stopSaved+=batch.length}
+ let actualSaved=0;const actualToSave=actualRows.slice(0,Math.max(0,remaining-vehicleSaved-stopSaved));
+ for(let i=0;i<actualToSave.length;i+=80){const batch=actualToSave.slice(i,i+80).map(v=>env.HISTORY_DB.prepare('INSERT OR IGNORE INTO actual_train_arrivals (source,train_number,trip_id,trip_start_date,stop_id,stop_name,stop_sequence,actual_arrival_at,scheduled_arrival_at,collected_at) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(v.source,v.trainNumber,v.tripId,v.tripStartDate,v.stopId,v.stopName,v.stopSequence,v.actualArrivalAt,v.scheduledArrivalAt,v.collectedAt));await env.HISTORY_DB.batch(batch);actualSaved+=batch.length}
  const countBySource=rows=>Object.fromEntries([...new Set(rows.map(row=>row.source))].map(source=>[source,rows.filter(row=>row.source===source).length]));
- return {ok:true,vehicleRecordsProcessed:vehicleSaved,stopUpdateRecordsProcessed:stopSaved,writeBudget:DAILY_WRITE_BUDGET,projectedMaxWritesPerDay:simulateDailyWrites(),positionSources:Object.keys(feedMap),stopUpdateSources:[...new Set(stops.map(row=>row.source))],stopCandidatesBySource:countBySource(stops),stopSelectedBySource:countBySource(safeStops),note:'Stop updates are predictions/notifications, not confirmed arrivals.'};
+ return {ok:true,vehicleRecordsProcessed:vehicleSaved,stopUpdateRecordsProcessed:stopSaved,actualArrivalRecordsProcessed:actualSaved,officialTrainChecks:candidates.length,writeBudget:DAILY_WRITE_BUDGET,projectedMaxWritesPerDay:simulateDailyWrites(),positionSources:Object.keys(feedMap),stopUpdateSources:[...new Set(stops.map(row=>row.source))],stopCandidatesBySource:countBySource(stops),stopSelectedBySource:countBySource(safeStops),note:'Stop updates are predictions/notifications, not confirmed arrivals.'};
 }
 export async function historyApi(request,env){
  if(!env?.HISTORY_DB)return response({enabled:false,reason:'D1 history storage not configured'},503);
  const url=new URL(request.url),kind=url.pathname.slice('/api/history/'.length);
  if(kind==='status'){
-  try{const utcDay=Math.floor(Date.now()/86400000)*86400;const [vehicles,stops,vehiclesBySource,stopsBySource,todayVehicles,todayStops]=await Promise.all([env.HISTORY_DB.prepare('SELECT COUNT(*) AS total,MAX(collected_at) AS latest FROM vehicle_observations').first(),env.HISTORY_DB.prepare('SELECT COUNT(*) AS total,MAX(collected_at) AS latest FROM stop_delay_events').first(),env.HISTORY_DB.prepare('SELECT source,COUNT(*) AS total,MAX(collected_at) AS latest FROM vehicle_observations GROUP BY source ORDER BY source').all(),env.HISTORY_DB.prepare('SELECT source,COUNT(*) AS total,MAX(collected_at) AS latest FROM stop_delay_events GROUP BY source ORDER BY source').all(),env.HISTORY_DB.prepare('SELECT COUNT(*) AS total FROM vehicle_observations WHERE collected_at>=?').bind(utcDay).first(),env.HISTORY_DB.prepare('SELECT COUNT(*) AS total FROM stop_delay_events WHERE collected_at>=?').bind(utcDay).first()]);return response({enabled:true,vehicleObservations:vehicles,stopUpdates:stops,bySource:{vehicleObservations:vehiclesBySource.results||[],stopUpdates:stopsBySource.results||[]},today:{vehicleObservations:Number(todayVehicles?.total||0),stopUpdates:Number(todayStops?.total||0),totalWrites:Number(todayVehicles?.total||0)+Number(todayStops?.total||0)},dailyWriteBudget:DAILY_WRITE_BUDGET,projectedMaxWritesPerDay:simulateDailyWrites(),collectorEnabled:env.HISTORY_COLLECTOR_ENABLED==='true',note:'Stop updates are not verified arrivals.'})}
+  try{const utcDay=Math.floor(Date.now()/86400000)*86400;const [vehicles,stops,vehiclesBySource,stopsBySource,todayVehicles,todayStops,actuals,todayActuals]=await Promise.all([env.HISTORY_DB.prepare('SELECT COUNT(*) AS total,MAX(collected_at) AS latest FROM vehicle_observations').first(),env.HISTORY_DB.prepare('SELECT COUNT(*) AS total,MAX(collected_at) AS latest FROM stop_delay_events').first(),env.HISTORY_DB.prepare('SELECT source,COUNT(*) AS total,MAX(collected_at) AS latest FROM vehicle_observations GROUP BY source ORDER BY source').all(),env.HISTORY_DB.prepare('SELECT source,COUNT(*) AS total,MAX(collected_at) AS latest FROM stop_delay_events GROUP BY source ORDER BY source').all(),env.HISTORY_DB.prepare('SELECT COUNT(*) AS total FROM vehicle_observations WHERE collected_at>=?').bind(utcDay).first(),env.HISTORY_DB.prepare('SELECT COUNT(*) AS total FROM stop_delay_events WHERE collected_at>=?').bind(utcDay).first(),env.HISTORY_DB.prepare('SELECT COUNT(*) AS total,MAX(collected_at) AS latest FROM actual_train_arrivals').first(),env.HISTORY_DB.prepare('SELECT COUNT(*) AS total FROM actual_train_arrivals WHERE collected_at>=?').bind(utcDay).first()]);return response({enabled:true,vehicleObservations:vehicles,stopUpdates:stops,actualArrivals:actuals,bySource:{vehicleObservations:vehiclesBySource.results||[],stopUpdates:stopsBySource.results||[]},today:{vehicleObservations:Number(todayVehicles?.total||0),stopUpdates:Number(todayStops?.total||0),actualArrivals:Number(todayActuals?.total||0),totalWrites:Number(todayVehicles?.total||0)+Number(todayStops?.total||0)+Number(todayActuals?.total||0)},dailyWriteBudget:DAILY_WRITE_BUDGET,projectedMaxWritesPerDay:simulateDailyWrites(),collectorEnabled:env.HISTORY_COLLECTOR_ENABLED==='true',note:'Stop updates are not verified arrivals.'})}
   catch{return response({enabled:false,reason:'History tables not initialized'},503)}
+ }
+ if(kind==='actual-arrivals'){
+  const number=url.searchParams.get('number'),trip=url.searchParams.get('trip'),stop=url.searchParams.get('stop'),date=url.searchParams.get('date');
+  if([number,trip,stop].filter(Boolean).length!==1||[number,trip,stop].some(v=>v!==null&&(!v.length||v.length>160))||(date&&!/^\d{8}$/.test(date)))return response({error:'Provide exactly one valid number, trip or stop; optional date must be YYYYMMDD'},400);
+  const hours=Math.min(168,Math.max(1,Number(url.searchParams.get('hours'))||48));
+  const clauses=['actual_arrival_at>=?'],params=[Math.floor(Date.now()/1000-hours*3600)];
+  if(number){clauses.push('train_number=?');params.push(number)}
+  if(trip){clauses.push('trip_id=?');params.push(trip)}
+  if(stop){clauses.push('stop_id=?');params.push(stop)}
+  if(date){clauses.push('trip_start_date=?');params.push(date)}
+  const result=await env.HISTORY_DB.prepare('SELECT source,train_number,trip_id,trip_start_date,stop_id,stop_name,stop_sequence,actual_arrival_at,scheduled_arrival_at,collected_at FROM actual_train_arrivals WHERE '+clauses.join(' AND ')+' ORDER BY actual_arrival_at DESC LIMIT 500').bind(...params).all();
+  return response({scope:'verified-actual-arrivals',number:number||null,trip:trip||null,stop:stop||null,date:date||null,hours,records:result.results||[],count:(result.results||[]).length,note:'Only official ViaggiaTreno actual arrival timestamps. Missing actual times are not inferred from forecasts or platforms.'});
  }
  if(kind==='diagnostics'){
   const source=url.searchParams.get('source');
