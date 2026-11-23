@@ -73,6 +73,6 @@ export function matchPlatform(data,c,now=Date.now()){
  const s=candidates[0],useDeparture=departure&&s.departure!==null&&s.departure!==undefined;
  const planned=useDeparture?s.plannedDeparture:s.plannedArrival,current=useDeparture?s.actualDeparture:s.actualArrival;
  if(!current&&!planned)return null;
- return {planned,current,changed:Boolean(current&&planned&&equivalentTrack(current)!==equivalentTrack(planned)),live:Boolean(current),source:data.source};
+ return {planned,current:current||planned,changed:Boolean(current&&planned&&equivalentTrack(current)!==equivalentTrack(planned)),live:Boolean(current),source:data.source};
 }
 export {track as displayTrack,stationNames};
